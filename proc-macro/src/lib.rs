@@ -11,8 +11,8 @@ pub(crate) use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{
   parse::Parse, parse_macro_input, parse_quote, punctuated::Punctuated, Attribute, Data,
-  DeriveInput, Error, Expr, ExprClosure, Fields, Ident, Item, ItemFn, ItemMod, Lit, LitStr, Meta,
-  Path, RangeLimits, Token, Type,
+  DeriveInput, Error, Expr, ExprClosure, Field, Fields, Ident, Item, ItemFn, ItemMod, Lit, LitStr,
+  Meta, Path, RangeLimits, Token, Type, Variant,
 };
 use type_extraction::*;
 
@@ -40,7 +40,12 @@ pub fn message_derive(input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(Enum, attributes(proto))]
 pub fn enum_derive(input: TokenStream) -> TokenStream {
-  process_enum_derive(input)
+  let tokens = parse_macro_input!(input as DeriveInput);
+
+  match process_enum_derive(tokens) {
+    Ok(output) => output.into(),
+    Err(e) => e.to_compile_error().into(),
+  }
 }
 
 #[proc_macro_derive(Oneof, attributes(proto))]

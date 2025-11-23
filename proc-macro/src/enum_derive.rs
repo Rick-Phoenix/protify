@@ -1,8 +1,6 @@
 use crate::*;
 
-pub(crate) fn process_enum_derive(input: TokenStream) -> TokenStream {
-  let tokens = parse_macro_input!(input as DeriveInput);
-
+pub(crate) fn process_enum_derive(tokens: DeriveInput) -> Result<TokenStream2, Error> {
   let DeriveInput {
     attrs,
     ident: enum_name,
@@ -100,5 +98,5 @@ pub(crate) fn process_enum_derive(input: TokenStream) -> TokenStream {
     }
   });
 
-  output_tokens.into()
+  Ok(output_tokens)
 }

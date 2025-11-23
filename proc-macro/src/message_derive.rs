@@ -75,7 +75,7 @@ pub(crate) fn process_message_derive(tokens: DeriveInput) -> Result<TokenStream2
       manually_set_tags.push(tag);
     }
 
-    let processed_type = extract_type(field_type);
+    let processed_type = extract_type_from_path(field_type);
 
     field_type = processed_type.path();
 

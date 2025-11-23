@@ -41,7 +41,7 @@ mod inner {
   #[derive(Oneof)]
   #[proto(required)]
   enum PseudoOneof {
-    #[proto(validate = |v| v)]
+    #[proto(tag = 12, validate = |v| v)]
     A(String),
     B(i32),
   }
@@ -52,17 +52,18 @@ mod inner {
   #[proto(nested_messages(Nested))]
   #[proto(nested_enums(PseudoEnum))]
   pub struct Abc {
-    #[proto(validate = string_validator())]
+    #[proto(tag = 35, validate = string_validator())]
     name: Option<String>,
 
-    #[proto(validate = repeated_validator())]
+    #[proto(tag = 50, validate = repeated_validator())]
     num: Vec<i32>,
 
     #[proto(type_(ProtoMap<String, Sint32>))]
     #[proto(validate = |v| v.min_pairs(0).keys(|k| k.min_len(25)).values(|v| v.lt(25)))]
     map: HashMap<String, i32>,
 
-    oneof: PseudoOneof,
+    #[proto(oneof)]
+    oneof: Option<PseudoOneof>,
 
     #[proto(validate = |v| v.defined_only())]
     enum_field: PseudoEnum,

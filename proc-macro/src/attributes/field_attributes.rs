@@ -65,7 +65,7 @@ pub fn process_field_attrs(
           }
         }
         Meta::Path(path) => {
-          if path.is_ident("ignore") {
+          if path.is_ident("ignore") || path.is_ident("oneof") {
             is_ignored = true;
           }
         }

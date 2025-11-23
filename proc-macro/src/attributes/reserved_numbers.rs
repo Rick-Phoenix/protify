@@ -1,6 +1,6 @@
 use crate::*;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub(crate) struct ReservedNumbers(pub Vec<Range<i32>>);
 
 pub const PROTOBUF_MAX_TAG: i32 = 536_870_911;
