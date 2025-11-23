@@ -71,7 +71,62 @@ pub struct ParentMessage {
   pub name: Rc<str>,
 }
 
+enum EnumKind {
+  Oneof,
+  Enum,
+}
+
+pub enum ModuleItem2 {
+  Message(MessageData),
+}
+
 pub fn process_module_items(
+  module_attrs: ModuleAttrs,
+  mut module: ItemMod,
+) -> Result<ItemMod, Error> {
+  let (brace, content) = if let Some((brace, content)) = module.content {
+    (brace, content)
+  } else {
+    return Ok(module);
+  };
+
+  let mut mod_items: Vec<Item> = Vec::new();
+  let mut proto_items: Vec<ModuleItem2> = Vec::new();
+
+  for item in content {
+    match item {
+      Item::Struct(s) => {
+        let derives = Derives::new(&s.attrs)?;
+
+        if !derives.contains("Message") {
+          mod_items.push(Item::Struct(s));
+          continue;
+        }
+
+        let message_data = parse_message(s)?;
+      }
+      Item::Enum(e) => {
+        let derives = Derives::new(&e.attrs)?;
+
+        let enum_kind = if let Some(kind) = derives.enum_kind() {
+          kind
+        } else {
+          mod_items.push(Item::Enum(e));
+          continue;
+        };
+      }
+      _ => {
+        mod_items.push(item);
+      }
+    };
+  }
+
+  module.content = Some((brace, mod_items));
+
+  Ok(module)
+}
+
+pub fn process_module_items2(
   file_attribute: Attribute,
   items: &'_ mut Vec<Item>,
 ) -> Result<TopLevelItemsTokens, Error> {
@@ -293,7 +348,7 @@ pub fn process_module_items(
   let mut top_level_messages = TokenStream2::new();
   let mut top_level_enums = TokenStream2::new();
 
-  for (item_ident, item) in module_items.iter_mut() {
+  for (item_ident, mut item) in module_items.into_iter() {
     item.inject_attr(file_attribute.clone());
 
     if let Some(parent_message) = nested_items_map.get(item.get_ident()) {
@@ -329,8 +384,24 @@ pub fn process_module_items(
       }
     }
 
-    if let ItemKind::Message(msg) = &mut item.kind {
-      //
+    if let ItemKind::Message(mut msg) = item.kind {
+      let ranges = msg.reserved_numbers.build_unavailable_ranges(msg.used_tags);
+
+      let mut tag_allocator = TagAllocator::new(&ranges.0);
+
+      for field in process_struct_fields(msg.tokens)? {
+        let tag = 'tag: {
+          for attr in &field.attrs {
+            if let Some(tag) = find_tag_attribute(attr)? {
+              break 'tag tag;
+            }
+          }
+
+          tag_allocator.next_tag()
+        };
+
+        eprintln!("Name: {}, tag: {tag}", field.ident.as_ref().unwrap());
+      }
     }
   }
 
@@ -338,19 +409,6 @@ pub fn process_module_items(
     top_level_messages,
     top_level_enums,
   })
-}
-
-fn get_proto_args(attr: &Attribute) -> Result<impl Iterator<Item = Meta>, Error> {
-  if attr.path().is_ident("proto") {
-    Ok(Either::Left(
-      attr
-        .parse_args::<PunctuatedParser<Meta>>()?
-        .inner
-        .into_iter(),
-    ))
-  } else {
-    Ok(Either::Right(std::iter::empty::<Meta>().into_iter()))
-  }
 }
 
 fn find_tag_attribute(attr: &Attribute) -> Result<Option<i32>, Error> {
@@ -384,7 +442,9 @@ fn process_enum_variants(
   })
 }
 
-fn process_struct_fields(target_struct: &'_ mut ItemStruct) -> Result<IterMut<'_, Field>, Error> {
+pub fn process_struct_fields(
+  target_struct: &'_ mut ItemStruct,
+) -> Result<IterMut<'_, Field>, Error> {
   if let Fields::Named(fields) = &mut target_struct.fields {
     Ok(fields.named.iter_mut())
   } else {
@@ -418,6 +478,90 @@ impl Parse for ModuleAttrs {
 }
 
 pub fn get_derive_kind(item: &Item) -> Result<Option<DeriveKind>, Error> {
+  let attrs = match item {
+    Item::Struct(s) => &s.attrs,
+    Item::Enum(e) => &e.attrs,
+    _ => return Ok(None),
+  };
+
+  for attr in attrs {
+    if attr.path().is_ident("derive") {
+      let derives = attr
+        .meta
+        .require_list()?
+        .parse_args::<PunctuatedParser<Path>>()?
+        .inner;
+
+      for path in derives {
+        if path.is_ident("Message") {
+          return Ok(Some(DeriveKind::Message));
+        } else if path.is_ident("Enum") {
+          return Ok(Some(DeriveKind::Enum));
+        } else if path.is_ident("Oneof") {
+          return Ok(Some(DeriveKind::Oneof));
+        }
+      }
+
+      return Ok(None);
+    }
+  }
+
+  Ok(None)
+}
+
+pub struct Derives {
+  pub list: Vec<Path>,
+}
+
+impl Derives {
+  pub fn contains(&self, value: &str) -> bool {
+    for item in &self.list {
+      let last_segment = item.segments.last().unwrap();
+
+      if last_segment.ident == value {
+        return true;
+      }
+    }
+
+    false
+  }
+
+  pub fn enum_kind(&self) -> Option<EnumKind> {
+    for item in &self.list {
+      let last_segment = item.segments.last().unwrap();
+
+      if last_segment.ident == "Oneof" {
+        return Some(EnumKind::Oneof);
+      } else if last_segment.ident == "Enum" {
+        return Some(EnumKind::Enum);
+      }
+    }
+
+    None
+  }
+}
+
+impl Derives {
+  pub fn new(attrs: &[Attribute]) -> Result<Self, Error> {
+    let mut list: Vec<Path> = Vec::new();
+
+    for attr in attrs {
+      if attr.path().is_ident("derive") {
+        list.extend(
+          attr
+            .meta
+            .require_list()?
+            .parse_args::<PunctuatedParser<Path>>()?
+            .inner,
+        );
+      }
+    }
+
+    Ok(Self { list })
+  }
+}
+
+pub fn has_derive() -> Result<Option<DeriveKind>, Error> {
   let attrs = match item {
     Item::Struct(s) => &s.attrs,
     Item::Enum(e) => &e.attrs,

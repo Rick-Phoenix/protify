@@ -9,6 +9,7 @@ pub struct FieldAttrs {
   pub options: ProtoOptions,
   pub name: String,
   pub type_: Option<Path>,
+  pub is_oneof: bool,
 }
 
 pub enum ValidatorExpr {
@@ -26,6 +27,7 @@ pub fn process_field_attrs(
   let mut name: Option<String> = None;
   let mut type_: Option<Path> = None;
   let mut is_ignored = false;
+  let mut is_oneof = false;
 
   for attr in attrs {
     if !attr.path().is_ident("proto") {
@@ -65,8 +67,10 @@ pub fn process_field_attrs(
           }
         }
         Meta::Path(path) => {
-          if path.is_ident("ignore") || path.is_ident("oneof") {
+          if path.is_ident("ignore") {
             is_ignored = true;
+          } else if path.is_ident("oneof") {
+            is_oneof = true;
           }
         }
       };
@@ -80,6 +84,7 @@ pub fn process_field_attrs(
       options: attributes::ProtoOptions(options),
       name: name.unwrap_or_else(|| ccase!(snake, original_name.to_string())),
       type_,
+      is_oneof,
     }))
   } else {
     Ok(None)

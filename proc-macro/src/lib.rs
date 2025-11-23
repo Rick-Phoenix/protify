@@ -10,9 +10,10 @@ use proc_macro2::Span;
 pub(crate) use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{
-  parse::Parse, parse_macro_input, parse_quote, punctuated::Punctuated, Attribute, Data,
-  DeriveInput, Error, Expr, ExprClosure, Field, Fields, Ident, Item, ItemFn, ItemMod, Lit, LitStr,
-  Meta, Path, RangeLimits, Token, Type, Variant,
+  parse::Parse, parse_macro_input, parse_quote, punctuated::Punctuated, token::Paren, Attribute,
+  Data, DeriveInput, Error, Expr, ExprClosure, Field, Fields, FieldsUnnamed, Generics, Ident, Item,
+  ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, Path, RangeLimits, Token, Type,
+  Variant, Visibility,
 };
 use type_extraction::*;
 
@@ -70,7 +71,7 @@ pub fn proto_module(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let TopLevelItemsTokens {
       top_level_messages,
       top_level_enums,
-    } = process_module_items(file_attribute, content).unwrap();
+    } = process_module_items2(file_attribute, content).unwrap();
 
     let aggregator_fn: ItemFn = parse_quote! {
       pub fn proto_file() -> ProtoFile {

@@ -2,22 +2,26 @@ mod enum_attributes;
 mod enum_variant_attributes;
 mod field_attributes;
 mod message_attributes;
+mod message_parsing;
 mod module_attributes;
 pub(crate) mod nested_items;
 mod oneof_attributes;
 mod parsers;
 mod reserved_names;
 mod reserved_numbers;
+mod tag_allocator;
 
 pub use enum_attributes::*;
 pub use enum_variant_attributes::*;
 pub use field_attributes::*;
 pub use message_attributes::*;
+pub use message_parsing::*;
 pub use module_attributes::*;
 pub use oneof_attributes::*;
 pub use parsers::*;
 pub use reserved_names::*;
 pub use reserved_numbers::*;
+pub use tag_allocator::*;
 
 use crate::*;
 

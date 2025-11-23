@@ -1,4 +1,19 @@
+use itertools::Either;
+
 use crate::*;
+
+pub fn get_proto_args(attr: &Attribute) -> Result<impl Iterator<Item = Meta>, Error> {
+  if attr.path().is_ident("proto") {
+    Ok(Either::Left(
+      attr
+        .parse_args::<PunctuatedParser<Meta>>()?
+        .inner
+        .into_iter(),
+    ))
+  } else {
+    Ok(Either::Right(std::iter::empty::<Meta>()))
+  }
+}
 
 pub struct PunctuatedParser<T: Parse> {
   pub inner: Punctuated<T, Token![,]>,
@@ -20,6 +35,7 @@ pub fn extract_i32(expr: &Expr) -> Result<i32, Error> {
   }
 }
 
+#[derive(Default)]
 pub(crate) struct ProtoOptions(pub Option<TokenStream2>);
 
 impl ToTokens for ProtoOptions {
