@@ -21,7 +21,7 @@ pub fn process_oneof_derive2(oneof: &mut OneofData) -> Result<TokenStream2, Erro
       quote! { None }
     };
 
-    let tag = variant.data.tag.expect("missing tag in oneof");
+    let tag = variant.data.tag.unwrap_or(1);
 
     variants_tokens.push(quote! {
       ProtoField {

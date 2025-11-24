@@ -40,6 +40,8 @@ pub(crate) fn process_message_derive2(
       for variant in &mut oneof.variants {
         variant.data.tag = Some(tag_allocator.get_or_next(variant.data.tag));
       }
+
+      continue;
     }
 
     let name = &field.data.name;
@@ -114,10 +116,8 @@ pub(crate) fn process_message_derive2(
           reserved_names: #reserved_names,
           reserved_numbers: vec![ #reserved_numbers ],
           options: #options,
-          // messages: vec![ #nested_messages ],
-          // enums: vec![ #nested_enums ],
           entries: vec![ #(#fields_tokens,)* ],
-          ..Default::default(),
+          ..Default::default()
         };
 
         new_msg
