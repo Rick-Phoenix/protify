@@ -1,7 +1,7 @@
 use crate::*;
 
 pub trait ProtoOneof {
-  fn fields(tag_allocator: &mut TagAllocator) -> Vec<ProtoField>;
+  fn fields() -> Vec<ProtoField>;
 }
 
 #[derive(Debug, Default, Clone)]

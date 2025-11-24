@@ -78,7 +78,7 @@ pub(crate) fn process_oneof_derive(tokens: DeriveInput) -> Result<TokenStream2, 
 
   output_tokens.extend(quote! {
     impl ProtoOneof for #enum_name {
-      fn fields(tag_allocator: &mut TagAllocator) -> Vec<ProtoField> {
+      fn fields() -> Vec<ProtoField> {
         vec![ #(#variants_tokens,)* ]
       }
     }
