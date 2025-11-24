@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use syn::{punctuated::IterMut, ItemEnum, ItemStruct, MetaNameValue};
 
-use crate::*;
+use crate::{message_derive::process_message_derive2, *};
 
 pub enum ModuleItem2 {
   Message(MessageData),
@@ -142,8 +142,25 @@ pub fn process_module_items(
     register_full_name(msg, &messages_relational_map, &mut messages);
   }
 
-  for (ident, msg) in messages.iter_mut() {
-    //
+  for (_, mut msg) in messages {
+    let message_derive = process_message_derive2(&mut msg, &mut oneofs, &module_attrs)?;
+
+    mod_items.push(Item::Struct(msg.into()));
+    mod_items.push(Item::Verbatim(message_derive));
+  }
+
+  for (_, mut oneof) in oneofs {
+    let oneof_derive = process_oneof_derive2(&mut oneof)?;
+
+    mod_items.push(Item::Enum(oneof.into()));
+    mod_items.push(Item::Verbatim(oneof_derive));
+  }
+
+  for (_, mut proto_enum) in enums {
+    let proto_enum_derive = process_enum_derive2(&mut proto_enum, &module_attrs)?;
+
+    mod_items.push(Item::Enum(proto_enum.into()));
+    mod_items.push(Item::Verbatim(proto_enum_derive));
   }
 
   module.content = Some((brace, mod_items));

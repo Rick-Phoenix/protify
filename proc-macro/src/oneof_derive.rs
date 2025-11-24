@@ -1,16 +1,12 @@
 use crate::*;
 
-pub fn process_oneof_derive2(
-  oneof: &mut OneofData,
-  tag_allocator: &mut TagAllocator,
-) -> Result<TokenStream2, Error> {
+pub fn process_oneof_derive2(oneof: &mut OneofData) -> Result<TokenStream2, Error> {
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
   for variant in &oneof.variants {
     let field_name = &variant.data.name;
     let field_options = &variant.data.options;
     let proto_type = &variant.type_;
-    let tag = tag_allocator.get_or_next(variant.data.tag);
 
     let validator_tokens = if let Some(validator) = &variant.data.validator {
       match validator {
@@ -24,6 +20,8 @@ pub fn process_oneof_derive2(
     } else {
       quote! { None }
     };
+
+    let tag = variant.data.tag.expect("missing tag in oneof");
 
     variants_tokens.push(quote! {
       ProtoField {
