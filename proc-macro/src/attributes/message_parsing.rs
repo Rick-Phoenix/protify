@@ -14,6 +14,7 @@ pub struct MessageData {
   pub full_name: OnceCell<String>,
   pub nested_messages: Vec<Ident>,
   pub nested_enums: Vec<Ident>,
+  pub oneofs: Vec<Ident>,
   pub used_tags: Vec<i32>,
   pub parent_message: Option<Rc<str>>,
 }
@@ -82,6 +83,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
   } = process_message_attrs(&ident, &attrs)?;
 
   let mut used_tags: Vec<i32> = Vec::new();
+  let mut oneofs: Vec<Ident> = Vec::new();
   let mut fields_data: Vec<FieldData> = Vec::new();
 
   for field in fields {
@@ -100,6 +102,8 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
           "Oneof fields must be wrapped in Option"
         ));
       }
+
+      oneofs.push(field_type.path().require_ident()?.clone());
     }
 
     if let Some(tag) = data.tag {
@@ -130,5 +134,6 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     nested_messages,
     nested_enums,
     full_name: OnceCell::new(),
+    oneofs,
   })
 }

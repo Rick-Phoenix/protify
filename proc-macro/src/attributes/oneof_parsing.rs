@@ -10,6 +10,7 @@ pub struct OneofData {
   pub data: OneofAttrs,
   pub tokens: EnumRaw,
   pub variants: Vec<OneofVariant>,
+  pub used_tags: Vec<i32>,
 }
 
 impl From<OneofData> for ItemEnum {
@@ -43,6 +44,7 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
   let oneof_attrs = process_oneof_attrs(&item.ident, &item.attrs);
 
   let mut variants_data: Vec<OneofVariant> = Vec::new();
+  let mut used_tags: Vec<i32> = Vec::new();
 
   for variant in item.variants {
     let field_attrs = if let Some(data) = process_field_attrs(&variant.ident, &variant.attrs)? {
@@ -50,6 +52,10 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
     } else {
       continue;
     };
+
+    if let Some(tag) = field_attrs.tag {
+      used_tags.push(tag);
+    }
 
     let variant_type = if let Fields::Unnamed(variant_fields) = &variant.fields {
       if variant_fields.unnamed.len() != 1 {
@@ -90,5 +96,6 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
       generics: item.generics,
     },
     variants: variants_data,
+    used_tags,
   })
 }

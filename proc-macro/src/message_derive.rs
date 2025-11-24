@@ -1,93 +1,53 @@
 use crate::*;
 
-pub(crate) fn process_message_derive(tokens: DeriveInput) -> Result<TokenStream2, Error> {
-  let DeriveInput {
-    attrs,
-    ident: struct_name,
-    data,
-    ..
-  } = tokens;
-
-  let MessageAttrs {
+pub(crate) fn process_message_derive2(
+  msg: &mut MessageData,
+  oneofs_map: &mut HashMap<Ident, OneofData>,
+  module_attrs: &ModuleAttrs,
+) -> Result<TokenStream2, Error> {
+  let MessageData {
+    fields,
     reserved_names,
     reserved_numbers,
     options,
     name: proto_name,
-    file,
-    package,
-    nested_messages,
-    full_name,
-    nested_enums,
     oneofs,
-  } = process_message_attrs(&struct_name, &attrs).unwrap();
+    used_tags,
+    ..
+  } = msg;
 
-  let reserved_numbers_tokens = reserved_numbers.to_token_stream();
+  let mut fields_tokens: Vec<TokenStream2> = Vec::new();
 
-  let data = if let Data::Struct(struct_data) = data {
-    struct_data
-  } else {
-    panic!()
-  };
+  for oneof in oneofs {
+    let oneof_data = oneofs_map.get_mut(oneof).expect("Failed to find oneof");
 
-  let fields = if let Fields::Named(fields) = data.fields {
-    fields.named
-  } else {
-    panic!()
-  };
+    let taken_tags = std::mem::take(&mut oneof_data.used_tags);
+    used_tags.extend(taken_tags);
+  }
 
-  let mut output_tokens = TokenStream2::new();
+  let unavailable_tags = reserved_numbers
+    .clone()
+    .build_unavailable_ranges(used_tags.clone());
 
-  let mut fields_data: Vec<TokenStream2> = Vec::new();
-  let mut manually_set_tags: Vec<i32> = Vec::new();
+  let mut tag_allocator = TagAllocator::new(&unavailable_tags.0);
 
   for field in fields {
-    let field_name = field.ident.as_ref().expect("Expected named field");
+    if field.data.is_oneof {
+      let oneof = oneofs_map
+        .get_mut(field.type_.require_ident()?)
+        .expect("Failed to find oneof");
 
-    let field_attrs = if let Some(attrs) = process_field_attrs(field_name, &field.attrs)? {
-      attrs
-    } else {
-      continue;
-    };
-
-    let FieldAttrs {
-      tag,
-      validator,
-      options,
-      name,
-      type_,
-    } = field_attrs;
-
-    let mut field_type = match &field.ty {
-      Type::Path(type_path) => &type_path.path,
-
-      _ => panic!("Must be a path type"),
-    };
-
-    if let Some(oneofs) = &oneofs && oneofs.contains(field_type) {
-      fields_data.push(quote! {
-        MessageEntry::Oneof(#field_type::to_oneof(&mut tag_allocator))
-      });
-
-      continue;
+      for variant in &mut oneof.variants {
+        variant.data.tag = Some(tag_allocator.get_or_next(variant.data.tag));
+      }
     }
 
-    if let Some(tag) = tag {
-      manually_set_tags.push(tag);
-    }
+    let name = &field.data.name;
+    let proto_type = &field.type_;
+    let field_options = &field.data.options;
+    let tag = tag_allocator.get_or_next(field.data.tag);
 
-    let processed_type = extract_type_from_path(field_type);
-
-    field_type = processed_type.path();
-
-    let is_optional = processed_type.is_option();
-
-    let proto_type = if let Some(type_data) = &type_ {
-      type_data
-    } else {
-      field_type
-    };
-
-    let validator_tokens = if let Some(validator) = validator {
+    let validator_tokens = if let Some(validator) = &field.data.validator {
       match validator {
         ValidatorExpr::Call(call) => {
           quote! { Some(<ValidatorMap as ProtoValidator<#proto_type>>::from_builder(#call)) }
@@ -100,20 +60,14 @@ pub(crate) fn process_message_derive(tokens: DeriveInput) -> Result<TokenStream2
       quote! { None }
     };
 
-    let field_type_tokens = if is_optional {
-      quote! { <Option<#proto_type> as AsProtoType>::proto_type() }
-    } else {
-      quote! { <#proto_type as AsProtoType>::proto_type() }
-    };
+    let field_type_tokens = quote! { <#proto_type as AsProtoType>::proto_type() };
 
-    let tag_tokens = OptionTokens::new(tag.as_ref());
-
-    fields_data.push(quote! {
+    fields_tokens.push(quote! {
       MessageEntry::Field(
         ProtoField {
           name: #name.to_string(),
-          tag: tag_allocator.get_or_next(#tag_tokens),
-          options: #options,
+          tag: #tag,
+          options: #field_options,
           type_: #field_type_tokens,
           validator: #validator_tokens,
         }
@@ -121,9 +75,12 @@ pub(crate) fn process_message_derive(tokens: DeriveInput) -> Result<TokenStream2
     });
   }
 
-  let occupied_ranges = reserved_numbers.build_unavailable_ranges(manually_set_tags);
+  let struct_name = &msg.tokens.ident;
+  let full_name = msg.full_name.get().unwrap_or_else(|| proto_name);
+  let file = &module_attrs.file;
+  let package = &module_attrs.package;
 
-  output_tokens.extend(quote! {
+  let output_tokens = quote! {
     impl ProtoMessage for #struct_name {}
 
     impl ProtoValidator<#struct_name> for ValidatorMap {
@@ -149,27 +106,24 @@ pub(crate) fn process_message_derive(tokens: DeriveInput) -> Result<TokenStream2
     impl #struct_name {
       #[track_caller]
       pub fn to_message() -> Message {
-        const UNAVAILABLE_TAGS: &'static [std::ops::Range<i32>] = &[#occupied_ranges];
-
-        let mut tag_allocator = TagAllocator::new(UNAVAILABLE_TAGS);
-
         let mut new_msg = Message {
           name: #proto_name,
           full_name: #full_name,
           package: #package.into(),
           file: #file.into(),
           reserved_names: #reserved_names,
-          reserved_numbers: vec![ #reserved_numbers_tokens ],
+          reserved_numbers: vec![ #reserved_numbers ],
           options: #options,
-          messages: vec![ #nested_messages ],
-          enums: vec![ #nested_enums ],
-          entries: vec![ #(#fields_data,)* ],
+          // messages: vec![ #nested_messages ],
+          // enums: vec![ #nested_enums ],
+          entries: vec![ #(#fields_tokens,)* ],
+          ..Default::default(),
         };
 
         new_msg
       }
     }
-  });
+  };
 
   Ok(output_tokens)
 }

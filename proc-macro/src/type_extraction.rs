@@ -2,16 +2,16 @@ use syn::{GenericArgument, PathArguments, PathSegment};
 
 use crate::*;
 
-pub enum FieldType<'a> {
+pub enum FieldTypeKind<'a> {
   Normal(&'a Path),
   Option(&'a Path),
 }
 
-impl<'a> FieldType<'a> {
+impl<'a> FieldTypeKind<'a> {
   pub fn path(&self) -> &Path {
     match self {
-      FieldType::Normal(path) => path,
-      FieldType::Option(path) => path,
+      FieldTypeKind::Normal(path) => path,
+      FieldTypeKind::Option(path) => path,
     }
   }
 
@@ -29,7 +29,7 @@ fn extract_inner_type(path_segment: &PathSegment) -> Option<&Path> {
   None
 }
 
-pub fn extract_type<'a>(ty: &'a Type) -> Result<FieldType<'a>, Error> {
+pub fn extract_type<'a>(ty: &'a Type) -> Result<FieldTypeKind<'a>, Error> {
   let field_type = match ty {
     Type::Path(type_path) => &type_path.path,
 
@@ -41,30 +41,30 @@ pub fn extract_type<'a>(ty: &'a Type) -> Result<FieldType<'a>, Error> {
   let extracted_type = if last_segment.ident == "Option" {
     let inner = extract_inner_type(last_segment).unwrap();
 
-    FieldType::Option(inner)
+    FieldTypeKind::Option(inner)
   } else if last_segment.ident == "Box" {
     let inner = extract_inner_type(last_segment).unwrap();
 
-    FieldType::Normal(inner)
+    FieldTypeKind::Normal(inner)
   } else {
-    FieldType::Normal(field_type)
+    FieldTypeKind::Normal(field_type)
   };
 
   Ok(extracted_type)
 }
 
-pub fn extract_type_from_path<'a>(ty: &'a Path) -> FieldType<'a> {
+pub fn extract_type_from_path<'a>(ty: &'a Path) -> FieldTypeKind<'a> {
   let last_segment = ty.segments.last().unwrap();
 
   if last_segment.ident == "Option" {
     let inner = extract_inner_type(last_segment).unwrap();
 
-    FieldType::Option(inner)
+    FieldTypeKind::Option(inner)
   } else if last_segment.ident == "Box" {
     let inner = extract_inner_type(last_segment).unwrap();
 
-    FieldType::Normal(inner)
+    FieldTypeKind::Normal(inner)
   } else {
-    FieldType::Normal(ty)
+    FieldTypeKind::Normal(ty)
   }
 }

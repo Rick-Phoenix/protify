@@ -71,29 +71,29 @@ pub fn proto_module(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
   let file_attribute: Attribute = parse_quote! { #[proto(file = #file, package = #package)] };
 
-  if let Some((_, content)) = &mut module.content {
-    let TopLevelItemsTokens {
-      top_level_messages,
-      top_level_enums,
-    } = process_module_items2(file_attribute, content).unwrap();
-
-    let aggregator_fn: ItemFn = parse_quote! {
-      pub fn proto_file() -> ProtoFile {
-        let mut file = ProtoFile {
-          name: #file.into(),
-          package: #package.into(),
-          ..Default::default()
-        };
-
-        file.add_messages([ #top_level_messages ]);
-        file.add_enums([ #top_level_enums ]);
-
-        file
-      }
-    };
-
-    content.push(Item::Fn(aggregator_fn));
-  }
+  // if let Some((_, content)) = &mut module.content {
+  //   let TopLevelItemsTokens {
+  //     top_level_messages,
+  //     top_level_enums,
+  //   } = process_module_items2(file_attribute, content).unwrap();
+  //
+  //   let aggregator_fn: ItemFn = parse_quote! {
+  //     pub fn proto_file() -> ProtoFile {
+  //       let mut file = ProtoFile {
+  //         name: #file.into(),
+  //         package: #package.into(),
+  //         ..Default::default()
+  //       };
+  //
+  //       file.add_messages([ #top_level_messages ]);
+  //       file.add_enums([ #top_level_enums ]);
+  //
+  //       file
+  //     }
+  //   };
+  //
+  //   content.push(Item::Fn(aggregator_fn));
+  // }
 
   quote!(#module).into()
 }

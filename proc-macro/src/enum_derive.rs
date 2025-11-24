@@ -1,60 +1,42 @@
 use crate::*;
 
-pub(crate) fn process_enum_derive(tokens: DeriveInput) -> Result<TokenStream2, Error> {
-  let DeriveInput {
-    attrs,
-    ident: enum_name,
-    data,
-    ..
-  } = tokens;
-
-  let EnumAttrs {
+pub fn process_enum_derive2(
+  enum_data: &mut EnumData,
+  module_attrs: &ModuleAttrs,
+) -> Result<TokenStream2, Error> {
+  let EnumData {
+    name: proto_name,
     reserved_names,
     reserved_numbers,
     options,
-    name: proto_name,
-    file,
-    package,
-    full_name,
-  } = process_enum_attrs(&enum_name, &attrs).unwrap();
-
-  let reserved_numbers_tokens = reserved_numbers.to_token_stream();
-  let mut manually_set_tags: Vec<i32> = Vec::new();
-
-  let data = if let Data::Enum(enum_data) = data {
-    enum_data
-  } else {
-    panic!("The enum derive can only be used on enums");
-  };
-
-  let mut output_tokens = TokenStream2::new();
+    variants,
+    used_tags,
+    tokens,
+  } = enum_data;
 
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
+  let taken_tags = reserved_numbers
+    .clone()
+    .build_unavailable_ranges(used_tags.clone());
 
-  for variant in data.variants {
-    if !variant.fields.is_empty() {
-      panic!("Must be a unit variant");
-    }
+  let mut tag_allocator = TagAllocator::new(&taken_tags.0);
 
-    let variant_name = variant.ident;
-
-    let EnumVariantAttrs { tag, options, name } =
-      process_enum_variants_attrs(&proto_name, &variant_name, &variant.attrs);
-
-    if let Some(tag) = tag {
-      manually_set_tags.push(tag);
-    }
-
-    let tag_tokens = OptionTokens::new(tag.as_ref());
+  for variant in variants {
+    let tag = tag_allocator.get_or_next(variant.tag);
+    let name = &variant.name;
+    let options = &variant.options;
 
     variants_tokens.push(quote! {
-      EnumVariant { name: #name.to_string(), options: #options, tag: tag_allocator.get_or_next(#tag_tokens), }
+      EnumVariant { name: #name.to_string(), options: #options, tag: #tag, }
     });
   }
 
-  let occupied_ranges = reserved_numbers.build_unavailable_ranges(manually_set_tags);
+  let enum_name = &tokens.ident;
+  let full_name = "todo";
 
-  output_tokens.extend(quote! {
+  let ModuleAttrs { file, package } = module_attrs;
+
+  let output_tokens = quote! {
     impl ProtoEnumTrait for #enum_name {}
 
     impl ProtoValidator<#enum_name> for ValidatorMap {
@@ -80,10 +62,6 @@ pub(crate) fn process_enum_derive(tokens: DeriveInput) -> Result<TokenStream2, E
     impl #enum_name {
       #[track_caller]
       pub fn to_enum() -> ProtoEnum {
-        const UNAVAILABLE_TAGS: &'static [std::ops::Range<i32>] = &[#occupied_ranges];
-
-        let mut tag_allocator = TagAllocator::new(UNAVAILABLE_TAGS);
-
         ProtoEnum {
           name: #proto_name.into(),
           full_name: #full_name,
@@ -91,12 +69,12 @@ pub(crate) fn process_enum_derive(tokens: DeriveInput) -> Result<TokenStream2, E
           file: #file.into(),
           variants: vec! [ #(#variants_tokens,)* ],
           reserved_names: #reserved_names,
-          reserved_numbers: vec![ #reserved_numbers_tokens ],
+          reserved_numbers: vec![ #reserved_numbers ],
           options: #options,
         }
       }
     }
-  });
+  };
 
   Ok(output_tokens)
 }
