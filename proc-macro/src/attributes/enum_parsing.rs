@@ -4,10 +4,15 @@ pub struct EnumData {
   pub name: String,
   pub reserved_names: ReservedNames,
   pub reserved_numbers: ReservedNumbers,
-  pub options: ProtoOptions,
   pub variants: Vec<EnumVariant>,
   pub used_tags: Vec<i32>,
   pub tokens: EnumRaw,
+}
+
+impl EnumData {
+  pub fn inject_attr(&mut self, attr: Attribute) {
+    self.tokens.attrs.push(attr);
+  }
 }
 
 impl From<EnumData> for ItemEnum {
@@ -34,16 +39,20 @@ pub struct EnumVariant {
   pub tokens: Variant,
   pub name: String,
   pub tag: Option<i32>,
-  pub options: ProtoOptions,
+}
+
+impl EnumVariant {
+  pub fn inject_attr(&mut self, attr: Attribute) {
+    self.tokens.attrs.push(attr);
+  }
 }
 
 pub fn parse_enum(item: ItemEnum) -> Result<EnumData, Error> {
-  let EnumAttrs {
+  let ModuleEnumAttrs {
     reserved_names,
     reserved_numbers,
-    options,
     name,
-  } = process_enum_attrs(&item.ident, &item.attrs)?;
+  } = process_module_enum_attrs(&item.ident, &item.attrs)?;
 
   let mut variants_data: Vec<EnumVariant> = Vec::new();
   let mut used_tags: Vec<i32> = Vec::new();
@@ -56,8 +65,8 @@ pub fn parse_enum(item: ItemEnum) -> Result<EnumData, Error> {
       ));
     }
 
-    let EnumVariantAttrs { name, tag, options } =
-      process_enum_variants_attrs(&name, &variant.ident, &variant.attrs);
+    let EnumVariantAttrs { name, tag, .. } =
+      process_enum_variants_attrs(&name, &variant.ident, &variant.attrs, true);
 
     if let Some(tag) = tag {
       used_tags.push(tag);
@@ -67,7 +76,6 @@ pub fn parse_enum(item: ItemEnum) -> Result<EnumData, Error> {
       tokens: variant,
       name,
       tag,
-      options,
     });
   }
 
@@ -75,7 +83,6 @@ pub fn parse_enum(item: ItemEnum) -> Result<EnumData, Error> {
     name,
     reserved_names,
     reserved_numbers,
-    options,
     variants: variants_data,
     tokens: EnumRaw {
       attrs: item.attrs,

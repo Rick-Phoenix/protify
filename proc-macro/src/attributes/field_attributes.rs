@@ -1,14 +1,13 @@
 use convert_case::ccase;
-use syn::{ExprCall, Path, TypePath};
+use syn::ExprCall;
 
 use crate::*;
 
 pub struct FieldAttrs {
-  pub tag: Option<i32>,
+  pub tag: i32,
   pub validator: Option<ValidatorExpr>,
   pub options: ProtoOptions,
   pub name: String,
-  pub type_: Option<Path>,
   pub is_oneof: bool,
 }
 
@@ -17,7 +16,7 @@ pub enum ValidatorExpr {
   Call(ExprCall),
 }
 
-pub fn process_field_attrs(
+pub fn process_derive_field_attrs(
   original_name: &Ident,
   attrs: &Vec<Attribute>,
 ) -> Result<Option<FieldAttrs>, Error> {
@@ -25,7 +24,6 @@ pub fn process_field_attrs(
   let mut tag: Option<i32> = None;
   let mut options: Option<TokenStream2> = None;
   let mut name: Option<String> = None;
-  let mut type_: Option<Path> = None;
   let mut is_ignored = false;
   let mut is_oneof = false;
 
@@ -62,8 +60,6 @@ pub fn process_field_attrs(
             let exprs = list.parse_args::<PunctuatedParser<Expr>>().unwrap().inner;
 
             options = Some(quote! { vec! [ #exprs ] });
-          } else if list.path.is_ident("type_") {
-            type_ = Some(list.parse_args::<TypePath>().unwrap().path);
           }
         }
         Meta::Path(path) => {
@@ -77,13 +73,14 @@ pub fn process_field_attrs(
     }
   }
 
+  let tag = tag.ok_or(spanned_error!(original_name, "Field tag is missing"))?;
+
   if !is_ignored {
     Ok(Some(FieldAttrs {
       validator,
       tag,
       options: attributes::ProtoOptions(options),
       name: name.unwrap_or_else(|| ccase!(snake, original_name.to_string())),
-      type_,
       is_oneof,
     }))
   } else {

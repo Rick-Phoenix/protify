@@ -2,8 +2,15 @@ use crate::*;
 
 pub struct OneofVariant {
   pub tokens: Variant,
-  pub data: FieldAttrs,
+  pub tag: Option<i32>,
+  pub name: String,
   pub type_: Path,
+}
+
+impl OneofVariant {
+  pub fn inject_attr(&mut self, attr: Attribute) {
+    self.tokens.attrs.push(attr);
+  }
 }
 
 pub struct OneofData {
@@ -41,19 +48,20 @@ pub struct EnumRaw {
 }
 
 pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
-  let oneof_attrs = process_oneof_attrs(&item.ident, &item.attrs);
+  let oneof_attrs = process_oneof_attrs(&item.ident, &item.attrs, true);
 
   let mut variants_data: Vec<OneofVariant> = Vec::new();
   let mut used_tags: Vec<i32> = Vec::new();
 
   for variant in item.variants {
-    let field_attrs = if let Some(data) = process_field_attrs(&variant.ident, &variant.attrs)? {
-      data
-    } else {
-      continue;
-    };
+    let ModuleFieldAttrs { tag, name, .. } =
+      if let Some(data) = process_module_field_attrs(&variant.ident, &variant.attrs)? {
+        data
+      } else {
+        continue;
+      };
 
-    if let Some(tag) = field_attrs.tag {
+    if let Some(tag) = tag {
       used_tags.push(tag);
     }
 
@@ -83,7 +91,8 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
     variants_data.push(OneofVariant {
       type_: variant_type.path().clone(),
       tokens: variant,
-      data: field_attrs,
+      tag,
+      name,
     });
   }
 

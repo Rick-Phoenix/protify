@@ -1,55 +1,77 @@
 use crate::*;
 
-pub(crate) fn process_message_derive2(
-  msg: &mut MessageData,
-  oneofs_map: &mut HashMap<Ident, OneofData>,
-  module_attrs: &ModuleAttrs,
-) -> Result<TokenStream2, Error> {
-  let MessageData {
-    fields,
+pub(crate) fn process_message_derive(tokens: DeriveInput) -> Result<TokenStream2, Error> {
+  let DeriveInput {
+    attrs,
+    ident: struct_name,
+    data,
+    ..
+  } = tokens;
+
+  let MessageAttrs {
     reserved_names,
     reserved_numbers,
     options,
     name: proto_name,
-    oneofs,
-    used_tags,
-    ..
-  } = msg;
+    nested_messages,
+    nested_enums,
+    full_name,
+    file,
+    package,
+  } = process_derive_message_attrs(&struct_name, &attrs).unwrap();
 
-  let mut fields_tokens: Vec<TokenStream2> = Vec::new();
+  let data = if let Data::Struct(struct_data) = data {
+    struct_data
+  } else {
+    panic!()
+  };
 
-  for oneof in oneofs {
-    let oneof_data = oneofs_map.get_mut(oneof).expect("Failed to find oneof");
+  let fields = if let Fields::Named(fields) = data.fields {
+    fields.named
+  } else {
+    panic!()
+  };
 
-    let taken_tags = std::mem::take(&mut oneof_data.used_tags);
-    used_tags.extend(taken_tags);
-  }
-
-  let unavailable_tags = reserved_numbers
-    .clone()
-    .build_unavailable_ranges(used_tags.clone());
-
-  let mut tag_allocator = TagAllocator::new(&unavailable_tags.0);
+  let mut fields_data: Vec<TokenStream2> = Vec::new();
 
   for field in fields {
-    if field.data.is_oneof {
-      let oneof = oneofs_map
-        .get_mut(field.type_.require_ident()?)
-        .expect("Failed to find oneof");
+    let field_name = field.ident.as_ref().expect("Expected named field");
 
-      for variant in &mut oneof.variants {
-        variant.data.tag = Some(tag_allocator.get_or_next(variant.data.tag));
-      }
+    let field_attrs = if let Some(attrs) = process_derive_field_attrs(field_name, &field.attrs)? {
+      attrs
+    } else {
+      continue;
+    };
+
+    let FieldAttrs {
+      tag,
+      validator,
+      options,
+      name,
+      is_oneof,
+    } = field_attrs;
+
+    let mut field_type = match &field.ty {
+      Type::Path(type_path) => &type_path.path,
+
+      _ => panic!("Must be a path type"),
+    };
+
+    if is_oneof {
+      fields_data.push(quote! {
+        MessageEntry::Oneof(#field_type::to_oneof(&mut tag_allocator))
+      });
 
       continue;
     }
 
-    let name = &field.data.name;
-    let proto_type = &field.type_;
-    let field_options = &field.data.options;
-    let tag = tag_allocator.get_or_next(field.data.tag);
+    let processed_type = extract_type_from_path(field_type);
 
-    let validator_tokens = if let Some(validator) = &field.data.validator {
+    let proto_type = processed_type.path();
+
+    let is_optional = processed_type.is_option();
+
+    let validator_tokens = if let Some(validator) = validator {
       match validator {
         ValidatorExpr::Call(call) => {
           quote! { Some(<ValidatorMap as ProtoValidator<#proto_type>>::from_builder(#call)) }
@@ -62,14 +84,18 @@ pub(crate) fn process_message_derive2(
       quote! { None }
     };
 
-    let field_type_tokens = quote! { <#proto_type as AsProtoType>::proto_type() };
+    let field_type_tokens = if is_optional {
+      quote! { <Option<#proto_type> as AsProtoType>::proto_type() }
+    } else {
+      quote! { <#proto_type as AsProtoType>::proto_type() }
+    };
 
-    fields_tokens.push(quote! {
+    fields_data.push(quote! {
       MessageEntry::Field(
         ProtoField {
           name: #name.to_string(),
           tag: #tag,
-          options: #field_options,
+          options: #options,
           type_: #field_type_tokens,
           validator: #validator_tokens,
         }
@@ -77,12 +103,7 @@ pub(crate) fn process_message_derive2(
     });
   }
 
-  let struct_name = &msg.tokens.ident;
-  let full_name = msg.full_name.get().unwrap_or_else(|| proto_name);
-  let file = &module_attrs.file;
-  let package = &module_attrs.package;
-
-  let output_tokens = quote! {
+  let output = quote! {
     impl ProtoMessage for #struct_name {}
 
     impl ProtoValidator<#struct_name> for ValidatorMap {
@@ -116,7 +137,9 @@ pub(crate) fn process_message_derive2(
           reserved_names: #reserved_names,
           reserved_numbers: vec![ #reserved_numbers ],
           options: #options,
-          entries: vec![ #(#fields_tokens,)* ],
+          // messages: vec![ #nested_messages ],
+          // enums: vec![ #nested_enums ],
+          entries: vec![ #(#fields_data,)* ],
           ..Default::default()
         };
 
@@ -125,5 +148,5 @@ pub(crate) fn process_message_derive2(
     }
   };
 
-  Ok(output_tokens)
+  Ok(output)
 }

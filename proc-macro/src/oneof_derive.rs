@@ -1,14 +1,56 @@
 use crate::*;
 
-pub fn process_oneof_derive2(oneof: &mut OneofData) -> Result<TokenStream2, Error> {
+pub(crate) fn process_oneof_derive(tokens: DeriveInput) -> Result<TokenStream2, Error> {
+  let enum_name = tokens.ident;
+
+  let mut output_tokens = TokenStream2::new();
+
+  let OneofAttrs {
+    options,
+    name: proto_name,
+    required,
+  } = process_oneof_attrs(&enum_name, &tokens.attrs, false);
+
+  let data = match tokens.data {
+    Data::Enum(enum_data) => enum_data,
+    _ => panic!(),
+  };
+
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
-  for variant in &oneof.variants {
-    let field_name = &variant.data.name;
-    let field_options = &variant.data.options;
-    let proto_type = &variant.type_;
+  for variant in data.variants {
+    let variant_name = variant.ident;
 
-    let validator_tokens = if let Some(validator) = &variant.data.validator {
+    let field_attrs =
+      if let Some(attrs) = process_derive_field_attrs(&variant_name, &variant.attrs)? {
+        attrs
+      } else {
+        continue;
+      };
+
+    let FieldAttrs {
+      tag,
+      validator,
+      options,
+      name,
+      ..
+    } = field_attrs;
+
+    let proto_type = if let Fields::Unnamed(variant_fields) = variant.fields {
+      if variant_fields.unnamed.len() != 1 {
+        panic!("Oneof variants must contain a single value");
+      }
+
+      match variant_fields.unnamed.first().unwrap().ty.clone() {
+        Type::Path(type_path) => type_path.path,
+
+        _ => panic!("Must be a path type"),
+      }
+    } else {
+      panic!("Enum can only have one unnamed field")
+    };
+
+    let validator_tokens = if let Some(validator) = validator {
       match validator {
         ValidatorExpr::Call(call) => {
           quote! { Some(<ValidatorMap as ProtoValidator<#proto_type>>::from_builder(#call)) }
@@ -21,12 +63,10 @@ pub fn process_oneof_derive2(oneof: &mut OneofData) -> Result<TokenStream2, Erro
       quote! { None }
     };
 
-    let tag = variant.data.tag.unwrap_or(1);
-
     variants_tokens.push(quote! {
       ProtoField {
-        name: #field_name.to_string(),
-        options: #field_options,
+        name: #name.to_string(),
+        options: #options,
         type_: <#proto_type as AsProtoType>::proto_type(),
         validator: #validator_tokens,
         tag: #tag,
@@ -34,15 +74,9 @@ pub fn process_oneof_derive2(oneof: &mut OneofData) -> Result<TokenStream2, Erro
     });
   }
 
-  let enum_name = &oneof.tokens.ident;
-  let proto_name = &oneof.data.name;
-  let oneof_options = &oneof.data.options;
-  let required_option_tokens = oneof
-    .data
-    .required
-    .then(|| quote! { options.push(oneof_required()); });
+  let required_option_tokens = required.then(|| quote! { options.push(oneof_required()); });
 
-  let output_tokens = quote! {
+  output_tokens.extend(quote! {
     impl ProtoOneof for #enum_name {
       fn fields(tag_allocator: &mut TagAllocator) -> Vec<ProtoField> {
         vec![ #(#variants_tokens,)* ]
@@ -51,19 +85,19 @@ pub fn process_oneof_derive2(oneof: &mut OneofData) -> Result<TokenStream2, Erro
 
     impl #enum_name {
       #[track_caller]
-      pub fn to_oneof(tag_allocator: &mut TagAllocator) -> Oneof {
-        let mut options: Vec<ProtoOption> = #oneof_options;
+      pub fn to_oneof() -> Oneof {
+        let mut options: Vec<ProtoOption> = #options;
 
         #required_option_tokens
 
         Oneof {
           name: #proto_name.into(),
-          fields: vec![ #(#variants_tokens,)* ],
+          fields: Self::fields(),
           options,
         }
       }
     }
-  };
+  });
 
   Ok(output_tokens)
 }

@@ -1,13 +1,6 @@
-use std::rc::Rc;
-
 use syn::{punctuated::IterMut, ItemEnum, ItemStruct, MetaNameValue};
 
-use crate::{message_derive::process_message_derive2, *};
-
-pub enum ModuleItem2 {
-  Message(MessageData),
-  Oneof(OneofData),
-}
+use crate::*;
 
 fn register_full_name(
   msg: &Ident,
@@ -47,7 +40,7 @@ fn get_full_name(
   };
 
   if is_full {
-    return name;
+    name
   } else {
     match relational_map.get(msg) {
       None => name,
@@ -69,7 +62,7 @@ fn get_full_name(
 }
 
 pub fn process_module_items(
-  module_attrs: ModuleAttrs,
+  package_attr: &Attribute,
   mut module: ItemMod,
 ) -> Result<ItemMod, Error> {
   let (brace, content) = if let Some((brace, content)) = module.content {
@@ -143,24 +136,15 @@ pub fn process_module_items(
   }
 
   for (_, mut msg) in messages {
-    let message_derive = process_message_derive2(&mut msg, &mut oneofs, &module_attrs)?;
+    process_message_from_module(&mut msg, &mut oneofs, package_attr)?;
 
     mod_items.push(Item::Struct(msg.into()));
-    mod_items.push(Item::Verbatim(message_derive));
   }
 
-  for (_, mut oneof) in oneofs {
-    let oneof_derive = process_oneof_derive2(&mut oneof)?;
+  for (_, mut enum_) in enums {
+    process_enum_from_module(&mut enum_, package_attr)?;
 
-    mod_items.push(Item::Enum(oneof.into()));
-    mod_items.push(Item::Verbatim(oneof_derive));
-  }
-
-  for (_, mut proto_enum) in enums {
-    let proto_enum_derive = process_enum_derive2(&mut proto_enum, &module_attrs)?;
-
-    mod_items.push(Item::Enum(proto_enum.into()));
-    mod_items.push(Item::Verbatim(proto_enum_derive));
+    mod_items.push(Item::Enum(enum_.into()));
   }
 
   module.content = Some((brace, mod_items));
@@ -178,63 +162,7 @@ pub struct TopLevelItemsTokens {
   pub top_level_enums: TokenStream2,
 }
 
-#[derive(Debug)]
-pub enum ItemKind<'a> {
-  Message(MessageStruct<'a>),
-  Enum(&'a mut ItemEnum),
-  Oneof(OneofEnum<'a>),
-}
-
-#[derive(Debug)]
-pub struct MessageStruct<'a> {
-  pub tokens: &'a mut ItemStruct,
-  pub reserved_numbers: ReservedNumbers,
-  pub oneofs: HashMap<Ident, OneofEnum<'a>>,
-  pub used_tags: Vec<i32>,
-}
-
-#[derive(Debug)]
-pub struct OneofEnum<'a> {
-  pub tokens: &'a mut ItemEnum,
-  pub used_tags: Vec<i32>,
-}
-
-#[derive(Debug)]
-pub struct ModuleItem<'a> {
-  pub kind: ItemKind<'a>,
-  pub name: Rc<str>,
-}
-
-impl<'a> ModuleItem<'a> {
-  pub fn inject_attr(&mut self, attr: Attribute) {
-    match &mut self.kind {
-      ItemKind::Message(item) => item.tokens.attrs.push(attr),
-      ItemKind::Enum(item) => item.attrs.push(attr),
-      ItemKind::Oneof(item) => item.tokens.attrs.push(attr),
-    }
-  }
-
-  pub fn get_ident(&self) -> &Ident {
-    match &self.kind {
-      ItemKind::Message(item) => &item.tokens.ident,
-      ItemKind::Enum(item) => &item.ident,
-      ItemKind::Oneof(item) => &item.tokens.ident,
-    }
-  }
-}
-
-pub enum DeriveKind {
-  Message,
-  Enum,
-  Oneof,
-}
-
-pub struct ParentMessage {
-  pub ident: Ident,
-  pub name: Rc<str>,
-}
-
-enum EnumKind {
+pub enum EnumKind {
   Oneof,
   Enum,
 }
@@ -303,38 +231,6 @@ impl Parse for ModuleAttrs {
 
     Ok(ModuleAttrs { file, package })
   }
-}
-
-pub fn get_derive_kind(item: &Item) -> Result<Option<DeriveKind>, Error> {
-  let attrs = match item {
-    Item::Struct(s) => &s.attrs,
-    Item::Enum(e) => &e.attrs,
-    _ => return Ok(None),
-  };
-
-  for attr in attrs {
-    if attr.path().is_ident("derive") {
-      let derives = attr
-        .meta
-        .require_list()?
-        .parse_args::<PunctuatedParser<Path>>()?
-        .inner;
-
-      for path in derives {
-        if path.is_ident("Message") {
-          return Ok(Some(DeriveKind::Message));
-        } else if path.is_ident("Enum") {
-          return Ok(Some(DeriveKind::Enum));
-        } else if path.is_ident("Oneof") {
-          return Ok(Some(DeriveKind::Oneof));
-        }
-      }
-
-      return Ok(None);
-    }
-  }
-
-  Ok(None)
 }
 
 pub struct Derives {

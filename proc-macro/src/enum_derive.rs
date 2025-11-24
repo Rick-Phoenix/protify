@@ -1,42 +1,49 @@
 use crate::*;
 
-pub fn process_enum_derive2(
-  enum_data: &mut EnumData,
-  module_attrs: &ModuleAttrs,
-) -> Result<TokenStream2, Error> {
-  let EnumData {
-    name: proto_name,
+pub(crate) fn process_enum_derive(tokens: DeriveInput) -> Result<TokenStream2, Error> {
+  let DeriveInput {
+    attrs,
+    ident: enum_name,
+    data,
+    ..
+  } = tokens;
+
+  let EnumAttrs {
     reserved_names,
     reserved_numbers,
     options,
-    variants,
-    used_tags,
-    tokens,
-  } = enum_data;
+    name: proto_name,
+    file,
+    package,
+    full_name,
+  } = process_derive_enum_attrs(&enum_name, &attrs).unwrap();
+
+  let data = if let Data::Enum(enum_data) = data {
+    enum_data
+  } else {
+    panic!("The enum derive can only be used on enums");
+  };
+
+  let mut output_tokens = TokenStream2::new();
 
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
-  let taken_tags = reserved_numbers
-    .clone()
-    .build_unavailable_ranges(used_tags.clone());
 
-  let mut tag_allocator = TagAllocator::new(&taken_tags.0);
+  for variant in data.variants {
+    if !variant.fields.is_empty() {
+      panic!("Must be a unit variant");
+    }
 
-  for variant in variants {
-    let tag = tag_allocator.get_or_next(variant.tag);
-    let name = &variant.name;
-    let options = &variant.options;
+    let variant_name = variant.ident;
+
+    let EnumVariantAttrs { tag, options, name } =
+      process_enum_variants_attrs(&proto_name, &variant_name, &variant.attrs, false);
 
     variants_tokens.push(quote! {
       EnumVariant { name: #name.to_string(), options: #options, tag: #tag, }
     });
   }
 
-  let enum_name = &tokens.ident;
-  let full_name = "todo";
-
-  let ModuleAttrs { file, package } = module_attrs;
-
-  let output_tokens = quote! {
+  output_tokens.extend(quote! {
     impl ProtoEnumTrait for #enum_name {}
 
     impl ProtoValidator<#enum_name> for ValidatorMap {
@@ -74,7 +81,7 @@ pub fn process_enum_derive2(
         }
       }
     }
-  };
+  });
 
   Ok(output_tokens)
 }

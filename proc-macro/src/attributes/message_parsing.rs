@@ -9,14 +9,18 @@ pub struct MessageData {
   pub fields: Vec<FieldData>,
   pub reserved_names: ReservedNames,
   pub reserved_numbers: ReservedNumbers,
-  pub options: ProtoOptions,
   pub name: String,
   pub full_name: OnceCell<String>,
   pub nested_messages: Vec<Ident>,
   pub nested_enums: Vec<Ident>,
   pub oneofs: Vec<Ident>,
   pub used_tags: Vec<i32>,
-  pub parent_message: Option<Rc<str>>,
+}
+
+impl MessageData {
+  pub fn inject_attr(&mut self, attr: Attribute) {
+    self.tokens.attrs.push(attr);
+  }
 }
 
 impl From<MessageData> for ItemStruct {
@@ -46,8 +50,16 @@ impl From<MessageData> for ItemStruct {
 
 pub struct FieldData {
   pub field_raw: Field,
-  pub data: FieldAttrs,
+  pub tag: Option<i32>,
+  pub name: String,
+  pub is_oneof: bool,
   pub type_: Path,
+}
+
+impl FieldData {
+  pub fn inject_attr(&mut self, attr: Attribute) {
+    self.field_raw.attrs.push(attr);
+  }
 }
 
 pub struct StructRaw {
@@ -73,21 +85,24 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     return Err(spanned_error!(ident, "Must be a struct with named fields"));
   };
 
-  let MessageAttrs {
+  let ModuleMessageAttrs {
     reserved_names,
     reserved_numbers,
-    options,
     name,
     nested_enums,
     nested_messages,
-  } = process_message_attrs(&ident, &attrs)?;
+  } = process_module_message_attrs(&ident, &attrs)?;
 
   let mut used_tags: Vec<i32> = Vec::new();
   let mut oneofs: Vec<Ident> = Vec::new();
   let mut fields_data: Vec<FieldData> = Vec::new();
 
   for field in fields {
-    let data = if let Some(field_attrs) = process_field_attrs(&ident, &attrs)? {
+    let ModuleFieldAttrs {
+      tag,
+      name,
+      is_oneof,
+    } = if let Some(field_attrs) = process_module_field_attrs(&ident, &attrs)? {
       field_attrs
     } else {
       continue;
@@ -95,7 +110,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
 
     let field_type = extract_type(&field.ty)?;
 
-    if data.is_oneof {
+    if is_oneof {
       if !field_type.is_option() {
         return Err(spanned_error!(
           &field.ty,
@@ -106,14 +121,16 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
       oneofs.push(field_type.path().require_ident()?.clone());
     }
 
-    if let Some(tag) = data.tag {
+    if let Some(tag) = tag {
       used_tags.push(tag);
     }
 
     fields_data.push(FieldData {
       type_: field_type.path().clone(),
       field_raw: field,
-      data,
+      tag,
+      name,
+      is_oneof,
     });
   }
 
@@ -124,12 +141,10 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
       ident,
       generics,
     },
-    parent_message: None,
     used_tags,
     fields: fields_data,
     reserved_names,
     reserved_numbers,
-    options,
     name,
     nested_messages,
     nested_enums,

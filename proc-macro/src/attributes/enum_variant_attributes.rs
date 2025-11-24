@@ -10,6 +10,7 @@ pub fn process_enum_variants_attrs(
   enum_name: &str,
   rust_variant_name: &Ident,
   attrs: &Vec<Attribute>,
+  is_in_module_macro: bool,
 ) -> EnumVariantAttrs {
   let mut tag: Option<i32> = None;
   let mut options: Option<TokenStream2> = None;
@@ -27,7 +28,7 @@ pub fn process_enum_variants_attrs(
         Meta::NameValue(nameval) => {
           if nameval.path.is_ident("tag") {
             tag = Some(extract_i32(&nameval.value).unwrap());
-          } else if nameval.path.is_ident("options") {
+          } else if !is_in_module_macro && nameval.path.is_ident("options") {
             let func_call = nameval.value;
 
             options = Some(quote! { #func_call });
@@ -36,7 +37,7 @@ pub fn process_enum_variants_attrs(
           }
         }
         Meta::List(list) => {
-          if list.path.is_ident("options") {
+          if !is_in_module_macro && list.path.is_ident("options") {
             let exprs = list.parse_args::<PunctuatedParser<Expr>>().unwrap().inner;
 
             options = Some(quote! { vec! [ #exprs ] });

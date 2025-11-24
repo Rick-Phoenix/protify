@@ -6,7 +6,11 @@ pub struct OneofAttrs {
   pub required: bool,
 }
 
-pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> OneofAttrs {
+pub fn process_oneof_attrs(
+  enum_name: &Ident,
+  attrs: &Vec<Attribute>,
+  is_in_module_macro: bool,
+) -> OneofAttrs {
   let mut options: Option<TokenStream2> = None;
   let mut name: Option<String> = None;
   let mut required = false;
@@ -26,14 +30,14 @@ pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> OneofAt
           }
         }
         Meta::List(list) => {
-          if list.path.is_ident("options") {
+          if !is_in_module_macro && list.path.is_ident("options") {
             let exprs = list.parse_args::<PunctuatedParser<Expr>>().unwrap().inner;
 
             options = Some(quote! { vec! [ #exprs ] });
           }
         }
         Meta::NameValue(nameval) => {
-          if nameval.path.is_ident("options") {
+          if !is_in_module_macro && nameval.path.is_ident("options") {
             let func_call = nameval.value;
 
             options = Some(quote! { #func_call });
