@@ -37,6 +37,15 @@ mod attributes;
 pub fn proto_message(_args: TokenStream, input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
 
+  if !matches!(item.fields, Fields::Named(_)) {
+    return spanned_error!(
+      &item.ident,
+      "The proto_message macro can only be used with structs that have named fields"
+    )
+    .to_compile_error()
+    .into();
+  }
+
   let extra_tokens = match process_message_derive(&mut item) {
     Ok(output) => output,
     Err(e) => return e.to_compile_error().into(),

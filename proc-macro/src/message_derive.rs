@@ -1,13 +1,34 @@
 use crate::*;
 
-pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
-  let ItemStruct {
-    attrs,
-    ident: struct_name,
-    fields,
-    ..
-  } = item;
+fn clone_struct_without_attrs(item: &ItemStruct) -> ItemStruct {
+  let item_fields = if let Fields::Named(fields) = &item.fields {
+    fields.named.iter().map(|f| Field {
+      attrs: vec![],
+      vis: f.vis.clone(),
+      mutability: syn::FieldMutability::None,
+      ident: f.ident.clone(),
+      colon_token: f.colon_token,
+      ty: f.ty.clone(),
+    })
+  } else {
+    unreachable!()
+  };
 
+  ItemStruct {
+    attrs: vec![],
+    vis: Visibility::Public(token::Pub::default()),
+    struct_token: token::Struct::default(),
+    ident: item.ident.clone(),
+    generics: item.generics.clone(),
+    fields: Fields::Named(syn::FieldsNamed {
+      brace_token: token::Brace::default(),
+      named: item_fields.collect(),
+    }),
+    semi_token: None,
+  }
+}
+
+pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
   let MessageAttrs {
     reserved_names,
     reserved_numbers,
@@ -19,9 +40,21 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
     file,
     package,
     into,
-  } = process_derive_message_attrs(struct_name, attrs)?;
+  } = process_derive_message_attrs(&item.ident, &item.attrs)?;
 
   let make_shadow_struct = into;
+
+  let shadow_struct = if make_shadow_struct {
+    Some(clone_struct_without_attrs(item))
+  } else {
+    None
+  };
+
+  let ItemStruct {
+    ident: struct_name,
+    fields,
+    ..
+  } = item;
 
   let mut fields_data: Vec<TokenStream2> = Vec::new();
 
