@@ -63,7 +63,7 @@ pub fn parse_enum(item: ItemEnum) -> Result<EnumData, Error> {
       ));
     }
 
-    let ModuleEnumVariantAttrs { name, tag, .. } =
+    let ModuleEnumVariantAttrs { name, tag } =
       process_module_enum_variants_attrs(&name, &variant.ident, &variant.attrs)?;
 
     if let Some(tag) = tag {

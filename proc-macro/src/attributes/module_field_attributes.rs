@@ -6,6 +6,7 @@ pub struct ModuleFieldAttrs {
   pub tag: Option<i32>,
   pub name: String,
   pub is_oneof: bool,
+  pub is_enum: bool,
   pub custom_type: Option<Path>,
 }
 
@@ -17,6 +18,7 @@ pub fn process_module_field_attrs(
   let mut name: Option<String> = None;
   let mut custom_type: Option<Path> = None;
   let mut is_oneof = false;
+  let mut is_enum = false;
 
   for attr in attrs {
     if !attr.path().is_ident("proto") {
@@ -41,6 +43,8 @@ pub fn process_module_field_attrs(
             return Ok(None);
           } else if path.is_ident("oneof") {
             is_oneof = true;
+          } else if path.is_ident("enum_") {
+            is_enum = true;
           }
         }
         Meta::List(_) => {}
@@ -53,5 +57,6 @@ pub fn process_module_field_attrs(
     name: name.unwrap_or_else(|| ccase!(snake, original_name.to_string())),
     is_oneof,
     custom_type,
+    is_enum,
   }))
 }

@@ -9,6 +9,7 @@ pub struct FieldAttrs {
   pub options: ProtoOptions,
   pub name: String,
   pub is_oneof: bool,
+  pub is_enum: bool,
   pub custom_type: Option<Path>,
 }
 
@@ -28,6 +29,7 @@ pub fn process_derive_field_attrs(
   let mut custom_type: Option<Path> = None;
   let mut is_ignored = false;
   let mut is_oneof = false;
+  let mut is_enum = false;
 
   for attr in attrs {
     if !attr.path().is_ident("proto") {
@@ -71,6 +73,8 @@ pub fn process_derive_field_attrs(
             is_ignored = true;
           } else if path.is_ident("oneof") {
             is_oneof = true;
+          } else if path.is_ident("enum_") {
+            is_enum = true;
           }
         }
       };
@@ -91,6 +95,7 @@ pub fn process_derive_field_attrs(
       name: name.unwrap_or_else(|| ccase!(snake, original_name.to_string())),
       is_oneof,
       custom_type,
+      is_enum,
     }))
   } else {
     Ok(None)

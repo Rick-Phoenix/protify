@@ -50,6 +50,7 @@ pub struct FieldData {
   pub tag: Option<i32>,
   pub name: String,
   pub is_oneof: bool,
+  pub is_enum: bool,
   pub type_: FieldType,
   pub type2: ProtoTypeKind,
 }
@@ -102,6 +103,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
       name,
       is_oneof,
       custom_type,
+      is_enum,
     } = if let Some(field_attrs) =
       process_module_field_attrs(field.ident.as_ref().unwrap(), &field.attrs)?
     {
@@ -122,6 +124,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     }
 
     fields_data.push(FieldData {
+      is_enum,
       type_: field_type,
       type2: get_proto_type_outer(type_path),
       tokens: field,

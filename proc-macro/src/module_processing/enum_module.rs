@@ -10,7 +10,7 @@ pub fn process_enum_from_module(
     reserved_numbers,
     variants,
     used_tags,
-    ..
+    tokens,
   } = enum_data;
 
   let reserved_numbers = std::mem::take(reserved_numbers);
@@ -19,14 +19,23 @@ pub fn process_enum_from_module(
 
   let mut tag_allocator = TagAllocator::new(&taken_tags);
 
+  let repr_attr: Attribute = parse_quote!(#[repr(i32)]);
+  tokens.attrs.push(repr_attr);
+
   for variant in variants {
     if variant.tag.is_none() {
       let tag = tag_allocator.next_tag();
+
+      variant.tag = Some(tag);
 
       let variant_attr: Attribute = parse_quote!(#[proto(tag = #tag)]);
 
       variant.inject_attr(variant_attr);
     }
+
+    let tag = variant.tag.unwrap();
+    let tag_expr: Expr = parse_quote!(#tag);
+    variant.tokens.discriminant = Some((token::Eq::default(), tag_expr));
   }
 
   if let Some(parent_message) = parent_message {
