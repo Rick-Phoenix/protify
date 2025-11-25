@@ -51,8 +51,7 @@ pub struct FieldData {
   pub tokens: Field,
   pub tag: Option<i32>,
   pub name: String,
-  pub is_oneof: bool,
-  pub type_: FieldType,
+  pub oneof_ident: Option<Ident>,
 }
 
 impl FieldData {
@@ -110,22 +109,24 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
       continue;
     };
 
-    let field_type = extract_type(&field.ty)?;
-
-    if is_oneof {
-      oneofs.push(field_type.inner().require_ident()?.clone());
-    }
-
     if let Some(tag) = tag {
       used_tags.push(tag);
     }
 
+    let mut oneof_ident: Option<Ident> = None;
+
+    if is_oneof {
+      let type_ident = extract_oneof_ident(&field.ty)?;
+
+      oneofs.push(type_ident.clone());
+      oneof_ident = Some(type_ident);
+    }
+
     fields_data.push(FieldData {
-      type_: field_type,
+      oneof_ident,
       tokens: field,
       tag,
       name,
-      is_oneof,
     });
   }
 
