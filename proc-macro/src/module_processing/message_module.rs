@@ -18,8 +18,9 @@ pub(crate) fn process_message_from_module(
   for oneof in oneofs {
     let oneof_data = oneofs_map.get_mut(oneof).expect("Failed to find oneof");
 
-    let taken_tags = std::mem::take(&mut oneof_data.used_tags);
-    used_tags.extend(taken_tags);
+    for tag in &oneof_data.used_tags {
+      used_tags.push(*tag);
+    }
   }
 
   let unavailable_tags = reserved_numbers.clone().build_unavailable_ranges(used_tags);
@@ -36,13 +37,36 @@ pub(crate) fn process_message_from_module(
         if variant.tag.is_none() {
           let tag = tag_allocator.next_tag();
 
+          variant.tag = Some(tag);
+
           oneof.used_tags.push(tag);
 
           let variant_attr: Attribute = parse_quote!(#[proto(tag = #tag)]);
 
           variant.inject_attr(variant_attr);
         }
+
+        let variant_proto_type = &variant.type2;
+        let tag_as_str = variant.tag.unwrap().to_string();
+
+        let prost_attr: Attribute = parse_quote!(#[proto(#variant_proto_type, tag2 = #tag_as_str)]);
+
+        variant.inject_attr(prost_attr);
       }
+
+      let mut oneof_tags = String::new();
+      for (i, tag) in oneof.used_tags.iter().enumerate() {
+        oneof_tags.push_str(&tag.to_string());
+
+        if i != oneof.used_tags.len() - 1 {
+          oneof_tags.push_str(", ");
+        }
+      }
+
+      let oneof_path = field.type_.inner().to_token_stream().to_string();
+
+      let oneof_attr: Attribute = parse_quote!(#[proto(oneof = #oneof_path, tags = #oneof_tags)]);
+      field.inject_attr(oneof_attr);
 
       continue;
     }
@@ -50,10 +74,19 @@ pub(crate) fn process_message_from_module(
     if field.tag.is_none() {
       let tag = tag_allocator.next_tag();
 
+      field.tag = Some(tag);
+
       let field_attr: Attribute = parse_quote!(#[proto(tag = #tag)]);
 
       field.inject_attr(field_attr);
     }
+
+    let field_prost_type = &field.type2;
+    let tag_as_str = field.tag.unwrap().to_string();
+
+    let field_prost_attr: Attribute = parse_quote!(#[proto(#field_prost_type, tag2 = #tag_as_str)]);
+
+    field.inject_attr(field_prost_attr);
   }
 
   if let Some(full_name) = msg.full_name.get() {

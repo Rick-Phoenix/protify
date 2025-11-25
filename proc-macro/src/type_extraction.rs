@@ -9,20 +9,60 @@ pub enum ProtoTypes {
   Bytes,
   Enum(Path),
   Message,
-  Int,
+  Int32,
+}
+
+impl ToTokens for ProtoTypes {
+  fn to_tokens(&self, tokens: &mut TokenStream2) {
+    let output = match self {
+      ProtoTypes::String => quote! { string },
+      ProtoTypes::Bool => quote! { bool },
+      ProtoTypes::Bytes => quote! { bytes = "bytes" },
+      ProtoTypes::Enum(path) => {
+        let path_as_str = path.to_token_stream().to_string();
+
+        quote! { enumeration = #path_as_str }
+      }
+      ProtoTypes::Message => quote! { message },
+      ProtoTypes::Int32 => quote! { int32 },
+    };
+
+    tokens.extend(output)
+  }
 }
 
 pub enum ProtoTypeKind {
   Single(ProtoTypes),
   Repeated(ProtoTypes),
   Optional(ProtoTypes),
-  Boxed(ProtoTypes),
+  Boxed,
   Map((ProtoTypes, ProtoTypes)),
 }
 
-pub struct TypeInformation {
-  pub original_type: Path,
-  pub prost_attr: TokenStream2,
+impl ProtoTypeKind {
+  pub fn is_option(&self) -> bool {
+    matches!(self, Self::Optional(_))
+  }
+}
+
+impl ToTokens for ProtoTypeKind {
+  fn to_tokens(&self, tokens: &mut TokenStream2) {
+    let output = match self {
+      ProtoTypeKind::Single(inner) => inner.to_token_stream(),
+      ProtoTypeKind::Repeated(inner) => quote! { #inner, repeated },
+      ProtoTypeKind::Optional(inner) => quote! { #inner, optional },
+      ProtoTypeKind::Boxed => quote! { message, optional, boxed },
+      ProtoTypeKind::Map((k, v)) => {
+        let k_as_str = k.to_token_stream().to_string();
+        let v_as_str = v.to_token_stream().to_string();
+
+        let map = format!("{k_as_str}, {v_as_str}");
+        quote! { map = #map }
+      }
+    };
+
+    tokens.extend(output)
+  }
 }
 
 pub struct PathWrapper<'a> {
@@ -34,7 +74,7 @@ impl<'a> PathWrapper<'a> {
     Self { inner: path }
   }
 
-  pub fn last_segment(&self) -> PathSegmentWrapper {
+  pub fn last_segment(&'_ self) -> PathSegmentWrapper<'_> {
     PathSegmentWrapper::new(self.inner.segments.last().unwrap())
   }
 }
@@ -67,32 +107,28 @@ impl<'a> PathSegmentWrapper<'a> {
   pub fn first_argument(&self) -> Option<&Path> {
     self
       .get_arguments()
-      .map(|args| args.find_or_first(|_| true))
-      .flatten()
+      .and_then(|args| args.find_or_first(|_| true))
   }
 
   pub fn first_two_arguments(&self) -> Option<(&Path, &Path)> {
-    self
-      .get_arguments()
-      .map(|args| {
-        let mut first_arg: Option<&Path> = None;
-        let mut second_arg: Option<&Path> = None;
-        for (i, arg) in args.enumerate() {
-          if i == 0 {
-            first_arg = Some(arg);
-          } else if i == 1 {
-            second_arg = Some(arg);
-            break;
-          }
+    self.get_arguments().and_then(|args| {
+      let mut first_arg: Option<&Path> = None;
+      let mut second_arg: Option<&Path> = None;
+      for (i, arg) in args.enumerate() {
+        if i == 0 {
+          first_arg = Some(arg);
+        } else if i == 1 {
+          second_arg = Some(arg);
+          break;
         }
+      }
 
-        if let Some(first) = first_arg && let Some(second) = second_arg {
+      if let Some(first) = first_arg && let Some(second) = second_arg {
           Some((first, second))
         } else {
           None
         }
-      })
-      .flatten()
+    })
   }
 }
 
@@ -103,6 +139,7 @@ pub fn get_proto_type(original_type: &Path) -> ProtoTypes {
   match type_ident.as_str() {
     "String" => ProtoTypes::String,
     "bool" => ProtoTypes::Bool,
+    "i32" => ProtoTypes::Int32,
     _ => ProtoTypes::Message,
   }
 }
@@ -120,7 +157,7 @@ pub fn get_proto_type_outer(original_type: &Path) -> ProtoTypeKind {
 
       ProtoTypeKind::Optional(get_proto_type(inner))
     }
-    "Box" => ProtoTypeKind::Boxed(ProtoTypes::Message),
+    "Box" => ProtoTypeKind::Boxed,
     "Vec" | "ProtoRepeated" => {
       let inner = last_segment.first_argument().unwrap();
 
@@ -172,6 +209,14 @@ fn extract_inner_type(path_segment: &PathSegment) -> Option<Path> {
     }
 
   None
+}
+
+pub fn extract_type_path(ty: &Type) -> Result<&Path, Error> {
+  match ty {
+    Type::Path(type_path) => Ok(&type_path.path),
+
+    _ => Err(spanned_error!(ty, "Must be a type path")),
+  }
 }
 
 pub fn extract_type(ty: &Type) -> Result<FieldType, Error> {

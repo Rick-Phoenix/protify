@@ -4,7 +4,7 @@ pub struct OneofVariant {
   pub tokens: Variant,
   pub tag: Option<i32>,
   pub name: String,
-  pub type_: FieldType,
+  pub type2: ProtoTypeKind,
 }
 
 impl OneofVariant {
@@ -78,7 +78,9 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
         ));
       }
 
-      extract_type(&variant_fields.unnamed.first().unwrap().ty)?
+      let type_path = extract_type_path(&variant_fields.unnamed.first().unwrap().ty)?;
+
+      get_proto_type_outer(type_path)
     } else {
       return Err(spanned_error!(
         &variant.ident,
@@ -86,15 +88,15 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
       ));
     };
 
-    if variant_type.is_option() {
-      return Err(spanned_error!(
-        &variant_type.outer,
-        "Oneof variants cannot be Option"
-      ));
-    }
+    // if variant_type.is_option() {
+    //   return Err(spanned_error!(
+    //     &variant_fields.unnamed.first().unwrap().ty,
+    //     "Oneof variants cannot be Option"
+    //   ));
+    // }
 
     variants_data.push(OneofVariant {
-      type_: variant_type,
+      type2: variant_type,
       tokens: variant,
       tag,
       name,

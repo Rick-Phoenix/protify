@@ -51,6 +51,7 @@ pub struct FieldData {
   pub name: String,
   pub is_oneof: bool,
   pub type_: FieldType,
+  pub type2: ProtoTypeKind,
 }
 
 impl FieldData {
@@ -100,6 +101,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
       tag,
       name,
       is_oneof,
+      custom_type,
     } = if let Some(field_attrs) =
       process_module_field_attrs(field.ident.as_ref().unwrap(), &field.attrs)?
     {
@@ -109,6 +111,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     };
 
     let field_type = extract_type(&field.ty)?;
+    let type_path = extract_type_path(&field.ty)?;
 
     if is_oneof {
       oneofs.push(field_type.inner().require_ident()?.clone());
@@ -120,6 +123,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
 
     fields_data.push(FieldData {
       type_: field_type,
+      type2: get_proto_type_outer(type_path),
       tokens: field,
       tag,
       name,
