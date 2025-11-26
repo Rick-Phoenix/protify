@@ -33,6 +33,7 @@ mod inner {
 
   #[proto_enum]
   #[proto(reserved_numbers(1, 2, 10..))]
+  #[derive(Clone, Debug, prost::Enumeration)]
   enum PseudoEnum {
     AbcDeg,
     B,
@@ -41,6 +42,7 @@ mod inner {
 
   #[proto_oneof]
   #[proto(required)]
+  #[derive(Clone)]
   enum PseudoOneof {
     #[proto(tag = 12, validate = |v| v)]
     A(String),
@@ -49,12 +51,11 @@ mod inner {
 
   #[proto_message]
   #[proto(reserved_numbers(1, 2, 3..9))]
-  #[proto(nested_messages(Nested))]
   #[proto(nested_enums(PseudoEnum))]
+  #[derive(Clone, Debug, Default)]
   pub struct Abc {
-    #[proto(type_(GenericMessage))]
-    boxed: Option<Box<Abc>>,
-
+    // #[proto(type_(GenericMessage))]
+    // boxed: Option<Box<AbcProto>>,
     #[proto(tag = 35, validate = string_validator())]
     name: Option<String>,
 
@@ -64,28 +65,27 @@ mod inner {
     #[proto(validate = |v| v.min_pairs(0).keys(|k| k.min_len(25)).values(|v| v.lt(25)))]
     map: HashMap<String, i32>,
 
-    #[proto(type_(ProtoMap<String, GenericProtoEnum>), validate = |v| v.values(|val| val.defined_only()))]
-    enum_map: HashMap<String, PseudoEnum>,
-
+    // #[proto(type_(ProtoMap<String, GenericProtoEnum>), validate = |v| v.values(|val| val.defined_only()))]
+    // enum_map: HashMap<String, PseudoEnum>,
     #[proto(oneof)]
     oneof: Option<PseudoOneof>,
-
-    #[proto(type_(GenericProtoEnum), validate = |v| v.defined_only())]
-    enum_field: PseudoEnum,
+    // #[proto(type_(GenericProtoEnum), validate = |v| v.defined_only())]
+    // enum_field: PseudoEnum,
   }
 
   #[proto_message]
-  #[proto(nested_messages(Nested2))]
+  #[derive(Clone)]
   pub struct Nested {
     name: String,
   }
 
   #[proto_message]
+  #[derive(Clone)]
   pub struct Nested2 {
     name: String,
 
-    #[proto(type_(GenericMessage), validate = |v| v.ignore_always())]
-    nested1: Nested,
+    #[proto(type_(GenericMessage), proto_type(Option<NestedProto>), validate = |v| v.ignore_always())]
+    nested1: Option<Nested>,
   }
 }
 
@@ -96,7 +96,7 @@ fn main() {
 
   let mut msg = Abc::to_message();
 
-  let nested2 = Nested2::to_message();
+  // let nested2 = Nested2::to_message();
 
   println!("{msg:#?}");
   // let nested_enum = Bcd::to_nested_enum(nested);

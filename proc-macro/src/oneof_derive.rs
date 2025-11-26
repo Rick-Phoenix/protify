@@ -16,6 +16,10 @@ pub(crate) fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, 
     required,
   } = process_oneof_attrs(enum_name, attrs, false);
 
+  let prost_derive: Attribute = parse_quote!(#[derive(prost::Oneof)]);
+
+  attrs.push(prost_derive);
+
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
   for variant in variants {

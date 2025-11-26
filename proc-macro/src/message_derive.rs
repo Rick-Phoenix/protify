@@ -1,5 +1,7 @@
 use std::{borrow::Cow, str::FromStr};
 
+use quote::format_ident;
+
 use crate::*;
 
 fn clone_struct_without_attrs(item: &ItemStruct) -> ItemStruct {
@@ -20,7 +22,7 @@ fn clone_struct_without_attrs(item: &ItemStruct) -> ItemStruct {
     attrs: vec![],
     vis: Visibility::Public(token::Pub::default()),
     struct_token: token::Struct::default(),
-    ident: item.ident.clone(),
+    ident: format_ident!("{}Proto", item.ident),
     generics: item.generics.clone(),
     fields: Fields::Named(syn::FieldsNamed {
       brace_token: token::Brace::default(),
@@ -44,13 +46,13 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
     into,
   } = process_derive_message_attrs(&item.ident, &item.attrs)?;
 
-  let make_shadow_struct = into;
+  let mut output_tokens = TokenStream2::new();
 
-  let shadow_struct = if make_shadow_struct {
-    Some(clone_struct_without_attrs(item))
-  } else {
-    None
-  };
+  let mut shadow_struct = clone_struct_without_attrs(item);
+
+  let prost_message_attr: Attribute = parse_quote!(#[derive(prost::Message, Clone)]);
+
+  shadow_struct.attrs.push(prost_message_attr);
 
   let ItemStruct {
     ident: struct_name,
@@ -60,10 +62,11 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
 
   let mut fields_data: Vec<TokenStream2> = Vec::new();
 
-  for field in fields {
-    let field_name = field.ident.as_ref().expect("Expected named field");
+  for (src_field, dst_field) in fields.iter_mut().zip(shadow_struct.fields.iter_mut()) {
+    let field_name = src_field.ident.as_ref().expect("Expected named field");
 
-    let field_attrs = if let Some(attrs) = process_derive_field_attrs(field_name, &field.attrs)? {
+    let field_attrs = if let Some(attrs) = process_derive_field_attrs(field_name, &src_field.attrs)?
+    {
       attrs
     } else {
       continue;
@@ -77,13 +80,27 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
       custom_type,
       kind,
       oneof_tags,
+      proto_type: dst_proto_type,
     } = field_attrs;
 
-    let field_type = TypeInfo::from_type(&field.ty, custom_type.clone())?;
+    let src_field_type = TypeInfo::from_type(&src_field.ty, custom_type.clone())?;
+
+    let dst_field_type = if let Some(dst_proto_type) = dst_proto_type {
+      if let Type::Path(type_path) = &mut dst_field.ty {
+        type_path.path = dst_proto_type;
+        Cow::Owned(TypeInfo::from_type(&dst_field.ty, custom_type.clone())?)
+      } else {
+        panic!("Must be a path")
+      }
+    } else {
+      Cow::Borrowed(&src_field_type)
+    };
+
+    if kind.is_enum() {}
 
     if kind.is_oneof() {
-      let oneof_path = field_type.as_inner_option_path().ok_or(spanned_error!(
-        &field.ty,
+      let oneof_path = src_field_type.as_inner_option_path().ok_or(spanned_error!(
+        &src_field.ty,
         "Oneofs must be wrapped in Option"
       ))?;
 
@@ -99,9 +116,9 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
       }
 
       let oneof_attr: Attribute =
-        parse_quote!(#[proto(oneof = #oneof_path_str, tags = #oneof_tags_str)]);
+        parse_quote!(#[prost(oneof = #oneof_path_str, tags = #oneof_tags_str)]);
 
-      field.attrs.push(oneof_attr);
+      dst_field.attrs.push(oneof_attr);
 
       fields_data.push(quote! {
         MessageEntry::Oneof(#oneof_path::to_oneof())
@@ -119,9 +136,9 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
 
       match last_segment_str.as_str() {
         "GenericProtoEnum" => {
-          let path = field_type
+          let path = src_field_type
             .as_inner_option_path()
-            .unwrap_or(field_type.full_type.as_ref());
+            .unwrap_or(src_field_type.full_type.as_ref());
 
           ProtoType::Enum(path.clone())
         }
@@ -132,7 +149,7 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
           ProtoType::from_rust_type(&custom_type_info)?
         }
       }
-    } else if let RustType::Map((k, v)) = &field_type.rust_type {
+    } else if let RustType::Map((k, v)) = &src_field_type.rust_type {
       let keys_str = k.require_ident()?.to_string();
       let values_str = v.require_ident()?.to_string();
 
@@ -140,27 +157,27 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
       let values = if values_str == "GenericProtoEnum" {
         ProtoMapValues::Enum(v.clone())
       } else {
-        ProtoMapValues::from_str(&values_str).map_err(|e| spanned_error!(&field.ty, e))?
+        ProtoMapValues::from_str(&values_str).map_err(|e| spanned_error!(&src_field.ty, e))?
       };
 
       ProtoType::Map(Box::new(ProtoMap { keys, values }))
     } else {
-      ProtoType::from_rust_type(&field_type)?
+      ProtoType::from_rust_type(&src_field_type)?
     };
 
-    let prost_attr = ProstAttrs::from_type_info(&field_type.rust_type, proto_type.clone(), tag);
+    let prost_attr = ProstAttrs::from_type_info(&src_field_type.rust_type, proto_type.clone(), tag);
 
     let field_prost_attr: Attribute = parse_quote!(#prost_attr);
 
-    field.attrs.push(field_prost_attr);
+    dst_field.attrs.push(field_prost_attr);
 
     let validator_tokens = if let Some(validator) = validator {
-      field_type.validator_tokens(&validator)
+      src_field_type.validator_tokens(&validator)
     } else {
       quote! { None }
     };
 
-    let full_type_path = &field_type.full_type;
+    let full_type_path = &src_field_type.full_type;
 
     let field_type_tokens = quote! { <#full_type_path as AsProtoType>::proto_type() };
 
@@ -188,7 +205,7 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
     nested_enums_tokens.extend(quote! { #ident::to_enum(), });
   }
 
-  let output = quote! {
+  output_tokens.extend(quote! {
     impl ProtoMessage for #struct_name {}
 
     impl ProtoValidator<#struct_name> for ValidatorMap {
@@ -230,7 +247,9 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
         new_msg
       }
     }
-  };
+  });
 
-  Ok(output)
+  output_tokens.extend(shadow_struct.into_token_stream());
+
+  Ok(output_tokens)
 }

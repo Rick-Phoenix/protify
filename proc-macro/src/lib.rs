@@ -5,6 +5,7 @@ use std::{borrow::Cow, collections::HashMap, ops::Range, rc::Rc};
 
 use attributes::*;
 pub(crate) use convert_case::ccase;
+use itertools::Itertools;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 pub(crate) use proc_macro2::TokenStream as TokenStream2;
@@ -15,22 +16,25 @@ use syn::{
   punctuated::Punctuated,
   token,
   token::{Brace, Struct},
-  Attribute, Data, DeriveInput, Error, Expr, ExprClosure, Field, Fields, Generics, Ident, Item,
-  ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, Path, RangeLimits, Token, Type,
-  Variant, Visibility,
+  Attribute, Data, DeriveInput, Error, Expr, ExprClosure, Field, Fields, GenericArgument, Generics,
+  Ident, Item, ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, Path, PathArguments,
+  PathSegment, RangeLimits, Token, Type, Variant, Visibility,
 };
 use type_extraction::*;
 
 use crate::{
-  enum_derive::*, message_derive::*, module_processing::*, oneof_derive::*, proto_types::*,
-  type_extraction::*,
+  enum_derive::*, message_derive::*, module_processing::*, oneof_derive::*, path_utils::*,
+  prost_attrs::*, proto_types::*, rust_type::*, type_extraction::*,
 };
 
 mod enum_derive;
 mod message_derive;
 mod module_processing;
 mod oneof_derive;
+mod path_utils;
+mod prost_attrs;
 mod proto_types;
+mod rust_type;
 mod type_extraction;
 
 mod attributes;

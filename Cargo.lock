@@ -710,6 +710,7 @@ version = "0.1.0"
 dependencies = [
  "prelude",
  "proc-macro-impls",
+ "prost",
 ]
 
 [[package]]
