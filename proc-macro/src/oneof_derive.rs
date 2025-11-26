@@ -32,45 +32,37 @@ pub(crate) fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, 
       ..
     } = field_attrs;
 
-    let proto_type = if let Fields::Unnamed(variant_fields) = &variant.fields {
+    let variant_type = if let Fields::Unnamed(variant_fields) = &variant.fields {
       if variant_fields.unnamed.len() != 1 {
         panic!("Oneof variants must contain a single value");
       }
 
-      match variant_fields.unnamed.first().unwrap().ty.clone() {
-        Type::Path(type_path) => type_path.path,
+      let type_ = &variant_fields.unnamed.first().unwrap().ty;
 
-        _ => panic!("Must be a path type"),
-      }
+      TypeInfo::from_type(type_)?
     } else {
       panic!("Enum can only have one unnamed field")
     };
 
-    let proto_type2 = get_proto_type_outer(&proto_type);
-    let tag_as_str = tag.to_string();
+    let prost_attr_tokens = variant_type.to_prost_attr(tag);
 
-    let prost_attr: Attribute = parse_quote!(#[proto(#proto_type2, tag2 = #tag_as_str)]);
+    let prost_attr: Attribute = parse_quote!(#prost_attr_tokens);
 
     variant.attrs.push(prost_attr);
 
     let validator_tokens = if let Some(validator) = validator {
-      match validator {
-        ValidatorExpr::Call(call) => {
-          quote! { Some(<ValidatorMap as ProtoValidator<#proto_type>>::from_builder(#call)) }
-        }
-        ValidatorExpr::Closure(closure) => {
-          quote! { Some(<ValidatorMap as ProtoValidator<#proto_type>>::build_rules(#closure)) }
-        }
-      }
+      variant_type.validator_tokens(&validator)
     } else {
       quote! { None }
     };
+
+    let full_type_path = &variant_type.full_type;
 
     variants_tokens.push(quote! {
       ProtoField {
         name: #name.to_string(),
         options: #options,
-        type_: <#proto_type as AsProtoType>::proto_type(),
+        type_: <#full_type_path as AsProtoType>::proto_type(),
         validator: #validator_tokens,
         tag: #tag,
       }

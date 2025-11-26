@@ -77,21 +77,15 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
       oneof_tags,
     } = field_attrs;
 
-    let field_type_path = extract_type_path(&field.ty)?;
-
-    let field_type = extract_type(&field.ty)?;
-
-    let proto_type = field_type.inner();
+    let field_type = TypeInfo::from_type(&field.ty)?;
 
     if kind.is_oneof() {
-      if !field_type.is_option() {
-        return Err(spanned_error!(
-          &field.ty,
-          "Oneofs must be wrapped in Option"
-        ));
-      }
+      let oneof_path = field_type.as_inner_option_path().ok_or(spanned_error!(
+        &field.ty,
+        "Oneofs must be wrapped in Option"
+      ))?;
 
-      let oneof_path_str = proto_type.to_token_stream().to_string();
+      let oneof_path_str = oneof_path.to_token_stream().to_string();
       let mut oneof_tags_str = String::new();
 
       for (i, tag) in oneof_tags.iter().enumerate() {
@@ -108,33 +102,27 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
       field.attrs.push(oneof_attr);
 
       fields_data.push(quote! {
-        MessageEntry::Oneof(#proto_type::to_oneof())
+        MessageEntry::Oneof(#oneof_path::to_oneof())
       });
 
       continue;
     }
 
-    let proto_type2 = get_proto_type_outer(field_type_path);
-    let tag_as_str = tag.to_string();
+    let prost_attr = field_type.to_prost_attr(tag);
 
-    let field_prost_attr: Attribute = parse_quote!(#[proto(#proto_type2, tag2 = #tag_as_str)]);
+    let field_prost_attr: Attribute = parse_quote!(#prost_attr);
 
     field.attrs.push(field_prost_attr);
 
     let validator_tokens = if let Some(validator) = validator {
-      match validator {
-        ValidatorExpr::Call(call) => {
-          quote! { Some(<ValidatorMap as ProtoValidator<#proto_type>>::from_builder(#call)) }
-        }
-        ValidatorExpr::Closure(closure) => {
-          quote! { Some(<ValidatorMap as ProtoValidator<#proto_type>>::build_rules(#closure)) }
-        }
-      }
+      field_type.validator_tokens(&validator)
     } else {
       quote! { None }
     };
 
-    let field_type_tokens = quote! { <#field_type_path as AsProtoType>::proto_type() };
+    let full_type_path = &field_type.full_type;
+
+    let field_type_tokens = quote! { <#full_type_path as AsProtoType>::proto_type() };
 
     fields_data.push(quote! {
       MessageEntry::Field(

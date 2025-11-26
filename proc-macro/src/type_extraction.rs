@@ -1,9 +1,214 @@
+use std::borrow::Cow;
+
 use itertools::Itertools;
 use syn::{GenericArgument, PathArguments, PathSegment};
 
 use crate::*;
 
-#[derive(Debug)]
+pub enum RustType {
+  Option(Path),
+  Boxed(Path),
+  Map((Path, Path)),
+  Vec(Path),
+  Normal(Path),
+}
+
+impl ProtoTypes {
+  pub fn from_rust_type(rust_type: &RustType) -> Option<Self> {
+    let output = match rust_type {
+      RustType::Option(path) => Self::from_path(&path),
+      RustType::Boxed(path) => Self::from_path(&path),
+      RustType::Map((k, v)) => {
+        Self::Map((Box::new(Self::from_path(&k)), Box::new(Self::from_path(&v))))
+      }
+      RustType::Vec(path) => Self::from_path(&path),
+      RustType::Normal(path) => Self::from_path(&path),
+    };
+
+    Some(output)
+  }
+}
+
+impl RustType {
+  pub fn as_option(&self) -> Option<&Path> {
+    if let Self::Option(path) = self {
+      Some(path)
+    } else {
+      None
+    }
+  }
+}
+
+pub struct ProstAttrs {
+  pub field_type: ProtoTypes,
+  pub cardinality: ProstCardinality,
+  pub tag: i32,
+}
+
+impl ProstAttrs {
+  pub fn from_type_info(type_info: &TypeInfo, tag: i32) -> Self {
+    let cardinality = match &type_info.rust_type {
+      RustType::Option(_) => ProstCardinality::Optional,
+      RustType::Boxed(_) => ProstCardinality::Boxed,
+      RustType::Vec(_) => ProstCardinality::Repeated,
+
+      _ => ProstCardinality::Single,
+    };
+
+    let field_type = type_info.proto_type.clone();
+
+    Self {
+      field_type,
+      cardinality,
+      tag,
+    }
+  }
+}
+
+impl ToTokens for ProstAttrs {
+  fn to_tokens(&self, tokens: &mut TokenStream2) {
+    let Self {
+      field_type,
+      cardinality,
+      tag,
+    } = self;
+
+    let tag_as_str = tag.to_string();
+
+    let output = quote! { #[proto(#field_type, #cardinality tag2 = #tag_as_str)] };
+
+    tokens.extend(output);
+  }
+}
+
+pub enum ProstCardinality {
+  Repeated,
+  Optional,
+  Single,
+  Boxed,
+}
+
+impl ToTokens for ProstCardinality {
+  fn to_tokens(&self, tokens: &mut TokenStream2) {
+    let output = match self {
+      ProstCardinality::Repeated => quote! { repeated, },
+      ProstCardinality::Optional => quote! { optional, },
+      ProstCardinality::Single => TokenStream2::new(),
+      ProstCardinality::Boxed => quote! { optional, boxed },
+    };
+
+    tokens.extend(output);
+  }
+}
+
+impl RustType {
+  pub fn from_path(path: &Path) -> Self {
+    let path_wrapper = PathWrapper::new(Cow::Borrowed(path));
+
+    let last_segment = path_wrapper.last_segment();
+
+    let type_ident = last_segment.ident().to_string();
+
+    match type_ident.as_str() {
+      "Option" => {
+        let inner = last_segment.first_argument().unwrap();
+
+        if inner.is_ident("Box") {
+          let box_wrapper = PathWrapper::new(Cow::Borrowed(inner));
+
+          let last_segment = box_wrapper.last_segment();
+
+          let box_inner = last_segment.first_argument().unwrap();
+
+          Self::Boxed(box_inner.clone())
+        } else {
+          Self::Option(inner.clone())
+        }
+      }
+      "Vec" | "ProtoRepeated" => {
+        let inner = last_segment.first_argument().unwrap();
+
+        Self::Vec(inner.clone())
+      }
+      "HashMap" | "ProtoMap" => {
+        let (key, val) = last_segment.first_two_arguments().unwrap();
+
+        Self::Map((key.clone(), val.clone()))
+      }
+      _ => Self::Normal(path.clone()),
+    }
+  }
+}
+
+// Need:
+// 1. Outer/inner type
+// 2. Protobuf types
+// 3. Prost attrs
+
+pub struct TypeInfo<'a> {
+  pub full_type: Cow<'a, Path>,
+  pub custom_type: Option<Path>,
+  pub rust_type: RustType,
+  pub proto_type: ProtoTypes,
+}
+
+impl<'a> TypeInfo<'a> {
+  pub fn to_prost_attr(&self, tag: i32) -> ProstAttrs {
+    ProstAttrs::from_type_info(self, tag)
+  }
+
+  pub fn validator_tokens(&self, validator: &ValidatorExpr) -> TokenStream2 {
+    let validator_type = match &self.rust_type {
+      RustType::Option(path) => path,
+      RustType::Boxed(path) => path,
+      RustType::Map(_) => self.full_type.as_ref(),
+      RustType::Vec(_) => self.full_type.as_ref(),
+      RustType::Normal(path) => path,
+    };
+
+    match validator {
+      ValidatorExpr::Call(call) => {
+        quote! { Some(<ValidatorMap as ProtoValidator<#validator_type>>::from_builder(#call)) }
+      }
+
+      ValidatorExpr::Closure(closure) => {
+        quote! { Some(<ValidatorMap as ProtoValidator<#validator_type>>::build_rules(#closure)) }
+      }
+    }
+  }
+
+  pub fn is_option(&self) -> bool {
+    matches!(self.rust_type, RustType::Option(_))
+  }
+
+  pub fn as_inner_option_path(&self) -> Option<&Path> {
+    if let RustType::Option(path) = &self.rust_type {
+      Some(path)
+    } else {
+      None
+    }
+  }
+
+  pub fn from_type(ty: &'a Type) -> Result<Self, Error> {
+    let path = extract_type_path(ty)?;
+
+    Ok(Self::from_path(path))
+  }
+
+  pub fn from_path(path: &'a Path) -> Self {
+    let rust_type = RustType::from_path(path);
+    let proto_type = ProtoTypes::from_rust_type(&rust_type).unwrap();
+
+    Self {
+      full_type: Cow::Borrowed(path),
+      custom_type: None,
+      rust_type,
+      proto_type,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
 pub enum ProtoTypes {
   String,
   Bool,
@@ -11,6 +216,7 @@ pub enum ProtoTypes {
   Enum(Path),
   Message,
   Int32,
+  Map((Box<ProtoTypes>, Box<ProtoTypes>)),
 }
 
 impl ToTokens for ProtoTypes {
@@ -26,40 +232,10 @@ impl ToTokens for ProtoTypes {
       }
       ProtoTypes::Message => quote! { message },
       ProtoTypes::Int32 => quote! { int32 },
-    };
+      ProtoTypes::Map((k, v)) => {
+        let map_as_str = format!("{}, {}", k.to_token_stream(), v.to_token_stream());
 
-    tokens.extend(output)
-  }
-}
-
-#[derive(Debug)]
-pub enum ProtoTypeKind {
-  Single(ProtoTypes),
-  Repeated(ProtoTypes),
-  Optional(ProtoTypes),
-  Boxed,
-  Map((ProtoTypes, ProtoTypes)),
-}
-
-impl ProtoTypeKind {
-  pub fn is_option(&self) -> bool {
-    matches!(self, Self::Optional(_))
-  }
-}
-
-impl ToTokens for ProtoTypeKind {
-  fn to_tokens(&self, tokens: &mut TokenStream2) {
-    let output = match self {
-      ProtoTypeKind::Single(inner) => inner.to_token_stream(),
-      ProtoTypeKind::Repeated(inner) => quote! { #inner, repeated },
-      ProtoTypeKind::Optional(inner) => quote! { #inner, optional },
-      ProtoTypeKind::Boxed => quote! { message, optional, boxed },
-      ProtoTypeKind::Map((k, v)) => {
-        let k_as_str = k.to_token_stream().to_string();
-        let v_as_str = v.to_token_stream().to_string();
-
-        let map = format!("{k_as_str}, {v_as_str}");
-        quote! { map = #map }
+        quote! { map = #map_as_str }
       }
     };
 
@@ -68,25 +244,25 @@ impl ToTokens for ProtoTypeKind {
 }
 
 pub struct PathWrapper<'a> {
-  pub inner: &'a Path,
+  pub inner: Cow<'a, Path>,
 }
 
 impl<'a> PathWrapper<'a> {
-  pub fn new(path: &'a Path) -> Self {
+  pub fn new(path: Cow<'a, Path>) -> Self {
     Self { inner: path }
   }
 
   pub fn last_segment(&'_ self) -> PathSegmentWrapper<'_> {
-    PathSegmentWrapper::new(self.inner.segments.last().unwrap())
+    PathSegmentWrapper::new(Cow::Borrowed(self.inner.segments.last().unwrap()))
   }
 }
 
 pub struct PathSegmentWrapper<'a> {
-  pub inner: &'a PathSegment,
+  pub inner: Cow<'a, PathSegment>,
 }
 
 impl<'a> PathSegmentWrapper<'a> {
-  pub fn new(segment: &'a PathSegment) -> Self {
+  pub fn new(segment: Cow<'a, PathSegment>) -> Self {
     Self { inner: segment }
   }
 
@@ -134,75 +310,17 @@ impl<'a> PathSegmentWrapper<'a> {
   }
 }
 
-pub fn get_proto_type(original_type: &Path) -> ProtoTypes {
-  let last_segment = PathSegmentWrapper::new(original_type.segments.last().unwrap());
-  let type_ident = last_segment.ident().to_string();
+impl ProtoTypes {
+  pub fn from_path(path: &Path) -> Self {
+    let last_segment = PathSegmentWrapper::new(Cow::Borrowed(path.segments.last().unwrap()));
+    let type_ident = last_segment.ident().to_string();
 
-  match type_ident.as_str() {
-    "String" => ProtoTypes::String,
-    "bool" => ProtoTypes::Bool,
-    "i32" => ProtoTypes::Int32,
-    _ => ProtoTypes::Message,
-  }
-}
-
-pub fn get_proto_type_outer(original_type: &Path) -> ProtoTypeKind {
-  let path_wrapper = PathWrapper::new(original_type);
-
-  let last_segment = path_wrapper.last_segment();
-
-  let type_ident = last_segment.ident().to_string();
-
-  match type_ident.as_str() {
-    "Option" => {
-      let inner = last_segment.first_argument().unwrap();
-
-      ProtoTypeKind::Optional(get_proto_type(inner))
+    match type_ident.as_str() {
+      "String" => Self::String,
+      "bool" => Self::Bool,
+      "i32" => Self::Int32,
+      _ => Self::Message,
     }
-    "Box" => ProtoTypeKind::Boxed,
-    "Vec" | "ProtoRepeated" => {
-      let inner = last_segment.first_argument().unwrap();
-
-      ProtoTypeKind::Repeated(get_proto_type(inner))
-    }
-    "HashMap" | "ProtoMap" => {
-      let (key, val) = last_segment.first_two_arguments().unwrap();
-
-      ProtoTypeKind::Map((get_proto_type(key), get_proto_type(val)))
-    }
-    "ProtoEnum" => {
-      let inner = last_segment.first_argument().unwrap();
-
-      ProtoTypeKind::Single(ProtoTypes::Enum(inner.clone()))
-    }
-    _ => ProtoTypeKind::Single(get_proto_type(path_wrapper.inner)),
-  }
-}
-
-#[derive(Debug)]
-pub enum FieldTypeKind {
-  Normal,
-  Option,
-  Boxed,
-}
-
-#[derive(Debug)]
-pub struct FieldType {
-  pub outer: Path,
-  pub inner: Option<Path>,
-  pub kind: FieldTypeKind,
-}
-
-impl FieldType {
-  pub fn inner(&self) -> &Path {
-    self.inner.as_ref().unwrap_or(&self.outer)
-  }
-
-  pub fn is_option(&self) -> bool {
-    matches!(self.kind, FieldTypeKind::Option)
-  }
-  pub fn is_boxed(&self) -> bool {
-    matches!(self.kind, FieldTypeKind::Boxed)
   }
 }
 
@@ -223,36 +341,10 @@ pub fn extract_type_path(ty: &Type) -> Result<&Path, Error> {
   }
 }
 
-pub fn extract_type(ty: &Type) -> Result<FieldType, Error> {
-  let outer = match ty {
-    Type::Path(type_path) => type_path.path.clone(),
-
-    _ => return Err(spanned_error!(ty, "Must be a type path")),
-  };
-
-  let last_segment = outer.segments.last().unwrap();
-
-  let (inner, kind) = if last_segment.ident == "Option" {
-    (
-      Some(extract_inner_type(last_segment).unwrap()),
-      FieldTypeKind::Option,
-    )
-  } else if last_segment.ident == "Box" {
-    (
-      Some(extract_inner_type(last_segment).unwrap()),
-      FieldTypeKind::Boxed,
-    )
-  } else {
-    (None, FieldTypeKind::Normal)
-  };
-
-  Ok(FieldType { outer, inner, kind })
-}
-
 pub fn extract_oneof_ident(ty: &Type) -> Result<Ident, Error> {
   let path = extract_type_path(ty)?;
 
-  let path_wrapper = PathWrapper::new(path);
+  let path_wrapper = PathWrapper::new(Cow::Borrowed(path));
   let last_segment = path_wrapper.last_segment();
 
   if last_segment.ident() != "Option" {
