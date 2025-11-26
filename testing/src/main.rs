@@ -81,7 +81,7 @@ mod inner {
   pub struct Nested2 {
     name: String,
 
-    #[proto(type_(ProtoMessage))]
+    #[proto(type_(GenericMessage), validate = |v| v.ignore_always())]
     nested1: Nested,
   }
 }

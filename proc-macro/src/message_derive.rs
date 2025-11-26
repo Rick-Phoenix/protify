@@ -125,7 +125,7 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
 
           ProtoType::Enum(path.clone())
         }
-        "ProtoMessage" => ProtoType::Message,
+        "GenericMessage" => ProtoType::Message,
         _ => {
           let custom_type_info = TypeInfo::from_path(custom_type, Some(custom_type.clone()))?;
 

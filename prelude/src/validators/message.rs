@@ -3,6 +3,18 @@ use message_validator_builder::{IsUnset, SetIgnore, State};
 
 use super::*;
 
+pub struct GenericMessage;
+
+impl<S: State> ValidatorBuilderFor<GenericMessage> for MessageValidatorBuilder<S> {}
+
+impl ProtoValidator<GenericMessage> for ValidatorMap {
+  type Builder = MessageValidatorBuilder;
+
+  fn builder() -> Self::Builder {
+    MessageValidator::builder()
+  }
+}
+
 impl<S: State, T> ValidatorBuilderFor<T> for MessageValidatorBuilder<S> where T: ProtoMessage {}
 
 impl<S: State> MessageValidatorBuilder<S>

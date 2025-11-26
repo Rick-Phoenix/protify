@@ -42,7 +42,7 @@ impl ProtoType {
     let output = match type_ident.as_str() {
       "String" => Self::String,
       "bool" => Self::Bool,
-      "ProtoMessage" => Self::Message,
+      "GenericMessage" => Self::Message,
       "i32" => Self::Int32,
       _ => {
         return Err(spanned_error!(
