@@ -3,6 +3,18 @@ use enum_validator_builder::State;
 
 use super::*;
 
+pub struct GenericProtoEnum;
+
+impl ProtoValidator<GenericProtoEnum> for ValidatorMap {
+  type Builder = EnumValidatorBuilder;
+
+  fn builder() -> Self::Builder {
+    EnumValidator::builder()
+  }
+}
+
+impl<S: State> ValidatorBuilderFor<GenericProtoEnum> for EnumValidatorBuilder<S> {}
+
 impl_ignore!(EnumValidatorBuilder);
 
 impl<T, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<S> where T: ProtoEnumTrait {}

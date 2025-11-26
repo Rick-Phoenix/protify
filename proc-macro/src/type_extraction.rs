@@ -135,12 +135,16 @@ pub struct TypeInfo<'a> {
 
 impl<'a> TypeInfo<'a> {
   pub fn validator_tokens(&self, validator: &ValidatorExpr) -> TokenStream2 {
-    let validator_type = match &self.rust_type {
-      RustType::Option(path) => path,
-      RustType::Boxed(path) => path,
-      RustType::Map(_) => self.full_type.as_ref(),
-      RustType::Vec(_) => self.full_type.as_ref(),
-      RustType::Normal(path) => path,
+    let validator_type = if let Some(custom_type) = &self.custom_type {
+      custom_type
+    } else {
+      match &self.rust_type {
+        RustType::Option(path) => path,
+        RustType::Boxed(path) => path,
+        RustType::Map(_) => self.full_type.as_ref(),
+        RustType::Vec(_) => self.full_type.as_ref(),
+        RustType::Normal(path) => path,
+      }
     };
 
     match validator {
@@ -166,13 +170,23 @@ impl<'a> TypeInfo<'a> {
     }
   }
 
-  pub fn from_type(ty: &'a Type) -> Result<Self, Error> {
+  pub fn from_path(path: &'a Path, custom_type: Option<Path>) -> Result<Self, Error> {
+    let rust_type = RustType::from_path(path);
+
+    Ok(Self {
+      full_type: Cow::Borrowed(path),
+      custom_type,
+      rust_type,
+    })
+  }
+
+  pub fn from_type(ty: &'a Type, custom_type: Option<Path>) -> Result<Self, Error> {
     let path = extract_type_path(ty)?;
     let rust_type = RustType::from_path(path);
 
     Ok(Self {
       full_type: Cow::Borrowed(path),
-      custom_type: None,
+      custom_type,
       rust_type,
     })
   }

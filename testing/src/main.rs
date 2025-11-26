@@ -61,10 +61,13 @@ mod inner {
     #[proto(validate = |v| v.min_pairs(0).keys(|k| k.min_len(25)).values(|v| v.lt(25)))]
     map: HashMap<String, i32>,
 
+    #[proto(type_(ProtoMap<String, GenericProtoEnum>), validate = |v| v.values(|val| val.defined_only()))]
+    enum_map: HashMap<String, PseudoEnum>,
+
     #[proto(oneof)]
     oneof: Option<PseudoOneof>,
 
-    #[proto(type_(ProtoEnum), validate = |v| v.defined_only())]
+    #[proto(type_(GenericProtoEnum), validate = |v| v.defined_only())]
     enum_field: PseudoEnum,
   }
 
@@ -78,7 +81,7 @@ mod inner {
   pub struct Nested2 {
     name: String,
 
-    #[proto(type_(ProtoMessage), validate = |v| v.ignore_always())]
+    #[proto(type_(ProtoMessage))]
     nested1: Nested,
   }
 }

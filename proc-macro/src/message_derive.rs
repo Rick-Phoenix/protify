@@ -79,7 +79,7 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
       oneof_tags,
     } = field_attrs;
 
-    let field_type = TypeInfo::from_type(&field.ty)?;
+    let field_type = TypeInfo::from_type(&field.ty, custom_type.clone())?;
 
     if kind.is_oneof() {
       let oneof_path = field_type.as_inner_option_path().ok_or(spanned_error!(
@@ -118,7 +118,7 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
       let last_segment_str = last_segment.ident().to_string();
 
       match last_segment_str.as_str() {
-        "ProtoEnum" => {
+        "GenericProtoEnum" => {
           let path = field_type
             .as_inner_option_path()
             .unwrap_or(field_type.full_type.as_ref());
@@ -126,14 +126,18 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
           ProtoType::Enum(path.clone())
         }
         "ProtoMessage" => ProtoType::Message,
-        _ => ProtoType::from_rust_type(&field_type.rust_type)?,
+        _ => {
+          let custom_type_info = TypeInfo::from_path(custom_type, Some(custom_type.clone()))?;
+
+          ProtoType::from_rust_type(&custom_type_info)?
+        }
       }
     } else if let RustType::Map((k, v)) = &field_type.rust_type {
       let keys_str = k.require_ident()?.to_string();
       let values_str = v.require_ident()?.to_string();
 
       let keys = ProtoMapKeys::from_str(&keys_str).unwrap();
-      let values = if values_str == "ProtoEnum" {
+      let values = if values_str == "GenericProtoEnum" {
         ProtoMapValues::Enum(v.clone())
       } else {
         ProtoMapValues::from_str(&values_str).map_err(|e| spanned_error!(&field.ty, e))?
@@ -141,7 +145,7 @@ pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStrea
 
       ProtoType::Map(Box::new(ProtoMap { keys, values }))
     } else {
-      ProtoType::from_rust_type(&field_type.rust_type)?
+      ProtoType::from_rust_type(&field_type)?
     };
 
     let prost_attr = ProstAttrs::from_type_info(&field_type.rust_type, proto_type.clone(), tag);

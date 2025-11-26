@@ -45,8 +45,8 @@ pub enum ProtoMapValues {
 impl Display for ProtoMapKeys {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      ProtoMapKeys::String => write!(f, ""),
-      ProtoMapKeys::Int32 => write!(f, ""),
+      ProtoMapKeys::String => write!(f, "string"),
+      ProtoMapKeys::Int32 => write!(f, "int32"),
     }
   }
 }

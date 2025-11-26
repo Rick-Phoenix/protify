@@ -43,7 +43,7 @@ pub(crate) fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, 
 
       let type_ = &variant_fields.unnamed.first().unwrap().ty;
 
-      TypeInfo::from_type(type_)?
+      TypeInfo::from_type(type_, custom_type.clone())?
     } else {
       panic!("Enum can only have one unnamed field")
     };
@@ -83,10 +83,10 @@ pub(crate) fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, 
 
           ProtoType::Enum(path.clone())
         }
-        _ => ProtoType::from_rust_type(&variant_type.rust_type)?,
+        _ => ProtoType::from_rust_type(&variant_type)?,
       }
     } else {
-      ProtoType::from_rust_type(&variant_type.rust_type)?
+      ProtoType::from_rust_type(&variant_type)?
     };
 
     let prost_attr_tokens =

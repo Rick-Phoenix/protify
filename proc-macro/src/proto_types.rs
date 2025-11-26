@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::*;
 
 #[derive(Debug, Clone)]
@@ -12,13 +14,26 @@ pub enum ProtoType {
 }
 
 impl ProtoType {
-  pub fn from_rust_type(rust_type: &RustType) -> Result<Self, Error> {
-    let path = match rust_type {
+  pub fn from_rust_type(type_info: &TypeInfo) -> Result<Self, Error> {
+    let path = match &type_info.rust_type {
       RustType::Option(path) => path,
       RustType::Boxed(path) => path,
       RustType::Vec(path) => path,
       RustType::Normal(path) => path,
-      RustType::Map(_) => panic!("Map not supported"),
+      RustType::Map((k, v)) => {
+        let keys_str = k.require_ident()?.to_string();
+        let values_str = v.require_ident()?.to_string();
+
+        let keys = ProtoMapKeys::from_str(&keys_str).unwrap();
+        let values = if values_str == "GenericProtoEnum" {
+          ProtoMapValues::Enum(v.clone())
+        } else {
+          ProtoMapValues::from_str(&values_str)
+            .map_err(|e| spanned_error!(&type_info.full_type, e))?
+        };
+
+        return Ok(ProtoType::Map(Box::new(ProtoMap { keys, values })));
+      }
     };
 
     let last_segment = PathSegmentWrapper::new(Cow::Borrowed(path.segments.last().unwrap()));
