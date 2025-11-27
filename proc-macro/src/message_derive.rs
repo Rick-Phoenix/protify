@@ -85,6 +85,7 @@ pub(crate) fn process_message_derive_shadow(
       };
 
       conversion_body.extend(quote! {
+        #[allow(clippy::redundant_closure)]
         #src_field_ident: #conversion_call,
       });
     }
@@ -109,19 +110,24 @@ pub(crate) fn process_message_derive_shadow(
 
   let conversion_body = if let Some(expr) = &message_attrs.map_with {
     match expr {
-      PathOrClosure::Path(path) => quote! { #path() },
-      PathOrClosure::Closure(closure) => quote! { prelude::apply(value, #closure) },
+      PathOrClosure::Path(path) => quote! { #path(value) },
+      PathOrClosure::Closure(closure) => quote! {
+        #[allow(clippy::redundant_closure)]
+        prelude::apply(value, #closure)
+      },
     }
   } else {
-    conversion_body
+    quote! {
+      Self {
+        #conversion_body
+      }
+    }
   };
 
   let conversion_tokens = quote! {
     impl From<#shadow_struct_ident> for #orig_struct_name {
       fn from(value: #shadow_struct_ident) -> Self {
-        Self {
-          #conversion_body
-        }
+        #conversion_body
       }
     }
   };
