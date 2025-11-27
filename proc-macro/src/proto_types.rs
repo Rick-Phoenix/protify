@@ -11,9 +11,32 @@ pub enum ProtoType {
   Message,
   Int32,
   Map(Box<ProtoMap>),
+  Sint32,
 }
 
 impl ProtoType {
+  pub fn from_primitive(path: &Path) -> Result<Self, Error> {
+    let ident = path.require_ident()?;
+    let ident_str = ident.to_string();
+
+    let output = match ident_str.as_str() {
+      "String" => Self::String,
+      "bool" => Self::Bool,
+      "i32" => Self::Int32,
+      _ => {
+        return Err(spanned_error!(
+          path,
+          format!(
+            "Type {} does not correspond to a prost-supported primitive",
+            path.to_token_stream()
+          )
+        ))
+      }
+    };
+
+    Ok(output)
+  }
+
   pub fn validator_expr(&self, validator: &ValidatorExpr) -> TokenStream2 {
     let target_type = match self {
       ProtoType::String => quote! { String },
@@ -93,6 +116,7 @@ impl ToTokens for ProtoType {
       ProtoType::Message => quote! { message },
       ProtoType::Int32 => quote! { int32 },
       ProtoType::Map(map) => map.to_token_stream(),
+      ProtoType::Sint32 => quote! { sint32 },
     };
 
     tokens.extend(output)

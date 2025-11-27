@@ -34,12 +34,55 @@ impl FromStr for ProtoMapKeys {
   }
 }
 
+impl ProtoMapKeys {
+  pub fn from_path(path: &Path) -> Result<Self, Error> {
+    let ident = path.get_ident().ok_or(spanned_error!(
+      path,
+      format!(
+        "Type {} is not a supported map key primitive",
+        path.to_token_stream()
+      )
+    ))?;
+    let ident_as_str = ident.to_string();
+
+    Self::from_str(&ident_as_str).map_err(|_| {
+      spanned_error!(
+        path,
+        format!("Type {} is not a supported map key primitive", ident_as_str)
+      )
+    })
+  }
+}
+
 #[derive(Debug, Clone)]
 pub enum ProtoMapValues {
   String,
   Int32,
   Enum(Path),
   Message,
+}
+
+impl ProtoMapValues {
+  pub fn from_path(path: &Path) -> Result<Self, Error> {
+    let ident = path.get_ident().ok_or(spanned_error!(
+      path,
+      format!(
+        "Type {} is not a supported map value primitive",
+        path.to_token_stream()
+      )
+    ))?;
+    let ident_as_str = ident.to_string();
+
+    Self::from_str(&ident_as_str).map_err(|_| {
+      spanned_error!(
+        path,
+        format!(
+          "Type {} is not a supported map value primitive",
+          ident_as_str
+        )
+      )
+    })
+  }
 }
 
 impl Display for ProtoMapKeys {

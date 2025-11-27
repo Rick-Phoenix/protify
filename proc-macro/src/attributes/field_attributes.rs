@@ -8,9 +8,10 @@ pub enum ProtoFieldType {
   Message,
   Enum,
   Oneof,
+  Map,
+  Sint32,
   #[default]
-  Normal,
-  Map((Path, Path)),
+  None,
 }
 
 impl ProtoFieldType {
@@ -26,8 +27,8 @@ impl ProtoFieldType {
     matches!(self, Self::Oneof)
   }
 
-  pub fn is_normal(&self) -> bool {
-    matches!(self, Self::Normal | Self::Enum)
+  pub fn is_none(&self) -> bool {
+    matches!(self, Self::None)
   }
 }
 
@@ -40,6 +41,7 @@ pub struct FieldAttrs {
   pub custom_type: Option<Path>,
   pub oneof_tags: Vec<i32>,
   pub proto_type: Option<Path>,
+  pub map_with_enum_value: bool,
 }
 
 pub enum ValidatorExpr {
@@ -58,6 +60,7 @@ pub fn process_derive_field_attrs(
   let mut custom_type: Option<Path> = None;
   let mut kind = ProtoFieldType::default();
   let mut is_ignored = false;
+  let mut map_with_enum_value = false;
   let mut proto_type: Option<Path> = None;
   let mut oneof_tags: Vec<i32> = Vec::new();
 
@@ -104,7 +107,7 @@ pub fn process_derive_field_attrs(
             let key_path = types.first().unwrap();
             let value_path = types.last().unwrap();
 
-            kind = ProtoFieldType::Map((key_path.clone(), value_path.clone()));
+            kind = ProtoFieldType::Map;
           } else if list.path.is_ident("type_") {
             custom_type = Some(list.parse_args::<Path>()?);
           } else if list.path.is_ident("proto_type") {
@@ -112,24 +115,35 @@ pub fn process_derive_field_attrs(
           }
         }
         Meta::Path(path) => {
-          if path.is_ident("ignore") {
-            is_ignored = true;
-          } else if path.is_ident("oneof") {
-            kind = ProtoFieldType::Oneof;
-          } else if path.is_ident("enum_") {
-            kind = ProtoFieldType::Enum;
-          } else if path.is_ident("message") {
-            kind = ProtoFieldType::Message;
-          }
+          let ident = if let Some(ident) = path.get_ident() {
+            ident.to_string()
+          } else {
+            continue;
+          };
+
+          match ident.as_str() {
+            "ignore" => is_ignored = true,
+            "oneof" => kind = ProtoFieldType::Oneof,
+            "enum_" => kind = ProtoFieldType::Enum,
+            "message" => kind = ProtoFieldType::Message,
+            "sint32" => kind = ProtoFieldType::Sint32,
+            "map_enum" => {
+              kind = ProtoFieldType::Map;
+              map_with_enum_value = true;
+            }
+            _ => {}
+          };
         }
       };
     }
   }
 
-  let tag = if is_ignored || !kind.is_normal() {
+  let tag = if let Some(tag) = tag {
+    tag
+  } else if is_ignored || kind.is_oneof() {
     0
   } else {
-    tag.ok_or(spanned_error!(original_name, "Field tag is missing"))?
+    return Err(spanned_error!(original_name, "Field tag is missing"));
   };
 
   if !is_ignored {
@@ -142,6 +156,7 @@ pub fn process_derive_field_attrs(
       kind,
       oneof_tags,
       proto_type,
+      map_with_enum_value,
     }))
   } else {
     Ok(None)
