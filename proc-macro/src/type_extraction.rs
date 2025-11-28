@@ -8,9 +8,30 @@ use crate::*;
 pub struct TypeInfo {
   pub rust_type: RustType,
   pub span: Span,
+  pub proto_type: ProtoType,
 }
 
 impl TypeInfo {
+  pub fn from_proto(&self) -> TokenStream2 {
+    let conversion_call = self.proto_type.default_from_proto();
+
+    match &self.rust_type {
+      RustType::Option(_) => quote! { map(|v| v.#conversion_call) },
+      RustType::Boxed(_) => quote! { map(|v| Box::new((*v).into())) },
+      RustType::Map(_) => {
+        let value_conversion = if let ProtoType::Map(map) = &self.proto_type && map.has_enum_values() {
+          quote! { try_into().unwrap_or_default() }
+        } else {
+          quote! { into() }
+        };
+
+        quote! { into_iter().map(|(k, v)| (k, v.#value_conversion)).collect() }
+      }
+      RustType::Vec(_) => quote! { into_iter().map(|v| v.#conversion_call).collect() },
+      RustType::Normal(_) => conversion_call,
+    }
+  }
+
   pub fn validator_tokens(
     &self,
     validator: &ValidatorExpr,
@@ -59,13 +80,19 @@ impl TypeInfo {
     }
   }
 
-  pub fn from_type(ty: &Type) -> Result<Self, Error> {
+  pub fn from_type(ty: &Type, field_kind: ProtoFieldKind) -> Result<Self, Error> {
     let path = extract_type_path(ty)?;
     let rust_type = RustType::from_path(path);
 
+    let proto_type = extract_proto_type(&rust_type, field_kind, ty)?;
+
     let span = ty.span();
 
-    Ok(Self { rust_type, span })
+    Ok(Self {
+      rust_type,
+      span,
+      proto_type,
+    })
   }
 
   pub fn error(&self, error: impl Display) -> Error {

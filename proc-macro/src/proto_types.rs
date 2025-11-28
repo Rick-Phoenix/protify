@@ -39,16 +39,10 @@ impl ProtoType {
     Ok(output)
   }
 
-  pub fn default_from_proto(&self, cardinality: ProstCardinality) -> TokenStream2 {
+  pub fn default_from_proto(&self) -> TokenStream2 {
     match self {
-      ProtoType::String => quote! { String },
-      ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { Vec<u8> },
-      ProtoType::Enum(_) => quote! { GenericProtoEnum },
-      ProtoType::Message(_) => quote! { GenericMessage },
-      ProtoType::Int32 => quote! { i32 },
-      ProtoType::Map(map) => map.validator_target_type(),
-      ProtoType::Sint32 => quote! { Sint32 },
+      ProtoType::Enum(_) => quote! { try_into().unwrap_or_default() },
+      _ => quote! { into() },
     }
   }
 

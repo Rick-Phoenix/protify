@@ -48,66 +48,7 @@ pub fn process_field(
     });
   }
 
-  let proto_type = match kind {
-    ProtoFieldKind::Enum(path) => {
-      // Handle the errors here and just say it can't be used for a map
-      let enum_path = if let Some(path) = path {
-        path
-      } else {
-        type_info
-          .rust_type
-          .inner_path()
-          .ok_or(spanned_error!(
-            &field.ty,
-            "Failed to extract the inner type. Expected a type, or a type wrapped in Option or Vec"
-          ))?
-          .clone()
-      };
-
-      ProtoType::Enum(enum_path)
-    }
-    ProtoFieldKind::Message(path) => {
-      let msg_path = if let MessagePath::Path(path) = path {
-        path
-      } else {
-        let inner_type = type_info
-          .rust_type
-          .inner_path()
-          .ok_or(spanned_error!(
-            &field.ty,
-            "Failed to extract the inner type. Expected a type, or a type wrapped in Option or Vec"
-          ))?
-          .clone();
-
-        if path.is_suffixed() {
-          append_proto_ident(inner_type)
-        } else {
-          inner_type
-        }
-      };
-
-      ProtoType::Message(msg_path)
-    }
-    ProtoFieldKind::Map(proto_map) => {
-      ProtoType::Map(set_map_proto_type(proto_map, &type_info.rust_type)?)
-    }
-    // No manually set type, let's try to infer it as a primitive
-    // maybe use the larger error for any of these
-    _ => match &type_info.rust_type {
-      RustType::Option(path) => ProtoType::from_primitive(path)?,
-      RustType::Boxed(path) => ProtoType::from_primitive(path)?,
-      RustType::Vec(path) => ProtoType::from_primitive(path)?,
-      RustType::Normal(path) => ProtoType::from_primitive(path)?,
-      RustType::Map((k, v)) => {
-        let keys = ProtoMapKeys::from_path(k)?;
-        let values = ProtoMapValues::from_path(v).map_err(|_| spanned_error!(v, format!("Unrecognized proto map value type {}. If you meant to use an enum or a message, use the attribute", v.to_token_stream())))?;
-
-        let proto_map = ProtoMap { keys, values };
-
-        ProtoType::Map(set_map_proto_type(proto_map, &type_info.rust_type)?)
-      }
-    },
-  };
+  let proto_type = &type_info.proto_type;
 
   if let OutputType::Change = output_type {
     let proto_output_type_inner = proto_type.output_proto_type();

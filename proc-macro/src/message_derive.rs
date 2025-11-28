@@ -66,7 +66,7 @@ pub(crate) fn process_message_derive_shadow(
     let field_attrs_into_proto = field_attrs.into_proto.clone();
     let is_enum = field_attrs.kind.is_enum();
 
-    let src_field_type = TypeInfo::from_type(&src_field.ty)?;
+    let src_field_type = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone())?;
 
     let field_tokens = process_field(dst_field, field_attrs, &src_field_type, OutputType::Change)?;
 
@@ -83,13 +83,12 @@ pub(crate) fn process_message_derive_shadow(
           }
         }
       } else {
-        let call = src_field_type.rust_type.conversion_call();
+        let call = src_field_type.from_proto();
 
         quote! { value.#src_field_ident.#call }
       };
 
       from_proto.extend(quote! {
-        #[allow(clippy::redundant_closure)]
         #src_field_ident: #conversion_call,
       });
     }
@@ -111,7 +110,6 @@ pub(crate) fn process_message_derive_shadow(
       };
 
       into_proto.extend(quote! {
-        #[allow(clippy::redundant_closure)]
         #src_field_ident: #conversion_call,
       });
     }
@@ -138,7 +136,6 @@ pub(crate) fn process_message_derive_shadow(
     match expr {
       PathOrClosure::Path(path) => quote! { #path(value) },
       PathOrClosure::Closure(closure) => quote! {
-        #[allow(clippy::redundant_closure)]
         prelude::apply(value, #closure)
       },
     }
@@ -152,6 +149,7 @@ pub(crate) fn process_message_derive_shadow(
 
   let from_proto_impl = quote! {
     impl From<#shadow_struct_ident> for #orig_struct_name {
+      #[allow(clippy::redundant_closure)]
       fn from(value: #shadow_struct_ident) -> Self {
         #from_proto
       }
@@ -230,7 +228,7 @@ pub(crate) fn process_message_derive_direct(
         ));
       };
 
-    let type_info = TypeInfo::from_type(&src_field.ty)?;
+    let type_info = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone())?;
 
     let field_tokens = process_field(src_field, field_attrs, &type_info, OutputType::Keep)?;
 
@@ -242,46 +240,4 @@ pub(crate) fn process_message_derive_direct(
   output_tokens.extend(schema_impls);
 
   Ok(output_tokens)
-}
-
-#[allow(clippy::collapsible_if)]
-pub fn set_map_proto_type(
-  mut proto_map: ProtoMap,
-  rust_type: &RustType,
-) -> Result<ProtoMap, Error> {
-  let proto_values = &mut proto_map.values;
-
-  if let ProtoMapValues::Message(path) = proto_values {
-    if !matches!(path, MessagePath::Path(_)) {
-      let value_path = if let RustType::Map((_, v)) = &rust_type {
-        v.clone()
-      } else {
-        return Err(spanned_error!(
-          path,
-          "Could not infer the path to the message value, please set it manually"
-        ));
-      };
-
-      if path.is_suffixed() {
-        *path = MessagePath::Path(append_proto_ident(value_path));
-      } else {
-        *path = MessagePath::Path(value_path);
-      }
-    }
-  } else if let ProtoMapValues::Enum(path) = proto_values {
-    if path.is_none() {
-      let v = if let RustType::Map((_, v)) = &rust_type {
-        v
-      } else {
-        return Err(spanned_error!(
-          path,
-          "Could not infer the path to the enum value, please set it manually"
-        ));
-      };
-
-      *path = Some(v.clone());
-    }
-  }
-
-  Ok(proto_map)
 }

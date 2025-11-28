@@ -44,7 +44,7 @@ pub(crate) fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, 
 
       let type_ = &variant_fields.unnamed.first().unwrap().ty;
 
-      TypeInfo::from_type(type_)?
+      TypeInfo::from_type(type_, kind)?
     } else {
       panic!("Enum can only have one unnamed field")
     };
