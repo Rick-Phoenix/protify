@@ -21,12 +21,7 @@ pub(crate) fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, 
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
   for variant in variants {
-    let field_attrs =
-      if let Some(attrs) = process_derive_field_attrs(&variant.ident, &variant.attrs)? {
-        attrs
-      } else {
-        continue;
-      };
+    let field_attrs = process_derive_field_attrs(&variant.ident, &variant.attrs)?;
 
     let FieldAttrs {
       tag,

@@ -44,7 +44,7 @@ pub(crate) fn process_message_derive_shadow(
     ..
   } = item;
 
-  let mut fields_data: Vec<TokenStream2> = Vec::new();
+  let mut proto_fields_data: Vec<TokenStream2> = Vec::new();
 
   let mut from_proto = TokenStream2::new();
   let mut into_proto = TokenStream2::new();
@@ -52,15 +52,12 @@ pub(crate) fn process_message_derive_shadow(
   let orig_struct_fields = fields.iter_mut();
   let shadow_struct_fields = shadow_struct.fields.iter_mut();
 
+  let mut ignored_fields: Vec<Ident> = Vec::new();
+
   for (src_field, dst_field) in orig_struct_fields.zip(shadow_struct_fields) {
     let src_field_ident = src_field.ident.as_ref().expect("Expected named field");
 
-    let field_attrs =
-      if let Some(attrs) = process_derive_field_attrs(src_field_ident, &src_field.attrs)? {
-        attrs
-      } else {
-        continue;
-      };
+    let field_attrs = process_derive_field_attrs(src_field_ident, &src_field.attrs)?;
 
     let field_attrs_from_proto = field_attrs.from_proto.clone();
     let field_attrs_into_proto = field_attrs.into_proto.clone();
@@ -68,9 +65,39 @@ pub(crate) fn process_message_derive_shadow(
 
     let src_field_type = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone())?;
 
-    let field_tokens = process_field(dst_field, field_attrs, &src_field_type, OutputType::Change)?;
+    if field_attrs.is_ignored {
+      ignored_fields.push(src_field.ident.clone().unwrap());
+    } else {
+      let field_tokens = process_field(
+        dst_field,
+        field_attrs.clone(),
+        &src_field_type,
+        OutputType::Change,
+      )?;
 
-    fields_data.push(field_tokens);
+      proto_fields_data.push(field_tokens);
+
+      if message_attrs.into_proto.is_none() {
+        let conversion_call = if let Some(expr) = field_attrs_into_proto {
+          match expr {
+            PathOrClosure::Path(path) => quote! { #path(value.#src_field_ident) },
+            PathOrClosure::Closure(closure) => {
+              quote! {
+                prelude::apply(value.#src_field_ident, #closure)
+              }
+            }
+          }
+        } else {
+          let call = src_field_type.rust_type.conversion_call();
+
+          quote! { value.#src_field_ident.#call }
+        };
+
+        into_proto.extend(quote! {
+          #src_field_ident: #conversion_call,
+        });
+      }
+    }
 
     if message_attrs.from_proto.is_none() {
       let conversion_call = if let Some(expr) = field_attrs_from_proto {
@@ -82,6 +109,8 @@ pub(crate) fn process_message_derive_shadow(
             }
           }
         }
+      } else if field_attrs.is_ignored {
+        quote! { Default::default() }
       } else {
         let call = src_field_type.from_proto();
 
@@ -92,30 +121,18 @@ pub(crate) fn process_message_derive_shadow(
         #src_field_ident: #conversion_call,
       });
     }
-
-    if message_attrs.into_proto.is_none() {
-      let conversion_call = if let Some(expr) = field_attrs_into_proto {
-        match expr {
-          PathOrClosure::Path(path) => quote! { #path(value.#src_field_ident) },
-          PathOrClosure::Closure(closure) => {
-            quote! {
-              prelude::apply(value.#src_field_ident, #closure)
-            }
-          }
-        }
-      } else {
-        let call = src_field_type.rust_type.conversion_call();
-
-        quote! { value.#src_field_ident.#call }
-      };
-
-      into_proto.extend(quote! {
-        #src_field_ident: #conversion_call,
-      });
-    }
   }
 
-  let schema_impls = create_schema_impls(orig_struct_name, &message_attrs, fields_data);
+  if let Fields::Named(fields) = &mut shadow_struct.fields {
+    let old_fields = std::mem::take(&mut fields.named);
+
+    fields.named = old_fields
+      .into_iter()
+      .filter(|f| !ignored_fields.contains(f.ident.as_ref().unwrap()))
+      .collect();
+  }
+
+  let schema_impls = create_schema_impls(orig_struct_name, &message_attrs, proto_fields_data);
 
   output_tokens.extend(schema_impls);
 
@@ -154,6 +171,16 @@ pub(crate) fn process_message_derive_shadow(
         #from_proto
       }
     }
+
+    impl #orig_struct_name {
+      pub fn from_proto(value: #shadow_struct_ident) -> Self {
+        value.into()
+      }
+
+      pub fn into_proto(self) -> #shadow_struct_ident {
+        self.into()
+      }
+    }
   };
 
   output_tokens.extend(from_proto_impl);
@@ -162,7 +189,6 @@ pub(crate) fn process_message_derive_shadow(
     match expr {
       PathOrClosure::Path(path) => quote! { #path(value) },
       PathOrClosure::Closure(closure) => quote! {
-        #[allow(clippy::redundant_closure)]
         prelude::apply(value, #closure)
       },
     }
@@ -176,6 +202,7 @@ pub(crate) fn process_message_derive_shadow(
 
   let into_proto_impl = quote! {
     impl From<#orig_struct_name> for #shadow_struct_ident {
+      #[allow(clippy::redundant_closure)]
       fn from(value: #orig_struct_name) -> Self {
         #into_proto
       }
@@ -218,15 +245,14 @@ pub(crate) fn process_message_derive_direct(
   for src_field in fields {
     let src_field_ident = src_field.ident.as_ref().expect("Expected named field");
 
-    let field_attrs =
-      if let Some(attrs) = process_derive_field_attrs(src_field_ident, &src_field.attrs)? {
-        attrs
-      } else {
-        return Err(spanned_error!(
-          src_field,
-          "Fields cannot be ignored in a direct impl"
-        ));
-      };
+    let field_attrs = process_derive_field_attrs(src_field_ident, &src_field.attrs)?;
+
+    if field_attrs.is_ignored {
+      return Err(spanned_error!(
+        src_field,
+        "Fields cannot be ignored in a direct impl"
+      ));
+    }
 
     let type_info = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone())?;
 

@@ -59,6 +59,7 @@ impl ProtoFieldKind {
   }
 }
 
+#[derive(Clone)]
 pub struct FieldAttrs {
   pub tag: i32,
   pub validator: Option<ValidatorExpr>,
@@ -68,8 +69,10 @@ pub struct FieldAttrs {
   pub oneof_tags: Vec<i32>,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
+  pub is_ignored: bool,
 }
 
+#[derive(Clone)]
 pub enum ValidatorExpr {
   Closure(ExprClosure),
   Call(ExprCall),
@@ -78,7 +81,7 @@ pub enum ValidatorExpr {
 pub fn process_derive_field_attrs(
   original_name: &Ident,
   attrs: &Vec<Attribute>,
-) -> Result<Option<FieldAttrs>, Error> {
+) -> Result<FieldAttrs, Error> {
   let mut validator: Option<ValidatorExpr> = None;
   let mut tag: Option<i32> = None;
   let mut options: Option<TokenStream2> = None;
@@ -209,18 +212,15 @@ pub fn process_derive_field_attrs(
     return Err(spanned_error!(original_name, "Field tag is missing"));
   };
 
-  if !is_ignored {
-    Ok(Some(FieldAttrs {
-      validator,
-      tag,
-      options: attributes::ProtoOptions(options),
-      name: name.unwrap_or_else(|| ccase!(snake, original_name.to_string())),
-      kind,
-      from_proto,
-      oneof_tags,
-      into_proto,
-    }))
-  } else {
-    Ok(None)
-  }
+  Ok(FieldAttrs {
+    validator,
+    tag,
+    options: attributes::ProtoOptions(options),
+    name: name.unwrap_or_else(|| ccase!(snake, original_name.to_string())),
+    kind,
+    from_proto,
+    oneof_tags,
+    into_proto,
+    is_ignored,
+  })
 }
