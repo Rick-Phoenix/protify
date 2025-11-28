@@ -18,6 +18,7 @@ pub enum ProtoType {
     path: Path,
     tags: Vec<i32>,
     default: bool,
+    is_proxied: bool,
   },
 }
 
@@ -150,6 +151,7 @@ pub fn extract_proto_type(
         path: oneof_path,
         tags,
         default,
+        is_proxied: !path.is_none(),
       }
     }
     ProtoFieldKind::Enum(path) => {

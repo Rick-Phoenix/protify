@@ -48,13 +48,13 @@ mod inner {
 
   // #[proto(required)]
   #[proto_oneof]
-  #[proto(direct)]
+  #[derive(Clone, Debug)]
   enum PseudoOneof {
     A(String),
     B(i32),
   }
 
-  impl Default for PseudoOneof {
+  impl Default for PseudoOneofProto {
     fn default() -> Self {
       Self::B(0)
     }
@@ -67,7 +67,7 @@ mod inner {
   #[proto_message]
   #[proto(reserved_numbers(1, 2, 3..9))]
   #[proto(nested_enums(PseudoEnum))]
-  #[derive(Clone, Debug, Default)]
+  #[derive(Clone, Debug)]
   pub struct Abc {
     #[proto(message(AbcProto))]
     boxed: Option<Box<Abc>>,
@@ -93,7 +93,7 @@ mod inner {
     #[proto(message(suffixed), from_proto = |v| v.map(Into::into))]
     nested: Option<Nested>,
 
-    #[proto(oneof(default))]
+    #[proto(oneof(default, suffixed))]
     oneof: PseudoOneof,
   }
 

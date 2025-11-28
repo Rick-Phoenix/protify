@@ -18,16 +18,6 @@ impl RustType {
     }
   }
 
-  pub fn into_proto(&self) -> TokenStream2 {
-    match self {
-      RustType::Option(_) => quote! { map(Into::into) },
-      RustType::Boxed(_) => quote! { map(|v| Box::new((*v).into())) },
-      RustType::Map(_) => quote! { into_iter().map(|(k, v)| (k, v.into())).collect() },
-      RustType::Vec(_) => quote! { into_iter().map(Into::into).collect() },
-      RustType::Normal(_) => quote! { into() },
-    }
-  }
-
   pub fn inner_path(&self) -> Option<&Path> {
     let output = match self {
       RustType::Option(path) => path,

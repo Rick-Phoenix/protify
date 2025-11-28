@@ -12,16 +12,45 @@ pub struct TypeInfo {
 }
 
 impl TypeInfo {
+  pub fn into_proto(&self) -> TokenStream2 {
+    if let ProtoType::Oneof {
+      default: true,
+      path,
+      is_proxied,
+      ..
+    } = &self.proto_type
+    {
+      if *is_proxied {
+        return quote! { into().into() };
+      } else {
+        return quote! { unwrap_or_default() };
+      }
+    }
+
+    match &self.rust_type {
+      RustType::Option(_) => quote! { map(Into::into) },
+      RustType::Boxed(_) => quote! { map(|v| Box::new((*v).into())) },
+      RustType::Map(_) => quote! { into_iter().map(|(k, v)| (k, v.into())).collect() },
+      RustType::Vec(_) => quote! { into_iter().map(Into::into).collect() },
+      RustType::Normal(_) => quote! { into() },
+    }
+  }
+
   pub fn from_proto(&self) -> TokenStream2 {
     let conversion_call = self.proto_type.default_from_proto();
 
     if let ProtoType::Oneof {
       default: true,
       path,
+      is_proxied,
       ..
     } = &self.proto_type
     {
-      return quote! { unwrap_or_default() };
+      if *is_proxied {
+        return quote! { unwrap_or_default().into() };
+      } else {
+        return quote! { unwrap_or_default() };
+      }
     }
 
     match &self.rust_type {

@@ -87,8 +87,10 @@ pub(crate) fn process_message_derive_shadow(
               }
             }
           }
+        } else if let ProtoType::Oneof { default: true, .. } = &type_info.proto_type {
+          quote! { Some(value.#src_field_ident.into()) }
         } else {
-          let call = type_info.rust_type.into_proto();
+          let call = type_info.into_proto();
 
           quote! { value.#src_field_ident.#call }
         };

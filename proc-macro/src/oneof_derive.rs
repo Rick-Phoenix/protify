@@ -25,7 +25,7 @@ pub fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> 
   if oneof_attrs.direct {
     process_oneof_derive_direct(item, oneof_attrs)
   } else {
-    todo!()
+    process_oneof_derive_shadow(item, oneof_attrs)
   }
 }
 
@@ -123,6 +123,8 @@ pub(crate) fn process_oneof_derive_shadow(
 ) -> Result<TokenStream2, Error> {
   let mut shadow_enum = create_shadow_enum(item);
 
+  let mut output_tokens = TokenStream2::new();
+
   let ItemEnum {
     attrs,
     ident: enum_name,
@@ -147,6 +149,12 @@ pub(crate) fn process_oneof_derive_shadow(
   let orig_enum_variants = variants.iter_mut();
   let shadow_enum_variants = shadow_enum.variants.iter_mut();
 
+  let orig_enum_ident = &enum_name;
+  let shadow_enum_ident = &shadow_enum.ident;
+
+  let mut from_proto = TokenStream2::new();
+  let mut into_proto = TokenStream2::new();
+
   for (src_variant, dst_variant) in orig_enum_variants.zip(shadow_enum_variants) {
     let field_attrs = process_derive_field_attrs(&src_variant.ident, &src_variant.attrs)?;
 
@@ -162,6 +170,8 @@ pub(crate) fn process_oneof_derive_shadow(
 
     let type_info = TypeInfo::from_type(&variant_type, field_attrs.kind.clone())?;
 
+    let variant_ident = &src_variant.ident;
+
     if field_attrs.is_ignored {
       ignored_variants.push(src_variant.ident.clone());
     } else {
@@ -173,12 +183,34 @@ pub(crate) fn process_oneof_derive_shadow(
       )?;
 
       variants_tokens.push(variant_proto_tokens);
+
+      let call = type_info.into_proto();
+
+      let into_proto_call = quote! {
+        #orig_enum_ident::#variant_ident(v) => #shadow_enum_ident::#variant_ident(v.#call),
+      };
+
+      into_proto.extend(into_proto_call);
+
+      let from_proto_call = type_info.from_proto();
+
+      let from_proto_expr = quote! {
+        #shadow_enum_ident::#variant_ident(v) => #orig_enum_ident::#variant_ident(v.#from_proto_call),
+      };
+
+      from_proto.extend(from_proto_expr);
     }
   }
 
+  shadow_enum.variants = shadow_enum
+    .variants
+    .into_iter()
+    .filter(|var| !ignored_variants.contains(&var.ident))
+    .collect();
+
   let required_option_tokens = required.then(|| quote! { options.push(oneof_required()); });
 
-  let output_tokens = quote! {
+  output_tokens.extend(quote! {
     impl ProtoOneof for #enum_name {
       fn fields() -> Vec<ProtoField> {
         vec![ #(#variants_tokens,)* ]
@@ -199,7 +231,58 @@ pub(crate) fn process_oneof_derive_shadow(
         }
       }
     }
+  });
+
+  let from_proto_impl = quote! {
+    impl From<#shadow_enum_ident> for #orig_enum_ident {
+      fn from(value: #shadow_enum_ident) -> Self {
+        match value {
+          #from_proto
+        }
+      }
+    }
   };
+
+  let into_proto_impl = quote! {
+    impl From<#orig_enum_ident> for #shadow_enum_ident {
+      fn from(value: #orig_enum_ident) -> Self {
+        match value {
+          #into_proto
+        }
+      }
+    }
+  };
+
+  output_tokens.extend(quote! {
+    #shadow_enum
+
+    #from_proto_impl
+    #into_proto_impl
+
+  });
+
+  output_tokens.extend(quote! {
+    impl ProtoOneof for #shadow_enum_ident {
+      fn fields() -> Vec<ProtoField> {
+        vec![ #(#variants_tokens,)* ]
+      }
+    }
+
+    impl #shadow_enum_ident {
+      #[track_caller]
+      pub fn to_oneof() -> Oneof {
+        let mut options: Vec<ProtoOption> = #options;
+
+        #required_option_tokens
+
+        Oneof {
+          name: #proto_name.into(),
+          fields: Self::fields(),
+          options,
+        }
+      }
+    }
+  });
 
   Ok(output_tokens)
 }
