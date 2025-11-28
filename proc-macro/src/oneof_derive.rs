@@ -241,6 +241,16 @@ pub(crate) fn process_oneof_derive_shadow(
         }
       }
     }
+
+    impl #orig_enum_ident {
+      pub fn from_proto(proto: #shadow_enum_ident) -> Self {
+        proto.into()
+      }
+
+      pub fn into_proto(self) -> #shadow_enum_ident {
+        self.into()
+      }
+    }
   };
 
   let into_proto_impl = quote! {
@@ -259,27 +269,16 @@ pub(crate) fn process_oneof_derive_shadow(
     #from_proto_impl
     #into_proto_impl
 
-  });
-
-  output_tokens.extend(quote! {
     impl ProtoOneof for #shadow_enum_ident {
       fn fields() -> Vec<ProtoField> {
-        vec![ #(#variants_tokens,)* ]
+        #orig_enum_ident::fields()
       }
     }
 
     impl #shadow_enum_ident {
       #[track_caller]
       pub fn to_oneof() -> Oneof {
-        let mut options: Vec<ProtoOption> = #options;
-
-        #required_option_tokens
-
-        Oneof {
-          name: #proto_name.into(),
-          fields: Self::fields(),
-          options,
-        }
+        #orig_enum_ident::to_oneof()
       }
     }
   });
