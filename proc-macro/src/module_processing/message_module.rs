@@ -60,7 +60,7 @@ pub(crate) fn process_message_from_module(
 
       let oneof_tags = &oneof.used_tags;
 
-      let oneof_attr: Attribute = parse_quote!(#[proto(oneof_tags(#(#oneof_tags),*))]);
+      let oneof_attr: Attribute = parse_quote!(#[proto(oneof(tags(#(#oneof_tags),*)))]);
 
       field.inject_attr(oneof_attr);
 

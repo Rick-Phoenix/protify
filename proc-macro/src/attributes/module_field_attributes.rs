@@ -27,12 +27,14 @@ pub fn process_module_field_attrs(
 
     for meta in args.inner {
       match meta {
-        Meta::NameValue(nameval) => {
-          if nameval.path.is_ident("tag") {
-            tag = Some(extract_i32(&nameval.value).unwrap());
-          } else if nameval.path.is_ident("name") {
-            name = Some(extract_string_lit(&nameval.value).unwrap());
-          }
+        Meta::NameValue(nv) => {
+          let ident = get_ident_or_continue!(nv.path);
+
+          match ident.as_str() {
+            "tag" => tag = Some(extract_i32(&nv.value).unwrap()),
+            "name" => name = Some(extract_string_lit(&nv.value).unwrap()),
+            _ => {}
+          };
         }
         Meta::Path(path) => {
           if path.is_ident("ignore") {
@@ -41,7 +43,14 @@ pub fn process_module_field_attrs(
             is_oneof = true;
           }
         }
-        Meta::List(_) => {}
+        Meta::List(list) => {
+          let ident = get_ident_or_continue!(list.path);
+
+          match ident.as_str() {
+            "oneof" => is_oneof = true,
+            _ => {}
+          };
+        }
       };
     }
   }

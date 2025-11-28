@@ -74,7 +74,7 @@ pub enum ProtoMapValues {
   String,
   Int32,
   Enum(Option<Path>),
-  Message(MessagePath),
+  Message(ItemPath),
 }
 
 impl ProtoMapValues {
@@ -145,7 +145,7 @@ impl FromStr for ProtoMapValues {
     let output = match s {
       "String" => Self::String,
       "i32" | "int32" => Self::Int32,
-      "message" => Self::Message(MessagePath::None),
+      "message" => Self::Message(ItemPath::None),
       "enum_" => Self::Enum(None),
       _ => return Err(format!("Unrecognized map value type {s}")),
     };
@@ -229,9 +229,9 @@ impl Parse for ProtoMap {
             let message_path = list.parse_args::<Path>()?;
 
             let path_type = if message_path.is_ident("suffixed") {
-              MessagePath::Suffixed
+              ItemPath::Suffixed
             } else {
-              MessagePath::Path(message_path)
+              ItemPath::Path(message_path)
             };
 
             ProtoMapValues::Message(path_type)
@@ -258,7 +258,7 @@ pub fn set_map_proto_type(
   let proto_values = &mut proto_map.values;
 
   if let ProtoMapValues::Message(path) = proto_values {
-    if !matches!(path, MessagePath::Path(_)) {
+    if !matches!(path, ItemPath::Path(_)) {
       let value_path = if let RustType::Map((_, v)) = &rust_type {
         v.clone()
       } else {
@@ -269,9 +269,9 @@ pub fn set_map_proto_type(
       };
 
       if path.is_suffixed() {
-        *path = MessagePath::Path(append_proto_ident(value_path));
+        *path = ItemPath::Path(append_proto_ident(value_path));
       } else {
-        *path = MessagePath::Path(value_path);
+        *path = ItemPath::Path(value_path);
       }
     }
   } else if let ProtoMapValues::Enum(path) = proto_values {

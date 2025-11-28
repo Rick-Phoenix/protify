@@ -55,6 +55,7 @@ pub fn process_field(
   if let ProtoType::Oneof {
     tags: oneof_tags,
     path: oneof_path,
+    ..
   } = &type_info.proto_type
   {
     let oneof_path_str = oneof_path.to_token_stream().to_string();
@@ -66,6 +67,10 @@ pub fn process_field(
       if i != oneof_tags.len() - 1 {
         oneof_tags_str.push_str(", ");
       }
+    }
+
+    if oneof_tags.is_empty() {
+      return Err(type_info.error("Oneof tags are empty"));
     }
 
     let oneof_attr: Attribute =

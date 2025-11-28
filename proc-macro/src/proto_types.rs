@@ -14,7 +14,11 @@ pub enum ProtoType {
   Int32,
   Map(ProtoMap),
   Sint32,
-  Oneof { path: Path, tags: Vec<i32> },
+  Oneof {
+    path: Path,
+    tags: Vec<i32>,
+    default: bool,
+  },
 }
 
 impl ProtoType {
@@ -103,7 +107,7 @@ impl ProtoType {
       ProtoType::Int32 => quote! { int32 },
       ProtoType::Map(map) => map.as_prost_attr_type(),
       ProtoType::Sint32 => quote! { sint32 },
-      ProtoType::Oneof { path, tags } => {
+      ProtoType::Oneof { .. } => {
         todo!()
       }
     }
@@ -116,23 +120,36 @@ pub fn extract_proto_type(
   field_ty: &Type,
 ) -> Result<ProtoType, Error> {
   let output = match field_type {
-    ProtoFieldKind::Oneof { path, tags } => {
-      let oneof_path = if let Some(path) = path {
-        path
-      } else {
-        rust_type
-          .inner_path()
-          .ok_or(spanned_error!(
+    ProtoFieldKind::Oneof(OneofInfo {
+      path,
+      tags,
+      default,
+    }) => {
+      let oneof_path = match &path {
+        ItemPath::Path(path) => path.clone(),
+
+        _ => {
+          let inner_type = rust_type
+            .inner_path()
+            .ok_or(spanned_error!(
             field_ty,
             // SHould refine this for oneofs
             "Failed to extract the inner type. Expected a type, or a type wrapped in Option or Vec"
           ))?
-          .clone()
+            .clone();
+
+          if path.is_suffixed() {
+            append_proto_ident(inner_type)
+          } else {
+            inner_type
+          }
+        }
       };
 
       ProtoType::Oneof {
         path: oneof_path,
         tags,
+        default,
       }
     }
     ProtoFieldKind::Enum(path) => {
@@ -152,7 +169,7 @@ pub fn extract_proto_type(
       ProtoType::Enum(enum_path)
     }
     ProtoFieldKind::Message(path) => {
-      let msg_path = if let MessagePath::Path(path) = path {
+      let msg_path = if let ItemPath::Path(path) = path {
         path
       } else {
         let inner_type = rust_type

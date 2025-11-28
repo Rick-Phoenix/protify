@@ -5,12 +5,9 @@ use crate::*;
 
 #[derive(Default, Debug, Clone)]
 pub enum ProtoFieldKind {
-  Message(MessagePath),
+  Message(ItemPath),
   Enum(Option<Path>),
-  Oneof {
-    path: Option<Path>,
-    tags: Vec<i32>,
-  },
+  Oneof(OneofInfo),
   Map(ProtoMap),
   Sint32,
   #[default]
@@ -18,14 +15,14 @@ pub enum ProtoFieldKind {
 }
 
 #[derive(Default, Debug, Clone)]
-pub enum MessagePath {
+pub enum ItemPath {
   Path(Path),
   Suffixed,
   #[default]
   None,
 }
 
-impl MessagePath {
+impl ItemPath {
   pub fn is_suffixed(&self) -> bool {
     matches!(self, Self::Suffixed)
   }
@@ -35,7 +32,7 @@ impl MessagePath {
   }
 }
 
-impl ToTokens for MessagePath {
+impl ToTokens for ItemPath {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
     match self {
       Self::Path(path) => tokens.extend(path.to_token_stream()),
@@ -92,6 +89,7 @@ pub fn process_derive_field_attrs(
   let mut is_ignored = false;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
+  let mut oneof_info: Option<OneofInfo> = None;
 
   for attr in attrs {
     if !attr.path().is_ident("proto") {
@@ -103,11 +101,7 @@ pub fn process_derive_field_attrs(
     for meta in args.inner {
       match meta {
         Meta::NameValue(nv) => {
-          let ident = if let Some(ident) = nv.path.get_ident() {
-            ident.to_string()
-          } else {
-            continue;
-          };
+          let ident = get_ident_or_continue!(nv.path);
 
           match ident.as_str() {
             "validate" => {
@@ -142,25 +136,37 @@ pub fn process_derive_field_attrs(
           };
         }
         Meta::List(list) => {
-          let ident = if let Some(ident) = list.path.get_ident() {
-            ident.to_string()
-          } else {
-            continue;
-          };
+          let ident = get_ident_or_continue!(list.path);
 
           match ident.as_str() {
-            "oneof_tags" => {
-              let tags = list.parse_args::<NumList>()?.list;
+            "oneof" => {
+              let mut info = list.parse_args::<OneofInfo>()?;
 
-              kind = ProtoFieldKind::Oneof { path: None, tags };
+              if let Some(previous) = &mut oneof_info {
+                let previous = std::mem::take(previous);
+
+                if previous.default {
+                  info.default = true;
+                }
+
+                if !previous.path.is_none() {
+                  info.path = previous.path;
+                }
+
+                info.tags.extend(previous.tags);
+              } else {
+                oneof_info = Some(info.clone());
+              }
+
+              kind = ProtoFieldKind::Oneof(info);
             }
             "message" => {
               let message_path = list.parse_args::<Path>()?;
 
               let path_type = if message_path.is_ident("suffixed") {
-                MessagePath::Suffixed
+                ItemPath::Suffixed
               } else {
-                MessagePath::Path(message_path)
+                ItemPath::Path(message_path)
               };
 
               kind = ProtoFieldKind::Message(path_type);
@@ -185,22 +191,13 @@ pub fn process_derive_field_attrs(
           };
         }
         Meta::Path(path) => {
-          let ident = if let Some(ident) = path.get_ident() {
-            ident.to_string()
-          } else {
-            continue;
-          };
+          let ident = get_ident_or_continue!(path);
 
           match ident.as_str() {
             "ignore" => is_ignored = true,
-            "oneof" => {
-              kind = ProtoFieldKind::Oneof {
-                path: None,
-                tags: vec![],
-              }
-            }
+            "oneof" => kind = ProtoFieldKind::Oneof(OneofInfo::default()),
             "enum_" => kind = ProtoFieldKind::Enum(None),
-            "message" => kind = ProtoFieldKind::Message(MessagePath::None),
+            "message" => kind = ProtoFieldKind::Message(ItemPath::None),
             "sint32" => kind = ProtoFieldKind::Sint32,
 
             _ => {}

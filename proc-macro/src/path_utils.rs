@@ -94,18 +94,11 @@ pub fn extract_type_path_mut(ty: &mut Type) -> Result<&mut Path, Error> {
 }
 
 pub fn extract_oneof_ident(ty: &Type) -> Result<Ident, Error> {
-  let path = extract_type_path(ty)?;
+  let rust_type = RustType::from_type(ty)?;
 
-  let path_wrapper = PathWrapper::new(Cow::Borrowed(path));
-  let last_segment = path_wrapper.last_segment();
-
-  if last_segment.ident() != "Option" {
-    return Err(spanned_error!(ty, "Oneofs must be wrapped in Option"));
-  }
-
-  last_segment
-    .first_argument()
-    .ok_or(spanned_error!(ty, "Could not find argument to Option"))?
-    .require_ident()
+  rust_type
+    .inner_path()
+    .and_then(|path| path.get_ident())
     .cloned()
+    .ok_or(spanned_error!(ty, "Failed to find oneof type"))
 }

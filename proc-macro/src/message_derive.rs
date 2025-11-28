@@ -63,7 +63,7 @@ pub(crate) fn process_message_derive_shadow(
     let field_attrs_into_proto = field_attrs.into_proto.clone();
     let is_enum = field_attrs.kind.is_enum();
 
-    let src_field_type = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone())?;
+    let type_info = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone())?;
 
     if field_attrs.is_ignored {
       ignored_fields.push(src_field.ident.clone().unwrap());
@@ -71,7 +71,7 @@ pub(crate) fn process_message_derive_shadow(
       let field_tokens = process_field(
         &mut FieldOrVariant::Field(dst_field),
         field_attrs.clone(),
-        &src_field_type,
+        &type_info,
         OutputType::Change,
       )?;
 
@@ -88,7 +88,7 @@ pub(crate) fn process_message_derive_shadow(
             }
           }
         } else {
-          let call = src_field_type.rust_type.into_proto();
+          let call = type_info.rust_type.into_proto();
 
           quote! { value.#src_field_ident.#call }
         };
@@ -112,7 +112,7 @@ pub(crate) fn process_message_derive_shadow(
       } else if field_attrs.is_ignored {
         quote! { Default::default() }
       } else {
-        let call = src_field_type.from_proto();
+        let call = type_info.from_proto();
 
         quote! { value.#src_field_ident.#call }
       };

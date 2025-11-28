@@ -23,15 +23,16 @@ use syn::{
 use type_extraction::*;
 
 use crate::{
-  enum_derive::*, message_derive::*, module_processing::*, oneof_derive::*, path_utils::*,
-  process_field::*, prost_attrs::*, proto_map::*, proto_types::*, rust_type::*, schema_impls::*,
-  type_extraction::*,
+  enum_derive::*, message_derive::*, module_processing::*, oneof_derive::*, oneof_info::*,
+  path_utils::*, process_field::*, prost_attrs::*, proto_map::*, proto_types::*, rust_type::*,
+  schema_impls::*, type_extraction::*,
 };
 
 mod enum_derive;
 mod message_derive;
 mod module_processing;
 mod oneof_derive;
+mod oneof_info;
 mod path_utils;
 mod process_field;
 mod prost_attrs;

@@ -142,21 +142,13 @@ pub(crate) fn process_oneof_derive_shadow(
   shadow_enum.attrs.push(prost_derive);
 
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
+  let mut ignored_variants: Vec<Ident> = Vec::new();
 
   let orig_enum_variants = variants.iter_mut();
   let shadow_enum_variants = shadow_enum.variants.iter_mut();
 
   for (src_variant, dst_variant) in orig_enum_variants.zip(shadow_enum_variants) {
     let field_attrs = process_derive_field_attrs(&src_variant.ident, &src_variant.attrs)?;
-
-    let FieldAttrs {
-      tag,
-      validator,
-      options,
-      name,
-      kind,
-      ..
-    } = field_attrs;
 
     let variant_type = if let Fields::Unnamed(variant_fields) = &src_variant.fields {
       if variant_fields.unnamed.len() != 1 {
@@ -168,38 +160,20 @@ pub(crate) fn process_oneof_derive_shadow(
       panic!("Enum can only have one unnamed field")
     };
 
-    let type_info = TypeInfo::from_type(&variant_type, kind)?;
+    let type_info = TypeInfo::from_type(&variant_type, field_attrs.kind.clone())?;
 
-    if !matches!(type_info.rust_type, RustType::Normal(_)) {
-      return Err(spanned_error!(variant_type, "Unsupported enum variant. If you want to use a custom type, you must use the proxied variant"));
-    };
-
-    let proto_type = &type_info.proto_type;
-
-    let prost_attr_tokens =
-      ProstAttrs::from_type_info(&type_info.rust_type, proto_type.clone(), tag);
-
-    let prost_attr: Attribute = parse_quote!(#prost_attr_tokens);
-
-    dst_variant.attrs.push(prost_attr);
-
-    let validator_tokens = if let Some(validator) = validator {
-      type_info.validator_tokens(&validator, &proto_type)
+    if field_attrs.is_ignored {
+      ignored_variants.push(src_variant.ident.clone());
     } else {
-      quote! { None }
-    };
+      let variant_proto_tokens = process_field(
+        &mut FieldOrVariant::Variant(dst_variant),
+        field_attrs,
+        &type_info,
+        OutputType::Change,
+      )?;
 
-    let field_type_tokens = type_info.as_proto_type_trait_expr(&proto_type);
-
-    variants_tokens.push(quote! {
-      ProtoField {
-        name: #name.to_string(),
-        options: #options,
-        type_: #field_type_tokens,
-        validator: #validator_tokens,
-        tag: #tag,
-      }
-    });
+      variants_tokens.push(variant_proto_tokens);
+    }
   }
 
   let required_option_tokens = required.then(|| quote! { options.push(oneof_required()); });

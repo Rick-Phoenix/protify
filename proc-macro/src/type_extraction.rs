@@ -15,15 +15,24 @@ impl TypeInfo {
   pub fn from_proto(&self) -> TokenStream2 {
     let conversion_call = self.proto_type.default_from_proto();
 
+    if let ProtoType::Oneof {
+      default: true,
+      path,
+      ..
+    } = &self.proto_type
+    {
+      return quote! { unwrap_or_default() };
+    }
+
     match &self.rust_type {
       RustType::Option(_) => quote! { map(|v| v.#conversion_call) },
       RustType::Boxed(_) => quote! { map(|v| Box::new((*v).into())) },
       RustType::Map(_) => {
         let value_conversion = if let ProtoType::Map(map) = &self.proto_type && map.has_enum_values() {
-          quote! { try_into().unwrap_or_default() }
-        } else {
-          quote! { into() }
-        };
+            quote! { try_into().unwrap_or_default() }
+          } else {
+            quote! { into() }
+          };
 
         quote! { into_iter().map(|(k, v)| (k, v.#value_conversion)).collect() }
       }

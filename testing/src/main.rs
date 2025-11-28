@@ -50,9 +50,14 @@ mod inner {
   #[proto_oneof]
   #[proto(direct)]
   enum PseudoOneof {
-    // #[proto(tag = 12, validate = |v| v)]
     A(String),
     B(i32),
+  }
+
+  impl Default for PseudoOneof {
+    fn default() -> Self {
+      Self::B(0)
+    }
   }
 
   fn convert(map: HashMap<String, NestedProto>) -> HashMap<String, Nested> {
@@ -88,8 +93,8 @@ mod inner {
     #[proto(message(suffixed), from_proto = |v| v.map(Into::into))]
     nested: Option<Nested>,
 
-    #[proto(oneof)]
-    oneof: Option<PseudoOneof>,
+    #[proto(oneof(default))]
+    oneof: PseudoOneof,
   }
 
   fn from_proto(input: NestedProto) -> Nested {
