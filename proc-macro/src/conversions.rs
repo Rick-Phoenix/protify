@@ -46,7 +46,7 @@ pub fn field_into_proto_expression(info: FieldConversion) -> Result<TokenStream2
         }
       }
     }
-  } else if let ProtoType::Oneof { default: true, .. } = &type_info.proto_type {
+  } else if let ProtoType::Oneof { default: true, .. } = &type_info.proto_field {
     quote! { Some(#base_ident.into()) }
   } else {
     type_info.into_proto(base_ident)

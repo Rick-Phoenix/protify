@@ -52,11 +52,11 @@ pub fn process_field(
     ..
   } = field_attrs;
 
-  if let ProtoType::Oneof {
+  if let ProtoField::Oneof {
     tags: oneof_tags,
     path: oneof_path,
     ..
-  } = &type_info.proto_type
+  } = &type_info.proto_field
   {
     let oneof_path_str = oneof_path.to_token_stream().to_string();
     let mut oneof_tags_str = String::new();
@@ -88,19 +88,13 @@ pub fn process_field(
     });
   }
 
-  let proto_type = &type_info.proto_type;
-
   if let OutputType::Change = output_type {
-    let proto_output_type_inner = proto_type.output_proto_type();
+    let proto_output_type_inner = type_info.proto_field.output_proto_type();
 
     // Get output type
     let proto_output_type_outer: Type = match &type_info.rust_type {
-      RustType::Option(_) => parse_quote! { Option<#proto_output_type_inner> },
-      RustType::BoxedMsg(_) => parse_quote! { Option<Box<#proto_output_type_inner>> },
-      RustType::Map(_) => parse_quote!( #proto_output_type_inner ),
-      RustType::Vec(_) => parse_quote! { Vec<#proto_output_type_inner> },
-      RustType::Normal(_) => parse_quote!( #proto_output_type_inner ),
-      RustType::BoxedOneofVariant(path) => parse_quote! { Box<#proto_output_type_inner> },
+      RustType::BoxedMsg(_) => parse_quote! { Option<#proto_output_type_inner> },
+      _ => parse_quote! { #proto_output_type_inner },
     };
 
     field.change_type(proto_output_type_outer);
@@ -112,14 +106,13 @@ pub fn process_field(
 
   field.inject_attr(field_prost_attr);
 
-  // Use new validator but with cardinality info
   let validator_tokens = if let Some(validator) = validator {
-    type_info.validator_tokens(&validator, &proto_type)
+    type_info.validator_tokens(&validator)
   } else {
     quote! { None }
   };
 
-  let field_type_tokens = type_info.as_proto_type_trait_expr(&proto_type);
+  let field_type_tokens = type_info.proto_field.as_proto_type_trait_expr();
 
   let output = match field {
     FieldOrVariant::Field(_) => {

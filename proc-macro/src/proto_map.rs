@@ -1,3 +1,5 @@
+use syn::spanned::Spanned;
+
 use crate::*;
 
 #[derive(Debug, Clone)]
@@ -78,6 +80,36 @@ pub enum ProtoMapValues {
 }
 
 impl ProtoMapValues {
+  pub fn with_path(self, fallback: Option<&Path>) -> Result<ProtoType, Error> {
+    let output = match self {
+      ProtoMapValues::String => ProtoType::String,
+      ProtoMapValues::Int32 => ProtoType::Int32,
+      ProtoMapValues::Enum(path) => {
+        let path = if let Some(path) = path {
+          path
+        } else {
+          fallback
+            .ok_or(error!(Span::call_site(), "Failed to get path"))?
+            .clone()
+        };
+
+        ProtoType::Enum(path)
+      }
+      ProtoMapValues::Message(item_path) => {
+        let path = item_path
+          .get_path_or_fallback(fallback)
+          .expect("Failed to get message path");
+
+        ProtoType::Message {
+          path,
+          is_boxed: false,
+        }
+      }
+    };
+
+    Ok(output)
+  }
+
   pub fn validator_target_type(&self) -> TokenStream2 {
     match self {
       ProtoMapValues::String => quote! { String },
@@ -168,18 +200,10 @@ impl Display for ProtoMapValues {
 #[derive(Debug, Clone)]
 pub struct ProtoMap {
   pub keys: ProtoMapKeys,
-  pub values: ProtoMapValues,
+  pub values: ProtoType,
 }
 
 impl ProtoMap {
-  pub fn has_message_values(&self) -> bool {
-    matches!(self.values, ProtoMapValues::Message(_))
-  }
-
-  pub fn has_enum_values(&self) -> bool {
-    matches!(self.values, ProtoMapValues::Enum(_))
-  }
-
   pub fn validator_target_type(&self) -> TokenStream2 {
     let keys = self.keys.validator_target_type();
     let values = self.values.validator_target_type();
@@ -195,9 +219,7 @@ impl ProtoMap {
   }
 
   pub fn as_prost_attr_type(&self) -> TokenStream2 {
-    let map_str = format!("{}, {}", self.keys, self.values);
-
-    quote! { map = #map_str }
+    quote! {}
   }
 
   pub fn as_proto_type_trait_target(&self) -> TokenStream2 {
@@ -208,86 +230,49 @@ impl ProtoMap {
   }
 }
 
-impl Parse for ProtoMap {
-  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
-
-    if metas.len() != 2 {
-      return Err(input.error("Expected a list of two items"));
-    }
-
-    let keys_path = metas.first().unwrap().require_path_only()?;
-    let keys = ProtoMapKeys::from_path(keys_path)?;
-
-    let values = match metas.last().unwrap() {
-      Meta::Path(path) => ProtoMapValues::from_path(path)?,
-      Meta::List(list) => {
-        let list_ident = ident_string!(list.path);
-
-        match list_ident.as_str() {
-          "message" => {
-            let message_path = list.parse_args::<Path>()?;
-
-            let path_type = if message_path.is_ident("suffixed") {
-              ItemPath::Suffixed
-            } else {
-              ItemPath::Path(message_path)
-            };
-
-            ProtoMapValues::Message(path_type)
-          }
-          "enum_" => {
-            let path = list.parse_args::<Path>()?;
-            ProtoMapValues::Enum(Some(path))
-          }
-          _ => return Err(input.error("Unrecognized value list")),
-        }
-      }
-      _ => return Err(input.error("Expected the values to be a list or path")),
-    };
-
-    Ok(Self { keys, values })
-  }
-}
-
-#[allow(clippy::collapsible_if)]
-pub fn set_map_proto_type(
-  mut proto_map: ProtoMap,
+pub fn parse_map_with_context(
+  input: syn::parse::ParseStream,
   rust_type: &RustType,
-) -> Result<ProtoMap, Error> {
-  let proto_values = &mut proto_map.values;
+) -> syn::Result<ProtoMap> {
+  let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
 
-  if let ProtoMapValues::Message(path) = proto_values {
-    if !matches!(path, ItemPath::Path(_)) {
-      let value_path = if let RustType::Map((_, v)) = &rust_type {
-        v.clone()
-      } else {
-        return Err(spanned_error!(
-          path,
-          "Could not infer the path to the message value, please set it manually"
-        ));
-      };
-
-      if path.is_suffixed() {
-        *path = ItemPath::Path(append_proto_ident(value_path));
-      } else {
-        *path = ItemPath::Path(value_path);
-      }
-    }
-  } else if let ProtoMapValues::Enum(path) = proto_values {
-    if path.is_none() {
-      let v = if let RustType::Map((_, v)) = &rust_type {
-        v
-      } else {
-        return Err(spanned_error!(
-          path,
-          "Could not infer the path to the enum value, please set it manually"
-        ));
-      };
-
-      *path = Some(v.clone());
-    }
+  if metas.len() != 2 {
+    return Err(input.error("Expected a list of two items"));
   }
 
-  Ok(proto_map)
+  let keys_path = metas.first().unwrap().require_path_only()?;
+  let keys = ProtoMapKeys::from_path(keys_path)?;
+
+  let values = match metas.last().take().unwrap() {
+    Meta::Path(path) => {
+      let ident = path.require_ident()?.to_string();
+
+      let span = path.span();
+
+      let fallback = if let RustType::Map((_, v)) = rust_type {
+        Some(v)
+      } else {
+        return Err(input.error("Not a map type"));
+      };
+
+      ProtoType::from_ident(&ident, span, fallback)?
+        .ok_or(input.error("Unrecognized map keys type"))?
+    }
+    Meta::List(list) => {
+      let list_ident = ident_string!(list.path);
+
+      let fallback = if let RustType::Map((_, v)) = rust_type {
+        Some(v)
+      } else {
+        return Err(input.error("Not a map type"));
+      };
+
+      ProtoType::from_meta_list(&list_ident, list.clone(), fallback)
+        .map_err(|e| input.error(e))?
+        .ok_or(input.error("Unrecognized map values type"))?
+    }
+    _ => return Err(input.error("Expected the values to be a list or path")),
+  };
+
+  Ok(ProtoMap { keys, values })
 }

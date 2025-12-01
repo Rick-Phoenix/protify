@@ -17,7 +17,7 @@ impl<'a> ProstAttrs<'a> {
     };
 
     Self {
-      proto_type: &type_info.proto_type,
+      proto_type: &type_info.proto_field,
       cardinality,
       tag,
     }

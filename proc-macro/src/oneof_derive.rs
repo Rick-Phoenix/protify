@@ -34,7 +34,11 @@ pub(crate) fn process_oneof_derive_shadow(
       panic!("Enum can only have one unnamed field")
     };
 
-    let type_info = TypeInfo::from_type(&variant_type, field_attrs.kind.clone(), orig_enum_ident)?;
+    let type_info = TypeInfo::from_type(
+      &variant_type,
+      field_attrs.proto_field.clone(),
+      orig_enum_ident,
+    )?;
 
     if field_attrs.is_ignored {
       ignored_variants.push(src_variant.ident.clone());
@@ -177,7 +181,8 @@ pub(crate) fn process_oneof_derive_direct(
       panic!("Enum can only have one unnamed field")
     };
 
-    let type_info = TypeInfo::from_type(&variant_type, field_attrs.kind.clone(), &item.ident)?;
+    let type_info =
+      TypeInfo::from_type(&variant_type, field_attrs.proto_field.clone(), &item.ident)?;
 
     if !matches!(type_info.rust_type, RustType::Normal(_)) {
       return Err(spanned_error!(variant_type, "Unsupported enum variant. If you want to use a custom type, you must use the proxied variant"));

@@ -7,31 +7,15 @@ pub struct MessageInfo {
 }
 
 impl MessageInfo {
-  pub fn to_proto_type(&self, rust_type: &RustType) -> Result<ProtoType, Error> {
-    let Self { path, boxed } = self;
+  pub fn with_path(&mut self, fallback: Option<&Path>) -> Result<(), Error> {
+    self.path = ItemPath::Path(
+      self
+        .path
+        .get_path_or_fallback(fallback)
+        .expect("Failed to infer the path to the message, please set it manually"),
+    );
 
-    let msg_path = if let ItemPath::Path(path) = path {
-      path.clone()
-    } else {
-      let inner_type = rust_type
-        .inner_path()
-        .ok_or(error!(
-          Span::call_site(),
-          "Failed to extract the inner type. Expected a type, or a type wrapped in Option or Vec"
-        ))?
-        .clone();
-
-      if path.is_suffixed() {
-        append_proto_ident(inner_type)
-      } else {
-        inner_type
-      }
-    };
-
-    Ok(ProtoType::Message {
-      path: msg_path,
-      boxed: *boxed,
-    })
+    Ok(())
   }
 }
 

@@ -24,8 +24,11 @@ pub(crate) fn process_message_derive_shadow(
 
     let field_attrs = process_derive_field_attrs(src_field_ident, &src_field.attrs)?;
 
-    let type_info =
-      TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone(), orig_struct_ident)?;
+    let type_info = TypeInfo::from_type(
+      &src_field.ty,
+      field_attrs.proto_field.clone(),
+      orig_struct_ident,
+    )?;
 
     if field_attrs.is_ignored {
       ignored_fields.push(src_field.ident.clone().unwrap());
@@ -147,7 +150,8 @@ pub(crate) fn process_message_derive_direct(
       ));
     }
 
-    let type_info = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone(), &item.ident)?;
+    let type_info =
+      TypeInfo::from_type(&src_field.ty, field_attrs.proto_field.clone(), &item.ident)?;
 
     let field_tokens = process_field(
       &mut FieldOrVariant::Field(src_field),

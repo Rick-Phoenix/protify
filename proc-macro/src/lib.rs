@@ -19,15 +19,16 @@ use syn::{
   token,
   token::{Brace, Struct},
   Attribute, Data, DeriveInput, Error, Expr, ExprCall, ExprClosure, Field, Fields, GenericArgument,
-  Generics, Ident, Item, ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, Path,
-  PathArguments, PathSegment, RangeLimits, Token, Type, Variant, Visibility,
+  Generics, Ident, Item, ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList,
+  ParseStream, Path, PathArguments, PathSegment, RangeLimits, Token, Type, Variant, Visibility,
 };
 use type_extraction::*;
 
 use crate::{
   conversions::*, enum_derive::*, item_cloners::*, message_derive::*, message_schema_impl::*,
   module_processing::*, oneof_derive::*, oneof_info::*, oneof_schema_impl::*, path_utils::*,
-  process_field::*, prost_attrs::*, proto_map::*, proto_types::*, rust_type::*, type_extraction::*,
+  process_field::*, prost_attrs::*, proto_field::*, proto_map::*, proto_types::*, rust_type::*,
+  type_extraction::*,
 };
 
 mod conversions;
@@ -42,6 +43,7 @@ mod oneof_schema_impl;
 mod path_utils;
 mod process_field;
 mod prost_attrs;
+mod proto_field;
 mod proto_map;
 mod proto_types;
 mod rust_type;

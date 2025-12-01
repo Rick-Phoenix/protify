@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use syn::spanned::Spanned;
 
 use crate::*;
@@ -10,22 +8,100 @@ pub enum ProtoType {
   Bool,
   Bytes,
   Enum(Path),
-  Message {
-    path: Path,
-    boxed: bool,
-  },
+  Message { path: Path, is_boxed: bool },
   Int32,
-  Map(ProtoMap),
   Sint32,
-  Oneof {
-    path: Path,
-    tags: Vec<i32>,
-    default: bool,
-    is_proxied: bool,
-  },
 }
 
 impl ProtoType {
+  pub fn from_meta(meta: Meta, fallback: Option<&Path>) -> Result<Option<Self>, Error> {
+    let output = match meta {
+      Meta::List(list) => {
+        let ident_str = list.path.require_ident()?.to_string();
+
+        Self::from_meta_list(&ident_str, list, fallback)?
+      }
+      Meta::Path(path) => {
+        let ident_str = path.require_ident()?.to_string();
+        let span = path.span();
+
+        Self::from_ident(&ident_str, span, fallback)?
+      }
+      _ => return Err(spanned_error!(meta, "Expected a path or a metalist")),
+    };
+
+    Ok(output)
+  }
+
+  pub fn from_meta_list(
+    ident_str: &str,
+    list: MetaList,
+    fallback: Option<&Path>,
+  ) -> Result<Option<Self>, Error> {
+    let output = match ident_str {
+      "message" => {
+        let msg_info = list.parse_args::<MessageInfo>()?;
+
+        let path = msg_info
+          .path
+          .get_path_or_fallback(fallback)
+          .ok_or(spanned_error!(
+            list,
+            "Failed to infer the message path. Please set it manually"
+          ))?;
+
+        Self::Message {
+          path,
+          is_boxed: msg_info.boxed,
+        }
+      }
+      "enum_" => {
+        let path = list.parse_args::<Path>()?;
+
+        Self::Enum(path)
+      }
+      _ => return Ok(None),
+    };
+
+    Ok(Some(output))
+  }
+
+  pub fn from_ident(
+    ident_str: &str,
+    span: Span,
+    fallback: Option<&Path>,
+  ) -> Result<Option<Self>, Error> {
+    let output = match ident_str {
+      "string" => Self::String,
+      "message" => {
+        let path = fallback
+          .ok_or(error!(
+            span,
+            "Failed to infer the path to the message type. Please set it manually"
+          ))?
+          .clone();
+
+        Self::Message {
+          path,
+          is_boxed: false,
+        }
+      }
+      "enum_" => {
+        let path = fallback
+          .ok_or(error!(
+            span,
+            "Failed to infer the path to the enum type. Please set it manually"
+          ))?
+          .clone();
+
+        Self::Enum(path)
+      }
+      _ => todo!(),
+    };
+
+    Ok(Some(output))
+  }
+
   pub fn from_primitive(path: &Path) -> Result<Self, Error> {
     let ident = path.require_ident()?;
     let ident_str = ident.to_string();
@@ -51,17 +127,8 @@ impl ProtoType {
   pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
     match self {
       ProtoType::Enum(_) => quote! { #base_ident.try_into().unwrap_or_default() },
-      ProtoType::Message { boxed: true, .. } => quote! { Box::new((*#base_ident).into()) },
-      ProtoType::Oneof {
-        default: true,
-        is_proxied,
-        ..
-      } => {
-        if *is_proxied {
-          quote! { #base_ident.unwrap_or_default().into() }
-        } else {
-          quote! { #base_ident.unwrap_or_default() }
-        }
+      ProtoType::Message { is_boxed: true, .. } => {
+        quote! { Box::new((*#base_ident).into()) }
       }
       _ => quote! { #base_ident.into() },
     }
@@ -75,9 +142,7 @@ impl ProtoType {
       ProtoType::Enum(_) => quote! { GenericProtoEnum },
       ProtoType::Message { .. } => quote! { GenericMessage },
       ProtoType::Int32 => quote! { i32 },
-      ProtoType::Map(map) => map.validator_target_type(),
       ProtoType::Sint32 => quote! { Sint32 },
-      ProtoType::Oneof { .. } => quote! {},
     }
   }
 
@@ -89,9 +154,7 @@ impl ProtoType {
       ProtoType::Enum(path) => quote! { #path },
       ProtoType::Message { path, .. } => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
-      ProtoType::Map(map) => map.as_proto_type_trait_target(),
       ProtoType::Sint32 => quote! { i32 },
-      ProtoType::Oneof { .. } => quote! {},
     }
   }
 
@@ -101,11 +164,15 @@ impl ProtoType {
       ProtoType::Bool => quote! { bool },
       ProtoType::Bytes => quote! { Vec<u8> },
       ProtoType::Enum(_) => quote! { i32 },
-      ProtoType::Message { path, .. } => path.to_token_stream(),
+      ProtoType::Message { path, is_boxed } => {
+        if *is_boxed {
+          quote! { Box<#path> }
+        } else {
+          path.to_token_stream()
+        }
+      }
       ProtoType::Int32 => quote! { i32 },
-      ProtoType::Map(map) => map.output_proto_type(),
       ProtoType::Sint32 => quote! { i32 },
-      ProtoType::Oneof { path, .. } => path.to_token_stream(),
     }
   }
 
@@ -121,161 +188,7 @@ impl ProtoType {
       }
       ProtoType::Message { .. } => quote! { message },
       ProtoType::Int32 => quote! { int32 },
-      ProtoType::Map(map) => map.as_prost_attr_type(),
       ProtoType::Sint32 => quote! { sint32 },
-      ProtoType::Oneof { .. } => {
-        todo!()
-      }
     }
   }
-
-  pub fn from_kind_primitive(kind: &ProtoFieldKind) -> Option<Self> {
-    let output = match kind {
-      ProtoFieldKind::Sint32 => Self::Sint32,
-      _ => return None,
-    };
-
-    Some(output)
-  }
-}
-
-pub fn extract_proto_type(
-  rust_type: &RustType,
-  field_type: ProtoFieldKind,
-  field_ty: &Type,
-) -> Result<ProtoType, Error> {
-  let output = match field_type {
-    ProtoFieldKind::Oneof(OneofInfo {
-      path,
-      tags,
-      default,
-    }) => {
-      let oneof_path = match &path {
-        ItemPath::Path(path) => path.clone(),
-
-        _ => {
-          let inner_type = rust_type
-            .inner_path()
-            .ok_or(spanned_error!(
-            field_ty,
-            // SHould refine this for oneofs
-            "Failed to extract the inner type. Expected a type, or a type wrapped in Option or Vec"
-          ))?
-            .clone();
-
-          if path.is_suffixed() {
-            append_proto_ident(inner_type)
-          } else {
-            inner_type
-          }
-        }
-      };
-
-      ProtoType::Oneof {
-        path: oneof_path,
-        tags,
-        default,
-        is_proxied: !path.is_none(),
-      }
-    }
-    ProtoFieldKind::Enum(path) => {
-      // Handle the errors here and just say it can't be used for a map
-      let enum_path = if let Some(path) = path {
-        path
-      } else {
-        rust_type
-          .inner_path()
-          .ok_or(spanned_error!(
-            field_ty,
-            "Failed to extract the inner type. Expected a type, or a type wrapped in Option or Vec"
-          ))?
-          .clone()
-      };
-
-      ProtoType::Enum(enum_path)
-    }
-    ProtoFieldKind::Message(MessageInfo { path, boxed }) => {
-      let msg_path = if let ItemPath::Path(path) = path {
-        path
-      } else {
-        let inner_type = rust_type
-          .inner_path()
-          .ok_or(spanned_error!(
-            field_ty,
-            "Failed to extract the inner type. Expected a type, or a type wrapped in Option or Vec"
-          ))?
-          .clone();
-
-        if path.is_suffixed() {
-          append_proto_ident(inner_type)
-        } else {
-          inner_type
-        }
-      };
-
-      ProtoType::Message {
-        path: msg_path,
-        boxed,
-      }
-    }
-    ProtoFieldKind::Repeated(inner) => {
-      let error_msg = "Expected a Vec";
-
-      if let Some(primitive) = ProtoType::from_kind_primitive(&inner) {
-        primitive
-      } else if let ProtoFieldKind::Message(MessageInfo { path, .. }) = &*inner {
-        let msg_path = if let ItemPath::Path(path) = &path {
-          path.clone()
-        } else {
-          let inferred_path = rust_type
-            .inner_path()
-            .ok_or(spanned_error!(field_ty, error_msg))?
-            .clone();
-
-          if path.is_suffixed() {
-            append_proto_ident(inferred_path)
-          } else {
-            inferred_path
-          }
-        };
-
-        ProtoType::Message {
-          path: msg_path,
-          boxed: false,
-        }
-      } else if let ProtoFieldKind::Enum(path) = &*inner {
-        let enum_path = if let Some(path) = path {
-          path
-        } else {
-          rust_type
-            .inner_path()
-            .ok_or(spanned_error!(field_ty, error_msg))?
-        };
-
-        ProtoType::Enum(enum_path.clone())
-      } else {
-        return Err(spanned_error!(field_ty, "Failed to infer repeated type"));
-      }
-    }
-    ProtoFieldKind::Map(proto_map) => ProtoType::Map(set_map_proto_type(proto_map, rust_type)?),
-    // No manually set type, let's try to infer it as a primitive
-    // maybe use the larger error for any of these
-    _ => match rust_type {
-      RustType::Option(path) => ProtoType::from_primitive(path)?,
-      RustType::BoxedMsg(path) => ProtoType::from_primitive(path)?,
-      RustType::Vec(path) => ProtoType::from_primitive(path)?,
-      RustType::Normal(path) => ProtoType::from_primitive(path)?,
-      RustType::BoxedOneofVariant(path) => ProtoType::from_primitive(path)?,
-      RustType::Map((k, v)) => {
-        let keys = ProtoMapKeys::from_path(k)?;
-        let values = ProtoMapValues::from_path(v).map_err(|_| spanned_error!(v, format!("Unrecognized proto map value type {}. If you meant to use an enum or a message, use the attribute", v.to_token_stream())))?;
-
-        let proto_map = ProtoMap { keys, values };
-
-        ProtoType::Map(set_map_proto_type(proto_map, rust_type)?)
-      }
-    },
-  };
-
-  Ok(output)
 }

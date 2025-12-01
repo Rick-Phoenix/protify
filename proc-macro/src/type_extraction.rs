@@ -8,17 +8,17 @@ use crate::*;
 pub struct TypeInfo {
   pub rust_type: RustType,
   pub span: Span,
-  pub proto_type: ProtoType,
+  pub proto_field: ProtoField,
 }
 
 impl TypeInfo {
   pub fn into_proto(&self, base_ident: TokenStream2) -> TokenStream2 {
-    if let ProtoType::Oneof {
+    if let ProtoField::Oneof {
       default: true,
       path,
       is_proxied,
       ..
-    } = &self.proto_type
+    } = &self.proto_field
     {
       if *is_proxied {
         return quote! { #base_ident.into().into() };
@@ -40,12 +40,12 @@ impl TypeInfo {
   pub fn from_proto(&self, base_ident: TokenStream2) -> TokenStream2 {
     let conversion_call = match &self.rust_type {
       RustType::Normal(_) | RustType::BoxedOneofVariant(_) => {
-        self.proto_type.default_from_proto(&base_ident)
+        self.proto_field.default_from_proto(&base_ident)
       }
       _ => {
         let inner_base_ident = quote! { v };
 
-        self.proto_type.default_from_proto(&inner_base_ident)
+        self.proto_field.default_from_proto(&inner_base_ident)
       }
     };
 
@@ -53,11 +53,11 @@ impl TypeInfo {
       RustType::Option(_) => quote! { #base_ident.map(|v| #conversion_call) },
       RustType::BoxedMsg(_) => quote! { #base_ident.map(|v| Box::new((*v).into())) },
       RustType::Map(_) => {
-        let value_conversion = if let ProtoType::Map(map) = &self.proto_type && map.has_enum_values() {
-            quote! { try_into().unwrap_or_default() }
-          } else {
-            quote! { into() }
-          };
+        let value_conversion = if let ProtoField::Map(map) = &self.proto_field && let ProtoType::Enum(_) = &map.values {
+          quote! { try_into().unwrap_or_default() }
+        } else {
+          quote! { into() }
+        };
 
         quote! { #base_ident.into_iter().map(|(k, v)| (k, v.#value_conversion)).collect() }
       }
@@ -66,16 +66,8 @@ impl TypeInfo {
     }
   }
 
-  pub fn validator_tokens(
-    &self,
-    validator: &ValidatorExpr,
-    proto_type: &ProtoType,
-  ) -> TokenStream2 {
-    let mut target_type = proto_type.validator_target_type();
-
-    if matches!(self.rust_type, RustType::Vec(_)) {
-      target_type = quote! { Vec<#target_type> };
-    }
+  pub fn validator_tokens(&self, validator: &ValidatorExpr) -> TokenStream2 {
+    let target_type = self.proto_field.output_proto_type();
 
     match validator {
       ValidatorExpr::Call(call) => {
@@ -115,22 +107,13 @@ impl TypeInfo {
     }
   }
 
-  pub fn from_type(
-    ty: &Type,
-    field_kind: ProtoFieldKind,
-    item_ident: &Ident,
-  ) -> Result<Self, Error> {
-    let path = extract_type_path(ty)?;
-    let rust_type = RustType::from_path(path, item_ident);
-
-    let proto_type = extract_proto_type(&rust_type, field_kind, ty)?;
-
+  pub fn from_type(rust_type: RustType, proto_field: ProtoField, ty: &Type) -> Result<Self, Error> {
     let span = ty.span();
 
     Ok(Self {
       rust_type,
       span,
-      proto_type,
+      proto_field,
     })
   }
 
