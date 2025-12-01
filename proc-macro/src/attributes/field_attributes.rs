@@ -110,6 +110,9 @@ pub fn process_derive_field_attrs(
           let ident = get_ident_or_continue!(list.path);
 
           match ident.as_str() {
+            "repeated" => {
+              kind = ProtoFieldKind::parse_repeated(list)?;
+            }
             "oneof" => {
               let mut info = list.parse_args::<OneofInfo>()?;
 

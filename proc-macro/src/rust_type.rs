@@ -78,12 +78,12 @@ impl RustType {
           Self::Option(inner.inner.into_owned())
         }
       }
-      "Vec" | "ProtoRepeated" => {
+      "Vec" => {
         let inner = last_segment.first_argument().unwrap();
 
         Self::Vec(inner.clone())
       }
-      "HashMap" | "ProtoMap" => {
+      "HashMap" => {
         let (key, val) = last_segment.first_two_arguments().unwrap();
 
         Self::Map((key.clone(), val.clone()))

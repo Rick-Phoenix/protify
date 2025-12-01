@@ -128,6 +128,15 @@ impl ProtoType {
       }
     }
   }
+
+  pub fn from_kind_primitive(kind: &ProtoFieldKind) -> Option<Self> {
+    let output = match kind {
+      ProtoFieldKind::Sint32 => Self::Sint32,
+      _ => return None,
+    };
+
+    Some(output)
+  }
 }
 
 pub fn extract_proto_type(
@@ -207,6 +216,45 @@ pub fn extract_proto_type(
       ProtoType::Message {
         path: msg_path,
         boxed,
+      }
+    }
+    ProtoFieldKind::Repeated(inner) => {
+      let error_msg = "Expected a Vec";
+
+      if let Some(primitive) = ProtoType::from_kind_primitive(&inner) {
+        primitive
+      } else if let ProtoFieldKind::Message(MessageInfo { path, .. }) = &*inner {
+        let msg_path = if let ItemPath::Path(path) = &path {
+          path.clone()
+        } else {
+          let inferred_path = rust_type
+            .inner_path()
+            .ok_or(spanned_error!(field_ty, error_msg))?
+            .clone();
+
+          if path.is_suffixed() {
+            append_proto_ident(inferred_path)
+          } else {
+            inferred_path
+          }
+        };
+
+        ProtoType::Message {
+          path: msg_path,
+          boxed: false,
+        }
+      } else if let ProtoFieldKind::Enum(path) = &*inner {
+        let enum_path = if let Some(path) = path {
+          path
+        } else {
+          rust_type
+            .inner_path()
+            .ok_or(spanned_error!(field_ty, error_msg))?
+        };
+
+        ProtoType::Enum(enum_path.clone())
+      } else {
+        return Err(spanned_error!(field_ty, "Failed to infer repeated type"));
       }
     }
     ProtoFieldKind::Map(proto_map) => ProtoType::Map(set_map_proto_type(proto_map, rust_type)?),
