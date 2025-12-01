@@ -1,10 +1,10 @@
 [workspace]
-members = ["prelude","proc-macro","protoschema", "testing"]
+members = ["prelude", "proc-macro", "protoschema", "testing"]
 resolver = "3"
 
 [workspace.package]
 edition = "2024"
-license = "Apache-2.0"
+license = "MPL-2.0"
 authors = ["Rick-Phoenix <https://github.com/Rick-Phoenix>"]
 repository = "https://github.com/Rick-Phoenix/protoschema"
 keywords = ["protobuf", "validation", "schema"]
