@@ -6,29 +6,18 @@ pub(crate) fn process_oneof_derive_shadow(
 ) -> Result<TokenStream2, Error> {
   let mut shadow_enum = create_shadow_enum(item);
 
-  let mut output_tokens = TokenStream2::new();
-
-  let ItemEnum {
-    ident: enum_name,
-    variants,
-    ..
-  } = item;
-
-  let prost_derive: Attribute = parse_quote!(#[derive(prost::Oneof, PartialEq, Clone)]);
-
-  shadow_enum.attrs.push(prost_derive);
-
-  let mut variants_tokens: Vec<TokenStream2> = Vec::new();
-  let mut ignored_variants: Vec<Ident> = Vec::new();
-
-  let orig_enum_variants = variants.iter_mut();
-  let shadow_enum_variants = shadow_enum.variants.iter_mut();
-
-  let orig_enum_ident = &enum_name;
+  let orig_enum_ident = &item.ident;
   let shadow_enum_ident = &shadow_enum.ident;
 
-  let mut from_proto = TokenStream2::new();
-  let mut into_proto = TokenStream2::new();
+  let mut output_tokens = TokenStream2::new();
+  let mut variants_tokens: Vec<TokenStream2> = Vec::new();
+
+  let orig_enum_variants = item.variants.iter_mut();
+  let shadow_enum_variants = shadow_enum.variants.iter_mut();
+  let mut ignored_variants: Vec<Ident> = Vec::new();
+
+  let mut from_proto_body = TokenStream2::new();
+  let mut into_proto_body = TokenStream2::new();
 
   for (src_variant, dst_variant) in orig_enum_variants.zip(shadow_enum_variants) {
     let field_attrs = process_derive_field_attrs(&src_variant.ident, &src_variant.attrs)?;
@@ -71,7 +60,7 @@ pub(crate) fn process_oneof_derive_shadow(
           is_ignored: field_attrs.is_ignored,
         })?;
 
-        into_proto.extend(field_into_proto);
+        into_proto_body.extend(field_into_proto);
       }
     }
 
@@ -87,7 +76,7 @@ pub(crate) fn process_oneof_derive_shadow(
         is_ignored: field_attrs.is_ignored,
       });
 
-      from_proto.extend(from_proto_expr);
+      from_proto_body.extend(from_proto_expr);
     }
   }
 
@@ -99,29 +88,12 @@ pub(crate) fn process_oneof_derive_shadow(
 
   let oneof_schema_impl = oneof_schema_impl(&oneof_attrs, orig_enum_ident, variants_tokens);
 
-  output_tokens.extend(oneof_schema_impl);
-
-  let from_proto_body = if let Some(expr) = &oneof_attrs.from_proto {
-    match expr {
-      PathOrClosure::Path(path) => quote! { #path(value) },
-      PathOrClosure::Closure(closure) => quote! {
-        prelude::apply(value, #closure)
-      },
-    }
-  } else {
-    quote! {
-      match value {
-        #from_proto
-      }
-    }
-  };
-
   let into_proto_impl = into_proto_impl(ItemConversion {
     source_ident: orig_enum_ident,
     target_ident: shadow_enum_ident,
     kind: ItemConversionKind::Enum,
     custom_expression: &oneof_attrs.into_proto,
-    conversion_tokens: into_proto,
+    conversion_tokens: into_proto_body,
   });
 
   let from_proto_impl = from_proto_impl(ItemConversion {
@@ -129,10 +101,13 @@ pub(crate) fn process_oneof_derive_shadow(
     target_ident: orig_enum_ident,
     kind: ItemConversionKind::Enum,
     custom_expression: &oneof_attrs.from_proto,
-    conversion_tokens: from_proto,
+    conversion_tokens: from_proto_body,
   });
 
   output_tokens.extend(quote! {
+    #oneof_schema_impl
+
+    #[derive(prost::Oneof, PartialEq, Clone)]
     #shadow_enum
 
     #from_proto_impl
@@ -174,7 +149,6 @@ pub(crate) fn process_oneof_derive_direct(
   } = item;
 
   let prost_derive: Attribute = parse_quote!(#[derive(prost::Oneof, PartialEq, Clone)]);
-
   attrs.push(prost_derive);
 
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();

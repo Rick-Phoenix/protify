@@ -4,25 +4,20 @@ pub(crate) fn process_message_derive_shadow(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
 ) -> Result<TokenStream2, Error> {
-  let mut output_tokens = TokenStream2::new();
-
   let mut shadow_struct = create_shadow_struct(item);
 
-  let ItemStruct {
-    ident: orig_struct_name,
-    fields,
-    ..
-  } = item;
+  let orig_struct_name = &item.ident;
+  let shadow_struct_ident = &shadow_struct.ident;
 
-  let mut proto_fields_data: Vec<TokenStream2> = Vec::new();
+  let mut output_tokens = TokenStream2::new();
+  let mut fields_tokens: Vec<TokenStream2> = Vec::new();
 
-  let mut from_proto = TokenStream2::new();
-  let mut into_proto = TokenStream2::new();
-
-  let orig_struct_fields = fields.iter_mut();
+  let orig_struct_fields = item.fields.iter_mut();
   let shadow_struct_fields = shadow_struct.fields.iter_mut();
-
   let mut ignored_fields: Vec<Ident> = Vec::new();
+
+  let mut from_proto_body = TokenStream2::new();
+  let mut into_proto_body = TokenStream2::new();
 
   for (src_field, dst_field) in orig_struct_fields.zip(shadow_struct_fields) {
     let src_field_ident = src_field.ident.as_ref().expect("Expected named field");
@@ -41,7 +36,7 @@ pub(crate) fn process_message_derive_shadow(
         OutputType::Change,
       )?;
 
-      proto_fields_data.push(field_tokens);
+      fields_tokens.push(field_tokens);
 
       if message_attrs.into_proto.is_none() {
         let field_into_proto = field_into_proto_expression(FieldConversion {
@@ -53,7 +48,7 @@ pub(crate) fn process_message_derive_shadow(
           is_ignored: field_attrs.is_ignored,
         })?;
 
-        into_proto.extend(field_into_proto);
+        into_proto_body.extend(field_into_proto);
       }
     }
 
@@ -67,7 +62,7 @@ pub(crate) fn process_message_derive_shadow(
         is_ignored: field_attrs.is_ignored,
       })?;
 
-      from_proto.extend(from_proto_expr);
+      from_proto_body.extend(from_proto_expr);
     }
   }
 
@@ -80,21 +75,14 @@ pub(crate) fn process_message_derive_shadow(
       .collect();
   }
 
-  let schema_impls = message_schema_impls(orig_struct_name, &message_attrs, proto_fields_data);
+  let schema_impls = message_schema_impls(orig_struct_name, &message_attrs, fields_tokens);
 
-  output_tokens.extend(schema_impls);
-
-  let shadow_struct_ident = &shadow_struct.ident;
-
-  output_tokens.extend(quote! {
-    #[derive(prost::Message, Clone, PartialEq)]
-    #shadow_struct
-
-    impl AsProtoType for #shadow_struct_ident {
-      fn proto_type() -> ProtoType {
-        <#orig_struct_name as AsProtoType>::proto_type()
-      }
-    }
+  let into_proto_impl = into_proto_impl(ItemConversion {
+    source_ident: orig_struct_name,
+    target_ident: shadow_struct_ident,
+    kind: ItemConversionKind::Struct,
+    custom_expression: &message_attrs.into_proto,
+    conversion_tokens: into_proto_body,
   });
 
   let from_proto_impl = from_proto_impl(ItemConversion {
@@ -102,20 +90,24 @@ pub(crate) fn process_message_derive_shadow(
     target_ident: orig_struct_name,
     kind: ItemConversionKind::Struct,
     custom_expression: &message_attrs.from_proto,
-    conversion_tokens: from_proto,
+    conversion_tokens: from_proto_body,
   });
 
-  output_tokens.extend(from_proto_impl);
+  output_tokens.extend(quote! {
+    #schema_impls
 
-  let into_proto_impl = into_proto_impl(ItemConversion {
-    source_ident: orig_struct_name,
-    target_ident: shadow_struct_ident,
-    kind: ItemConversionKind::Struct,
-    custom_expression: &message_attrs.into_proto,
-    conversion_tokens: into_proto,
+    #[derive(prost::Message, Clone, PartialEq)]
+    #shadow_struct
+
+    #from_proto_impl
+    #into_proto_impl
+
+    impl AsProtoType for #shadow_struct_ident {
+      fn proto_type() -> ProtoType {
+        <#orig_struct_name as AsProtoType>::proto_type()
+      }
+    }
   });
-
-  output_tokens.extend(into_proto_impl);
 
   Ok(output_tokens)
 }
@@ -134,21 +126,13 @@ pub(crate) fn process_message_derive_direct(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
 ) -> Result<TokenStream2, Error> {
-  let mut output_tokens = TokenStream2::new();
-
   let prost_message_attr: Attribute = parse_quote!(#[derive(prost::Message, Clone, PartialEq)]);
-
   item.attrs.push(prost_message_attr);
 
-  let ItemStruct {
-    ident: struct_name,
-    fields,
-    ..
-  } = item;
-
+  let mut output_tokens = TokenStream2::new();
   let mut fields_data: Vec<TokenStream2> = Vec::new();
 
-  for src_field in fields {
+  for src_field in item.fields.iter_mut() {
     let src_field_ident = src_field.ident.as_ref().expect("Expected named field");
 
     let field_attrs = process_derive_field_attrs(src_field_ident, &src_field.attrs)?;
@@ -172,7 +156,7 @@ pub(crate) fn process_message_derive_direct(
     fields_data.push(field_tokens);
   }
 
-  let schema_impls = message_schema_impls(struct_name, &message_attrs, fields_data);
+  let schema_impls = message_schema_impls(&item.ident, &message_attrs, fields_data);
 
   output_tokens.extend(schema_impls);
 
