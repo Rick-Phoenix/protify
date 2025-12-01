@@ -29,9 +29,6 @@ pub(crate) fn process_message_derive_shadow(
 
     let field_attrs = process_derive_field_attrs(src_field_ident, &src_field.attrs)?;
 
-    let field_from_proto = field_attrs.from_proto.clone();
-    let field_into_proto = field_attrs.into_proto.clone();
-
     let type_info = TypeInfo::from_type(&src_field.ty, field_attrs.kind.clone())?;
 
     if field_attrs.is_ignored {
@@ -100,65 +97,23 @@ pub(crate) fn process_message_derive_shadow(
     }
   });
 
-  let from_proto_body = if let Some(expr) = &message_attrs.from_proto {
-    match expr {
-      PathOrClosure::Path(path) => quote! { #path(value) },
-      PathOrClosure::Closure(closure) => quote! {
-        prelude::apply(value, #closure)
-      },
-    }
-  } else {
-    quote! {
-      Self {
-        #from_proto
-      }
-    }
-  };
-
-  let from_proto_impl = quote! {
-    impl From<#shadow_struct_ident> for #orig_struct_name {
-      #[allow(clippy::redundant_closure)]
-      fn from(value: #shadow_struct_ident) -> Self {
-        #from_proto_body
-      }
-    }
-
-    impl #orig_struct_name {
-      pub fn from_proto(value: #shadow_struct_ident) -> Self {
-        value.into()
-      }
-
-      pub fn into_proto(self) -> #shadow_struct_ident {
-        self.into()
-      }
-    }
-  };
+  let from_proto_impl = from_proto_impl(ItemConversion {
+    source_ident: shadow_struct_ident,
+    target_ident: orig_struct_name,
+    kind: ItemConversionKind::Struct,
+    custom_expression: &message_attrs.from_proto,
+    conversion_tokens: from_proto,
+  });
 
   output_tokens.extend(from_proto_impl);
 
-  let into_proto_body = if let Some(expr) = &message_attrs.into_proto {
-    match expr {
-      PathOrClosure::Path(path) => quote! { #path(value) },
-      PathOrClosure::Closure(closure) => quote! {
-        prelude::apply(value, #closure)
-      },
-    }
-  } else {
-    quote! {
-      Self {
-        #into_proto
-      }
-    }
-  };
-
-  let into_proto_impl = quote! {
-    impl From<#orig_struct_name> for #shadow_struct_ident {
-      #[allow(clippy::redundant_closure)]
-      fn from(value: #orig_struct_name) -> Self {
-        #into_proto_body
-      }
-    }
-  };
+  let into_proto_impl = into_proto_impl(ItemConversion {
+    source_ident: orig_struct_name,
+    target_ident: shadow_struct_ident,
+    kind: ItemConversionKind::Struct,
+    custom_expression: &message_attrs.into_proto,
+    conversion_tokens: into_proto,
+  });
 
   output_tokens.extend(into_proto_impl);
 

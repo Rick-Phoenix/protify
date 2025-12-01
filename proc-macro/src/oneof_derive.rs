@@ -116,46 +116,21 @@ pub(crate) fn process_oneof_derive_shadow(
     }
   };
 
-  let from_proto_impl = quote! {
-    impl From<#shadow_enum_ident> for #orig_enum_ident {
-      fn from(value: #shadow_enum_ident) -> Self {
-        #from_proto_body
-      }
-    }
+  let into_proto_impl = into_proto_impl(ItemConversion {
+    source_ident: orig_enum_ident,
+    target_ident: shadow_enum_ident,
+    kind: ItemConversionKind::Enum,
+    custom_expression: &oneof_attrs.into_proto,
+    conversion_tokens: into_proto,
+  });
 
-    impl #orig_enum_ident {
-      pub fn from_proto(proto: #shadow_enum_ident) -> Self {
-        proto.into()
-      }
-
-      pub fn into_proto(self) -> #shadow_enum_ident {
-        self.into()
-      }
-    }
-  };
-
-  let into_proto_body = if let Some(expr) = &oneof_attrs.into_proto {
-    match expr {
-      PathOrClosure::Path(path) => quote! { #path(value) },
-      PathOrClosure::Closure(closure) => quote! {
-        prelude::apply(value, #closure)
-      },
-    }
-  } else {
-    quote! {
-      match value {
-        #into_proto
-      }
-    }
-  };
-
-  let into_proto_impl = quote! {
-    impl From<#orig_enum_ident> for #shadow_enum_ident {
-      fn from(value: #orig_enum_ident) -> Self {
-        #into_proto_body
-      }
-    }
-  };
+  let from_proto_impl = from_proto_impl(ItemConversion {
+    source_ident: shadow_enum_ident,
+    target_ident: orig_enum_ident,
+    kind: ItemConversionKind::Enum,
+    custom_expression: &oneof_attrs.from_proto,
+    conversion_tokens: from_proto,
+  });
 
   output_tokens.extend(quote! {
     #shadow_enum

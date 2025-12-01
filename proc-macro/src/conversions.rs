@@ -18,18 +18,6 @@ pub enum FieldConversionKind<'a> {
   },
 }
 
-impl<'a> FieldConversionKind<'a> {
-  #[must_use]
-  pub fn is_struct_field(&self) -> bool {
-    matches!(self, Self::StructField { .. })
-  }
-
-  #[must_use]
-  pub fn is_enum_variant(&self) -> bool {
-    matches!(self, Self::EnumVariant { .. })
-  }
-}
-
 pub fn field_into_proto_expression(info: FieldConversion) -> Result<TokenStream2, Error> {
   let FieldConversion {
     custom_expression,
@@ -140,4 +128,97 @@ pub fn field_from_proto_expression(info: FieldConversion) -> Result<TokenStream2
   };
 
   Ok(conversion)
+}
+
+pub struct ItemConversion<'a> {
+  pub source_ident: &'a Ident,
+  pub target_ident: &'a Ident,
+  pub kind: ItemConversionKind,
+  pub custom_expression: &'a Option<PathOrClosure>,
+  pub conversion_tokens: TokenStream2,
+}
+
+pub enum ItemConversionKind {
+  Enum,
+  Struct,
+}
+
+fn create_from_impl(info: &ItemConversion) -> TokenStream2 {
+  let ItemConversion {
+    source_ident,
+    target_ident,
+    kind,
+    custom_expression,
+    conversion_tokens,
+  } = info;
+
+  let conversion_body = if let Some(expr) = custom_expression {
+    match expr {
+      PathOrClosure::Path(path) => quote! { #path(value) },
+      PathOrClosure::Closure(closure) => quote! {
+        prelude::apply(value, #closure)
+      },
+    }
+  } else {
+    match kind {
+      ItemConversionKind::Enum => quote! {
+        match value {
+          #conversion_tokens
+        }
+      },
+      ItemConversionKind::Struct => quote! {
+        Self {
+          #conversion_tokens
+        }
+      },
+    }
+  };
+
+  quote! {
+    impl From<#source_ident> for #target_ident {
+      fn from(value: #source_ident) -> Self {
+        #conversion_body
+      }
+    }
+  }
+}
+
+pub fn into_proto_impl(info: ItemConversion) -> TokenStream2 {
+  let into_proto_impl = create_from_impl(&info);
+
+  let ItemConversion {
+    source_ident,
+    target_ident,
+    ..
+  } = info;
+
+  quote! {
+    #into_proto_impl
+
+    impl #source_ident {
+      pub fn into_proto(self) -> #target_ident {
+        self.into()
+      }
+    }
+  }
+}
+
+pub fn from_proto_impl(info: ItemConversion) -> TokenStream2 {
+  let from_proto_impl = create_from_impl(&info);
+
+  let ItemConversion {
+    source_ident,
+    target_ident,
+    ..
+  } = info;
+
+  quote! {
+    #from_proto_impl
+
+    impl #source_ident {
+      pub fn from_proto(value: #target_ident) -> Self {
+        value.into()
+      }
+    }
+  }
 }
