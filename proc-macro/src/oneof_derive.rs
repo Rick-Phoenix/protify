@@ -128,10 +128,13 @@ pub(crate) fn process_oneof_derive_shadow(
     conversion_tokens: from_proto_body,
   });
 
+  let shadow_enum_derives = oneof_attrs.shadow_derives.map(|list| quote! { #[#list] });
+
   output_tokens.extend(quote! {
     #oneof_schema_impl
 
     #[derive(prost::Oneof, PartialEq, Clone)]
+    #shadow_enum_derives
     #shadow_enum
 
     #from_proto_impl

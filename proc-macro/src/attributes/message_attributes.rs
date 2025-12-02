@@ -13,6 +13,7 @@ pub struct MessageAttrs {
   pub direct: bool,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
+  pub shadow_derives: Option<MetaList>,
 }
 
 pub fn process_derive_message_attrs(
@@ -31,6 +32,7 @@ pub fn process_derive_message_attrs(
   let mut nested_enums: Vec<Ident> = Vec::new();
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
+  let mut shadow_derives: Option<MetaList> = None;
 
   for attr in attrs {
     if !attr.path().is_ident("proto") {
@@ -42,27 +44,37 @@ pub fn process_derive_message_attrs(
     for arg in args.inner {
       match arg {
         Meta::List(list) => {
-          if list.path.is_ident("reserved_names") {
-            let names = list.parse_args::<StringList>().unwrap();
+          let ident = get_ident_or_continue!(list.path);
 
-            reserved_names = ReservedNames::List(names.list);
-          } else if list.path.is_ident("reserved_numbers") {
-            let numbers = list.parse_args::<ReservedNumbers>().unwrap();
+          match ident.as_str() {
+            "reserved_names" => {
+              let names = list.parse_args::<StringList>().unwrap();
 
-            reserved_numbers = numbers;
-          } else if list.path.is_ident("options") {
-            let exprs = list.parse_args::<PunctuatedParser<Expr>>().unwrap().inner;
+              reserved_names = ReservedNames::List(names.list);
+            }
+            "reserved_numbers" => {
+              let numbers = list.parse_args::<ReservedNumbers>().unwrap();
 
-            options = Some(quote! { vec! [ #exprs ] });
-          } else if list.path.is_ident("nested_messages") {
-            let idents = list.parse_args::<PunctuatedParser<Ident>>()?.inner;
+              reserved_numbers = numbers;
+            }
+            "options" => {
+              let exprs = list.parse_args::<PunctuatedParser<Expr>>().unwrap().inner;
 
-            nested_messages.extend(idents.into_iter());
-          } else if list.path.is_ident("nested_enums") {
-            let idents = list.parse_args::<PunctuatedParser<Ident>>()?.inner;
+              options = Some(quote! { vec! [ #exprs ] });
+            }
+            "nested_messages" => {
+              let idents = list.parse_args::<PunctuatedParser<Ident>>()?.inner;
 
-            nested_enums.extend(idents.into_iter());
-          }
+              nested_messages.extend(idents.into_iter());
+            }
+            "nested_enums" => {
+              let idents = list.parse_args::<PunctuatedParser<Ident>>()?.inner;
+
+              nested_enums.extend(idents.into_iter());
+            }
+            "derive" => shadow_derives = Some(list),
+            _ => {}
+          };
         }
         Meta::NameValue(nv) => {
           let ident = if let Some(ident) = nv.path.get_ident() {
@@ -132,5 +144,6 @@ pub fn process_derive_message_attrs(
     direct,
     from_proto,
     into_proto,
+    shadow_derives,
   })
 }

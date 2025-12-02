@@ -7,6 +7,7 @@ pub struct OneofAttrs {
   pub direct: bool,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
+  pub shadow_derives: Option<MetaList>,
 }
 
 pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> Result<OneofAttrs, Error> {
@@ -16,6 +17,7 @@ pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> Result<
   let mut direct = false;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
+  let mut shadow_derives: Option<MetaList> = None;
 
   for attr in attrs {
     if !attr.path().is_ident("proto") {
@@ -48,6 +50,7 @@ pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> Result<
 
               options = Some(quote! { vec! [ #exprs ] });
             }
+            "derive" => shadow_derives = Some(list),
             _ => {}
           };
         }
@@ -85,5 +88,6 @@ pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> Result<
     direct,
     from_proto,
     into_proto,
+    shadow_derives,
   })
 }

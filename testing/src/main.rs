@@ -45,7 +45,7 @@ mod inner {
 
   #[proto_enum]
   #[proto(reserved_numbers(1, 2, 10..))]
-  #[derive(Clone, Debug, prost::Enumeration)]
+  #[derive(Clone, Debug)]
   enum PseudoEnum {
     AbcDeg,
     B,

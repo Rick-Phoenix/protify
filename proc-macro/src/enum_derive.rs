@@ -9,7 +9,9 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
   } = item;
 
   let repr_attr: Attribute = parse_quote!(#[repr(i32)]);
+  let prost_attr: Attribute = parse_quote!(#[derive(::prost::Enumeration)]);
   attrs.push(repr_attr);
+  attrs.push(prost_attr);
 
   let EnumAttrs {
     reserved_names,

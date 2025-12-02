@@ -110,10 +110,13 @@ pub(crate) fn process_message_derive_shadow(
     conversion_tokens: from_proto_body,
   });
 
+  let shadow_struct_derives = message_attrs.shadow_derives.map(|list| quote! { #[#list] });
+
   output_tokens.extend(quote! {
     #schema_impls
 
     #[derive(prost::Message, Clone, PartialEq)]
+    #shadow_struct_derives
     #shadow_struct
 
     #from_proto_impl
