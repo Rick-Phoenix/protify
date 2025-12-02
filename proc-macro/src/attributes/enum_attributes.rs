@@ -12,7 +12,7 @@ pub struct EnumAttrs {
 }
 
 pub fn process_derive_enum_attrs(
-  rust_name: &Ident,
+  enum_ident: &Ident,
   attrs: &Vec<Attribute>,
 ) -> Result<EnumAttrs, Error> {
   let mut reserved_names = ReservedNames::default();
@@ -89,7 +89,7 @@ pub fn process_derive_enum_attrs(
     }
   }
 
-  let name = proto_name.unwrap_or_else(|| ccase!(pascal, rust_name.to_string()));
+  let name = proto_name.unwrap_or_else(|| ccase!(pascal, enum_ident.to_string()));
   let full_name = full_name.unwrap_or_else(|| name.clone());
 
   let file = file.ok_or(error!(Span::call_site(), "Missing file attribute"))?;

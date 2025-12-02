@@ -10,7 +10,10 @@ pub struct OneofAttrs {
   pub shadow_derives: Option<MetaList>,
 }
 
-pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> Result<OneofAttrs, Error> {
+pub fn process_oneof_attrs(
+  enum_ident: &Ident,
+  attrs: &Vec<Attribute>,
+) -> Result<OneofAttrs, Error> {
   let mut options: Vec<Expr> = Vec::new();
   let mut name: Option<String> = None;
   let mut required = false;
@@ -78,7 +81,7 @@ pub fn process_oneof_attrs(enum_name: &Ident, attrs: &Vec<Attribute>) -> Result<
 
   Ok(OneofAttrs {
     options,
-    name: name.unwrap_or_else(|| ccase!(snake, enum_name.to_string())),
+    name: name.unwrap_or_else(|| ccase!(snake, enum_ident.to_string())),
     required,
     direct,
     from_proto,

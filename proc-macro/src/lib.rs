@@ -7,23 +7,23 @@
 #[macro_use]
 mod macros;
 
-use std::{borrow::Cow, collections::HashMap, fmt::Display, ops::Range, str::FromStr};
+use std::{borrow::Cow, collections::HashMap, fmt::Display, ops::Range};
 
 use attributes::*;
-pub(crate) use convert_case::ccase;
+use convert_case::ccase;
 use itertools::Itertools;
 use proc_macro::TokenStream;
-use proc_macro2::Span;
-pub(crate) use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-  parse::Parse,
+  parse::{Parse, ParseStream, Parser},
   parse_macro_input, parse_quote,
   punctuated::Punctuated,
+  spanned::Spanned,
   token,
   token::{Brace, Struct},
-  Attribute, Error, Expr, ExprClosure, Field, Fields, GenericArgument, Generics, Ident, Item,
-  ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, Path, PathArguments,
+  Attribute, Error, Expr, ExprCall, ExprClosure, Field, Fields, GenericArgument, Generics, Ident,
+  Item, ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, Path, PathArguments,
   PathSegment, RangeLimits, Token, Type, Variant, Visibility,
 };
 

@@ -2,7 +2,48 @@ use quote::format_ident;
 
 use crate::*;
 
-pub fn append_proto_ident(mut path: Path) -> Path {
+#[derive(Default, Debug, Clone)]
+pub enum ItemPath {
+  Path(Path),
+  Proxied,
+  #[default]
+  None,
+}
+
+impl ItemPath {
+  pub fn get_path_or_fallback(&self, fallback: Option<&Path>) -> Option<Path> {
+    let output = if let Self::Path(path) = self {
+      path.clone()
+    } else if let Some(fallback) = fallback {
+      let fallback = fallback.clone();
+
+      if matches!(self, Self::Proxied) {
+        ident_with_proto_suffix(fallback)
+      } else {
+        fallback
+      }
+    } else {
+      return None;
+    };
+
+    Some(output)
+  }
+
+  pub fn is_none(&self) -> bool {
+    matches!(self, Self::None)
+  }
+}
+
+impl ToTokens for ItemPath {
+  fn to_tokens(&self, tokens: &mut TokenStream2) {
+    match self {
+      Self::Path(path) => tokens.extend(path.to_token_stream()),
+      _ => {}
+    };
+  }
+}
+
+pub fn ident_with_proto_suffix(mut path: Path) -> Path {
   let last_segment = path.segments.last_mut().unwrap();
 
   last_segment.ident = format_ident!("{}Proto", last_segment.ident);
@@ -81,7 +122,7 @@ pub fn extract_type_path(ty: &Type) -> Result<&Path, Error> {
   match ty {
     Type::Path(type_path) => Ok(&type_path.path),
 
-    _ => Err(spanned_error!(ty, "Must be a type path")),
+    _ => Err(spanned_error!(ty, "Expected be a type path")),
   }
 }
 

@@ -7,7 +7,7 @@ pub struct EnumVariantAttrs {
 
 pub fn process_derive_enum_variants_attrs(
   enum_name: &str,
-  rust_variant_name: &Ident,
+  variant_ident: &Ident,
   attrs: &Vec<Attribute>,
   no_prefix: bool,
 ) -> Result<EnumVariantAttrs, Error> {
@@ -53,7 +53,7 @@ pub fn process_derive_enum_variants_attrs(
   let name = if let Some(name) = name {
     name
   } else {
-    let plain_name = ccase!(constant, rust_variant_name.to_string());
+    let plain_name = ccase!(constant, variant_ident.to_string());
 
     if no_prefix {
       plain_name
