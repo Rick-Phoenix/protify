@@ -96,7 +96,7 @@ impl ProtoType {
 
         Self::Enum(path)
       }
-      _ => todo!(),
+      _ => return Ok(None),
     };
 
     Ok(Some(output))

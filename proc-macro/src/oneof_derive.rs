@@ -207,7 +207,7 @@ pub(crate) fn process_oneof_derive_direct(
         }
       },
 
-      RustType::Normal(_) => todo!(),
+      RustType::Normal(_) => {},
 
       _ => return Err(spanned_error!(variant_type, "Unsupported enum variant. If you want to use a custom type, you must use the proxied variant"))
     };

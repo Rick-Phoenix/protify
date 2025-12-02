@@ -205,6 +205,8 @@ pub fn process_derive_field_attrs(
           match ident.as_str() {
             "ignore" => is_ignored = true,
 
+            "oneof" => {}
+
             _ => {
               let fallback = rust_type.inner_path();
 
