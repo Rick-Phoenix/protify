@@ -52,11 +52,17 @@ mod inner {
   enum PseudoOneof {
     A(String),
     B(i32),
-    #[proto(message(suffixed, boxed))]
+    #[proto(message(proxied, boxed))]
     C(Box<Abc>),
   }
 
   impl Default for PseudoOneofProto {
+    fn default() -> Self {
+      Self::B(0)
+    }
+  }
+
+  impl Default for PseudoOneof {
     fn default() -> Self {
       Self::B(0)
     }
@@ -69,7 +75,7 @@ mod inner {
   #[proto_message]
   #[proto(reserved_numbers(1, 2, 3..9))]
   #[proto(nested_enums(PseudoEnum))]
-  #[derive(Clone, Debug)]
+  #[derive(Clone, Debug, Default)]
   pub struct Abc {
     #[proto(message(AbcProto, boxed))]
     boxed: Option<Box<Abc>>,
@@ -86,16 +92,19 @@ mod inner {
     #[proto(map(string, enum_), validate = |v| v.values(|val| val.defined_only()))]
     enum_map: HashMap<String, PseudoEnum>,
 
-    #[proto(map(string, message(suffixed)), validate = |v| v.values(|val| val.ignore_always()))]
+    #[proto(map(string, message(proxied)), validate = |v| v.values(|val| val.ignore_always()))]
     message_map: HashMap<String, Nested>,
 
     #[proto(enum_, validate = enum_validator())]
     enum_field: PseudoEnum,
 
-    #[proto(message(suffixed), from_proto = |v| v.map(Into::into))]
+    #[proto(enum_)]
+    optional_enum: Option<PseudoEnum>,
+
+    #[proto(message(proxied), from_proto = |v| v.map(Into::into))]
     nested: Option<Nested>,
 
-    #[proto(oneof(default, suffixed))]
+    #[proto(oneof(default, proxied))]
     oneof: PseudoOneof,
   }
 

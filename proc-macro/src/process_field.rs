@@ -53,9 +53,9 @@ pub fn process_field(
   } = field_attrs;
 
   if let OutputType::Change = output_type {
-    let is_oneof = matches!(field, FieldOrVariant::Variant(_));
+    let is_oneof_variant = matches!(field, FieldOrVariant::Variant(_));
 
-    let proto_output_type_inner = type_info.proto_field.output_proto_type(is_oneof);
+    let proto_output_type_inner = type_info.proto_field.output_proto_type(is_oneof_variant);
 
     let proto_output_type_outer: Type = parse_quote! { #proto_output_type_inner };
 

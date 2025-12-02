@@ -53,27 +53,17 @@ impl ProtoField {
           quote! { #base_ident.map(|v| v.into()) }
         }
       }
-      ProtoField::Map(ProtoMap { values, .. }) => {
-        let base_ident2 = quote! { v };
-
-        let values_converter = values.default_into_proto(&base_ident2);
-
-        quote! { #base_ident.into_iter().map(|(k, v)| (k.into(), #values_converter)).collect() }
+      ProtoField::Map(ProtoMap { .. }) => {
+        quote! { #base_ident.into_iter().map(|(k, v)| (k.into(), v.into())).collect() }
       }
-      ProtoField::Repeated(proto_type) => {
-        let base_ident2 = quote! { v };
-        let inner = proto_type.default_into_proto(&base_ident2);
-
-        quote! { #base_ident.into_iter().map(|v| #inner).collect() }
+      ProtoField::Repeated(_) => {
+        quote! { #base_ident.into_iter().map(Into::into).collect() }
       }
-      ProtoField::Optional(proto_type) => {
-        let base_ident2 = quote! { v };
-        let inner = proto_type.default_into_proto(&base_ident2);
-
-        quote! { #base_ident.map(|v| #inner) }
+      ProtoField::Optional(_) => {
+        quote! { #base_ident.map(|v| v.into()) }
       }
       ProtoField::Single(proto_type) => {
-        if let ProtoType::Message { .. } = proto_type && !is_oneof_variant {
+        if let ProtoType::Message {  .. } = proto_type && !is_oneof_variant  {
           let base_ident2 = quote! { v };
           let inner = proto_type.default_into_proto(&base_ident2);
 
@@ -103,7 +93,6 @@ impl ProtoField {
       }
       ProtoField::Map(ProtoMap { values, .. }) => {
         let base_ident2 = quote! { v };
-
         let values_converter = values.default_from_proto(&base_ident2);
 
         quote! { #base_ident.into_iter().map(|(k, v)| (k.into(), #values_converter)).collect() }
@@ -153,7 +142,7 @@ impl ProtoField {
     quote! { <#target_type as AsProtoType>::proto_type() }
   }
 
-  pub fn output_proto_type(&self, is_oneof: bool) -> TokenStream2 {
+  pub fn output_proto_type(&self, is_oneof_variant: bool) -> TokenStream2 {
     match self {
       Self::Map(map) => map.output_proto_type(),
       Self::Oneof { path, .. } => quote! { Option<#path> },
@@ -168,9 +157,9 @@ impl ProtoField {
         quote! { Option<#inner_type> }
       }
       ProtoField::Single(inner) => {
-        if let ProtoType::Message { path, is_boxed } = inner {
+        if let ProtoType::Message { path, is_boxed, .. } = inner {
           if *is_boxed {
-            if is_oneof {
+            if is_oneof_variant {
               quote! { Box<#path> }
             } else {
               quote! { Option<Box<#path>> }

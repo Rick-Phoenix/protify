@@ -2,13 +2,17 @@ use syn::spanned::Spanned;
 
 use crate::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum ProtoType {
+  #[default]
   String,
   Bool,
   Bytes,
   Enum(Path),
-  Message { path: Path, is_boxed: bool },
+  Message {
+    path: Path,
+    is_boxed: bool,
+  },
   Int32,
   Sint32,
 }
@@ -40,19 +44,16 @@ impl ProtoType {
   ) -> Result<Option<Self>, Error> {
     let output = match ident_str {
       "message" => {
-        let msg_info = list.parse_args::<MessageInfo>()?;
+        let MessageInfo { path, boxed } = list.parse_args::<MessageInfo>()?;
 
-        let path = msg_info
-          .path
-          .get_path_or_fallback(fallback)
-          .ok_or(spanned_error!(
-            list,
-            "Failed to infer the message path. Please set it manually"
-          ))?;
+        let path = path.get_path_or_fallback(fallback).ok_or(spanned_error!(
+          list,
+          "Failed to infer the message path. Please set it manually"
+        ))?;
 
         Self::Message {
           path,
-          is_boxed: msg_info.boxed,
+          is_boxed: boxed,
         }
       }
       "enum_" => {
@@ -189,7 +190,7 @@ impl ProtoType {
       ProtoType::Bool => quote! { bool },
       ProtoType::Bytes => quote! { Vec<u8> },
       ProtoType::Enum(_) => quote! { i32 },
-      ProtoType::Message { path, is_boxed } => {
+      ProtoType::Message { path, is_boxed, .. } => {
         if *is_boxed {
           quote! { Box<#path> }
         } else {

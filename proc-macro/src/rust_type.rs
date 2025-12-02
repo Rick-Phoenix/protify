@@ -43,6 +43,14 @@ impl RustType {
       None
     }
   }
+
+  /// Returns `true` if the rust type is [`Option`].
+  ///
+  /// [`Option`]: RustType::Option
+  #[must_use]
+  pub fn is_option(&self) -> bool {
+    matches!(self, Self::Option(..))
+  }
 }
 
 impl RustType {

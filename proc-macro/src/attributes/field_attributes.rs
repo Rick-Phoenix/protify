@@ -10,23 +10,19 @@ use crate::*;
 #[derive(Default, Debug, Clone)]
 pub enum ItemPath {
   Path(Path),
-  Suffixed,
+  Proxied,
   #[default]
   None,
 }
 
 impl ItemPath {
-  pub fn is_proxied(&self) -> bool {
-    !self.is_none()
-  }
-
   pub fn get_path_or_fallback(&self, fallback: Option<&Path>) -> Option<Path> {
     let output = if let Self::Path(path) = self {
       path.clone()
     } else if let Some(fallback) = fallback {
       let fallback = fallback.clone();
 
-      if self.is_suffixed() {
+      if matches!(self, Self::Proxied) {
         append_proto_ident(fallback)
       } else {
         fallback
@@ -36,10 +32,6 @@ impl ItemPath {
     };
 
     Some(output)
-  }
-
-  pub fn is_suffixed(&self) -> bool {
-    matches!(self, Self::Suffixed)
   }
 
   pub fn is_none(&self) -> bool {
@@ -168,20 +160,6 @@ pub fn process_derive_field_attrs(
               proto_field = Some(ProtoField::Repeated(inner));
             }
 
-            "optional" => {
-              let args = list.parse_args::<Meta>()?;
-
-              let fallback = if let RustType::Option(path) = rust_type {
-                path
-              } else {
-                panic!("Could not parse the option type");
-              };
-
-              let inner = ProtoType::from_meta(args, Some(fallback))?.unwrap();
-
-              proto_field = Some(ProtoField::Optional(inner));
-            }
-
             "map" => {
               let parser = |input: ParseStream| parse_map_with_context(input, rust_type);
 
@@ -262,11 +240,16 @@ pub fn process_derive_field_attrs(
   }
 
   if is_ignored {
-    // We could place a default here for this kind of from_proto expression rather than later
     return Ok(FieldAttrData::Ignored { from_proto });
   }
 
-  let proto_field = if let Some(field) = proto_field {
+  let proto_field = if let Some(mut field) = proto_field {
+    if let ProtoField::Single(proto_type) = &mut field && rust_type.is_option() {
+      let inner = std::mem::take(proto_type);
+
+      field = ProtoField::Optional(inner);
+    }
+
     field
   } else {
     match rust_type {

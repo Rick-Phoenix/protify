@@ -37,7 +37,7 @@ impl Parse for OneofInfo {
 
           match ident.as_str() {
             "default" => default = true,
-            "suffixed" => oneof_path = ItemPath::Suffixed,
+            "proxied" => oneof_path = ItemPath::Proxied,
             _ => oneof_path = ItemPath::Path(path),
           };
         }
