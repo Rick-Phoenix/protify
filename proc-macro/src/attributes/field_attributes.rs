@@ -74,25 +74,6 @@ pub enum FieldAttrData {
   Normal(FieldAttrs),
 }
 
-impl FieldAttrData {
-  pub fn from_proto_expr(&self) -> &Option<PathOrClosure> {
-    match self {
-      FieldAttrData::Ignored { from_proto } => from_proto,
-      FieldAttrData::Normal(field_attrs) => &field_attrs.from_proto,
-    }
-  }
-}
-
-impl FieldAttrData {
-  /// Returns `true` if the field data is [`Ignored`].
-  ///
-  /// [`Ignored`]: FieldData::Ignored
-  #[must_use]
-  pub fn is_ignored(&self) -> bool {
-    matches!(self, Self::Ignored { .. })
-  }
-}
-
 #[derive(Clone)]
 pub enum ValidatorExpr {
   Closure(ExprClosure),
@@ -243,7 +224,6 @@ pub fn process_derive_field_attrs(
     let mut oneof_path = ItemPath::None;
     let mut oneof_tags: Vec<i32> = Vec::new();
     let mut use_default = false;
-    let mut is_proxied = false;
 
     let fallback = rust_type.inner_path();
 
@@ -253,10 +233,6 @@ pub fn process_derive_field_attrs(
         tags,
         default,
       } = attr.parse_args::<OneofInfo>()?;
-
-      if path.is_proxied() {
-        is_proxied = true;
-      }
 
       if !path.is_none() {
         oneof_path = path;
@@ -280,7 +256,6 @@ pub fn process_derive_field_attrs(
       path: oneof_path,
       tags: oneof_tags,
       default: use_default,
-      is_proxied,
     })
   }
 
@@ -289,12 +264,10 @@ pub fn process_derive_field_attrs(
     return Ok(FieldAttrData::Ignored { from_proto });
   }
 
-  let mut proto_field = if let Some(field) = proto_field {
+  let proto_field = if let Some(field) = proto_field {
     field
   } else {
-    let inner_type = rust_type.inner_path();
-
-    let inferred_type = match rust_type {
+    match rust_type {
       RustType::Map((k, v)) => {
         let keys = ProtoMapKeys::from_path(k)?;
         let values = ProtoType::from_primitive(v)?;
@@ -304,13 +277,15 @@ pub fn process_derive_field_attrs(
         ProtoField::Map(proto_map)
       }
       RustType::Option(path) => ProtoField::Optional(ProtoType::from_primitive(path)?),
-      RustType::OptionBoxed(path) => ProtoField::Optional(ProtoType::from_primitive(path)?),
-      RustType::Boxed(path) => ProtoField::Single(ProtoType::from_primitive(path)?),
+      RustType::OptionBoxed(path) => {
+        return Err(spanned_error!(path, "You seem to be using Option<Box<T>>. If you are using a boxed message, please use message(boxed)"))
+      },
+      RustType::Boxed(path) => {
+        return Err(spanned_error!(path, "You seem to be using Box<T>. If you meant to use a boxed message as a oneof variant, please use message(boxed)"))
+      },
       RustType::Vec(path) => ProtoField::Repeated(ProtoType::from_primitive(path)?),
       RustType::Normal(path) => ProtoField::Single(ProtoType::from_primitive(path)?),
-    };
-
-    inferred_type
+    }
   };
 
   let tag = if let Some(tag) = tag {

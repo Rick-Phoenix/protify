@@ -134,6 +134,15 @@ impl ProtoType {
     }
   }
 
+  pub fn default_into_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
+    match self {
+      ProtoType::Message { is_boxed: true, .. } => {
+        quote! { Box::new((*#base_ident).into()) }
+      }
+      _ => quote! { #base_ident.into() },
+    }
+  }
+
   pub fn validator_target_type(&self) -> TokenStream2 {
     match self {
       ProtoType::String => quote! { String },

@@ -3,7 +3,7 @@ use syn::LitInt;
 
 use crate::*;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum PathOrClosure {
   Path(Path),
   Closure(ExprClosure),

@@ -51,7 +51,7 @@ pub(crate) fn process_message_derive_shadow(
 
     if message_attrs.from_proto.is_none() {
       let from_proto_expr = field_from_proto_expression(FromProto {
-        custom_expression: &field_attrs.into_proto,
+        custom_expression: &field_attrs.from_proto,
         kind: FieldConversionKind::StructField {
           ident: src_field_ident,
         },

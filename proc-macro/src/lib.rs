@@ -1,4 +1,8 @@
-#![allow(clippy::single_match)]
+#![allow(
+  clippy::single_match,
+  clippy::collapsible_if,
+  clippy::collapsible_else_if
+)]
 
 #[macro_use]
 mod macros;
