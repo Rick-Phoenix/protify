@@ -24,12 +24,18 @@ pub(crate) fn process_oneof_derive_shadow(
 
     let variant_type = if let Fields::Unnamed(variant_fields) = &src_variant.fields {
       if variant_fields.unnamed.len() != 1 {
-        panic!("Oneof variants must contain a single value");
+        bail!(
+          &src_variant.fields,
+          "Oneof variants can only contain a single value"
+        );
       }
 
       variant_fields.unnamed.first().unwrap().ty.clone()
     } else {
-      panic!("Enum can only have one unnamed field")
+      bail!(
+        &src_variant.fields,
+        "Oneof variants can only contain a single unnamed value"
+      );
     };
 
     let rust_type = RustType::from_type(&variant_type, orig_enum_ident)?;
@@ -55,10 +61,10 @@ pub(crate) fn process_oneof_derive_shadow(
 
         continue;
       }
-      FieldAttrData::Normal(field_attrs) => field_attrs,
+      FieldAttrData::Normal(field_attrs) => *field_attrs,
     };
 
-    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone(), &variant_type)?;
+    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone())?;
 
     let variant_proto_tokens = process_field(
       &mut FieldOrVariant::Variant(dst_variant),
@@ -172,16 +178,20 @@ pub(crate) fn process_oneof_derive_direct(
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
   for variant in variants {
-    let variant_ident = &variant.ident;
-
     let variant_type = if let Fields::Unnamed(variant_fields) = &variant.fields {
       if variant_fields.unnamed.len() != 1 {
-        panic!("Oneof variants must contain a single value");
+        bail!(
+          &variant.fields,
+          "Oneof variants must contain a single unnamed value"
+        );
       }
 
       variant_fields.unnamed.first().unwrap().ty.clone()
     } else {
-      panic!("Enum can only have one unnamed field")
+      bail!(
+        &variant.fields,
+        "Oneof variants must contain a single unnamed value"
+      );
     };
 
     let rust_type = RustType::from_type(&variant_type, &item.ident)?;
@@ -190,26 +200,24 @@ pub(crate) fn process_oneof_derive_direct(
 
     let field_attrs = match field_data {
       FieldAttrData::Ignored { .. } => {
-        return Err(spanned_error!(
+        bail!(
           &variant.ident,
           "Oneof variants cannot be ignored in a direct impl"
-        ))
+        );
       }
-      FieldAttrData::Normal(field_attrs) => field_attrs,
+      FieldAttrData::Normal(field_attrs) => *field_attrs,
     };
 
-    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone(), &variant_type)?;
+    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone())?;
 
     match &type_info.rust_type {
-      RustType::Boxed(_) => {
-        if !matches!(type_info.proto_field, ProtoField::Single(ProtoType::Message { is_boxed: true, .. })) {
-          return Err(spanned_error!(variant_type, "Box can only be used for messages in a native oneof"))
-        }
-      },
-
-      RustType::Normal(_) => {},
-
-      _ => return Err(spanned_error!(variant_type, "Unsupported enum variant. If you want to use a custom type, you must use the proxied variant"))
+        RustType::Boxed(_) => {
+            if !matches!(type_info.proto_field, ProtoField::Single(ProtoType::Message { is_boxed: true, .. })) {
+              bail!(variant_type, "Box can only be used for messages in a native oneof");
+            }
+          },
+        RustType::Normal(_) => {},
+        _ => bail!(variant_type, "Unsupported Oneof variant type. If you want to use a custom type, you must use a proxied oneof with custom conversions"),
     };
 
     let variant_proto_tokens = process_field(

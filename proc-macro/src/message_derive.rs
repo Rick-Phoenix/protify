@@ -44,10 +44,10 @@ pub(crate) fn process_message_derive_shadow(
 
         continue;
       }
-      FieldAttrData::Normal(field_attrs) => field_attrs,
+      FieldAttrData::Normal(field_attrs) => *field_attrs,
     };
 
-    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone(), &src_field.ty)?;
+    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone())?;
 
     if message_attrs.from_proto.is_none() {
       let from_proto_expr = field_from_proto_expression(FromProto {
@@ -163,10 +163,10 @@ pub(crate) fn process_message_derive_direct(
           "Fields cannot be ignored in a direct impl"
         ))
       }
-      FieldAttrData::Normal(attrs) => attrs,
+      FieldAttrData::Normal(attrs) => *attrs,
     };
 
-    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone(), &src_field.ty)?;
+    let type_info = TypeInfo::from_type(rust_type, field_attrs.proto_field.clone())?;
 
     match &type_info.rust_type {
       RustType::Boxed(path) => {

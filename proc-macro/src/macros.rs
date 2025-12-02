@@ -1,3 +1,9 @@
+macro_rules! bail {
+  ($($tokens:tt)*) => {
+    return Err(spanned_error!($($tokens)*))
+  };
+}
+
 macro_rules! get_ident_or_return_ok_none {
   ($path:expr) => {
     if let Some(ident) = $path.get_ident() {

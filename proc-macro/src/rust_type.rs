@@ -11,14 +11,6 @@ pub enum RustType {
 }
 
 impl RustType {
-  pub fn as_inner_option_path(&self) -> Option<&Path> {
-    if let RustType::Option(path) = self {
-      Some(path)
-    } else {
-      None
-    }
-  }
-
   pub fn inner_path(&self) -> Option<&Path> {
     let output = match self {
       RustType::Option(path) => path,
@@ -30,14 +22,6 @@ impl RustType {
     };
 
     Some(output)
-  }
-
-  pub fn as_map(&self) -> Option<&(Path, Path)> {
-    if let Self::Map(v) = self {
-      Some(v)
-    } else {
-      None
-    }
   }
 
   /// Returns `true` if the rust type is [`Option`].

@@ -112,12 +112,12 @@ impl ProtoField {
   }
 
   pub fn as_proto_type_trait_expr(&self) -> TokenStream2 {
-    let target_type = self.output_proto_type(false);
+    let target_type = self.output_proto_type();
 
     quote! { <#target_type as AsProtoType>::proto_type() }
   }
 
-  pub fn output_proto_type(&self, is_oneof_variant: bool) -> TokenStream2 {
+  pub fn output_proto_type(&self) -> TokenStream2 {
     match self {
       Self::Map(map) => map.output_proto_type(),
       Self::Oneof { path, .. } => quote! { Option<#path> },
@@ -131,21 +131,7 @@ impl ProtoField {
 
         quote! { Option<#inner_type> }
       }
-      ProtoField::Single(inner) => {
-        if let ProtoType::Message { path, is_boxed, .. } = inner {
-          if *is_boxed {
-            if is_oneof_variant {
-              quote! { Box<#path> }
-            } else {
-              quote! { Option<Box<#path>> }
-            }
-          } else {
-            quote! { Option<#path> }
-          }
-        } else {
-          inner.output_proto_type()
-        }
-      }
+      ProtoField::Single(inner) => inner.output_proto_type(),
     }
   }
 

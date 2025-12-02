@@ -48,7 +48,6 @@ impl ToTokens for ItemPath {
   }
 }
 
-// We probably should have an enum for this so that ignored fields don't hold the same state/info
 #[derive(Clone)]
 pub struct FieldAttrs {
   pub tag: i32,
@@ -63,7 +62,7 @@ pub struct FieldAttrs {
 #[derive(Clone)]
 pub enum FieldAttrData {
   Ignored { from_proto: Option<PathOrClosure> },
-  Normal(FieldAttrs),
+  Normal(Box<FieldAttrs>),
 }
 
 #[derive(Clone)]
@@ -295,7 +294,7 @@ pub fn process_derive_field_attrs(
     return Err(spanned_error!(original_name, "Field tag is missing"));
   };
 
-  Ok(FieldAttrData::Normal(FieldAttrs {
+  Ok(FieldAttrData::Normal(Box::new(FieldAttrs {
     validator,
     tag,
     options: attributes::ProtoOptions(options),
@@ -303,5 +302,5 @@ pub fn process_derive_field_attrs(
     proto_field,
     from_proto,
     into_proto,
-  }))
+  })))
 }

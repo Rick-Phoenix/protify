@@ -31,10 +31,6 @@ impl ProtoMapKeys {
       ProtoMapKeys::Int32 => quote! { i32 },
     }
   }
-
-  pub fn as_proto_type_trait_target(&self) -> TokenStream2 {
-    self.output_proto_type()
-  }
 }
 
 impl FromStr for ProtoMapKeys {
@@ -106,13 +102,6 @@ impl ProtoMap {
 
     quote! { map = #map_attr }
   }
-
-  pub fn as_proto_type_trait_target(&self) -> TokenStream2 {
-    let keys = self.keys.as_proto_type_trait_target();
-    let values = self.values.as_proto_type_trait_target();
-
-    quote! { HashMap<#keys, #values> }
-  }
 }
 
 pub fn parse_map_with_context(
@@ -128,7 +117,7 @@ pub fn parse_map_with_context(
   let keys_path = metas.first().unwrap().require_path_only()?;
   let keys = ProtoMapKeys::from_path(keys_path)?;
 
-  let values = match metas.last().take().unwrap() {
+  let values = match metas.last().unwrap() {
     Meta::Path(path) => {
       let ident = path.require_ident()?.to_string();
 

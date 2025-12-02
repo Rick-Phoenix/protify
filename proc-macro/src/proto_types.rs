@@ -172,18 +172,6 @@ impl ProtoType {
     }
   }
 
-  pub fn as_proto_type_trait_target(&self) -> TokenStream2 {
-    match self {
-      ProtoType::String => quote! { String },
-      ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { Vec<u8> },
-      ProtoType::Enum(path) => quote! { #path },
-      ProtoType::Message { path, .. } => quote! { #path },
-      ProtoType::Int32 => quote! { i32 },
-      ProtoType::Sint32 => quote! { i32 },
-    }
-  }
-
   pub fn output_proto_type(&self) -> TokenStream2 {
     match self {
       ProtoType::String => quote! { String },

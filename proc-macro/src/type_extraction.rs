@@ -1,13 +1,8 @@
-use std::{borrow::Cow, fmt::Display};
-
-use syn::spanned::Spanned;
-
 use crate::*;
 
 #[derive(Clone)]
 pub struct TypeInfo {
   pub rust_type: RustType,
-  pub span: Span,
   pub proto_field: ProtoField,
 }
 
@@ -46,17 +41,10 @@ impl TypeInfo {
     }
   }
 
-  pub fn from_type(rust_type: RustType, proto_field: ProtoField, ty: &Type) -> Result<Self, Error> {
-    let span = ty.span();
-
+  pub fn from_type(rust_type: RustType, proto_field: ProtoField) -> Result<Self, Error> {
     Ok(Self {
       rust_type,
-      span,
       proto_field,
     })
-  }
-
-  pub fn error(&self, error: impl Display) -> Error {
-    syn::Error::new(self.span, error)
   }
 }

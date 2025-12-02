@@ -7,7 +7,7 @@
 #[macro_use]
 mod macros;
 
-use std::{borrow::Cow, collections::HashMap, fmt::Display, ops::Range, rc::Rc, str::FromStr};
+use std::{borrow::Cow, collections::HashMap, fmt::Display, ops::Range, str::FromStr};
 
 use attributes::*;
 pub(crate) use convert_case::ccase;
@@ -17,22 +17,20 @@ use proc_macro2::Span;
 pub(crate) use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-  parse::{Parse, ParseStream},
+  parse::Parse,
   parse_macro_input, parse_quote,
   punctuated::Punctuated,
   token,
   token::{Brace, Struct},
-  Attribute, Data, DeriveInput, Error, Expr, ExprCall, ExprClosure, Field, Fields, GenericArgument,
-  Generics, Ident, Item, ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, Path,
-  PathArguments, PathSegment, RangeLimits, Token, Type, Variant, Visibility,
+  Attribute, Error, Expr, ExprClosure, Field, Fields, GenericArgument, Generics, Ident, Item,
+  ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, Path, PathArguments,
+  PathSegment, RangeLimits, Token, Type, Variant, Visibility,
 };
-use type_extraction::*;
 
 use crate::{
   conversions::*, enum_derive::*, item_cloners::*, message_derive::*, message_schema_impl::*,
   module_processing::*, oneof_derive::*, oneof_info::*, oneof_schema_impl::*, path_utils::*,
-  process_field::*, prost_attrs::*, proto_field::*, proto_map::*, proto_types::*, rust_type::*,
-  type_extraction::*,
+  process_field::*, proto_field::*, proto_map::*, proto_types::*, rust_type::*, type_extraction::*,
 };
 
 mod conversions;
@@ -46,7 +44,6 @@ mod oneof_info;
 mod oneof_schema_impl;
 mod path_utils;
 mod process_field;
-mod prost_attrs;
 mod proto_field;
 mod proto_map;
 mod proto_types;

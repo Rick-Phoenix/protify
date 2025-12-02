@@ -18,23 +18,31 @@ impl<'a> FieldOrVariant<'a> {
     }
   }
 
-  pub fn change_type(&mut self, ty: Type) {
+  pub fn change_type(&mut self, ty: Type) -> Result<(), Error> {
     let src_type = match self {
       FieldOrVariant::Field(field) => &mut field.ty,
       FieldOrVariant::Variant(variant) => {
         if let Fields::Unnamed(variant_fields) = &mut variant.fields {
           if variant_fields.unnamed.len() != 1 {
-            panic!("Oneof variants must contain a single value");
+            bail!(
+              &variant.fields,
+              "Oneof variants must contain a single unnamed value"
+            );
           }
 
           &mut variant_fields.unnamed.first_mut().unwrap().ty
         } else {
-          panic!("Oneof variants can only have one unnamed field")
+          bail!(
+            &variant.fields,
+            "Oneof variants must contain a single unnamed value"
+          );
         }
       }
     };
 
     *src_type = ty;
+
+    Ok(())
   }
 }
 
@@ -53,13 +61,11 @@ pub fn process_field(
   } = field_attrs;
 
   if let OutputType::Change = output_type {
-    let is_oneof_variant = matches!(field, FieldOrVariant::Variant(_));
+    let proto_output_type = type_info.proto_field.output_proto_type();
 
-    let proto_output_type_inner = type_info.proto_field.output_proto_type(is_oneof_variant);
+    let proto_output_type_outer: Type = parse_quote! { #proto_output_type };
 
-    let proto_output_type_outer: Type = parse_quote! { #proto_output_type_inner };
-
-    field.change_type(proto_output_type_outer);
+    field.change_type(proto_output_type_outer)?;
   }
 
   let prost_attr = type_info.as_prost_attr(tag);
