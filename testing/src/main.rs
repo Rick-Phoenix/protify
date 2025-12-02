@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 use prelude::{
   validators::{
-    EnumValidator, GenericProtoEnum, RepeatedValidator, RepeatedValidatorBuilder, StringValidator,
-    StringValidatorBuilder, ValidatorBuilderFor,
+    EnumValidator, GenericProtoEnum, IntValidator, RepeatedValidator, RepeatedValidatorBuilder,
+    Sint32, StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
   },
   ProtoFile,
 };
@@ -25,6 +25,12 @@ fn enum_validator() -> impl ValidatorBuilderFor<GenericProtoEnum> {
   let validator = EnumValidator::builder();
 
   validator.defined_only()
+}
+
+fn numeric_validator() -> impl ValidatorBuilderFor<Sint32> {
+  let validator = IntValidator::builder();
+
+  validator.lt(0)
 }
 
 #[proc_macro_impls::proto_module(file = "abc.proto", package = "myapp.v1")]
@@ -110,8 +116,17 @@ mod inner {
     #[proto(oneof(default, proxied))]
     oneof: PseudoOneof,
 
-    #[proto(sint32)]
+    #[proto(sint32, validate = numeric_validator())]
     sint32: i32,
+
+    #[proto(repeated(sint32), validate = |v| v.items(|it| it.gt(0)))]
+    sint32_repeated: Vec<i32>,
+
+    #[proto(map(sint32, sint32), validate = |v| v.keys(|k| k.gt(0)).values(|vals| vals.gt(0)))]
+    sint32_map: HashMap<i32, i32>,
+
+    #[proto(sint32)]
+    sint32_optional: Option<i32>,
   }
 
   #[proto_message]

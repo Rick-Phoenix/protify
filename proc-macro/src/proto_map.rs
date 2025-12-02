@@ -6,6 +6,7 @@ use crate::*;
 pub enum ProtoMapKeys {
   String,
   Int32,
+  Sint32,
 }
 
 impl From<ProtoMapKeys> for ProtoType {
@@ -13,6 +14,7 @@ impl From<ProtoMapKeys> for ProtoType {
     match value {
       ProtoMapKeys::String => Self::String,
       ProtoMapKeys::Int32 => Self::Int32,
+      ProtoMapKeys::Sint32 => Self::Sint32,
     }
   }
 }
@@ -22,13 +24,14 @@ impl ProtoMapKeys {
     match self {
       ProtoMapKeys::String => quote! { String },
       ProtoMapKeys::Int32 => quote! { i32 },
+      ProtoMapKeys::Sint32 => quote! { Sint32 },
     }
   }
 
   pub fn output_proto_type(&self) -> TokenStream2 {
     match self {
       ProtoMapKeys::String => quote! { String },
-      ProtoMapKeys::Int32 => quote! { i32 },
+      ProtoMapKeys::Int32 | ProtoMapKeys::Sint32 => quote! { i32 },
     }
   }
 
@@ -36,41 +39,27 @@ impl ProtoMapKeys {
     match self {
       ProtoMapKeys::String => quote! { String },
       ProtoMapKeys::Int32 => quote! { i32 },
+      ProtoMapKeys::Sint32 => quote! { Sint32 },
     }
-  }
-}
-
-impl FromStr for ProtoMapKeys {
-  type Err = String;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let output = match s {
-      "String" | "string" => Self::String,
-      "i32" => Self::Int32,
-      _ => return Err(format!("Unrecognized map key {s}")),
-    };
-
-    Ok(output)
   }
 }
 
 impl ProtoMapKeys {
   pub fn from_path(path: &Path) -> Result<Self, Error> {
-    let ident = path.get_ident().ok_or(spanned_error!(
-      path,
-      format!(
-        "Type {} is not a supported map key primitive",
-        path.to_token_stream()
-      )
-    ))?;
-    let ident_as_str = ident.to_string();
+    let ident = path.require_ident()?;
+    let ident_str = ident.to_string();
 
-    Self::from_str(&ident_as_str).map_err(|_| {
-      spanned_error!(
-        path,
-        format!("Type {} is not a supported map key primitive", ident_as_str)
-      )
-    })
+    let output = match ident_str.as_str() {
+      "String" | "string" => Self::String,
+      "int32" | "i32" => Self::Int32,
+      "sint32" => Self::Sint32,
+      _ => bail!(
+        ident,
+        format!("Type {} is not a supported map key primitive", ident_str)
+      ),
+    };
+
+    Ok(output)
   }
 }
 
@@ -79,6 +68,7 @@ impl Display for ProtoMapKeys {
     match self {
       ProtoMapKeys::String => write!(f, "string"),
       ProtoMapKeys::Int32 => write!(f, "int32"),
+      ProtoMapKeys::Sint32 => write!(f, "sint32"),
     }
   }
 }
@@ -122,45 +112,46 @@ pub fn parse_map_with_context(
   input: syn::parse::ParseStream,
   rust_type: &RustType,
 ) -> syn::Result<ProtoMap> {
-  let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
+  let mut metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
 
   if metas.len() != 2 {
-    return Err(input.error("Expected a list of two items"));
+    bail!(metas, "Expected a list of two items");
   }
 
-  let keys_path = metas.first().unwrap().require_path_only()?;
-  let keys = ProtoMapKeys::from_path(keys_path)?;
-
-  let values = match metas.last().unwrap() {
+  let values = match metas.pop().unwrap().into_value() {
     Meta::Path(path) => {
       let ident = path.require_ident()?.to_string();
-
       let span = path.span();
 
       let fallback = if let RustType::Map((_, v)) = rust_type {
         Some(v)
       } else {
-        return Err(input.error("Not a map type"));
+        None
       };
 
       ProtoType::from_ident(&ident, span, fallback)?
-        .ok_or(input.error("Unrecognized map keys type"))?
+        .ok_or(error!(span, "Unrecognized map keys type"))?
     }
     Meta::List(list) => {
       let list_ident = ident_string!(list.path);
+      let span = list.span();
 
       let fallback = if let RustType::Map((_, v)) = rust_type {
         Some(v)
       } else {
-        return Err(input.error("Not a map type"));
+        None
       };
 
-      ProtoType::from_meta_list(&list_ident, list.clone(), fallback)
+      ProtoType::from_meta_list(&list_ident, list, fallback)
         .map_err(|e| input.error(e))?
-        .ok_or(input.error("Unrecognized map values type"))?
+        .ok_or(error!(span, "Unrecognized map values type"))?
     }
-    _ => return Err(input.error("Expected the values to be a list or path")),
+    Meta::NameValue(nv) => bail!(nv, "Expected the values to be a list or path"),
   };
+
+  let keys_input = metas.pop().unwrap().into_value();
+  let keys_path = keys_input.require_path_only()?;
+  let keys = ProtoMapKeys::from_path(keys_path)?;
 
   Ok(ProtoMap { keys, values })
 }
