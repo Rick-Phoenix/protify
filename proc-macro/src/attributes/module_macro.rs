@@ -1,85 +1,6 @@
-use syn::MetaNameValue;
-
 use crate::*;
 
-fn register_full_name(
-  msg: &Ident,
-  relational_map: &HashMap<Ident, Ident>,
-  messages_map: &mut HashMap<Ident, MessageData>,
-) -> Result<(), Error> {
-  let target = messages_map.get(msg).ok_or(spanned_error!(
-    msg,
-    format!("Could not find the data for the message `{msg}`")
-  ))?;
-
-  let has_full_name = target.full_name.get().is_some();
-
-  if !has_full_name {
-    let short_name = target.name.clone();
-
-    if let Some(parent) = relational_map.get(msg) {
-      let parent_name = get_full_name(parent, relational_map, messages_map)?;
-
-      let full_name = format!("{parent_name}.{short_name}");
-
-      let _ = messages_map
-        .get_mut(msg)
-        .ok_or(spanned_error!(
-          msg,
-          format!("Could not find the data for the message `{msg}`")
-        ))?
-        .full_name
-        .set(full_name);
-    }
-  }
-
-  Ok(())
-}
-
-fn get_full_name(
-  msg: &Ident,
-  relational_map: &HashMap<Ident, Ident>,
-  messages_map: &mut HashMap<Ident, MessageData>,
-) -> Result<String, Error> {
-  let mut found_full_name = false;
-
-  let name = {
-    let msg_data = messages_map.get(msg).ok_or(spanned_error!(
-      msg,
-      format!("Could not find the data for the message `{msg}`")
-    ))?;
-
-    if let Some(full_name) = msg_data.full_name.get() {
-      found_full_name = true;
-      full_name.clone()
-    } else {
-      msg_data.name.clone()
-    }
-  };
-
-  if found_full_name {
-    Ok(name)
-  } else {
-    match relational_map.get(msg) {
-      None => Ok(name),
-      Some(parent) => {
-        let parent_name = get_full_name(parent, relational_map, messages_map)?;
-
-        let full_name = format!("{parent_name}.{name}");
-
-        let _ = messages_map
-          .get_mut(msg)
-          // Safe now since we know we have it
-          .unwrap()
-          .full_name
-          .set(full_name.clone());
-
-        Ok(full_name)
-      }
-    }
-  }
-}
-
+// We collect the items in this so that we can retain the order in the output
 pub enum ModuleItem {
   Raw(Box<Item>),
   Oneof(Ident),
@@ -87,6 +8,10 @@ pub enum ModuleItem {
   Enum(Ident),
 }
 
+// The module macro currently does this:
+// - It processes nested items and emits their full names
+// - It processes tags for oneofs and messages
+// - It injects the package and module attributes
 pub fn process_module_items(
   module_attrs: ModuleAttrs,
   mut module: ItemMod,
@@ -251,33 +176,85 @@ pub fn process_module_items(
   Ok(module)
 }
 
-pub struct ModuleAttrs {
-  pub file: String,
-  pub package: String,
+fn register_full_name(
+  msg: &Ident,
+  relational_map: &HashMap<Ident, Ident>,
+  messages_map: &mut HashMap<Ident, MessageData>,
+) -> Result<(), Error> {
+  let target = messages_map.get(msg).ok_or(spanned_error!(
+    msg,
+    format!("Could not find the data for the message `{msg}`")
+  ))?;
+
+  let has_full_name = target.full_name.get().is_some();
+
+  if !has_full_name {
+    let short_name = target.name.clone();
+
+    if let Some(parent) = relational_map.get(msg) {
+      let parent_name = get_full_name(parent, relational_map, messages_map)?;
+
+      let full_name = format!("{parent_name}.{short_name}");
+
+      let _ = messages_map
+        .get_mut(msg)
+        .ok_or(spanned_error!(
+          msg,
+          format!("Could not find the data for the message `{msg}`")
+        ))?
+        .full_name
+        .set(full_name);
+    }
+  }
+
+  Ok(())
 }
 
-impl Parse for ModuleAttrs {
-  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    let mut file: Option<String> = None;
-    let mut package: Option<String> = None;
+fn get_full_name(
+  msg: &Ident,
+  relational_map: &HashMap<Ident, Ident>,
+  messages_map: &mut HashMap<Ident, MessageData>,
+) -> Result<String, Error> {
+  let mut found_full_name = false;
 
-    let args = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
+  let name = {
+    let msg_data = messages_map.get(msg).ok_or(spanned_error!(
+      msg,
+      format!("Could not find the data for the message `{msg}`")
+    ))?;
 
-    for arg in args {
-      if arg.path.is_ident("file") {
-        file = Some(extract_string_lit(&arg.value)?);
-      } else if arg.path.is_ident("package") {
-        package = Some(extract_string_lit(&arg.value)?);
+    if let Some(full_name) = msg_data.full_name.get() {
+      found_full_name = true;
+      full_name.clone()
+    } else {
+      msg_data.name.clone()
+    }
+  };
+
+  if found_full_name {
+    Ok(name)
+  } else {
+    match relational_map.get(msg) {
+      None => Ok(name),
+      Some(parent) => {
+        let parent_name = get_full_name(parent, relational_map, messages_map)?;
+
+        let full_name = format!("{parent_name}.{name}");
+
+        let _ = messages_map
+          .get_mut(msg)
+          // Safe now since we know we have it
+          .unwrap()
+          .full_name
+          .set(full_name.clone());
+
+        Ok(full_name)
       }
     }
-
-    let file = file.ok_or(error!(Span::call_site(), "File attribute is missing"))?;
-    let package = package.ok_or(error!(Span::call_site(), "Package attribute is missing"))?;
-
-    Ok(ModuleAttrs { file, package })
   }
 }
 
+// We use this to discriminate the kind of item we have before we process them
 pub enum ItemKind {
   Message,
   Enum,

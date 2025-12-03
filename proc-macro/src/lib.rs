@@ -23,8 +23,8 @@ use syn::{
   token,
   token::{Brace, Struct},
   Attribute, Error, Expr, ExprCall, ExprClosure, Field, Fields, GenericArgument, Generics, Ident,
-  Item, ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, Path, PathArguments,
-  PathSegment, RangeLimits, Token, Type, Variant, Visibility,
+  Item, ItemEnum, ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, MetaNameValue, Path,
+  PathArguments, PathSegment, RangeLimits, Token, Type, Variant, Visibility,
 };
 
 use crate::{
