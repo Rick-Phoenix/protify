@@ -37,14 +37,6 @@ pub fn message_schema_impls(
   };
 
   quote! {
-    impl ProtoValidator<#struct_name> for ValidatorMap {
-      type Builder = MessageValidatorBuilder;
-
-      fn builder() -> Self::Builder {
-        MessageValidator::builder()
-      }
-    }
-
     impl AsProtoType for #struct_name {
       fn proto_type() -> ProtoType {
         ProtoType::Single(TypeInfo {

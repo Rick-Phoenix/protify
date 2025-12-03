@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! cel_rule {
   (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
-    $crate::validators::CelRule {
+    $crate::CelRule {
       id: $id.into(),
       message: $msg.into(),
       expression: $expr.into(),

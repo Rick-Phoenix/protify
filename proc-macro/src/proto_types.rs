@@ -90,6 +90,8 @@ impl ProtoType {
           is_boxed: false,
         }
       }
+      "bytes" => Self::Bytes,
+      "bool" => Self::Bool,
       "duration" => Self::Duration,
       "timestamp" => Self::Timestamp,
       "enum_" => {
@@ -116,20 +118,22 @@ impl ProtoType {
       ProtoType::Enum(path) => quote! { #path },
       ProtoType::Message { path, .. } => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
-      ProtoType::Sint32 => quote! { Sint32 },
+      ProtoType::Sint32 => quote! { prelude::Sint32 },
       ProtoType::Duration => quote! { proto_types::Duration },
       ProtoType::Timestamp => quote! { proto_types::Timestamp },
     }
   }
 
   pub fn from_primitive(path: &Path) -> Result<Self, Error> {
-    let ident = path.require_ident()?;
+    let ident = &path.segments.last().unwrap().ident;
     let ident_str = ident.to_string();
 
     let output = match ident_str.as_str() {
       "String" => Self::String,
       "bool" => Self::Bool,
       "i32" => Self::Int32,
+      "Timestamp" => Self::Timestamp,
+      "Duration" => Self::Duration,
       _ => {
         return Err(spanned_error!(
           path,
@@ -168,10 +172,10 @@ impl ProtoType {
       ProtoType::String => quote! { String },
       ProtoType::Bool => quote! { bool },
       ProtoType::Bytes => quote! { Vec<u8> },
-      ProtoType::Enum(_) => quote! { GenericProtoEnum },
-      ProtoType::Message { .. } => quote! { GenericMessage },
+      ProtoType::Enum(_) => quote! { prelude::GenericProtoEnum },
+      ProtoType::Message { .. } => quote! { prelude::GenericMessage },
       ProtoType::Int32 => quote! { i32 },
-      ProtoType::Sint32 => quote! { Sint32 },
+      ProtoType::Sint32 => quote! { prelude::Sint32 },
       ProtoType::Duration => quote! { proto_types::Duration },
       ProtoType::Timestamp => quote! { proto_types::Timestamp },
     }

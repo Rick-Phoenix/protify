@@ -92,14 +92,6 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
   }
 
   let output_tokens = quote! {
-    impl ProtoValidator<#enum_name> for ValidatorMap {
-      type Builder = EnumValidatorBuilder;
-
-      fn builder() -> Self::Builder {
-        EnumValidator::builder()
-      }
-    }
-
     impl AsProtoType for #enum_name {
       fn proto_type() -> ProtoType {
         ProtoType::Single(TypeInfo {

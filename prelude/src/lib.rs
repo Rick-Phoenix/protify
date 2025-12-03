@@ -4,12 +4,8 @@ mod macros;
 pub use paste::paste;
 mod oneof;
 mod options;
-pub mod validators;
-use std::{
-  collections::{BTreeSet, HashSet},
-  ops::Range,
-  sync::Arc,
-};
+mod validators;
+use std::{collections::HashSet, ops::Range, sync::Arc};
 mod field;
 mod file;
 mod message;
@@ -26,6 +22,7 @@ pub use oneof::*;
 pub use options::*;
 pub use proto_enum::*;
 pub use proto_type::*;
+pub use validators::*;
 
 #[doc(hidden)]
 pub fn apply<I, O, F>(input: I, f: F) -> O

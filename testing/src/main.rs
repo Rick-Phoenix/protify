@@ -3,14 +3,11 @@
 use std::collections::HashMap;
 
 use prelude::{
-  validators::{
-    EnumValidator, GenericProtoEnum, IntValidator, RepeatedValidator, RepeatedValidatorBuilder,
-    Sint32, StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
-  },
-  ProtoFile,
+  EnumValidator, GenericProtoEnum, IntValidator, ProtoFile, RepeatedValidator,
+  RepeatedValidatorBuilder, Sint32, StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
 };
 use proc_macro_impls::{Enum, Message, Oneof};
-use proto_types::Duration;
+use proto_types::{Duration, Timestamp};
 
 fn string_validator() -> StringValidatorBuilder {
   StringValidator::builder()
@@ -36,10 +33,7 @@ fn numeric_validator() -> impl ValidatorBuilderFor<Sint32> {
 
 #[proc_macro_impls::proto_module(file = "abc.proto", package = "myapp.v1")]
 mod inner {
-  use prelude::{
-    validators::{ProtoValidator, ValidatorMap, *},
-    *,
-  };
+  use prelude::*;
   use proc_macro_impls::{proto_enum, proto_message, proto_oneof};
 
   use super::*;
@@ -92,9 +86,13 @@ mod inner {
   #[proto_message]
   #[proto(reserved_numbers(1, 2, 3..9))]
   #[proto(nested_enums(PseudoEnum))]
+  #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
   #[proto(validate = message_rules())]
   pub struct Abc {
+    #[proto(timestamp, validate = |v| v.lt_now())]
+    timestamp: Option<Timestamp>,
+
     #[proto(duration, validate = |v| v.lt(Duration { seconds: 2000, nanos: 0 }))]
     duration: Option<Duration>,
 

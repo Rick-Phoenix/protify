@@ -50,11 +50,11 @@ pub fn process_module_items(
         let message_data = parse_message(s)?;
 
         for nested_msg_ident in &message_data.nested_messages {
-          messages_relational_map.insert(item_ident.clone(), nested_msg_ident.clone());
+          messages_relational_map.insert(nested_msg_ident.clone(), item_ident.clone());
         }
 
         for nested_enum_ident in &message_data.nested_enums {
-          enums_relational_map.insert(item_ident.clone(), nested_enum_ident.clone());
+          enums_relational_map.insert(nested_enum_ident.clone(), item_ident.clone());
         }
 
         mod_items.push(ModuleItem::Message(item_ident.clone()));
