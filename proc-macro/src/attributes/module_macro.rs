@@ -154,6 +154,7 @@ pub fn process_module_items(
     file,
     package,
     schema_feature,
+    ..
   } = module_attrs;
 
   let feature_tokens = schema_feature.map(|feat| quote! { #[cfg(feature = #feat)] });

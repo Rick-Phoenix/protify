@@ -1,6 +1,24 @@
 use crate::*;
 
-pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
+pub fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
+  let ItemEnum {
+    attrs,
+    ident: enum_name,
+    ..
+  } = item;
+
+  let enum_attrs = process_derive_enum_attrs(enum_name, attrs)?;
+
+  match enum_attrs.backend {
+    Backend::Prost => process_enum_derive_prost(item, enum_attrs),
+    Backend::Protobuf => unimplemented!(),
+  }
+}
+
+pub fn process_enum_derive_prost(
+  item: &mut ItemEnum,
+  enum_attrs: EnumAttrs,
+) -> Result<TokenStream2, Error> {
   let ItemEnum {
     attrs,
     ident: enum_name,
@@ -23,7 +41,8 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
     full_name,
     no_prefix,
     schema_feature,
-  } = process_derive_enum_attrs(enum_name, attrs).unwrap();
+    ..
+  } = enum_attrs;
 
   let reserved_numbers_tokens = reserved_numbers.to_token_stream();
 

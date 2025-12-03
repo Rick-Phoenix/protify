@@ -1,6 +1,26 @@
 use crate::*;
 
-pub(crate) fn process_message_derive_shadow(
+pub fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
+  let message_attrs = process_derive_message_attrs(&item.ident, &item.attrs)?;
+
+  match message_attrs.backend {
+    Backend::Prost => process_message_derive_prost(item, message_attrs),
+    Backend::Protobuf => unimplemented!(),
+  }
+}
+
+pub fn process_message_derive_prost(
+  item: &mut ItemStruct,
+  message_attrs: MessageAttrs,
+) -> Result<TokenStream2, Error> {
+  if message_attrs.direct {
+    process_message_derive_direct(item, message_attrs)
+  } else {
+    process_message_derive_shadow(item, message_attrs)
+  }
+}
+
+pub fn process_message_derive_shadow(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
 ) -> Result<TokenStream2, Error> {
@@ -132,17 +152,7 @@ pub(crate) fn process_message_derive_shadow(
   Ok(output_tokens)
 }
 
-pub(crate) fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
-  let message_attrs = process_derive_message_attrs(&item.ident, &item.attrs)?;
-
-  if message_attrs.direct {
-    process_message_derive_direct(item, message_attrs)
-  } else {
-    process_message_derive_shadow(item, message_attrs)
-  }
-}
-
-pub(crate) fn process_message_derive_direct(
+pub fn process_message_derive_direct(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
 ) -> Result<TokenStream2, Error> {

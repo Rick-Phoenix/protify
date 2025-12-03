@@ -1,5 +1,25 @@
 use crate::*;
 
+pub fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
+  let oneof_attrs = process_oneof_attrs(&item.ident, &item.attrs)?;
+
+  match oneof_attrs.backend {
+    Backend::Prost => process_oneof_derive_prost(item, oneof_attrs),
+    Backend::Protobuf => unimplemented!(),
+  }
+}
+
+pub fn process_oneof_derive_prost(
+  item: &mut ItemEnum,
+  oneof_attrs: OneofAttrs,
+) -> Result<TokenStream2, Error> {
+  if oneof_attrs.direct {
+    process_oneof_derive_direct(item, oneof_attrs)
+  } else {
+    process_oneof_derive_shadow(item, oneof_attrs)
+  }
+}
+
 pub(crate) fn process_oneof_derive_shadow(
   item: &mut ItemEnum,
   oneof_attrs: OneofAttrs,
@@ -154,16 +174,6 @@ pub(crate) fn process_oneof_derive_shadow(
   });
 
   Ok(output_tokens)
-}
-
-pub fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
-  let oneof_attrs = process_oneof_attrs(&item.ident, &item.attrs)?;
-
-  if oneof_attrs.direct {
-    process_oneof_derive_direct(item, oneof_attrs)
-  } else {
-    process_oneof_derive_shadow(item, oneof_attrs)
-  }
 }
 
 pub(crate) fn process_oneof_derive_direct(
