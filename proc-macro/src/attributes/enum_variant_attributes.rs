@@ -24,7 +24,7 @@ pub fn process_derive_enum_variants_attrs(
     for meta in args.inner {
       match meta {
         Meta::NameValue(nv) => {
-          let ident = get_ident_or_continue!(nv.path);
+          let ident = nv.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "name" => {
@@ -33,7 +33,7 @@ pub fn process_derive_enum_variants_attrs(
             "options" => {
               options = Some(nv.value);
             }
-            _ => {}
+            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::List(_) => {}

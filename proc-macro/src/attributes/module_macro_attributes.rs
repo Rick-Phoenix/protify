@@ -76,7 +76,7 @@ impl Parse for ModuleAttrs {
     let args = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
 
     for arg in args {
-      let ident = get_ident_or_continue!(arg.path);
+      let ident = arg.path.require_ident()?.to_string();
 
       match ident.as_str() {
         "backend" => {
@@ -91,7 +91,7 @@ impl Parse for ModuleAttrs {
         "schema_feature" => {
           schema_feature = Some(extract_string_lit(&arg.value)?);
         }
-        _ => {}
+        _ => bail!(arg.path, format!("Unknown attribute `{ident}`")),
       };
     }
 

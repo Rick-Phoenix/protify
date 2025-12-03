@@ -50,7 +50,7 @@ pub fn process_derive_message_attrs(
     for arg in args.inner {
       match arg {
         Meta::List(list) => {
-          let ident = get_ident_or_continue!(list.path);
+          let ident = list.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "reserved_names" => {
@@ -74,11 +74,11 @@ pub fn process_derive_message_attrs(
               nested_enums.extend(idents.into_iter());
             }
             "derive" => shadow_derives = Some(list),
-            _ => {}
+            _ => bail!(list, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::NameValue(nv) => {
-          let ident = get_ident_or_continue!(nv.path);
+          let ident = nv.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "backend" => {
@@ -118,13 +118,16 @@ pub fn process_derive_message_attrs(
             "package" => {
               package = Some(extract_string_lit(&nv.value)?);
             }
-            _ => {}
+            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::Path(path) => {
-          if path.is_ident("direct") {
-            direct = true;
-          }
+          let ident = path.require_ident()?.to_string();
+
+          match ident.as_str() {
+            "direct" => direct = true,
+            _ => bail!(path, format!("Unknown attribute `{ident}`")),
+          };
         }
       }
     }

@@ -38,7 +38,7 @@ pub fn process_derive_enum_attrs(
     for arg in args.inner {
       match arg {
         Meta::List(list) => {
-          let ident = get_ident_or_continue!(list.path);
+          let ident = list.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "reserved_names" => {
@@ -52,11 +52,11 @@ pub fn process_derive_enum_attrs(
               reserved_numbers = numbers;
             }
 
-            _ => {}
+            _ => bail!(list, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::NameValue(nv) => {
-          let ident = get_ident_or_continue!(nv.path);
+          let ident = nv.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "backend" => {
@@ -83,15 +83,15 @@ pub fn process_derive_enum_attrs(
             "file" => {
               file = Some(extract_string_lit(&nv.value)?);
             }
-            _ => {}
+            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::Path(path) => {
-          let ident = get_ident_or_continue!(path);
+          let ident = path.require_ident()?.to_string();
 
           match ident.as_str() {
             "no_prefix" => no_prefix = true,
-            _ => {}
+            _ => bail!(path, format!("Unknown attribute `{ident}`")),
           };
         }
       }

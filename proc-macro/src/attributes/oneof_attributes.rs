@@ -36,28 +36,24 @@ pub fn process_oneof_attrs(
     for arg in args.inner {
       match arg {
         Meta::Path(path) => {
-          let ident = if let Some(ident) = path.get_ident() {
-            ident.to_string()
-          } else {
-            continue;
-          };
+          let ident = path.require_ident()?.to_string();
 
           match ident.as_str() {
             "required" => required = true,
             "direct" => direct = true,
-            _ => {}
+            _ => bail!(path, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::List(list) => {
-          let ident = get_ident_or_continue!(list.path);
+          let ident = list.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "derive" => shadow_derives = Some(list),
-            _ => {}
+            _ => bail!(list, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::NameValue(nv) => {
-          let ident = get_ident_or_continue!(nv.path);
+          let ident = nv.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "backend" => {
@@ -80,7 +76,7 @@ pub fn process_oneof_attrs(
               into_proto = Some(expr);
             }
             "name" => name = Some(extract_string_lit(&nv.value)?),
-            _ => {}
+            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
           };
         }
       }

@@ -49,7 +49,7 @@ pub fn process_derive_field_attrs(
     for meta in args.inner {
       match meta {
         Meta::NameValue(nv) => {
-          let ident = get_ident_or_continue!(nv.path);
+          let ident = nv.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "options" => {
@@ -79,11 +79,11 @@ pub fn process_derive_field_attrs(
             "name" => {
               name = Some(extract_string_lit(&nv.value)?);
             }
-            _ => {}
+            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
           };
         }
         Meta::List(list) => {
-          let ident = get_ident_or_continue!(list.path);
+          let ident = list.path.require_ident()?.to_string();
 
           match ident.as_str() {
             "oneof" => {
@@ -131,16 +131,19 @@ pub fn process_derive_field_attrs(
             }
 
             _ => {
+              let list_span = list.span();
               let fallback = rust_type.inner_path();
 
               if let Some(field_info) = ProtoType::from_meta_list(&ident, list, fallback)? {
                 proto_field = Some(ProtoField::Single(field_info));
+              } else {
+                return Err(error!(list_span, format!("Unknown attribute `{ident}`")));
               }
             }
           };
         }
         Meta::Path(path) => {
-          let ident = get_ident_or_continue!(path);
+          let ident = path.require_ident()?.to_string();
 
           match ident.as_str() {
             "ignore" => is_ignored = true,
@@ -152,6 +155,8 @@ pub fn process_derive_field_attrs(
 
               if let Some(parsed_kind) = ProtoType::from_ident(&ident, span, fallback)? {
                 proto_field = Some(ProtoField::Single(parsed_kind));
+              } else {
+                return Err(error!(span, format!("Unknown attribute `{ident}`")));
               }
             }
           };
