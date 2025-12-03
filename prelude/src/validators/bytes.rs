@@ -36,36 +36,37 @@ macro_rules! insert_bytes_option {
 }
 
 #[derive(Clone, Debug, Builder)]
+#[builder(derive(Clone))]
 pub struct BytesValidator {
-  /// Specifies the exact length for this bytes field to be considered valid.
+  /// Specifies that the given `bytes` field must be of this exact length.
   pub len: Option<u64>,
-  /// The minimum length for this field in order to be considered valid.
+  /// Specifies that the given `bytes` field must have a length that is equal to or higher than the given value.
   pub min_len: Option<u64>,
-  /// The maximum length for this field in order to be considered valid.
+  /// Specifies that the given `bytes` field must have a length that is equal to or lower than the given value.
   pub max_len: Option<u64>,
-  /// The pattern that this field must match in order to be valid.
+  /// Specifies a regex pattern that must be matches by the value to pass validation.
   pub pattern: Option<Regex>,
-  /// A prefix that this field must contain in order to be valid.
+  /// Specifies a prefix that the value must start with in order to pass validation.
   pub prefix: Option<Bytes>,
-  /// A suffix that this field must contain in order to be valid.
+  /// Specifies a suffix that the value must end with in order to pass validation.
   pub suffix: Option<Bytes>,
-  /// A subset of bytes that this field must contain in order to be valid.
+  /// Specifies a subset of bytes that the value must contain in order to pass validation.
   pub contains: Option<Bytes>,
-  /// Only the values in this list will be considered valid for this field.
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[builder(into)]
   pub in_: Option<Arc<[Bytes]>>,
-  /// The values in this list will be considered invalid for this field.
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[builder(into)]
   pub not_in: Option<Arc<[Bytes]>>,
   #[builder(setters(vis = "", name = well_known))]
   pub well_known: Option<WellKnownBytes>,
-  /// Only this specific value will be considered valid for this field.
+  /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Bytes>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
   #[builder(with = || true)]
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
@@ -147,9 +148,18 @@ macro_rules! well_known_impl {
 }
 
 impl<S: State> BytesValidatorBuilder<S> {
-  well_known_impl!(Ip, "The value must be an IPv4/Ipv6 address");
-  well_known_impl!(Ipv4, "The value must be an IPv4 address");
-  well_known_impl!(Ipv6, "The value must be an IPv6 address");
+  well_known_impl!(
+    Ip,
+    "Specifies that the value must be a valid IP address (v4 or v6) in byte format."
+  );
+  well_known_impl!(
+    Ipv4,
+    "Specifies that the value must be a valid IPv4 address in byte format."
+  );
+  well_known_impl!(
+    Ipv6,
+    "Specifies that the value must be a valid IPv6 address in byte format."
+  );
 }
 
 impl WellKnownBytes {

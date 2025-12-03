@@ -7,29 +7,29 @@ use super::*;
 /// Used by the [`timestamp`](crate::timestamp) macro to define validation rules.
 #[derive(Clone, Debug, Builder)]
 pub struct TimestampValidator {
-  /// Only this specific value will be considered valid for this field.
+  /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Timestamp>,
-  /// This field's value will be valid only if it is smaller than the specified amount.
+  /// Specifies that this field's value will be valid only if it is smaller than the specified amount.
   pub lt: Option<Timestamp>,
-  /// This field's value will be valid only if it is smaller than, or equal to, the specified amount.
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount.
   pub lte: Option<Timestamp>,
   #[builder(with = || true)]
-  /// This field's value will be valid only if it in the past.
+  /// Specifies that this field's value will be valid only if it in the past.
   pub lt_now: Option<bool>,
-  /// This field's value will be valid only if it is greater than the specified amount.
+  /// Specifies that this field's value will be valid only if it is greater than the specified amount.
   pub gt: Option<Timestamp>,
-  /// This field's value will be valid only if it is greater than, or equal to, the specified amount.
+  /// Specifies that this field's value will be valid only if it is greater than, or equal to, the specified amount.
   pub gte: Option<Timestamp>,
   #[builder(with = || true)]
-  /// This field's value will be valid only if it in the future.
+  /// Specifies that this field's value will be valid only if it in the future.
   pub gt_now: Option<bool>,
-  /// This field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
+  /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
   pub within: Option<Duration>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Box<[CelRule]>>,
   #[builder(with = || true)]
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,

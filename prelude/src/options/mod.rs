@@ -9,7 +9,6 @@ pub struct ProtoOption {
 }
 
 /// An enum representing values for protobuf options.
-/// For building [`OptionValue`]s for options with a message type, try using the [`message_option`](crate::message_option) macro or the [`message_value`] helper. For lists, use the [`list_value`] helper. For options that have enum values, you can use the [`enum_option`](crate::enum_option) macro or the [`enum_values_list`] helper.
 #[derive(Clone, Debug)]
 pub enum OptionValue {
   Bool(bool),
@@ -22,6 +21,34 @@ pub enum OptionValue {
   Enum(Arc<str>),
   Duration(Duration),
   Timestamp(Timestamp),
+}
+
+impl OptionValue {
+  /// Creates a new message option value.
+  pub fn new_message<S, V, I>(items: I) -> Self
+  where
+    S: Into<Arc<str>>,
+    V: Into<OptionValue>,
+    I: IntoIterator<Item = (S, V)>,
+  {
+    let items: Vec<(Arc<str>, OptionValue)> = items
+      .into_iter()
+      .map(|(name, val)| (name.into(), val.into()))
+      .collect();
+
+    Self::Message(items.into())
+  }
+
+  /// Creates a new list option value.
+  pub fn new_list<I, V>(items: I) -> Self
+  where
+    V: Into<OptionValue>,
+    I: IntoIterator<Item = V>,
+  {
+    let items: Vec<OptionValue> = items.into_iter().map(|v| v.into()).collect();
+
+    Self::List(items.into())
+  }
 }
 
 macro_rules! option_value_conversion {
@@ -79,6 +106,17 @@ impl From<&str> for OptionValue {
 impl From<Arc<str>> for OptionValue {
   fn from(value: Arc<str>) -> Self {
     OptionValue::String(value)
+  }
+}
+
+impl From<std::time::Duration> for OptionValue {
+  fn from(value: std::time::Duration) -> Self {
+    let seconds = value.as_secs() as i64;
+    let nanos = value.as_nanos() as i32;
+
+    let duration = Duration { seconds, nanos };
+
+    OptionValue::Duration(duration)
   }
 }
 

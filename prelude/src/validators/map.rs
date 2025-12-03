@@ -57,13 +57,11 @@ pub struct MapValidator<K = (), V = ()> {
   #[builder(default)]
   _value_type: PhantomData<V>,
 
+  /// The validation rules to apply to the keys of this map field.
   #[builder(setters(vis = "", name = keys_internal))]
-  /// The options that will apply to this map's keys.
-  /// This is mostly useful when calling the map definition macros, which will automatically convert validators into the option to use here.
   pub keys: Option<ProtoOption>,
+  /// The validation rules to apply to the keys of this map field.
   #[builder(setters(vis = "", name = values_internal))]
-  /// The options that will apply to this map's values.
-  /// This is mostly useful when calling the map definition macros, which will automatically convert validators into the option to use here.
   pub values: Option<ProtoOption>,
   /// The minimum amount of key-value pairs that this field should have in order to be valid.
   pub min_pairs: Option<u64>,
@@ -74,7 +72,7 @@ pub struct MapValidator<K = (), V = ()> {
   /// To apply cel rules to the individual keys or values, use the validators for those instead.
   pub cel: Option<Arc<[CelRule]>>,
   #[builder(with = || true)]
-  /// Marks the field as required. This is essentially the same as setting min_pairs to 1.
+  /// Specifies that the field must be set in order to be valid. This is essentially the same as setting min_pairs to 1.
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
@@ -85,7 +83,7 @@ where
   S::Keys: IsUnset,
 {
   #[track_caller]
-  /// Sets the rules for the map keys
+  /// Sets the rules for the keys of this map field.
   pub fn keys<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetKeys<S>>
   where
     ValidatorMap: ProtoValidator<K>,
@@ -102,7 +100,7 @@ where
   S::Values: IsUnset,
 {
   #[track_caller]
-  /// Sets the rules for the map values
+  /// Sets the rules for the values of this map field.
   pub fn values<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetValues<S>>
   where
     ValidatorMap: ProtoValidator<V>,

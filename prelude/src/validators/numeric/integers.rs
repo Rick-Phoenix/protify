@@ -12,26 +12,26 @@ where
 {
   #[builder(default)]
   _wrapper: PhantomData<Num>,
-  /// Only this specific value will be considered valid for this field.
+  /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Num::RustType>,
-  /// This field's value will be valid only if it is smaller than the specified amount
+  /// Specifies that this field's value will be valid only if it is smaller than the specified amount
   pub lt: Option<Num::RustType>,
-  /// This field's value will be valid only if it is smaller than, or equal to, the specified amount
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
   pub lte: Option<Num::RustType>,
-  /// This field's value will be valid only if it is greater than the specified amount
+  /// Specifies that this field's value will be valid only if it is greater than the specified amount
   pub gt: Option<Num::RustType>,
-  /// This field's value will be valid only if it is smaller than, or equal to, the specified amount
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
   pub gte: Option<Num::RustType>,
-  /// Only the values in this list will be considered valid for this field.
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[builder(into)]
   pub in_: Option<Arc<[Num::RustType]>>,
-  /// The values in this list will be considered invalid for this field.
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[builder(into)]
   pub not_in: Option<Arc<[Num::RustType]>>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,

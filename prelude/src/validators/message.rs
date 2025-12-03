@@ -15,7 +15,7 @@ pub struct MessageValidator {
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
   #[builder(with = || true)]
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,

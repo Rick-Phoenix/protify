@@ -41,12 +41,12 @@ type OptionValueList = Vec<(Arc<str>, OptionValue)>;
 impl From<Ignore> for OptionValue {
   fn from(value: Ignore) -> Self {
     let name = match value {
-      Ignore::Unspecified => "IGNORE_UNSPECIFIED",
-      Ignore::IfZeroValue => "IGNORE_IF_ZERO_VALUE",
-      Ignore::Always => "IGNORE_ALWAYS",
+      Ignore::Unspecified => IGNORE_UNSPECIFIED.clone(),
+      Ignore::IfZeroValue => IGNORE_IF_ZERO_VALUE.clone(),
+      Ignore::Always => IGNORE_ALWAYS.clone(),
     };
 
-    OptionValue::Enum(name.into())
+    OptionValue::Enum(name)
   }
 }
 

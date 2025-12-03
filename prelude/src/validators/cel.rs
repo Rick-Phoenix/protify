@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use cel_rule_builder::{IsComplete, State};
+
 use super::*;
 
 /// The structure of a custom Cel rule used to define validation logic with protovalidate.
@@ -11,9 +13,21 @@ use super::*;
 #[derive(Debug, Clone, Builder)]
 #[builder(on(Arc<str>, into))]
 pub struct CelRule {
+  /// The id of this specific rule.
   pub id: Arc<str>,
+  /// The error message to display in case the rule fails validation.
   pub message: Arc<str>,
+  /// The CEL expression that must be used to perform the validation check.
   pub expression: Arc<str>,
+}
+
+impl<S: State> From<CelRuleBuilder<S>> for OptionValue
+where
+  S: IsComplete,
+{
+  fn from(value: CelRuleBuilder<S>) -> Self {
+    value.build().into()
+  }
 }
 
 impl From<CelRule> for OptionValue {

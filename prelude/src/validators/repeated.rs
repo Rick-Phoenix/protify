@@ -57,6 +57,7 @@ impl<T: AsProtoType, S: State> RepeatedValidatorBuilder<T, S>
 where
   S::Items: repeated_validator_builder::IsUnset,
 {
+  /// Specifies the rules that will be applied to the individual items of this repeated field.
   #[track_caller]
   pub fn items<F, FinalBuilder>(
     self,
@@ -89,8 +90,8 @@ pub struct RepeatedValidator<T: AsProtoType> {
   #[builder(default)]
   _inner_type: PhantomData<T>,
 
+  /// Specifies the rules that will be applied to the individual items of this repeated field.
   #[builder(setters(vis = "", name = items_internal))]
-  /// The rules to apply to the individual items in this field's list. Usually defined via the various field macros, which automatically convert field validator instances into the correct [`ProtoOption`] to place here.
   pub items: Option<ProtoOption>,
   /// The minimum amount of items that this field must contain in order to be valid.
   pub min_items: Option<u64>,
@@ -103,7 +104,7 @@ pub struct RepeatedValidator<T: AsProtoType> {
   /// These will apply to the list as a whole. To apply rules to the individual items, use the items validator instead.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
-  /// Marks the field as required. Since repeated fields are always present in protobuf, this is essentially the same as setting min_items to 1
+  /// Specifies that the field must be set in order to be valid. This is essentially the same as setting min_items to 1
   #[builder(with = || true)]
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]

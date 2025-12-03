@@ -7,11 +7,12 @@ impl_validator!(BoolValidator, bool);
 impl_into_option!(BoolValidator);
 
 #[derive(Clone, Debug, Builder)]
+#[builder(derive(Clone))]
 pub struct BoolValidator {
-  /// Only this specific value will be considered valid for this field.
+  /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<bool>,
   #[builder(with = || true)]
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   pub required: Option<bool>,
 }
 

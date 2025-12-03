@@ -7,30 +7,30 @@ use super::*;
 impl_validator!(DurationValidator, Duration);
 impl_into_option!(DurationValidator);
 
-/// Used by the [`duration`](crate::duration) macro to define validation rules.
 #[derive(Clone, Debug, Builder)]
+#[builder(derive(Clone))]
 pub struct DurationValidator {
-  /// Only the values in this list will be considered valid for this field.
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[builder(into)]
   pub in_: Option<Arc<[Duration]>>,
-  /// The values in this list will be considered invalid for this field.
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[builder(into)]
   pub not_in: Option<Arc<[Duration]>>,
-  /// Only this specific value will be considered valid for this field.
+  /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Duration>,
-  /// This field's value will be valid only if it is smaller than the specified amount
+  /// Specifies that the value must be smaller than the indicated amount in order to pass validation.
   pub lt: Option<Duration>,
-  /// This field's value will be valid only if it is smaller than, or equal to, the specified amount
+  /// Specifies that the value must be equal to or smaller than the indicated amount in order to pass validation.
   pub lte: Option<Duration>,
-  /// This field's value will be valid only if it is greater than the specified amount
+  /// Specifies that the value must be greater than the indicated amount in order to pass validation.
   pub gt: Option<Duration>,
-  /// This field's value will be valid only if it is greater than, or equal to, the specified amount
+  /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
   pub gte: Option<Duration>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
   #[builder(with = || true)]
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,

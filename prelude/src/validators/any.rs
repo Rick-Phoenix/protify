@@ -8,17 +8,18 @@ impl_validator!(AnyValidator, Any);
 impl_into_option!(AnyValidator);
 
 #[derive(Clone, Debug, Builder)]
+#[builder(derive(Clone))]
 pub struct AnyValidator {
-  /// Only the type_urls defined in this list will be considered valid for this field.
+  /// Specifies that the given `google.protobuf.Any` message must have a type URL that is contained in this list.
   #[builder(setters(vis = "", name = in_internal))]
   pub in_: Option<Arc<[Arc<str>]>>,
-  /// The type_urls defined in this list will be considered invalid for this field.
+  /// Specifies that the given `google.protobuf.Any` message must have a type URL that is NOT contained in this list.
   #[builder(setters(vis = "", name = not_in_internal))]
   pub not_in: Option<Arc<[Arc<str>]>>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   #[builder(with = || true)]
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
@@ -29,7 +30,7 @@ impl<S: State> AnyValidatorBuilder<S>
 where
   S::In: IsUnset,
 {
-  /// Only the type URLs contained in this list will be considered valid
+  /// Specifies that the given `google.protobuf.Any` message must have a type URL that is contained in this list.
   pub fn in_<T: Into<Arc<str>>, I: IntoIterator<Item = T>>(
     self,
     list: I,
@@ -43,7 +44,7 @@ impl<S: State> AnyValidatorBuilder<S>
 where
   S::NotIn: IsUnset,
 {
-  /// Only the type URLs not contained in this list will be considered valid
+  /// Specifies that the given `google.protobuf.Any` message must have a type URL that is NOT contained in this list.
   pub fn not_in<T: Into<Arc<str>>, I: IntoIterator<Item = T>>(
     self,
     list: I,

@@ -11,13 +11,13 @@ impl_into_option!(EnumValidator);
 
 #[derive(Clone, Debug, Builder)]
 pub struct EnumValidator {
-  /// Only the values in this list will be considered valid for this field.
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[builder(into)]
   pub in_: Option<Arc<[i32]>>,
-  /// The values in this list will be considered invalid for this field.
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[builder(into)]
   pub not_in: Option<Arc<[i32]>>,
-  /// Only this specific value will be considered valid for this field.
+  /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
   #[builder(with = || true)]
   /// Marks that this field will only accept values that are defined in the enum that it's referring to.
@@ -25,7 +25,7 @@ pub struct EnumValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Option<Arc<[CelRule]>>,
   #[builder(with = || true)]
-  /// Marks the field as invalid if unset.
+  /// Specifies that the field must be set in order to be valid.
   pub required: Option<bool>,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
