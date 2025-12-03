@@ -4,7 +4,7 @@ pub trait AsProtoType {
   fn proto_type() -> ProtoType;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ProtoType {
   Single(TypeInfo),
   Repeated(TypeInfo),
@@ -13,8 +13,10 @@ pub enum ProtoType {
 }
 
 impl TypeInfo {
-  pub fn register_import(&self, imports: &mut HashSet<&'static str>) {
-    self.path.as_ref().map(|path| imports.insert(path.file));
+  pub(crate) fn register_import(&self, imports: &mut FileImports) {
+    if let Some(path) = self.path.as_ref() {
+      imports.insert(path)
+    }
   }
 }
 
@@ -25,13 +27,13 @@ pub(crate) fn invalid_type_output(msg: &'static str) -> TypeInfo {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TypeInfo {
   pub name: &'static str,
   pub path: Option<ProtoPath>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ProtoPath {
   pub package: &'static str,
   pub file: &'static str,

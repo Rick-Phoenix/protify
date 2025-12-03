@@ -162,6 +162,8 @@ use inner::*;
 fn main() {
   let mut file = prelude::ProtoFile::new("abc.proto", "myapp.v1");
 
+  let mut file2 = proto_file();
+
   let mut msg = Abc::to_message();
 
   // let nested2 = Nested2::to_message();

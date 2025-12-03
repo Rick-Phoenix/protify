@@ -4,7 +4,7 @@ pub trait ProtoOneof {
   fn fields() -> Vec<ProtoField>;
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Oneof {
   pub name: &'static str,
   pub fields: Vec<ProtoField>,

@@ -10,7 +10,7 @@ use super::*;
 /// The expression is a [Cel](https://cel.dev/) expression that will be executed on validation by protovalidate-compatible libraries such as [protocheck](https://github.com/Rick-Phoenix/protocheck) (for rust) or [protovalidate-es](https://github.com/bufbuild/protovalidate-es) (for javascript).
 /// <br/>
 /// You can use the [`cel_rule`](crate::cel_rule) macro to build them with a shorter syntax.
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, PartialEq)]
 #[builder(on(Arc<str>, into))]
 pub struct CelRule {
   /// The id of this specific rule.

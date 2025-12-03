@@ -1,6 +1,6 @@
 use crate::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ProtoField {
   pub name: String,
   pub tag: i32,
@@ -10,7 +10,7 @@ pub struct ProtoField {
 }
 
 impl ProtoField {
-  pub fn register_type_import_path(&self, imports: &mut HashSet<&'static str>) {
+  pub(crate) fn register_type_import_path(&self, imports: &mut FileImports) {
     match &self.type_ {
       ProtoType::Single(ty) => ty.register_import(imports),
       ProtoType::Repeated(ty) => ty.register_import(imports),

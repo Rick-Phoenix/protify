@@ -1,6 +1,6 @@
 use crate::*;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Enum {
   pub name: &'static str,
   pub full_name: &'static str,
@@ -12,7 +12,7 @@ pub struct Enum {
   pub options: Vec<ProtoOption>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct EnumVariant {
   pub name: &'static str,
   pub tag: i32,

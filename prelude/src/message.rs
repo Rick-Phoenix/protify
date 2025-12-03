@@ -1,6 +1,6 @@
 use crate::{validators::CelRule, *};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Message {
   pub name: &'static str,
   pub full_name: &'static str,
@@ -15,14 +15,14 @@ pub struct Message {
   pub cel_rules: Vec<CelRule>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MessageEntry {
   Field(ProtoField),
   Oneof(Oneof),
 }
 
 impl Message {
-  pub fn register_imports(&self, imports: &mut HashSet<&'static str>) {
+  pub(crate) fn register_imports(&self, imports: &mut FileImports) {
     for entry in &self.entries {
       match entry {
         MessageEntry::Field(field) => field.register_type_import_path(imports),
@@ -32,6 +32,10 @@ impl Message {
           }
         }
       }
+    }
+
+    for nested_msg in &self.messages {
+      nested_msg.register_imports(imports);
     }
   }
 

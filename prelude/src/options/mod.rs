@@ -2,14 +2,14 @@ use std::sync::Arc;
 
 use proto_types::{Duration, Timestamp};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ProtoOption {
   pub name: Arc<str>,
   pub value: OptionValue,
 }
 
 /// An enum representing values for protobuf options.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum OptionValue {
   Bool(bool),
   Int(i64),
