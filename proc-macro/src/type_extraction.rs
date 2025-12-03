@@ -19,11 +19,11 @@ impl TypeInfo {
     }
   }
 
-  pub fn into_proto(&self, base_ident: TokenStream2) -> TokenStream2 {
+  pub fn field_into_proto_impl(&self, base_ident: TokenStream2) -> TokenStream2 {
     self.proto_field.default_into_proto(&base_ident)
   }
 
-  pub fn from_proto(&self, base_ident: TokenStream2) -> TokenStream2 {
+  pub fn field_from_proto_impl(&self, base_ident: TokenStream2) -> TokenStream2 {
     self.proto_field.default_from_proto(&base_ident)
   }
 

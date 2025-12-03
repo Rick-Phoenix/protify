@@ -4,6 +4,7 @@ use bool_validator_builder::State;
 use super::*;
 
 impl_validator!(BoolValidator, bool);
+impl_into_option!(BoolValidator);
 
 #[derive(Clone, Debug, Builder)]
 pub struct BoolValidator {
@@ -13,8 +14,6 @@ pub struct BoolValidator {
   /// Marks the field as invalid if unset.
   pub required: Option<bool>,
 }
-
-impl_into_option!(BoolValidator);
 
 impl From<BoolValidator> for ProtoOption {
   fn from(validator: BoolValidator) -> Self {

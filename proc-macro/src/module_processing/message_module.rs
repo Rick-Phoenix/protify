@@ -1,6 +1,6 @@
 use crate::*;
 
-pub(crate) fn process_message_from_module(
+pub fn process_message_from_module(
   msg: &mut MessageData,
   oneofs_map: &mut HashMap<Ident, OneofData>,
   package_attribute: &Attribute,

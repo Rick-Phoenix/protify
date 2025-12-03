@@ -51,7 +51,7 @@ pub fn field_into_proto_expression(info: IntoProto) -> Result<TokenStream2, Erro
   } else if let ProtoField::Oneof { default: true, .. } = &type_info.proto_field {
     quote! { Some(#base_ident.into()) }
   } else {
-    type_info.into_proto(base_ident)
+    type_info.field_into_proto_impl(base_ident)
   };
 
   let conversion = match kind {
@@ -97,10 +97,10 @@ pub fn field_from_proto_expression(info: FromProto) -> Result<TokenStream2, Erro
         }
       }
     } else {
-      type_info.from_proto(base_ident)
+      type_info.field_from_proto_impl(base_ident)
     }
   } else {
-    // Field is ignored
+    // Field is ignored, so we don't pass any args here
     if let Some(expr) = custom_expression {
       match expr {
         PathOrClosure::Path(path) => quote! { #path() },

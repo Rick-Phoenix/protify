@@ -5,25 +5,8 @@ use super::*;
 
 pub struct GenericMessage;
 
-impl<S: State> ValidatorBuilderFor<GenericMessage> for MessageValidatorBuilder<S> {}
-
-impl ProtoValidator<GenericMessage> for ValidatorMap {
-  type Builder = MessageValidatorBuilder;
-
-  fn builder() -> Self::Builder {
-    MessageValidator::builder()
-  }
-}
-
-impl<S: State> MessageValidatorBuilder<S>
-where
-  S::Ignore: IsUnset,
-{
-  /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> MessageValidatorBuilder<SetIgnore<S>> {
-    self.ignore(Ignore::Always)
-  }
-}
+impl_validator!(MessageValidator, GenericMessage);
+impl_into_option!(MessageValidator);
 
 /// Used by the [`msg_field`](crate::msg_field) macro to define validation rules.
 #[derive(Debug, Clone, Builder)]
@@ -38,10 +21,13 @@ pub struct MessageValidator {
   pub ignore: Option<Ignore>,
 }
 
-impl<S: message_validator_builder::State> From<MessageValidatorBuilder<S>> for ProtoOption {
-  #[track_caller]
-  fn from(value: MessageValidatorBuilder<S>) -> Self {
-    value.build().into()
+impl<S: State> MessageValidatorBuilder<S>
+where
+  S::Ignore: IsUnset,
+{
+  /// Rules set for this field will always be ignored.
+  pub fn ignore_always(self) -> MessageValidatorBuilder<SetIgnore<S>> {
+    self.ignore(Ignore::Always)
   }
 }
 

@@ -5,17 +5,9 @@ use super::*;
 
 pub struct GenericProtoEnum;
 
-impl ProtoValidator<GenericProtoEnum> for ValidatorMap {
-  type Builder = EnumValidatorBuilder;
-
-  fn builder() -> Self::Builder {
-    EnumValidator::builder()
-  }
-}
-
-impl<S: State> ValidatorBuilderFor<GenericProtoEnum> for EnumValidatorBuilder<S> {}
-
+impl_validator!(EnumValidator, GenericProtoEnum);
 impl_ignore!(EnumValidatorBuilder);
+impl_into_option!(EnumValidator);
 
 #[derive(Clone, Debug, Builder)]
 pub struct EnumValidator {
@@ -38,8 +30,6 @@ pub struct EnumValidator {
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 }
-
-impl_into_option!(EnumValidator);
 
 impl From<EnumValidator> for ProtoOption {
   #[track_caller]

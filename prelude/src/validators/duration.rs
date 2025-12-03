@@ -5,16 +5,7 @@ use proto_types::Duration;
 use super::*;
 
 impl_validator!(DurationValidator, Duration);
-
-impl<S: State> DurationValidatorBuilder<S>
-where
-  S::Ignore: IsUnset,
-{
-  /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> DurationValidatorBuilder<SetIgnore<S>> {
-    self.ignore(Ignore::Always)
-  }
-}
+impl_into_option!(DurationValidator);
 
 /// Used by the [`duration`](crate::duration) macro to define validation rules.
 #[derive(Clone, Debug, Builder)]
@@ -45,7 +36,15 @@ pub struct DurationValidator {
   pub ignore: Option<Ignore>,
 }
 
-impl_into_option!(DurationValidator);
+impl<S: State> DurationValidatorBuilder<S>
+where
+  S::Ignore: IsUnset,
+{
+  /// Rules set for this field will always be ignored.
+  pub fn ignore_always(self) -> DurationValidatorBuilder<SetIgnore<S>> {
+    self.ignore(Ignore::Always)
+  }
+}
 
 impl From<DurationValidator> for ProtoOption {
   #[track_caller]

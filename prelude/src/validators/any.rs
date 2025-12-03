@@ -5,42 +5,7 @@ use proto_types::Any;
 use super::*;
 
 impl_validator!(AnyValidator, Any);
-
-impl<S: State> AnyValidatorBuilder<S>
-where
-  S::In: IsUnset,
-{
-  pub fn in_<T: Into<Arc<str>>, I: IntoIterator<Item = T>>(
-    self,
-    list: I,
-  ) -> AnyValidatorBuilder<SetIn<S>> {
-    let list = create_string_list(list);
-    self.in_internal(list)
-  }
-}
-
-impl<S: State> AnyValidatorBuilder<S>
-where
-  S::NotIn: IsUnset,
-{
-  pub fn not_in<T: Into<Arc<str>>, I: IntoIterator<Item = T>>(
-    self,
-    list: I,
-  ) -> AnyValidatorBuilder<SetNotIn<S>> {
-    let list = create_string_list(list);
-    self.not_in_internal(list)
-  }
-}
-
-impl<S: State> AnyValidatorBuilder<S>
-where
-  S::Ignore: IsUnset,
-{
-  /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> AnyValidatorBuilder<SetIgnore<S>> {
-    self.ignore(Ignore::Always)
-  }
-}
+impl_into_option!(AnyValidator);
 
 #[derive(Clone, Debug, Builder)]
 pub struct AnyValidator {
@@ -60,7 +25,43 @@ pub struct AnyValidator {
   pub ignore: Option<Ignore>,
 }
 
-impl_into_option!(AnyValidator);
+impl<S: State> AnyValidatorBuilder<S>
+where
+  S::In: IsUnset,
+{
+  /// Only the type URLs contained in this list will be considered valid
+  pub fn in_<T: Into<Arc<str>>, I: IntoIterator<Item = T>>(
+    self,
+    list: I,
+  ) -> AnyValidatorBuilder<SetIn<S>> {
+    let list = create_string_list(list);
+    self.in_internal(list)
+  }
+}
+
+impl<S: State> AnyValidatorBuilder<S>
+where
+  S::NotIn: IsUnset,
+{
+  /// Only the type URLs not contained in this list will be considered valid
+  pub fn not_in<T: Into<Arc<str>>, I: IntoIterator<Item = T>>(
+    self,
+    list: I,
+  ) -> AnyValidatorBuilder<SetNotIn<S>> {
+    let list = create_string_list(list);
+    self.not_in_internal(list)
+  }
+}
+
+impl<S: State> AnyValidatorBuilder<S>
+where
+  S::Ignore: IsUnset,
+{
+  /// Rules set for this field will always be ignored.
+  pub fn ignore_always(self) -> AnyValidatorBuilder<SetIgnore<S>> {
+    self.ignore(Ignore::Always)
+  }
+}
 
 impl From<AnyValidator> for ProtoOption {
   #[track_caller]

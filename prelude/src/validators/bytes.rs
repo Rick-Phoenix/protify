@@ -7,6 +7,7 @@ use super::*;
 
 impl_validator!(BytesValidator, Vec<u8>);
 impl_validator!(BytesValidator, Bytes);
+impl_into_option!(BytesValidator);
 impl_ignore!(BytesValidatorBuilder);
 
 macro_rules! insert_bytes_option {
@@ -70,8 +71,6 @@ pub struct BytesValidator {
   pub ignore: Option<Ignore>,
 }
 
-impl_into_option!(BytesValidator);
-
 impl From<BytesValidator> for ProtoOption {
   #[track_caller]
   fn from(validator: BytesValidator) -> Self {
@@ -125,6 +124,7 @@ impl From<BytesValidator> for ProtoOption {
   }
 }
 
+#[doc(hidden)]
 #[derive(Clone, Debug, Copy)]
 pub enum WellKnownBytes {
   Ip,
@@ -133,8 +133,9 @@ pub enum WellKnownBytes {
 }
 
 macro_rules! well_known_impl {
-  ($name:ident) => {
+  ($name:ident, $doc:literal) => {
     paste::paste! {
+      #[doc = $doc]
       pub fn [< $name:snake >](self) -> BytesValidatorBuilder<SetWellKnown<S>>
         where
           S::WellKnown: IsUnset,
@@ -146,9 +147,9 @@ macro_rules! well_known_impl {
 }
 
 impl<S: State> BytesValidatorBuilder<S> {
-  well_known_impl!(Ip);
-  well_known_impl!(Ipv4);
-  well_known_impl!(Ipv6);
+  well_known_impl!(Ip, "The value must be an IPv4/Ipv6 address");
+  well_known_impl!(Ipv4, "The value must be an IPv4 address");
+  well_known_impl!(Ipv6, "The value must be an IPv6 address");
 }
 
 impl WellKnownBytes {

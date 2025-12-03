@@ -4,16 +4,6 @@ macro_rules! bail {
   };
 }
 
-macro_rules! get_ident_or_return_ok_none {
-  ($path:expr) => {
-    if let Some(ident) = $path.get_ident() {
-      ident.to_string()
-    } else {
-      return Ok(None);
-    }
-  };
-}
-
 macro_rules! get_ident_or_continue {
   ($path:expr) => {
     if let Some(ident) = $path.get_ident() {

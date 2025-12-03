@@ -2,8 +2,8 @@
 mod macros;
 
 pub use paste::paste;
-mod items;
 mod oneof;
+mod options;
 pub mod validators;
 use std::{
   collections::{BTreeSet, HashSet},
@@ -20,9 +20,9 @@ mod proto_type;
 use bon::Builder;
 pub use field::*;
 pub use file::*;
-pub use items::*;
 pub use message::*;
 pub use oneof::*;
+pub use options::*;
 pub use proto_enum::*;
 pub use proto_type::*;
 
