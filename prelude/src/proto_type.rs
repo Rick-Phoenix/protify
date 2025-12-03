@@ -13,11 +13,8 @@ pub enum ProtoType {
 }
 
 impl TypeInfo {
-  pub fn register_import(&self, imports: &mut HashSet<Arc<str>>) {
-    self
-      .path
-      .as_ref()
-      .map(|path| imports.insert(path.file.clone()));
+  pub fn register_import(&self, imports: &mut HashSet<&'static str>) {
+    self.path.as_ref().map(|path| imports.insert(path.file));
   }
 }
 
@@ -29,6 +26,6 @@ pub struct TypeInfo {
 
 #[derive(Debug, Clone)]
 pub struct ProtoPath {
-  pub package: Arc<str>,
-  pub file: Arc<str>,
+  pub package: &'static str,
+  pub file: &'static str,
 }

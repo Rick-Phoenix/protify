@@ -6,7 +6,7 @@ pub trait ProtoOneof {
 
 #[derive(Debug, Default, Clone)]
 pub struct Oneof {
-  pub name: Arc<str>,
+  pub name: &'static str,
   pub fields: Vec<ProtoField>,
   pub options: Vec<ProtoOption>,
 }

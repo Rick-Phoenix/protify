@@ -2,10 +2,10 @@ use crate::*;
 
 #[derive(Debug, Default, Clone)]
 pub struct Enum {
-  pub name: Arc<str>,
+  pub name: &'static str,
   pub full_name: &'static str,
-  pub package: Arc<str>,
-  pub file: Arc<str>,
+  pub package: &'static str,
+  pub file: &'static str,
   pub variants: Vec<EnumVariant>,
   pub reserved_numbers: Vec<Range<i32>>,
   pub reserved_names: Vec<&'static str>,
@@ -14,7 +14,7 @@ pub struct Enum {
 
 #[derive(Debug, Default, Clone)]
 pub struct EnumVariant {
-  pub name: String,
+  pub name: &'static str,
   pub tag: i32,
   pub options: Vec<ProtoOption>,
 }

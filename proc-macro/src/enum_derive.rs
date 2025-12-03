@@ -81,7 +81,7 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
     };
 
     variants_tokens.push(quote! {
-      EnumVariant { name: #name.to_string(), options: vec![ #(#options),* ], tag: #tag, }
+      EnumVariant { name: #name, options: vec![ #(#options),* ], tag: #tag, }
     });
   }
 
@@ -99,8 +99,8 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
         ProtoType::Single(TypeInfo {
           name: #full_name,
           path: Some(ProtoPath {
-            file: #file.into(),
-            package: #package.into()
+            file: #file,
+            package: #package
           })
         })
       }
@@ -127,10 +127,10 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
       #[track_caller]
       pub fn to_enum() -> Enum {
         Enum {
-          name: #proto_name.into(),
+          name: #proto_name,
           full_name: #full_name,
-          package: #package.into(),
-          file: #file.into(),
+          package: #package,
+          file: #file,
           variants: vec! [ #(#variants_tokens,)* ],
           reserved_names: #reserved_names,
           reserved_numbers: vec![ #reserved_numbers_tokens ],

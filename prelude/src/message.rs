@@ -4,8 +4,8 @@ use crate::*;
 pub struct Message {
   pub name: &'static str,
   pub full_name: &'static str,
-  pub package: Arc<str>,
-  pub file: Arc<str>,
+  pub package: &'static str,
+  pub file: &'static str,
   pub entries: Vec<MessageEntry>,
   pub messages: Vec<Message>,
   pub enums: Vec<Enum>,
@@ -21,7 +21,7 @@ pub enum MessageEntry {
 }
 
 impl Message {
-  pub fn register_imports(&self, imports: &mut HashSet<Arc<str>>) {
+  pub fn register_imports(&self, imports: &mut HashSet<&'static str>) {
     for entry in &self.entries {
       match entry {
         MessageEntry::Field(field) => field.register_type_import_path(imports),

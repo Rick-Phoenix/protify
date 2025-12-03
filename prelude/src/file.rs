@@ -4,7 +4,7 @@ use crate::*;
 pub struct ProtoFile {
   pub name: Arc<str>,
   pub package: Arc<str>,
-  pub imports: BTreeSet<Arc<str>>,
+  pub imports: Vec<Arc<str>>,
   pub messages: Vec<Message>,
   pub enums: Vec<Enum>,
   // pub services: Vec<ServiceData>,

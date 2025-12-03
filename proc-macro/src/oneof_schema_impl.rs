@@ -29,7 +29,7 @@ pub fn oneof_schema_impl(
         #required_option_tokens
 
         Oneof {
-          name: #proto_name.into(),
+          name: #proto_name,
           fields: Self::fields(),
           options,
         }

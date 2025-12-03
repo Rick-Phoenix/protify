@@ -10,7 +10,7 @@ pub struct ProtoField {
 }
 
 impl ProtoField {
-  pub fn register_type_import_path(&self, imports: &mut HashSet<Arc<str>>) {
+  pub fn register_type_import_path(&self, imports: &mut HashSet<&'static str>) {
     match &self.type_ {
       ProtoType::Single(ty) => ty.register_import(imports),
       ProtoType::Repeated(ty) => ty.register_import(imports),
