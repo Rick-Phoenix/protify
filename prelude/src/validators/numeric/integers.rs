@@ -57,7 +57,6 @@ where
   S: IsComplete,
   N: IntWrapper,
 {
-  #[track_caller]
   fn from(value: IntValidatorBuilder<N, S>) -> Self {
     value.build().into()
   }
@@ -67,16 +66,12 @@ impl<N> From<IntValidator<N>> for ProtoOption
 where
   N: IntWrapper,
 {
-  #[track_caller]
   fn from(validator: IntValidator<N>) -> Self {
     let mut values: OptionValueList = Vec::new();
 
     if let Some(const_val) = validator.const_ {
       values.push((CONST_.clone(), const_val.into()));
     }
-
-    validate_comparables(validator.lt, validator.lte, validator.gt, validator.gte).unwrap();
-    validate_lists(validator.in_.as_deref(), validator.not_in.as_deref()).unwrap();
 
     insert_option!(validator, values, lt);
     insert_option!(validator, values, lte);

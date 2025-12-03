@@ -4,6 +4,8 @@ use timestamp_validator_builder::{IsUnset, SetIgnore, State};
 
 use super::*;
 
+impl_into_option!(TimestampValidator);
+
 #[derive(Clone, Debug, Builder)]
 #[builder(derive(Clone))]
 pub struct TimestampValidator {
@@ -45,27 +47,13 @@ where
   }
 }
 
-impl<S: timestamp_validator_builder::State> From<TimestampValidatorBuilder<S>> for ProtoOption {
-  #[track_caller]
-  fn from(value: TimestampValidatorBuilder<S>) -> Self {
-    value.build().into()
-  }
-}
-
-reusable_string!(LT_NOW);
-reusable_string!(GT_NOW);
-reusable_string!(WITHIN);
-
 impl From<TimestampValidator> for ProtoOption {
-  #[track_caller]
   fn from(validator: TimestampValidator) -> Self {
     let mut rules: OptionValueList = Vec::new();
 
     if let Some(const_val) = validator.const_ {
       rules.push((CONST_.clone(), OptionValue::Timestamp(const_val)));
     }
-
-    validate_comparables(validator.lt, validator.lte, validator.gt, validator.gte).unwrap();
 
     if let Some(true) = validator.lt_now {
       if validator.lt.is_some() || validator.lte.is_some() {

@@ -47,16 +47,12 @@ where
 }
 
 impl From<DurationValidator> for ProtoOption {
-  #[track_caller]
   fn from(validator: DurationValidator) -> Self {
     let mut rules: OptionValueList = Vec::new();
 
     if let Some(const_val) = validator.const_ {
       rules.push((CONST_.clone(), OptionValue::Duration(const_val)));
     }
-
-    validate_comparables(validator.lt, validator.lte, validator.gt, validator.gte).unwrap();
-    validate_lists(validator.in_.as_deref(), validator.not_in.as_deref()).unwrap();
 
     insert_option!(validator, rules, lt);
     insert_option!(validator, rules, lte);

@@ -65,11 +65,8 @@ where
 }
 
 impl From<AnyValidator> for ProtoOption {
-  #[track_caller]
   fn from(validator: AnyValidator) -> Self {
     let mut rules: OptionValueList = Vec::new();
-
-    validate_lists(validator.in_.as_deref(), validator.not_in.as_deref()).unwrap();
 
     insert_option!(validator, rules, in_);
     insert_option!(validator, rules, not_in);

@@ -32,7 +32,6 @@ where
 }
 
 impl From<MessageValidator> for ProtoOption {
-  #[track_caller]
   fn from(validator: MessageValidator) -> Self {
     let mut rules: OptionValueList = Vec::new();
 

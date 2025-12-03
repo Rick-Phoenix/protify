@@ -72,3 +72,6 @@ reusable_string!(INT32);
 reusable_string!(SINT32);
 reusable_string!(FLOAT);
 reusable_string!(DOUBLE);
+reusable_string!(LT_NOW);
+reusable_string!(GT_NOW);
+reusable_string!(WITHIN);

@@ -55,41 +55,11 @@ where
   }
 }
 
-impl<Num: FloatWrapper> FloatValidator<Num> {
-  pub(crate) fn validate_lists(&self) -> Result<(), Vec<Num::RustType>> {
-    if let Some(in_list) = &self.in_ && let Some(not_in_list) = &self.not_in {
-      let mut overlapping: Vec<Num::RustType> = Vec::new();
-
-      let (shorter_list, longer_list) = if in_list.len() < not_in_list.len() {
-        (in_list, not_in_list)
-      } else {
-        (not_in_list, in_list)
-      };
-
-      for num in longer_list.iter() {
-        if shorter_list.contains(num) {
-          overlapping.push(*num);
-        }
-      }
-
-      if !overlapping.is_empty() {
-        Err(overlapping)
-      } else {
-        Ok(())
-      }
-
-    } else {
-      Ok(())
-    }
-  }
-}
-
 impl<S: State, N> From<FloatValidatorBuilder<N, S>> for ProtoOption
 where
   S: IsComplete,
   N: FloatWrapper,
 {
-  #[track_caller]
   fn from(value: FloatValidatorBuilder<N, S>) -> Self {
     value.build().into()
   }
@@ -99,16 +69,12 @@ impl<N> From<FloatValidator<N>> for ProtoOption
 where
   N: FloatWrapper,
 {
-  #[track_caller]
   fn from(validator: FloatValidator<N>) -> Self {
     let mut values: OptionValueList = Vec::new();
 
     if let Some(const_val) = validator.const_ {
       values.push((CONST_.clone(), const_val.into()));
     }
-
-    validate_comparables(validator.lt, validator.lte, validator.gt, validator.gte).unwrap();
-    validator.validate_lists().unwrap();
 
     insert_option!(validator, values, lt);
     insert_option!(validator, values, lte);

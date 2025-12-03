@@ -73,7 +73,6 @@ pub struct BytesValidator {
 }
 
 impl From<BytesValidator> for ProtoOption {
-  #[track_caller]
   fn from(validator: BytesValidator) -> Self {
     let mut rules: OptionValueList = Vec::new();
 
@@ -83,8 +82,6 @@ impl From<BytesValidator> for ProtoOption {
         OptionValue::String(format_bytes_as_proto_string_literal(&const_val).into()),
       ));
     }
-
-    validate_lists(validator.in_.as_deref(), validator.not_in.as_deref()).unwrap();
 
     if validator.len.is_none() {
       insert_option!(validator, rules, min_len);

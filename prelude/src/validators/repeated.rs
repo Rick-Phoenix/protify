@@ -12,7 +12,6 @@ macro_rules! impl_repeated {
     impl_repeated_validator!($name);
 
     impl<T: AsProtoType> AsProtoType for $name<T> {
-      #[track_caller]
       fn proto_type() -> ProtoType {
         let mut inner_type = T::proto_type();
 
@@ -58,7 +57,6 @@ where
   S::Items: repeated_validator_builder::IsUnset,
 {
   /// Specifies the rules that will be applied to the individual items of this repeated field.
-  #[track_caller]
   pub fn items<F, FinalBuilder>(
     self,
     config_fn: F,
@@ -116,14 +114,12 @@ impl<T: AsProtoType, S: State> From<RepeatedValidatorBuilder<T, S>> for ProtoOpt
 where
   S: IsComplete,
 {
-  #[track_caller]
   fn from(value: RepeatedValidatorBuilder<T, S>) -> Self {
     value.build().into()
   }
 }
 
 impl<T: AsProtoType> From<RepeatedValidator<T>> for ProtoOption {
-  #[track_caller]
   fn from(validator: RepeatedValidator<T>) -> ProtoOption {
     let mut rules: OptionValueList = Vec::new();
 

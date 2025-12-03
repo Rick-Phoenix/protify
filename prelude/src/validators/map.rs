@@ -11,7 +11,6 @@ macro_rules! impl_map {
     impl_map_validator!($name);
 
     impl<K: AsProtoType, V: AsProtoType> AsProtoType for $name<K, V> {
-      #[track_caller]
       fn proto_type() -> ProtoType {
         let keys = match K::proto_type() {
           ProtoType::Single(data) => data,
@@ -83,7 +82,6 @@ impl<K, V, S: State> MapValidatorBuilder<K, V, S>
 where
   S::Keys: IsUnset,
 {
-  #[track_caller]
   /// Sets the rules for the keys of this map field.
   pub fn keys<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetKeys<S>>
   where
@@ -100,7 +98,6 @@ impl<K, V, S: State> MapValidatorBuilder<K, V, S>
 where
   S::Values: IsUnset,
 {
-  #[track_caller]
   /// Sets the rules for the values of this map field.
   pub fn values<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetValues<S>>
   where
@@ -127,14 +124,12 @@ impl<K, V, S: State> From<MapValidatorBuilder<K, V, S>> for ProtoOption
 where
   S: IsComplete,
 {
-  #[track_caller]
   fn from(value: MapValidatorBuilder<K, V, S>) -> Self {
     value.build().into()
   }
 }
 
 impl<KeyItems, ValueItems> From<MapValidator<KeyItems, ValueItems>> for ProtoOption {
-  #[track_caller]
   fn from(validator: MapValidator<KeyItems, ValueItems>) -> Self {
     let mut rules: OptionValueList = Vec::new();
 

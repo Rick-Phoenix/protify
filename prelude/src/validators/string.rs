@@ -85,15 +85,12 @@ pub struct StringValidator {
 }
 
 impl From<StringValidator> for ProtoOption {
-  #[track_caller]
   fn from(validator: StringValidator) -> ProtoOption {
     let mut rules: OptionValueList = Vec::new();
 
     if let Some(const_val) = validator.const_ {
       rules.push((CONST_.clone(), OptionValue::String(const_val)));
     }
-
-    validate_lists(validator.in_.as_deref(), validator.not_in.as_deref()).unwrap();
 
     if validator.len.is_none() {
       insert_option!(validator, rules, min_len);

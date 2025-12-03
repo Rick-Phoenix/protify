@@ -33,15 +33,12 @@ pub struct EnumValidator {
 }
 
 impl From<EnumValidator> for ProtoOption {
-  #[track_caller]
   fn from(validator: EnumValidator) -> Self {
     let mut rules: OptionValueList = Vec::new();
 
     if let Some(const_val) = validator.const_ {
       rules.push((CONST_.clone(), OptionValue::Int(const_val as i64)));
     }
-
-    validate_lists(validator.in_.as_deref(), validator.not_in.as_deref()).unwrap();
 
     insert_option!(validator, rules, defined_only);
     insert_option!(validator, rules, in_);
