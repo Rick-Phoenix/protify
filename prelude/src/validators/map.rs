@@ -14,12 +14,12 @@ macro_rules! impl_map {
       fn proto_type() -> ProtoType {
         let keys = match K::proto_type() {
           ProtoType::Single(data) => data,
-          _ => panic!("Map keys must be scalar types"),
+          _ => invalid_type_output("Map keys cannot be repeated, optional or nested maps"),
         };
 
         let values = match V::proto_type() {
           ProtoType::Single(data) => data,
-          _ => panic!("Map values cannot be repeated, optional or nested maps"),
+          _ => invalid_type_output("Map values cannot be repeated, optional or nested maps"),
         };
 
         ProtoType::Map { keys, values }

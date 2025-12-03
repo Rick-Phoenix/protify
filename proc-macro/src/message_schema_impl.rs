@@ -58,7 +58,6 @@ pub fn message_schema_impls(
     }
 
     impl #struct_name {
-      #[track_caller]
       pub fn to_message() -> Message {
         let mut new_msg = Message {
           name: #proto_name,

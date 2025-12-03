@@ -13,16 +13,14 @@ macro_rules! impl_repeated {
 
     impl<T: AsProtoType> AsProtoType for $name<T> {
       fn proto_type() -> ProtoType {
-        let mut inner_type = T::proto_type();
+        let inner_type = T::proto_type();
 
         match inner_type {
-          ProtoType::Single(data) => {
-            inner_type = ProtoType::Repeated(data);
-          }
-          _ => panic!("Repeated fields cannot be optional, maps or nested within each other"),
+          ProtoType::Single(data) => ProtoType::Repeated(data),
+          _ => ProtoType::Repeated(invalid_type_output(
+            "Repeated fields cannot be optional, maps or other repeated fields",
+          )),
         }
-
-        inner_type
       }
     }
   };

@@ -21,8 +21,7 @@ impl<'a> TagAllocator<'a> {
     }
   }
 
-  #[track_caller]
-  pub fn next_tag(&mut self) -> i32 {
+  pub fn next_tag(&mut self) -> Result<i32, &'static str> {
     loop {
       let idx = self.unavailable.partition_point(|r| r.end <= self.next_tag);
 
@@ -33,12 +32,12 @@ impl<'a> TagAllocator<'a> {
         }
 
       if self.reserved_to_max {
-        panic!("Protobuf tag limit exceeded! Check if you have set the reserved numbers range to infinity");
+        return Err("Protobuf tag limit exceeded! Check if you have set the reserved numbers range to infinity");
       }
 
       let tag = self.next_tag;
       self.next_tag += 1;
-      return tag;
+      return Ok(tag);
     }
   }
 }

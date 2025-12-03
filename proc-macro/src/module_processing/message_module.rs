@@ -47,7 +47,9 @@ pub fn process_message_from_module(
         }
 
         if variant.tag.is_none() {
-          let tag = tag_allocator.next_tag();
+          let tag = tag_allocator
+            .next_tag()
+            .map_err(|e| spanned_error!(&variant.tokens, e))?;
 
           variant.tag = Some(tag);
           oneof.used_tags.push(tag);
@@ -66,7 +68,9 @@ pub fn process_message_from_module(
     }
 
     if field.tag.is_none() {
-      let tag = tag_allocator.next_tag();
+      let tag = tag_allocator
+        .next_tag()
+        .map_err(|e| spanned_error!(&field.tokens, e))?;
 
       field.tag = Some(tag);
 

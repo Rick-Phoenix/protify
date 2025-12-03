@@ -55,34 +55,6 @@ impl From<TimestampValidator> for ProtoOption {
       rules.push((CONST_.clone(), OptionValue::Timestamp(const_val)));
     }
 
-    if let Some(true) = validator.lt_now {
-      if validator.lt.is_some() || validator.lte.is_some() {
-        panic!("Cannot use lt_now with lt or lte")
-      }
-
-      if let Some(gt) = validator.gt && gt.is_future() {
-        panic!("Gt cannot be in the future if lt_now is true")
-      }
-
-      if let Some(gte) = validator.gte && gte.is_future() {
-        panic!("Gte cannot be in the future if lt_now is true")
-      }
-    }
-
-    if let Some(true) = validator.gt_now {
-      if validator.gt.is_some() || validator.gte.is_some() {
-        panic!("Cannot use gt_now with gt or gte")
-      }
-
-      if let Some(lt) = validator.lt && lt.is_past() {
-        panic!("Lt cannot be in the past if gt_now is true")
-      }
-
-      if let Some(lte) = validator.lte && lte.is_past() {
-        panic!("Lte cannot be in the past if gt_now is true")
-      }
-    }
-
     insert_option!(validator, rules, lt);
     insert_option!(validator, rules, lte);
     insert_option!(validator, rules, gt);

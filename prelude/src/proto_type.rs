@@ -18,6 +18,13 @@ impl TypeInfo {
   }
 }
 
+pub(crate) fn invalid_type_output(msg: &'static str) -> TypeInfo {
+  TypeInfo {
+    name: msg,
+    path: None,
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct TypeInfo {
   pub name: &'static str,

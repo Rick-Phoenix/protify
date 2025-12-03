@@ -147,7 +147,6 @@ pub(crate) fn process_oneof_derive_shadow(
     }
 
     impl #shadow_enum_ident {
-      #[track_caller]
       pub fn to_oneof() -> Oneof {
         #orig_enum_ident::to_oneof()
       }

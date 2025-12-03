@@ -72,7 +72,13 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
 
       tag
     } else {
-      let next_tag = if i == 0 { 0 } else { tag_allocator.next_tag() };
+      let next_tag = if i == 0 {
+        0
+      } else {
+        tag_allocator
+          .next_tag()
+          .map_err(|e| spanned_error!(&variant, e))?
+      };
 
       let tag_expr: Expr = parse_quote!(#next_tag);
       variant.discriminant = Some((token::Eq::default(), tag_expr));
@@ -124,7 +130,6 @@ pub(crate) fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, E
         }
       }
 
-      #[track_caller]
       pub fn to_enum() -> Enum {
         Enum {
           name: #proto_name,
