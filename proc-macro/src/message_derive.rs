@@ -40,7 +40,10 @@ pub fn process_message_derive_shadow(
   let mut into_proto_body = TokenStream2::new();
 
   for (src_field, dst_field) in orig_struct_fields.zip(shadow_struct_fields) {
-    let src_field_ident = src_field.ident.as_ref().expect("Expected named field");
+    let src_field_ident = src_field
+      .ident
+      .as_ref()
+      .ok_or(spanned_error!(&src_field, "Expected a named field"))?;
 
     let rust_type = RustType::from_type(&src_field.ty, orig_struct_ident)?;
 
@@ -163,7 +166,10 @@ pub fn process_message_derive_direct(
   let mut fields_data: Vec<TokenStream2> = Vec::new();
 
   for src_field in item.fields.iter_mut() {
-    let src_field_ident = src_field.ident.as_ref().expect("Expected named field");
+    let src_field_ident = src_field
+      .ident
+      .as_ref()
+      .ok_or(spanned_error!(&src_field, "Expected a named field"))?;
 
     let rust_type = RustType::from_type(&src_field.ty, &item.ident)?;
 
