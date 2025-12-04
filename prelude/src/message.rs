@@ -58,6 +58,10 @@ impl Message {
   }
 
   pub(crate) fn register_imports(&self, imports: &mut FileImports) {
+    if !self.cel_rules.is_empty() {
+      imports.set.insert("buf/validate/validate.proto");
+    }
+
     for entry in &self.entries {
       match entry {
         MessageEntry::Field(field) => field.register_type_import_path(imports),

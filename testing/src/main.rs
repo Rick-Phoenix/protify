@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 
 use prelude::{
-  EnumValidator, GenericProtoEnum, IntValidator, RepeatedValidator, RepeatedValidatorBuilder,
-  Sint32, StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
+  EnumValidator, GenericProtoEnum, IntValidator, OptionValue, ProtoOption, RepeatedValidator,
+  RepeatedValidatorBuilder, Sint32, StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
 };
 use proc_macro_impls::{Enum, Message, Oneof};
 use proto_types::{Duration, Timestamp};
@@ -31,24 +31,46 @@ fn numeric_validator() -> impl ValidatorBuilderFor<Sint32> {
   validator.lt(0)
 }
 
+fn random_option() -> ProtoOption {
+  ProtoOption {
+    name: "(hobbits.location)".into(),
+    value: OptionValue::String("isengard".into()),
+  }
+}
+
 #[proc_macro_impls::proto_module(file = "abc.proto", package = "myapp.v1")]
 mod inner {
   use prelude::{cel_rule, CelRule, DEPRECATED};
-  use proc_macro_impls::{proto_enum, proto_message, proto_oneof, proto_service, Service};
+  use proc_macro_impls::{
+    proto_enum, proto_extension, proto_message, proto_oneof, proto_service, Extension, Service,
+  };
 
   use super::*;
 
+  #[proto_extension(target = MessageOptions)]
+  struct SomeExt {
+    #[proto(tag = 5000)]
+    name: String,
+  }
+
   #[proto_service]
-  #[proto(options = vec![ DEPRECATED.into() ])]
+  #[proto(options = vec![ random_option() ])]
   enum FrodoService {
-    #[proto(options = vec![ DEPRECATED.into() ])]
-    GetRing { request: Abc, response: Nested },
+    #[proto(options = vec![ random_option() ])]
+    GetRing {
+      request: Abc,
+      response: Nested,
+    },
+    DestroyRing {
+      request: Abc,
+      response: Nested,
+    },
   }
 
   #[proto_enum]
   #[proto(reserved_numbers(1, 2, 10..))]
   #[proto(reserved_names("abc", "bcd"))]
-  #[proto(options = vec![ DEPRECATED.into() ])]
+  #[proto(options = vec![ random_option() ])]
   #[derive(Clone, Debug)]
   enum PseudoEnum {
     AbcDeg,
@@ -99,7 +121,7 @@ mod inner {
   #[proto(nested_enums(PseudoEnum))]
   #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
-  #[proto(options = vec![ DEPRECATED.into() ])]
+  #[proto(options = vec![ random_option() ])]
   #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "abc") ])]
   pub struct Abc {
     #[proto(timestamp, validate = |v| v.lt_now())]

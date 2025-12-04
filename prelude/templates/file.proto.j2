@@ -2,7 +2,9 @@
 
 package {{+ package }};
 
-{%~ for import in imports %}
+{% set sorted_imports = self.imports.as_sorted_vec() %}
+
+{%~ for import in sorted_imports %}
 import "{{ import }}";
 {%~ endfor %}
 
@@ -11,10 +13,10 @@ import "{{ import }}";
 {% endif +%}
 
 {%~ for extension in extensions ~%}
-extend {{+ extension.name +}} {
+extend {{+ extension.target +}} {
   {% for field in extension.fields ~%}
   {{+ field.render(self.package) }}
-  {%~ endfor %}
+  {% endfor ~%}
 }
 {%~ endfor %}
 

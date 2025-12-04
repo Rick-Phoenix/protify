@@ -2,12 +2,12 @@ use std::fmt::Display;
 
 use crate::*;
 
-#[derive(Default, Debug, PartialEq, Template)]
+#[derive(Debug, PartialEq, Template)]
 #[template(path = "file.proto.j2")]
 pub struct ProtoFile {
   pub name: &'static str,
   pub package: &'static str,
-  pub imports: Vec<&'static str>,
+  pub imports: FileImports,
   pub messages: Vec<Message>,
   pub enums: Vec<Enum>,
   pub options: Vec<ProtoOption>,
@@ -34,27 +34,32 @@ impl Display for Edition {
   }
 }
 
-pub(crate) struct FileImports {
-  pub imports: HashSet<&'static str>,
+#[derive(PartialEq, Debug)]
+pub struct FileImports {
+  pub set: HashSet<&'static str>,
   pub file: &'static str,
 }
 
 impl FileImports {
+  pub fn extend(&mut self, other: FileImports) {
+    self.set.extend(other.set);
+  }
+
   pub fn new(file: &'static str) -> Self {
     Self {
       file,
-      imports: HashSet::new(),
+      set: HashSet::new(),
     }
   }
 
-  pub fn insert(&mut self, path: &ProtoPath) {
+  pub fn insert_path(&mut self, path: &ProtoPath) {
     if path.file != self.file {
-      self.imports.insert(path.file);
+      self.set.insert(path.file);
     }
   }
 
-  pub fn into_sorted_vec(self) -> Vec<&'static str> {
-    let mut imports: Vec<&'static str> = self.imports.into_iter().collect();
+  pub fn as_sorted_vec(&self) -> Vec<&'static str> {
+    let mut imports: Vec<&'static str> = self.set.iter().cloned().collect();
 
     imports.sort();
 
@@ -67,7 +72,13 @@ impl ProtoFile {
     Self {
       name,
       package,
-      ..Default::default()
+      imports: FileImports::new(name),
+      messages: Default::default(),
+      enums: Default::default(),
+      options: Default::default(),
+      edition: Default::default(),
+      services: Default::default(),
+      extensions: Default::default(),
     }
   }
 
@@ -78,20 +89,24 @@ impl ProtoFile {
   }
 
   pub fn add_messages<I: IntoIterator<Item = Message>>(&mut self, messages: I) {
-    let mut file_imports = FileImports::new(self.name);
-
     for message in messages.into_iter() {
-      message.register_imports(&mut file_imports);
+      message.register_imports(&mut self.imports);
 
       self.messages.push(message);
     }
-
-    self.imports = file_imports.into_sorted_vec();
   }
 
   pub fn add_enums<I: IntoIterator<Item = Enum>>(&mut self, enums: I) {
     for enum_ in enums.into_iter() {
       self.enums.push(enum_);
+    }
+  }
+
+  pub fn add_extensions<I: IntoIterator<Item = Extension>>(&mut self, extensions: I) {
+    self.imports.set.insert("google/protobuf/descriptor.proto");
+
+    for ext in extensions.into_iter() {
+      self.extensions.push(ext);
     }
   }
 }
@@ -115,6 +130,6 @@ impl ProtoFile {
 
 #[derive(Debug, PartialEq)]
 pub struct Extension {
-  pub name: &'static str,
+  pub target: &'static str,
   pub fields: Vec<ProtoField>,
 }

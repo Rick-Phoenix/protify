@@ -28,6 +28,7 @@ pub fn process_module_items(
   let mut messages: HashMap<Ident, MessageData> = HashMap::new();
   let mut enums: HashMap<Ident, EnumData> = HashMap::new();
   let mut services: Vec<Ident> = Vec::new();
+  let mut extensions: Vec<Ident> = Vec::new();
 
   let mut messages_relational_map: HashMap<Ident, Ident> = HashMap::new();
   let mut enums_relational_map: HashMap<Ident, Ident> = HashMap::new();
@@ -44,18 +45,29 @@ pub fn process_module_items(
       Item::Struct(s) => {
         let item_ident = s.ident.clone();
 
-        let message_data = parse_message(s)?;
+        match item_kind {
+          ItemKind::Extension => {
+            extensions.push(item_ident);
 
-        for nested_msg_ident in &message_data.nested_messages {
-          messages_relational_map.insert(nested_msg_ident.clone(), item_ident.clone());
-        }
+            mod_items.push(ModuleItem::Raw(Item::Struct(s).into()));
+            continue;
+          }
+          ItemKind::Message => {
+            let message_data = parse_message(s)?;
 
-        for nested_enum_ident in &message_data.nested_enums {
-          enums_relational_map.insert(nested_enum_ident.clone(), item_ident.clone());
-        }
+            for nested_msg_ident in &message_data.nested_messages {
+              messages_relational_map.insert(nested_msg_ident.clone(), item_ident.clone());
+            }
 
-        mod_items.push(ModuleItem::Message(item_ident.clone()));
-        messages.insert(item_ident, message_data);
+            for nested_enum_ident in &message_data.nested_enums {
+              enums_relational_map.insert(nested_enum_ident.clone(), item_ident.clone());
+            }
+
+            mod_items.push(ModuleItem::Message(item_ident.clone()));
+            messages.insert(item_ident, message_data);
+          }
+          _ => unreachable!(),
+        };
       }
       Item::Enum(mut e) => {
         let item_ident = e.ident.clone();
@@ -171,13 +183,9 @@ pub fn process_module_items(
   let aggregator_fn: ItemFn = parse_quote! {
     #feature_tokens
     pub fn proto_file() -> ::prelude::ProtoFile {
-      let mut file = ::prelude::ProtoFile {
-        name: #file,
-        package: #package,
-        services: vec![ #(#services::as_service()),* ],
-        ..Default::default()
-      };
+      let mut file = ::prelude::ProtoFile::new(#file, #package);
 
+      file.add_extensions([ #(#extensions::as_proto_extension()),* ]);
       file.add_messages([ #top_level_messages ]);
       file.add_enums([ #top_level_enums ]);
 
@@ -276,6 +284,7 @@ pub enum ItemKind {
   Enum,
   Oneof,
   Service,
+  Extension,
 }
 
 impl ItemKind {
@@ -308,6 +317,16 @@ impl ItemKind {
           }
 
           return Ok(Some(Self::Message));
+        }
+        "proto_extension" => {
+          if !is_struct {
+            return Err(spanned_error!(
+              attr,
+              "proto_extension can only be used on a struct"
+            ));
+          }
+
+          return Ok(Some(Self::Extension));
         }
         "proto_enum" => {
           if is_struct {

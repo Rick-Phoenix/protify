@@ -38,6 +38,10 @@ impl ProtoField {
   }
 
   pub(crate) fn register_type_import_path(&self, imports: &mut FileImports) {
+    if self.validator.is_some() {
+      imports.set.insert("buf/validate/validate.proto");
+    }
+
     match &self.type_ {
       ProtoType::Single(ty) => ty.register_import(imports),
       ProtoType::Repeated(ty) => ty.register_import(imports),

@@ -28,14 +28,15 @@ use syn::{
 };
 
 use crate::{
-  conversions::*, enum_derive::*, item_cloners::*, message_derive::*, message_schema_impl::*,
-  module_processing::*, oneof_derive::*, oneof_info::*, oneof_schema_impl::*, path_utils::*,
-  process_field::*, proto_field::*, proto_map::*, proto_types::*, rust_type::*, service_derive::*,
-  type_extraction::*,
+  conversions::*, enum_derive::*, extension_derive::*, item_cloners::*, message_derive::*,
+  message_schema_impl::*, module_processing::*, oneof_derive::*, oneof_info::*,
+  oneof_schema_impl::*, path_utils::*, process_field::*, proto_field::*, proto_map::*,
+  proto_types::*, rust_type::*, service_derive::*, type_extraction::*,
 };
 
 mod conversions;
 mod enum_derive;
+mod extension_derive;
 mod item_cloners;
 mod message_derive;
 mod message_schema_impl;
@@ -83,6 +84,29 @@ pub fn proto_message(_args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(Message, attributes(proto))]
 pub fn message_derive(_input: TokenStream) -> TokenStream {
+  TokenStream::new()
+}
+
+#[proc_macro_attribute]
+pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
+  let mut item = parse_macro_input!(input as ItemStruct);
+
+  let extra_tokens = match process_extension_derive(args, &mut item) {
+    Ok(output) => output,
+    Err(e) => return e.to_compile_error().into(),
+  };
+
+  quote! {
+    #[derive(Extension)]
+    #item
+
+    #extra_tokens
+  }
+  .into()
+}
+
+#[proc_macro_derive(Extension, attributes(proto))]
+pub fn extension_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 

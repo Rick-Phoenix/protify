@@ -52,7 +52,7 @@ impl TypeInfo {
 
   pub(crate) fn register_import(&self, imports: &mut FileImports) {
     if let Some(path) = self.path.as_ref() {
-      imports.insert(path)
+      imports.insert_path(path)
     }
   }
 }
