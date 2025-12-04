@@ -33,12 +33,8 @@ impl Oneof {
     let mut options_str = String::new();
 
     if !options.is_empty() {
-      options_str.push('\n');
-
-      for option in options {
-        render_option(option, &mut options_str, OptionKind::NormalOption);
-        options_str.push('\n');
-      }
+      options_str = render_normal_options(options);
+      options_str.insert(0, '\n');
     }
 
     format!(

@@ -29,17 +29,7 @@ impl ProtoField {
     };
 
     if options_len != 0 {
-      field_str.push_str(" [\n");
-
-      for (i, option) in options_iter {
-        render_option(option, &mut field_str, OptionKind::FieldOption);
-
-        if i != options_len - 1 {
-          field_str.push_str(",\n");
-        }
-      }
-
-      field_str.push_str("\n]");
+      render_field_options(options_iter, options_len, &mut field_str);
     }
 
     field_str.push(';');

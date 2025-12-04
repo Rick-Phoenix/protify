@@ -1,17 +1,17 @@
 enum {{+ name +}} {
-{% if let Some(names) = self.render_reserved_names() +%}
-  {{+ names }}
+{% if let Some(names) = self.render_reserved_names() ~%}
+  {{+ names ~}}
+{%~ endif %}
+
+{%~ if let Some(numbers) = self.render_reserved_numbers() ~%}
+  {{+ numbers ~}}
+{%~ endif %}
+
+{%~ if let Some(options) = self.render_options() ~%}
+{{+ options }}
 {% endif %}
 
-{% if let Some(numbers) = self.render_reserved_numbers() +%}
-  {{+ numbers }}
-{% endif %}
-
-{% if let Some(options) = self.render_options() +%}
-{{~ options }}
-{% endif +%}
-
-{% filter indent(2) %}
+{% filter indent(2) ~%}
 {% for variant in variants ~%}
 {{+ variant.render() ~}}
 {% endfor ~%}

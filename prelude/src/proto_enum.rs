@@ -27,17 +27,7 @@ impl EnumVariant {
     let mut variant_str = format!("{} = {}", name, tag);
 
     if !options.is_empty() {
-      variant_str.push_str(" [\n");
-
-      for (i, option) in options.iter().enumerate() {
-        render_option(option, &mut variant_str, OptionKind::FieldOption);
-
-        if i != options.len() - 1 {
-          variant_str.push_str(",\n");
-        }
-      }
-
-      variant_str.push_str("\n]");
+      render_field_options(options.iter().enumerate(), options.len(), &mut variant_str);
     }
 
     variant_str.push(';');
@@ -60,13 +50,6 @@ impl Enum {
       return None;
     }
 
-    let mut options_str = String::new();
-
-    for option in &self.options {
-      render_option(option, &mut options_str, OptionKind::NormalOption);
-      options_str.push('\n');
-    }
-
-    Some(options_str)
+    Some(render_normal_options(&self.options))
   }
 }

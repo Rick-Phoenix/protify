@@ -40,8 +40,8 @@ mod inner {
 
   #[proto_enum]
   #[proto(reserved_numbers(1, 2, 10..))]
-  #[proto(reserved_names("abc", "bcd"))]
-  #[proto(options = vec![ DEPRECATED.into() ])]
+  // #[proto(reserved_names("abc", "bcd"))]
+  // #[proto(options = vec![ DEPRECATED.into() ])]
   #[derive(Clone, Debug)]
   enum PseudoEnum {
     AbcDeg,

@@ -54,14 +54,7 @@ impl Message {
 
     let options = self.options.iter().chain(cel_rules_options.iter());
 
-    let mut options_str = String::new();
-
-    for option in options {
-      render_option(option, &mut options_str, OptionKind::NormalOption);
-      options_str.push('\n');
-    }
-
-    Some(options_str)
+    Some(render_normal_options(options))
   }
 
   pub(crate) fn register_imports(&self, imports: &mut FileImports) {

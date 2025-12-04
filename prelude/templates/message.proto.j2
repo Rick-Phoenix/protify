@@ -1,15 +1,15 @@
 message {{+ self.name +}} {
-{% if let Some(names) = self.render_reserved_names() +%}
-  {{+ names }}
-{% endif %}
+{% if let Some(names) = self.render_reserved_names() ~%}
+  {{+ names ~}}
+{%~ endif %}
 
-{% if let Some(numbers) = self.render_reserved_numbers() +%}
-  {{+ numbers }}
-{% endif %}
+{%~ if let Some(numbers) = self.render_reserved_numbers() ~%}
+  {{+ numbers ~}}
+{%~ endif %}
 
-{% if let Some(options) = self.render_options() +%}
-{{~ options }}
-{% endif +%}
+{%~ if let Some(options) = self.render_options() ~%}
+{{+ options }}
+{% endif %}
 
 {% for enum_ in enums %}
 {%+ filter indent(2) ~%}

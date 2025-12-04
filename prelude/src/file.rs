@@ -1,13 +1,37 @@
+use std::fmt::Display;
+
 use crate::*;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Template)]
+#[template(path = "file.proto.j2")]
 pub struct ProtoFile {
   pub name: &'static str,
   pub package: &'static str,
   pub imports: Vec<&'static str>,
   pub messages: Vec<Message>,
   pub enums: Vec<Enum>,
-  // pub services: Vec<ServiceData>,
+  pub options: Vec<ProtoOption>,
+  pub edition: Edition,
+  pub services: Vec<Service>,
+  pub extensions: Vec<Extension>,
+}
+
+#[derive(Default, Debug, PartialEq)]
+pub enum Edition {
+  Proto2,
+  #[default]
+  Proto3,
+  E2023,
+}
+
+impl Display for Edition {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Edition::Proto2 => write!(f, "syntax = \"proto2\""),
+      Edition::Proto3 => write!(f, "syntax = \"proto3\""),
+      Edition::E2023 => write!(f, "edition = \"2023\""),
+    }
+  }
 }
 
 pub(crate) struct FileImports {
@@ -70,4 +94,27 @@ impl ProtoFile {
       self.enums.push(enum_);
     }
   }
+}
+
+impl ProtoFile {
+  pub(crate) fn render_options(&self) -> Option<String> {
+    if self.options.is_empty() {
+      return None;
+    }
+
+    let mut options_str = String::new();
+
+    for option in &self.options {
+      render_option(option, &mut options_str, OptionKind::NormalOption);
+      options_str.push('\n');
+    }
+
+    Some(options_str)
+  }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Extension {
+  pub name: &'static str,
+  pub fields: Vec<ProtoField>,
 }

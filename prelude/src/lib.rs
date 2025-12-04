@@ -14,6 +14,7 @@ mod optional;
 mod proto_enum;
 mod proto_type;
 mod rendering_utils;
+mod service;
 mod well_known_types;
 
 use bon::Builder;
@@ -25,6 +26,7 @@ pub use options::*;
 pub use proto_enum::*;
 pub use proto_type::*;
 use rendering_utils::*;
+pub use service::*;
 pub use validators::*;
 
 #[doc(hidden)]

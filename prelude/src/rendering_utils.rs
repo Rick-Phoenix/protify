@@ -9,22 +9,57 @@ pub(crate) enum OptionKind {
   NormalOption,
 }
 
-pub(crate) fn render_option(option: &ProtoOption, field_str: &mut String, option_kind: OptionKind) {
-  let option_str = match option_kind {
+pub(crate) fn render_option(
+  option: &ProtoOption,
+  option_str: &mut String,
+  option_kind: OptionKind,
+) {
+  let option_value_str = match option_kind {
     OptionKind::FieldOption => option.render_as_field_option(),
     OptionKind::NormalOption => option.render(),
   };
 
-  let mut lines = option_str.lines().peekable();
+  let mut lines = option_value_str.lines().peekable();
 
   while let Some(line) = lines.next() {
-    field_str.push_str("  ");
-    field_str.push_str(line);
+    option_str.push_str("  ");
+    option_str.push_str(line);
 
     if lines.peek().is_some() {
-      field_str.push('\n');
+      option_str.push('\n');
     }
   }
+}
+
+pub(crate) fn render_field_options<'a, I>(options: I, options_len: usize, field_str: &mut String)
+where
+  I: IntoIterator<Item = (usize, &'a ProtoOption)>,
+{
+  field_str.push_str(" [\n");
+
+  for (i, option) in options.into_iter() {
+    render_option(option, field_str, OptionKind::FieldOption);
+
+    if i != options_len - 1 {
+      field_str.push_str(",\n");
+    }
+  }
+
+  field_str.push_str("\n]");
+}
+
+pub(crate) fn render_normal_options<'a, I>(options: I) -> String
+where
+  I: IntoIterator<Item = &'a ProtoOption>,
+{
+  let mut options_str = String::new();
+
+  for option in options.into_iter() {
+    render_option(option, &mut options_str, OptionKind::NormalOption);
+    options_str.push('\n');
+  }
+
+  options_str
 }
 
 pub(crate) fn render_reserved_numbers(ranges: &[Range<i32>]) -> Option<String> {
