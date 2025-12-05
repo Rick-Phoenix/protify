@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::*;
 
 // We collect the items in this so that we can retain the order in the output
@@ -25,6 +27,8 @@ pub fn process_module_items(
   let mut mod_items: Vec<ModuleItem> = Vec::new();
 
   let mut oneofs: HashMap<Ident, OneofData> = HashMap::new();
+  let mut used_oneofs: HashSet<Ident> = HashSet::new();
+
   let mut messages: HashMap<Ident, MessageData> = HashMap::new();
   let mut enums: HashMap<Ident, EnumData> = HashMap::new();
   let mut services: Vec<Ident> = Vec::new();
@@ -52,6 +56,7 @@ pub fn process_module_items(
             mod_items.push(ModuleItem::Raw(Item::Struct(s).into()));
             continue;
           }
+
           ItemKind::Message => {
             let message_data = parse_message(s)?;
 
@@ -61,6 +66,14 @@ pub fn process_module_items(
 
             for nested_enum_ident in &message_data.nested_enums {
               enums_relational_map.insert(nested_enum_ident.clone(), item_ident.clone());
+            }
+
+            for oneof in &message_data.oneofs {
+              if let Some(oneof_data) = oneofs.get(oneof) && !oneof_data.has_all_tags_assigned() {
+                bail!(oneof, format!("Oneof `{oneof}` must have all tags manually assigned in order to be used by multiple messages"));
+              } else {
+                used_oneofs.insert(oneof.clone());
+              }
             }
 
             mod_items.push(ModuleItem::Message(item_ident.clone()));

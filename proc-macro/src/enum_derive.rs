@@ -43,8 +43,6 @@ pub fn process_enum_derive_prost(
     ..
   } = enum_attrs;
 
-  let reserved_numbers_tokens = reserved_numbers.to_token_stream();
-
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
   let mut from_str_tokens = TokenStream2::new();
   let mut as_str_tokens = TokenStream2::new();
@@ -58,7 +56,9 @@ pub fn process_enum_derive_prost(
     }
   }
 
-  let unavailable_ranges = reserved_numbers.build_unavailable_ranges(&used_tags);
+  let unavailable_ranges = reserved_numbers
+    .clone()
+    .build_unavailable_ranges(&used_tags);
   let mut tag_allocator = TagAllocator::new(&unavailable_ranges);
 
   for (i, variant) in variants.iter_mut().enumerate() {
@@ -87,6 +87,10 @@ pub fn process_enum_derive_prost(
           expr,
           "The first variant of a protobuf enum must have have a tag of 0"
         );
+      }
+
+      if reserved_numbers.contains(tag) {
+        bail!(&variant, format!("Tag {tag} is a reserved number"));
       }
 
       tag
@@ -165,7 +169,7 @@ pub fn process_enum_derive_prost(
           file: #file,
           variants: vec! [ #(#variants_tokens,)* ],
           reserved_names: #reserved_names,
-          reserved_numbers: vec![ #reserved_numbers_tokens ],
+          reserved_numbers: vec![ #reserved_numbers ],
           options: #options_tokens,
         }
       }

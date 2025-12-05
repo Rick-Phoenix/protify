@@ -17,6 +17,13 @@ pub struct OneofData {
   pub tokens: EnumRaw,
   pub variants: Vec<OneofVariant>,
   pub used_tags: Vec<i32>,
+  pub ignored_variants: usize,
+}
+
+impl OneofData {
+  pub fn has_all_tags_assigned(&self) -> bool {
+    self.used_tags.len() == (self.variants.len() - self.ignored_variants)
+  }
 }
 
 impl From<OneofData> for ItemEnum {
@@ -50,6 +57,7 @@ pub struct EnumRaw {
 pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
   let mut variants_data: Vec<OneofVariant> = Vec::new();
   let mut used_tags: Vec<i32> = Vec::new();
+  let mut ignored_variants: usize = 0;
 
   for variant in item.variants {
     let ModuleFieldAttrs {
@@ -61,6 +69,10 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
 
     if let Some(tag) = tag {
       used_tags.push(tag);
+    }
+
+    if is_ignored {
+      ignored_variants += 1;
     }
 
     variants_data.push(OneofVariant {
@@ -80,5 +92,6 @@ pub fn parse_oneof(item: ItemEnum) -> Result<OneofData, Error> {
     },
     variants: variants_data,
     used_tags,
+    ignored_variants,
   })
 }

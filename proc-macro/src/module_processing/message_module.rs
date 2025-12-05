@@ -10,6 +10,7 @@ pub fn process_message_from_module(
     reserved_numbers,
     oneofs,
     used_tags,
+    name,
     ..
   } = msg;
 
@@ -20,6 +21,13 @@ pub fn process_message_from_module(
     ))?;
 
     for tag in &oneof_data.used_tags {
+      if reserved_numbers.contains(*tag) {
+        bail!(
+          oneof,
+          format!("Tag {tag} being used by oneof {oneof} is a reserved number for message {name}")
+        );
+      }
+
       used_tags.push(*tag);
     }
   }
@@ -36,7 +44,7 @@ pub fn process_message_from_module(
     if let Some(ident) = &field.oneof_ident {
       let oneof = oneofs_map.get_mut(ident).ok_or(spanned_error!(
         ident,
-        format!("Failed to find the data for the oneof `{ident}`")
+        format!("Failed to find the data for the oneof `{ident}`. If you are using a proxied oneof, use the `#[proto(oneof(proxied))]` attribute rather than using the proxied ident (ending with `Proto`) directly")
       ))?;
 
       for variant in &mut oneof.variants {
@@ -65,7 +73,11 @@ pub fn process_message_from_module(
       continue;
     }
 
-    if field.tag.is_none() {
+    if let Some(tag) = &field.tag {
+      if reserved_numbers.contains(*tag) {
+        bail!(&field.tokens, format!("Tag {tag} is a reserved number"));
+      }
+    } else {
       let tag = tag_allocator
         .next_tag()
         .map_err(|e| spanned_error!(&field.tokens, e))?;
