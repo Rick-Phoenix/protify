@@ -7,9 +7,7 @@ pub fn process_message_from_module(
 ) -> Result<(), Error> {
   let MessageData {
     fields,
-    reserved_names,
     reserved_numbers,
-    name: proto_name,
     oneofs,
     used_tags,
     ..

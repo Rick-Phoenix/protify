@@ -125,13 +125,3 @@ pub fn extract_type_path(ty: &Type) -> Result<&Path, Error> {
     _ => Err(spanned_error!(ty, "Expected be a type path")),
   }
 }
-
-pub fn extract_oneof_ident(ty: &Type, item_ident: &Ident) -> Result<Ident, Error> {
-  let rust_type = RustType::from_type(ty, item_ident)?;
-
-  rust_type
-    .inner_path()
-    .and_then(|path| path.get_ident())
-    .cloned()
-    .ok_or(spanned_error!(ty, "Failed to find oneof type"))
-}

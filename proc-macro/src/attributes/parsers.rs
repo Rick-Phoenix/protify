@@ -2,14 +2,6 @@ use syn::LitInt;
 
 use crate::*;
 
-pub fn parse_call(expr: Expr) -> Result<ExprCall, Error> {
-  if let Expr::Call(call) = expr {
-    Ok(call)
-  } else {
-    Err(spanned_error!(expr, "Expected a function call"))
-  }
-}
-
 #[derive(Debug, Clone)]
 pub enum PathOrClosure {
   Path(Path),

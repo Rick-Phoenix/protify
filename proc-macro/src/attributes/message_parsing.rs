@@ -8,7 +8,6 @@ use crate::*;
 pub struct MessageData {
   pub tokens: StructRaw,
   pub fields: Vec<FieldData>,
-  pub reserved_names: ReservedNames,
   pub reserved_numbers: ReservedNumbers,
   pub name: String,
   pub full_name: OnceCell<String>,
@@ -86,7 +85,6 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
   };
 
   let ModuleMessageAttrs {
-    reserved_names,
     reserved_numbers,
     name,
     nested_enums,
@@ -156,7 +154,6 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     },
     used_tags,
     fields: fields_data,
-    reserved_names,
     reserved_numbers,
     name,
     nested_messages,

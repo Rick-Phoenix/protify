@@ -1,5 +1,4 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc = include_str!("../README.md")]
 //! # 🚩 Feature flags
 #![doc = document_features::document_features!()]
 
