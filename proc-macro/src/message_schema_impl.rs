@@ -46,25 +46,34 @@ pub fn message_schema_impls(
     #schema_feature_tokens
     impl ::prelude::AsProtoType for #struct_name {
       fn proto_type() -> ::prelude::ProtoType {
-        ::prelude::ProtoType::Single(::prelude::TypeInfo {
-          name: #full_name,
-          path: Some(::prelude::ProtoPath {
+        ::prelude::ProtoType::Message(
+          ::prelude::ProtoPath {
+            name: #full_name,
             file: #file,
-            package: #package
-          })
-        })
+            package: #package,
+          }
+        )
+      }
+    }
+
+    #schema_feature_tokens
+    impl ::prelude::ProtoMessage for #struct_name {
+      fn proto_path() -> ::prelude::ProtoPath {
+        ::prelude::ProtoPath {
+          name: #full_name,
+          file: #file,
+          package: #package,
+        }
       }
     }
 
     #schema_feature_tokens
     impl #struct_name {
-      pub fn path() -> ::prelude::TypeInfo {
-        ::prelude::TypeInfo {
+      pub fn proto_path() -> ::prelude::ProtoPath {
+        ::prelude::ProtoPath {
           name: #full_name,
-          path: Some(::prelude::ProtoPath {
-            file: #file,
-            package: #package
-          })
+          file: #file,
+          package: #package,
         }
       }
 

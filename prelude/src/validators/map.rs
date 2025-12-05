@@ -10,19 +10,19 @@ macro_rules! impl_map {
   ($name:ident) => {
     impl_map_validator!($name);
 
-    impl<K: AsProtoType, V: AsProtoType> AsProtoType for $name<K, V> {
-      fn proto_type() -> ProtoType {
-        let keys = match K::proto_type() {
-          ProtoType::Single(data) => data,
+    impl<K: AsProtoField, V: AsProtoField> AsProtoField for $name<K, V> {
+      fn as_proto_field() -> ProtoFieldInfo {
+        let keys = match K::as_proto_field() {
+          ProtoFieldInfo::Single(data) => data,
           _ => invalid_type_output("Map keys cannot be repeated, optional or nested maps"),
         };
 
-        let values = match V::proto_type() {
-          ProtoType::Single(data) => data,
+        let values = match V::as_proto_field() {
+          ProtoFieldInfo::Single(data) => data,
           _ => invalid_type_output("Map values cannot be repeated, optional or nested maps"),
         };
 
-        ProtoType::Map { keys, values }
+        ProtoFieldInfo::Map { keys, values }
       }
     }
   };

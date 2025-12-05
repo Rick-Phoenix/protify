@@ -120,13 +120,13 @@ pub fn process_enum_derive_prost(
     #schema_feature_tokens
     impl ::prelude::AsProtoType for #enum_name {
       fn proto_type() -> ::prelude::ProtoType {
-        ::prelude::ProtoType::Single(::prelude::TypeInfo {
-          name: #full_name,
-          path: Some(::prelude::ProtoPath {
+        ::prelude::ProtoType::Enum(
+          ::prelude::ProtoPath {
+            name: #full_name,
             file: #file,
-            package: #package
-          })
-        })
+            package: #package,
+          }
+        )
       }
     }
 

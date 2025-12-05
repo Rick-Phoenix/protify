@@ -65,8 +65,8 @@ pub fn process_service_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error
     handlers_tokens.push(quote! {
       ::prelude::ServiceHandler {
         name: #handler_name,
-        request: #request::path(),
-        response: #response::path(),
+        request: <#request as ::prelude::ProtoMessage>::proto_path(),
+        response: <#response as ::prelude::ProtoMessage>::proto_path(),
         options: #handler_options
       }
     });

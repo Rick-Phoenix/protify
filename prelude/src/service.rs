@@ -23,8 +23,8 @@ impl Service {
 pub struct ServiceHandler {
   pub name: &'static str,
   pub options: Vec<ProtoOption>,
-  pub request: TypeInfo,
-  pub response: TypeInfo,
+  pub request: ProtoPath,
+  pub response: ProtoPath,
 }
 
 impl ServiceHandler {

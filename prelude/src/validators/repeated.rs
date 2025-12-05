@@ -11,13 +11,13 @@ macro_rules! impl_repeated {
   ($name:ident) => {
     impl_repeated_validator!($name);
 
-    impl<T: AsProtoType> AsProtoType for $name<T> {
-      fn proto_type() -> ProtoType {
-        let inner_type = T::proto_type();
+    impl<T: AsProtoField> AsProtoField for $name<T> {
+      fn as_proto_field() -> ProtoFieldInfo {
+        let inner_type = T::as_proto_field();
 
         match inner_type {
-          ProtoType::Single(data) => ProtoType::Repeated(data),
-          _ => ProtoType::Repeated(invalid_type_output(
+          ProtoFieldInfo::Single(typ) => ProtoFieldInfo::Repeated(typ),
+          _ => ProtoFieldInfo::Repeated(invalid_type_output(
             "Repeated fields cannot be optional, maps or other repeated fields",
           )),
         }

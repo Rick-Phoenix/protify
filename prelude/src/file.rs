@@ -16,7 +16,7 @@ pub struct ProtoFile {
   pub extensions: Vec<Extension>,
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone, Copy)]
 pub enum Edition {
   Proto2,
   #[default]
@@ -80,6 +80,10 @@ impl ProtoFile {
       services: Default::default(),
       extensions: Default::default(),
     }
+  }
+
+  pub fn edition(&mut self, edition: Edition) {
+    self.edition = edition;
   }
 
   pub fn merge_with(&mut self, other: Self) {

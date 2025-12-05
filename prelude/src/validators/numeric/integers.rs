@@ -125,8 +125,10 @@ macro_rules! impl_int_wrapper {
       }
     }
 
-    impl_proto_type!($proto_type, stringify!($proto_type));
-    impl_int_validator!($proto_type);
+    $crate::paste!(
+      impl_proto_type!($proto_type, stringify!([< $proto_type:lower >]));
+      impl_int_validator!($proto_type);
+    );
   };
 }
 

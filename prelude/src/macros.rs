@@ -57,10 +57,7 @@ macro_rules! impl_proto_type {
   ($rust_type:ty, $proto_type:expr) => {
     impl AsProtoType for $rust_type {
       fn proto_type() -> ProtoType {
-        ProtoType::Single(TypeInfo {
-          name: $proto_type,
-          path: None,
-        })
+        ProtoType::Scalar { name: $proto_type }
       }
     }
   };

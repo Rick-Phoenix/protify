@@ -1,5 +1,9 @@
 use crate::{validators::CelRule, *};
 
+pub trait ProtoMessage {
+  fn proto_path() -> ProtoPath;
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Template)]
 #[template(path = "message.proto.j2")]
 pub struct Message {

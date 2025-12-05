@@ -67,7 +67,7 @@ pub(crate) fn render_reserved_numbers(ranges: &[Range<i32>]) -> Option<String> {
     return None;
   }
 
-  let mut output_str = format!("reserved ");
+  let mut output_str = "reserved ".to_string();
 
   for (i, range) in ranges.iter().enumerate() {
     let Range { start, end } = range;
@@ -99,7 +99,7 @@ pub(crate) fn render_reserved_names(names: &[&'static str]) -> Option<String> {
     return None;
   }
 
-  let mut output_str = format!("reserved ");
+  let mut output_str = "reserved ".to_string();
 
   for (i, name) in names.iter().enumerate() {
     write!(output_str, "\"{name}\"").unwrap();

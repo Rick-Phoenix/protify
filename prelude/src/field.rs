@@ -4,7 +4,7 @@ use crate::*;
 pub struct ProtoField {
   pub name: String,
   pub tag: i32,
-  pub type_: ProtoType,
+  pub type_: ProtoFieldInfo,
   pub options: Vec<ProtoOption>,
   pub validator: Option<ProtoOption>,
 }
@@ -43,10 +43,10 @@ impl ProtoField {
     }
 
     match &self.type_ {
-      ProtoType::Single(ty) => ty.register_import(imports),
-      ProtoType::Repeated(ty) => ty.register_import(imports),
-      ProtoType::Optional(ty) => ty.register_import(imports),
-      ProtoType::Map { keys, values } => {
+      ProtoFieldInfo::Single(ty) => ty.register_import(imports),
+      ProtoFieldInfo::Repeated(ty) => ty.register_import(imports),
+      ProtoFieldInfo::Optional(ty) => ty.register_import(imports),
+      ProtoFieldInfo::Map { keys, values } => {
         keys.register_import(imports);
         values.register_import(imports);
       }

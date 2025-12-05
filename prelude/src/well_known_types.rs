@@ -4,84 +4,70 @@ use crate::*;
 
 impl AsProtoType for Duration {
   fn proto_type() -> ProtoType {
-    ProtoType::Single(TypeInfo {
+    ProtoType::Message(ProtoPath {
       name: "Duration",
-      path: Some(ProtoPath {
-        package: "google.protobuf",
-        file: "google/protobuf/duration.proto",
-      }),
+      package: "google.protobuf",
+      file: "google/protobuf/duration.proto",
     })
   }
 }
 
 impl AsProtoType for Timestamp {
   fn proto_type() -> ProtoType {
-    ProtoType::Single(TypeInfo {
+    ProtoType::Message(ProtoPath {
       name: "Timestamp",
-      path: Some(ProtoPath {
-        package: "google.protobuf",
-        file: "google/protobuf/timestamp.proto",
-      }),
+      package: "google.protobuf",
+      file: "google/protobuf/timestamp.proto",
     })
   }
 }
 
 impl AsProtoType for Any {
   fn proto_type() -> ProtoType {
-    ProtoType::Single(TypeInfo {
+    ProtoType::Message(ProtoPath {
       name: "Any",
-      path: Some(ProtoPath {
-        package: "google.protobuf",
-        file: "google/protobuf/any.proto",
-      }),
+      package: "google.protobuf",
+      file: "google/protobuf/any.proto",
     })
   }
 }
 
 impl AsProtoType for () {
   fn proto_type() -> ProtoType {
-    ProtoType::Single(TypeInfo {
+    ProtoType::Message(ProtoPath {
       name: "Empty",
-      path: Some(ProtoPath {
-        package: "google.protobuf",
-        file: "google/protobuf/empty.proto",
-      }),
+      package: "google.protobuf",
+      file: "google/protobuf/empty.proto",
     })
   }
 }
 
 impl AsProtoType for FieldMask {
   fn proto_type() -> ProtoType {
-    ProtoType::Single(TypeInfo {
-      name: "FieldMask",
-      path: Some(ProtoPath {
-        package: "google.protobuf",
-        file: "google/protobuf/field_mask.proto",
-      }),
+    ProtoType::Message(ProtoPath {
+      name: "Duration",
+      package: "google.protobuf",
+      file: "google/protobuf/field_mask.proto",
     })
   }
 }
 
 impl AsProtoType for Status {
   fn proto_type() -> ProtoType {
-    ProtoType::Single(TypeInfo {
+    ProtoType::Message(ProtoPath {
       name: "Status",
-      path: Some(ProtoPath {
-        package: "google.rpc",
-        file: "google/rpc/status.proto",
-      }),
+      package: "google.rpc",
+      file: "google/rpc/status.proto",
     })
   }
 }
 
 impl AsProtoType for Code {
   fn proto_type() -> ProtoType {
-    ProtoType::Single(TypeInfo {
+    ProtoType::Message(ProtoPath {
       name: "Code",
-      path: Some(ProtoPath {
-        package: "google.rpc",
-        file: "google/rpc/code.proto",
-      }),
+      package: "google.rpc",
+      file: "google/rpc/code.proto",
     })
   }
 }
