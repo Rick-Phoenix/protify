@@ -2,6 +2,7 @@ use crate::{validators::CelRule, *};
 
 pub trait ProtoMessage {
   fn proto_path() -> ProtoPath;
+  fn proto_schema() -> Message;
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Template)]

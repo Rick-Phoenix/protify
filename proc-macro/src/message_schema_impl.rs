@@ -24,11 +24,11 @@ pub fn message_schema_impls(
   let mut nested_enums_tokens = TokenStream2::new();
 
   for ident in nested_messages {
-    nested_messages_tokens.extend(quote! { #ident::to_message(), });
+    nested_messages_tokens.extend(quote! { #ident::proto_schema(), });
   }
 
   for ident in nested_enums {
-    nested_enums_tokens.extend(quote! { #ident::to_enum(), });
+    nested_enums_tokens.extend(quote! { #ident::proto_schema(), });
   }
 
   let validator_tokens = if let Some(call) = validator {
@@ -47,11 +47,7 @@ pub fn message_schema_impls(
     impl ::prelude::AsProtoType for #struct_name {
       fn proto_type() -> ::prelude::ProtoType {
         ::prelude::ProtoType::Message(
-          ::prelude::ProtoPath {
-            name: #full_name,
-            file: #file,
-            package: #package,
-          }
+          <Self as ::prelude::ProtoMessage>::proto_path()
         )
       }
     }
@@ -65,19 +61,15 @@ pub fn message_schema_impls(
           package: #package,
         }
       }
+
+      fn proto_schema() -> ::prelude::Message {
+        Self::proto_schema()
+      }
     }
 
     #schema_feature_tokens
     impl #struct_name {
-      pub fn proto_path() -> ::prelude::ProtoPath {
-        ::prelude::ProtoPath {
-          name: #full_name,
-          file: #file,
-          package: #package,
-        }
-      }
-
-      pub fn to_message() -> ::prelude::Message {
+      pub fn proto_schema() -> ::prelude::Message {
         let mut new_msg = ::prelude::Message {
           name: #proto_name,
           full_name: #full_name,

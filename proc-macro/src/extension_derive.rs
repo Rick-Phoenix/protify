@@ -53,24 +53,22 @@ pub fn process_extension_derive(
   args: TokenStream,
   item: &mut ItemStruct,
 ) -> Result<TokenStream2, Error> {
-  let parser = Punctuated::<Meta, Token![,]>::parse_terminated;
+  let parser = Punctuated::<MetaNameValue, Token![,]>::parse_terminated;
   let args = parser.parse(args)?;
 
   let ItemStruct { ident, fields, .. } = item;
 
   let mut target: Option<ExtendTarget> = None;
   let mut fields_tokens: Vec<TokenStream2> = Vec::new();
-  let mut keep = false;
 
   for arg in args {
-    let ident = arg.path().require_ident()?.to_string();
+    let ident = arg.path.require_ident()?.to_string();
 
     match ident.as_str() {
       "target" => {
-        let path = extract_path(&arg.require_name_value()?.value)?;
+        let path = extract_path(&arg.value)?;
         target = Some(ExtendTarget::from_ident(path.require_ident()?)?);
       }
-      "keep" => keep = true,
       _ => bail!(arg, format!("Unknown attribute `{ident}`")),
     };
   }
@@ -114,9 +112,7 @@ pub fn process_extension_derive(
     });
   }
 
-  if !keep {
-    item.fields = Fields::Unit;
-  }
+  item.fields = Fields::Unit;
 
   Ok(quote! {
     impl #ident {

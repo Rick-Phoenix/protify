@@ -191,9 +191,9 @@ pub fn process_module_items(
         file.add_extensions(extensions);
       }
 
-      file.add_messages([ #(#top_level_messages::to_message()),* ]);
-      file.add_enums([ #(#top_level_enums::to_enum()),* ]);
-      file.add_services([ #(#services::as_service()),* ]);
+      file.add_messages([ #(#top_level_messages::proto_schema()),* ]);
+      file.add_enums([ #(#top_level_enums::proto_schema()),* ]);
+      file.add_services([ #(#services::proto_schema()),* ]);
 
       file
     }

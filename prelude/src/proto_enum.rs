@@ -1,5 +1,10 @@
 use crate::*;
 
+pub trait ProtoEnum {
+  fn proto_path() -> ProtoPath;
+  fn proto_schema() -> Enum;
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Template)]
 #[template(path = "enum.proto.j2")]
 pub struct Enum {

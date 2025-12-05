@@ -1,10 +1,11 @@
 use crate::*;
 
-pub fn process_service_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
+pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
   let ItemEnum {
     attrs,
     ident,
     variants,
+    vis,
     ..
   } = item;
 
@@ -14,7 +15,7 @@ pub fn process_service_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error
     name: service_name,
     options: service_options,
     package,
-  } = process_service_or_handler_attrs(ident, attrs)?;
+  } = process_service_or_handler_attrs(&ident, &attrs)?;
 
   for variant in variants {
     let ServiceOrHandlerAttrs {
@@ -76,8 +77,17 @@ pub fn process_service_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error
   let service_options = tokens_or_default!(service_options, quote! { vec![] });
 
   Ok(quote! {
+    #[derive(Service)]
+    #vis struct #ident;
+
+    impl ::prelude::ProtoService for #ident {
+      fn proto_schema() -> ::prelude::Service {
+        Self::proto_schema()
+      }
+    }
+
     impl #ident {
-      pub fn as_service() -> ::prelude::Service {
+      pub fn proto_schema() -> ::prelude::Service {
         ::prelude::Service {
           name: #service_name,
           package: #package,

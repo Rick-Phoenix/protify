@@ -1,5 +1,9 @@
 use crate::*;
 
+pub trait ProtoService {
+  fn proto_schema() -> Service;
+}
+
 #[derive(Debug, PartialEq, Template)]
 #[template(path = "service.proto.j2")]
 pub struct Service {

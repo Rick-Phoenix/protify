@@ -112,20 +112,14 @@ pub fn extension_derive(_input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn proto_service(_args: TokenStream, input: TokenStream) -> TokenStream {
-  let mut item = parse_macro_input!(input as ItemEnum);
+  let item = parse_macro_input!(input as ItemEnum);
 
-  let extra_tokens = match process_service_derive(&mut item) {
+  let output = match process_service_derive(item) {
     Ok(output) => output,
     Err(e) => return e.to_compile_error().into(),
   };
 
-  quote! {
-    #[derive(Service)]
-    #item
-
-    #extra_tokens
-  }
-  .into()
+  output.into()
 }
 
 #[proc_macro_derive(Service, attributes(proto))]

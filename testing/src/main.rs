@@ -198,7 +198,7 @@ fn main() {
 
   let mut file2 = proto_file();
 
-  let mut msg = Abc::to_message();
+  let mut msg = Abc::proto_schema();
 
   // let nested2 = Nested2::to_message();
 

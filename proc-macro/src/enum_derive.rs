@@ -117,22 +117,33 @@ pub fn process_enum_derive_prost(
   let schema_feature_tokens = schema_feature.map(|feat| quote! { #[cfg(feature = #feat)] });
 
   let output_tokens = quote! {
+    impl #enum_name {
+      pub fn from_int_or_default(int: i32) -> Self {
+        int.try_into().unwrap_or_default()
+      }
+    }
+
     #schema_feature_tokens
     impl ::prelude::AsProtoType for #enum_name {
       fn proto_type() -> ::prelude::ProtoType {
         ::prelude::ProtoType::Enum(
-          ::prelude::ProtoPath {
-            name: #full_name,
-            file: #file,
-            package: #package,
-          }
+          <Self as ::prelude::ProtoEnum>::proto_path()
         )
       }
     }
 
-    impl #enum_name {
-      pub fn from_int_or_default(int: i32) -> Self {
-        int.try_into().unwrap_or_default()
+    #schema_feature_tokens
+    impl ::prelude::ProtoEnum for #enum_name {
+      fn proto_path() -> ::prelude::ProtoPath {
+        ::prelude::ProtoPath {
+          name: #full_name,
+          file: #file,
+          package: #package,
+        }
+      }
+
+      fn proto_schema() -> ::prelude::Enum {
+        Self::proto_schema()
       }
     }
 
@@ -151,7 +162,7 @@ pub fn process_enum_derive_prost(
         }
       }
 
-      pub fn to_enum() -> ::prelude::Enum {
+      pub fn proto_schema() -> ::prelude::Enum {
         ::prelude::Enum {
           name: #proto_name,
           full_name: #full_name,
