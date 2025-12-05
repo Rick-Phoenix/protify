@@ -202,6 +202,7 @@ pub fn process_derive_field_attrs(
     }
 
     let oneof_path = oneof_path.get_path_or_fallback(fallback).ok_or(error!(
+      // Just an overly cautious fallback here, the span cannot be empty
       attr_span.unwrap_or_else(Span::call_site),
       "Failed to infer the path to the oneof. Please set it manually"
     ))?;

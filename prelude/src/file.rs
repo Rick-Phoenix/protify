@@ -87,6 +87,20 @@ impl ProtoFile {
   }
 
   pub fn merge_with(&mut self, other: Self) {
+    if self.name != other.name {
+      panic!(
+        "Cannot merge file `{}` with file `{}` as they have different names",
+        self.name, other.name
+      );
+    }
+
+    if self.package != other.package {
+      panic!(
+        "Cannot merge file `{}` with file `{}` as they belong to different packages",
+        self.name, other.name
+      );
+    }
+
     self.imports.extend(other.imports);
     self.messages.extend(other.messages);
     self.enums.extend(other.enums);

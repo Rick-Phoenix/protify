@@ -93,8 +93,11 @@ pub fn process_derive_enum_attrs(
   let name = proto_name.unwrap_or_else(|| ccase!(pascal, enum_ident.to_string()));
   let full_name = full_name.unwrap_or_else(|| name.clone());
 
-  let file = file.ok_or(error!(Span::call_site(), "Missing file attribute"))?;
-  let package = package.ok_or(error!(Span::call_site(), "Missing package attribute"))?;
+  let file = file.ok_or(error!(
+    Span::call_site(),
+    r#"`file` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(file = "my_file.proto")]"#
+  ))?;
+  let package = package.ok_or(error!(Span::call_site(), r#"`package` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(package = "mypackage.v1")]"#))?;
 
   Ok(EnumAttrs {
     reserved_names,
