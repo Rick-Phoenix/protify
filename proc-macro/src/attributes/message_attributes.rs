@@ -1,7 +1,7 @@
 use crate::*;
 
 pub struct MessageAttrs {
-  pub reserved_names: ReservedNames,
+  pub reserved_names: Vec<String>,
   pub reserved_numbers: ReservedNumbers,
   pub options: Option<Expr>,
   pub name: String,
@@ -22,7 +22,7 @@ pub fn process_derive_message_attrs(
   rust_name: &Ident,
   attrs: &Vec<Attribute>,
 ) -> Result<MessageAttrs, Error> {
-  let mut reserved_names = ReservedNames::default();
+  let mut reserved_names: Vec<String> = Vec::new();
   let mut reserved_numbers = ReservedNumbers::default();
   let mut options: Option<Expr> = None;
   let mut proto_name: Option<String> = None;
@@ -54,7 +54,7 @@ pub fn process_derive_message_attrs(
             "reserved_names" => {
               let names = list.parse_args::<StringList>()?;
 
-              reserved_names = ReservedNames::List(names.list);
+              reserved_names = names.list;
             }
             "reserved_numbers" => {
               let numbers = list.parse_args::<ReservedNumbers>()?;
@@ -103,9 +103,6 @@ pub fn process_derive_message_attrs(
             }
             "full_name" => {
               full_name = Some(extract_string_lit(&nv.value)?);
-            }
-            "reserved_names" => {
-              reserved_names = ReservedNames::Expr(nv.value);
             }
             "file" => {
               file = Some(extract_string_lit(&nv.value)?);

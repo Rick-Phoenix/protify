@@ -68,7 +68,7 @@ pub fn message_schema_impls(
           full_name: #full_name,
           package: #package,
           file: #file,
-          reserved_names: #reserved_names,
+          reserved_names: vec![ #(#reserved_names),* ],
           reserved_numbers: vec![ #reserved_numbers ],
           options: #options_tokens,
           messages: vec![ #nested_messages_tokens ],

@@ -168,7 +168,7 @@ pub fn process_enum_derive_prost(
           package: #package,
           file: #file,
           variants: vec! [ #(#variants_tokens,)* ],
-          reserved_names: #reserved_names,
+          reserved_names: vec![ #(#reserved_names),* ],
           reserved_numbers: vec![ #reserved_numbers ],
           options: #options_tokens,
         }
