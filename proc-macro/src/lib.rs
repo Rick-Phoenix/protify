@@ -29,9 +29,9 @@ use syn::{
 
 use crate::{
   conversions::*, enum_derive::*, extension_derive::*, item_cloners::*, message_derive::*,
-  message_schema_impl::*, module_processing::*, oneof_derive::*, oneof_info::*,
-  oneof_schema_impl::*, path_utils::*, process_field::*, proto_field::*, proto_map::*,
-  proto_types::*, rust_type::*, service_derive::*, type_extraction::*,
+  message_schema_impl::*, module_processing::*, oneof_derive::*, oneof_schema_impl::*,
+  path_utils::*, process_field::*, proto_field::*, proto_map::*, proto_types::*, rust_type::*,
+  service_derive::*, type_extraction::*,
 };
 
 mod conversions;
@@ -42,7 +42,6 @@ mod message_derive;
 mod message_schema_impl;
 mod module_processing;
 mod oneof_derive;
-mod oneof_info;
 mod oneof_schema_impl;
 mod path_utils;
 mod process_field;
