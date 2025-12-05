@@ -1,7 +1,7 @@
 use crate::*;
 
 pub trait ProtoOneof {
-  fn fields() -> Vec<ProtoField>;
+  fn proto_schema() -> Oneof;
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]

@@ -90,6 +90,9 @@ impl ProtoFile {
     self.imports.extend(other.imports);
     self.messages.extend(other.messages);
     self.enums.extend(other.enums);
+    self.services.extend(other.services);
+    self.extensions.extend(other.extensions);
+    self.options.extend(other.options);
   }
 
   pub fn add_messages<I: IntoIterator<Item = Message>>(&mut self, messages: I) {

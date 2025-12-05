@@ -161,14 +161,8 @@ pub(crate) fn process_oneof_derive_shadow(
     #into_proto_impl
 
     impl ::prelude::ProtoOneof for #shadow_enum_ident {
-      fn fields() -> Vec<::prelude::ProtoField> {
-        #orig_enum_ident::fields()
-      }
-    }
-
-    impl #shadow_enum_ident {
-      pub fn to_oneof() -> ::prelude::Oneof {
-        #orig_enum_ident::to_oneof()
+      fn proto_schema() -> ::prelude::Oneof {
+        <#orig_enum_ident as ::prelude::ProtoOneof>::proto_schema()
       }
     }
   });

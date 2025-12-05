@@ -78,7 +78,7 @@ pub fn process_field(
   {
     // Early return
     return Ok(quote! {
-      ::prelude::MessageEntry::Oneof(#oneof_path::to_oneof())
+      ::prelude::MessageEntry::Oneof(<#oneof_path as ::prelude::ProtoOneof>::proto_schema())
     });
   }
 

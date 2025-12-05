@@ -23,21 +23,21 @@ pub fn oneof_schema_impl(
   quote! {
     #schema_feature_tokens
     impl ::prelude::ProtoOneof for #enum_ident {
-      fn fields() -> Vec<::prelude::ProtoField> {
-        vec![ #(#variants_tokens,)* ]
+      fn proto_schema() -> ::prelude::Oneof {
+        Self::proto_schema()
       }
     }
 
     #schema_feature_tokens
     impl #enum_ident {
-      pub fn to_oneof() -> ::prelude::Oneof {
+      pub fn proto_schema() -> ::prelude::Oneof {
         let mut options: Vec<::prelude::ProtoOption> = #options_tokens;
 
         #required_option_tokens
 
         ::prelude::Oneof {
           name: #proto_name,
-          fields: <Self as ::prelude::ProtoOneof>::fields(),
+          fields: vec![ #(#variants_tokens,)* ],
           options,
         }
       }
