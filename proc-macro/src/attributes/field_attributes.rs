@@ -251,11 +251,13 @@ pub fn process_derive_field_attrs(
     return Err(spanned_error!(original_name, "Field tag is missing"));
   };
 
+  let name = name.unwrap_or_else(|| ccase!(snake, original_name.to_string()));
+
   Ok(FieldAttrData::Normal(Box::new(FieldAttrs {
     validator,
     tag,
     options,
-    name: name.unwrap_or_else(|| ccase!(snake, original_name.to_string())),
+    name,
     proto_field,
     from_proto,
     into_proto,

@@ -9,6 +9,7 @@ pub struct MessageData {
   pub tokens: StructRaw,
   pub fields: Vec<FieldData>,
   pub reserved_numbers: ReservedNumbers,
+  pub reserved_names: Vec<String>,
   pub name: String,
   pub full_name: OnceCell<String>,
   pub nested_messages: Vec<Ident>,
@@ -89,6 +90,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     name,
     nested_enums,
     nested_messages,
+    reserved_names,
   } = process_module_message_attrs(&ident, &attrs)?;
 
   let mut used_tags: Vec<i32> = Vec::new();
@@ -160,5 +162,6 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     nested_enums,
     full_name: OnceCell::new(),
     oneofs,
+    reserved_names,
   })
 }

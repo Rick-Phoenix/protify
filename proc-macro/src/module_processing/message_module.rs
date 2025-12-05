@@ -11,6 +11,7 @@ pub fn process_message_from_module(
     oneofs,
     used_tags,
     name,
+    reserved_names,
     ..
   } = msg;
 
@@ -52,6 +53,16 @@ pub fn process_message_from_module(
           continue;
         }
 
+        if reserved_names.contains(&variant.name) {
+          bail!(
+            &variant.tokens,
+            format!(
+              "Name `{}` used by oneof `{ident}` is a reserved name for message `{name}`",
+              variant.name
+            )
+          )
+        }
+
         if variant.tag.is_none() {
           let tag = tag_allocator
             .next_tag()
@@ -71,6 +82,10 @@ pub fn process_message_from_module(
       field.inject_attr(oneof_attr);
 
       continue;
+    }
+
+    if reserved_names.contains(&field.name) {
+      bail!(&field.tokens, format!("Name `{}` is reserved", field.name));
     }
 
     if let Some(tag) = &field.tag {

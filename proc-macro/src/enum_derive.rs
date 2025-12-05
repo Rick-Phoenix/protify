@@ -71,6 +71,10 @@ pub fn process_enum_derive_prost(
     let EnumVariantAttrs { options, name } =
       process_derive_enum_variants_attrs(&proto_name, variant_ident, &variant.attrs, no_prefix)?;
 
+    if reserved_names.contains(&name) {
+      bail!(&variant, format!("Variant name `{name}` is reserved"));
+    }
+
     from_str_tokens.extend(quote! {
       #name => Some(Self::#variant_ident),
     });
