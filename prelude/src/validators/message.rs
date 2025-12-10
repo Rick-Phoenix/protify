@@ -13,7 +13,7 @@ impl<T: ProtoMessage, S: State> ValidatorBuilderFor<T> for MessageValidatorBuild
 }
 
 impl<T: ProtoMessage> Validator<T> for MessageValidator {
-  fn validate(&self, _val: &T) -> Result<(), bool> {
+  fn validate(&self, _val: Option<&T>) -> Result<(), bool> {
     Ok(())
   }
 }

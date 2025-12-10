@@ -72,7 +72,7 @@ where
   T: AsProtoType + ProtoValidator<T>,
   IV: Validator<T::Target>,
 {
-  fn validate(&self, val: &Vec<T::Target>) -> Result<(), bool> {
+  fn validate(&self, val: Option<&Vec<T::Target>>) -> Result<(), bool> {
     self.validate(val)
   }
 }
@@ -82,7 +82,7 @@ where
   T: AsProtoType + ProtoValidator<T>,
   IV: Validator<T::Target>,
 {
-  pub fn validate(&self, _val: &Vec<T::Target>) -> Result<(), bool> {
+  pub fn validate(&self, _val: Option<&Vec<T::Target>>) -> Result<(), bool> {
     Ok(())
   }
 

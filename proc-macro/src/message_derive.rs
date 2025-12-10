@@ -94,15 +94,10 @@ pub fn process_message_derive_shadow(
 
     fields_tokens.push(field_tokens);
 
-    if let Some(validator) = &field_attrs.validator && matches!(type_info.proto_field, ProtoField::Single(ProtoType::String)| ProtoField::Map(_)) {
+    if let Some(validator) = &field_attrs.validator {
+      let field_validator = type_info.validator_tokens(src_field_ident, validator);
 
-      let field_validator = type_info.validator_tokens(validator);
-
-      validator_tokens.extend(
-        quote! {
-          #field_validator.validate(&self.#src_field_ident);
-        }
-      );
+      validator_tokens.extend(field_validator);
     }
 
     if message_attrs.into_proto.is_none() {

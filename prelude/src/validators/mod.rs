@@ -6,7 +6,7 @@ use common_strings::*;
 use proto_types::protovalidate::Ignore;
 
 pub trait Validator<T>: Into<ProtoOption> {
-  fn validate(&self, val: &T) -> Result<(), bool>;
+  fn validate(&self, val: Option<&T>) -> Result<(), bool>;
 }
 
 pub trait ValidatorBuilderFor<T>: Into<ProtoOption> {

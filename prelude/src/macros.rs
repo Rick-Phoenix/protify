@@ -51,7 +51,7 @@ macro_rules! impl_validator {
       }
 
       impl Validator<$rust_type> for $validator {
-        fn validate(&self, _target: &$rust_type) -> Result<(), bool> {
+        fn validate(&self, _target: Option<&$rust_type>) -> Result<(), bool> {
           Ok(())
         }
       }

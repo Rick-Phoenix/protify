@@ -105,7 +105,7 @@ where
   KV: Validator<K::Target>,
   VV: Validator<V::Target>,
 {
-  fn validate(&self, val: &HashMap<K::Target, V::Target>) -> Result<(), bool> {
+  fn validate(&self, val: Option<&HashMap<K::Target, V::Target>>) -> Result<(), bool> {
     self.validate(val)
   }
 }
@@ -117,10 +117,20 @@ where
   KV: Validator<K::Target>,
   VV: Validator<V::Target>,
 {
-  pub fn validate(&self, val: &HashMap<K::Target, V::Target>) -> Result<(), bool> {
-    for (k, v) in val {
-      if let Some(keys) = &self.keys {
-        keys.validate(k);
+  pub fn validate(&self, val: Option<&HashMap<K::Target, V::Target>>) -> Result<(), bool> {
+    if let Some(val) = val {
+      if let Some(min_pairs) = self.min_pairs && val.len() < min_pairs {
+        println!("Expected {min_pairs} pairs, found {}", val.len());
+      }
+
+      for (k, v) in val {
+        if let Some(keys) = &self.keys {
+          keys.validate(Some(k));
+        }
+
+        if let Some(values) = &self.values {
+          values.validate(Some(v));
+        }
       }
     }
 

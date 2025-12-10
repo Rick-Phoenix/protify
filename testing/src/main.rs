@@ -19,13 +19,13 @@ fn repeated_validator() -> impl ValidatorBuilderFor<Vec<i32>> {
   validator.items(|i| i.lt(20)).min_items(1)
 }
 
-fn enum_validator<T: ProtoEnum>() -> impl ValidatorBuilderFor<T> {
+fn enum_validator<T: ProtoEnum>() -> impl ValidatorBuilderFor<T, Target = i32> {
   let validator = EnumValidator::builder();
 
   validator.defined_only()
 }
 
-fn numeric_validator() -> impl ValidatorBuilderFor<Sint32> {
+fn numeric_validator() -> impl ValidatorBuilderFor<Sint32, Target = i32> {
   let validator = IntValidator::builder();
 
   validator.lt(0)
@@ -40,7 +40,7 @@ fn random_option() -> ProtoOption {
 
 #[proc_macro_impls::proto_module(file = "abc.proto", package = "myapp.v1")]
 mod inner {
-  use prelude::{cel_rule, CelRule, DEPRECATED};
+  use prelude::{cel_rule, CelRule, Validator, DEPRECATED};
   use proc_macro_impls::{
     proto_enum, proto_extension, proto_message, proto_oneof, proto_service, Extension, Service,
   };
@@ -144,13 +144,13 @@ mod inner {
     #[proto(validate = |v| v.min_pairs(0).keys(|k| k.min_len(25)).values(|v| v.lt(25)))]
     map: HashMap<String, i32>,
 
-    // #[proto(map(string, enum_), validate = |v| v.values(|val| val.defined_only()))]
-    // enum_map: HashMap<String, PseudoEnum>,
-    //
+    #[proto(map(string, enum_), validate = |v| v.min_pairs(20).values(|val| val.defined_only()))]
+    enum_map: HashMap<String, PseudoEnum>,
+
     #[proto(map(string, message(proxied)), validate = |v| v.values(|val| val.ignore_always().cel(message_rules())))]
     message_map: HashMap<String, Nested>,
 
-    #[proto(enum_, validate = enum_validator())]
+    #[proto(enum_, validate = |v| v.defined_only())]
     enum_field: PseudoEnum,
 
     #[proto(enum_)]
@@ -205,8 +205,9 @@ fn main() {
 
   let mut msg = Abc::proto_schema();
 
-  // let nested2 = Nested2::to_message();
+  // println!("{file2}");
 
-  println!("{file2}");
-  // let nested_enum = Bcd::to_nested_enum(nested);
+  let msg2 = AbcProto::default();
+
+  msg2.validate();
 }

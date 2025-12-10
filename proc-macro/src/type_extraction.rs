@@ -41,15 +41,28 @@ impl TypeInfo {
     }
   }
 
-  pub fn validator_tokens(&self, validator: &ValidatorExpr) -> TokenStream2 {
+  pub fn validator_tokens(&self, field_ident: &Ident, validator: &ValidatorExpr) -> TokenStream2 {
     let target_type = self.proto_field.validator_target_type();
 
-    match validator {
+    let validation_expr = match validator {
       ValidatorExpr::Call(call) => quote! { #call.build_validator() },
 
       ValidatorExpr::Closure(closure) => {
         quote! { <#target_type as ::prelude::ProtoValidator<#target_type>>::validator_from_closure(#closure) }
       }
+    };
+
+    let argument = match &self.rust_type {
+      RustType::Option(_) => quote! { self.#field_ident.as_ref() },
+      RustType::OptionBoxed(_) => quote! { self.#field_ident.as_ref() },
+      RustType::Boxed(_) => quote! { &(*self.#field_ident) },
+      RustType::Map(_) => quote! { Some(&self.#field_ident) },
+      RustType::Vec(_) => quote! {  Some(&self.#field_ident)  },
+      RustType::Normal(_) => quote! {  Some(&self.#field_ident)  },
+    };
+
+    quote! {
+      #validation_expr.validate(#argument);
     }
   }
 

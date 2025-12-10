@@ -9,7 +9,7 @@ impl<Num> Validator<Num::RustType> for IntValidator<Num>
 where
   Num: IntWrapper,
 {
-  fn validate(&self, _val: &Num::RustType) -> Result<(), bool> {
+  fn validate(&self, _val: Option<&Num::RustType>) -> Result<(), bool> {
     Ok(())
   }
 }
@@ -18,7 +18,7 @@ impl<Num, S: State> Validator<Num::RustType> for IntValidatorBuilder<Num, S>
 where
   Num: IntWrapper,
 {
-  fn validate(&self, _val: &Num::RustType) -> Result<(), bool> {
+  fn validate(&self, _val: Option<&Num::RustType>) -> Result<(), bool> {
     Ok(())
   }
 }

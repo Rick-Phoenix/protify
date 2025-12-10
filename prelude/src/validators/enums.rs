@@ -7,7 +7,7 @@ impl_ignore!(EnumValidatorBuilder);
 impl_into_option!(EnumValidator);
 
 impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<S> {
-  type Target = T;
+  type Target = i32;
   type Validator = EnumValidator;
 
   fn build_validator(self) -> Self::Validator {
@@ -15,8 +15,8 @@ impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<S> 
   }
 }
 
-impl<T: ProtoEnum> Validator<T> for EnumValidator {
-  fn validate(&self, _val: &T) -> Result<(), bool> {
+impl Validator<i32> for EnumValidator {
+  fn validate(&self, _val: Option<&i32>) -> Result<(), bool> {
     Ok(())
   }
 }
