@@ -170,7 +170,7 @@ pub fn process_derive_field_attrs(
   }
 
   if !oneof_attrs.is_empty() {
-    let mut oneof_path = ItemPath::None;
+    let mut oneof_path = ItemPathEntry::None;
     let mut oneof_tags: Vec<i32> = Vec::new();
     let mut use_default = false;
     let mut attr_span: Option<Span> = None;

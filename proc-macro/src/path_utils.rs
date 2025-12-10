@@ -3,14 +3,22 @@ use quote::format_ident;
 use crate::*;
 
 #[derive(Default, Debug, Clone)]
-pub enum ItemPath {
+pub enum ItemPathEntry {
   Path(Path),
   Proxied,
   #[default]
   None,
 }
 
-impl ItemPath {
+#[derive(Debug, Clone)]
+pub enum ItemPath {
+  Path(Path),
+  Proxied(Path),
+}
+
+impl ItemPath {}
+
+impl ItemPathEntry {
   pub fn get_path_or_fallback(&self, fallback: Option<&Path>) -> Option<Path> {
     let output = if let Self::Path(path) = self {
       path.clone()
@@ -34,7 +42,7 @@ impl ItemPath {
   }
 }
 
-impl ToTokens for ItemPath {
+impl ToTokens for ItemPathEntry {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
     match self {
       Self::Path(path) => tokens.extend(path.to_token_stream()),

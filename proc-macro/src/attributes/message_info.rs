@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct MessageInfo {
-  pub path: ItemPath,
+  pub path: ItemPathEntry,
   pub boxed: bool,
 }
 
@@ -10,7 +10,7 @@ impl Parse for MessageInfo {
   fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
     let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
 
-    let mut item_path = ItemPath::default();
+    let mut item_path = ItemPathEntry::default();
     let mut boxed = false;
 
     for meta in metas {
@@ -20,10 +20,10 @@ impl Parse for MessageInfo {
 
           match ident.as_str() {
             "proxied" => {
-              item_path = ItemPath::Proxied;
+              item_path = ItemPathEntry::Proxied;
             }
             "boxed" => boxed = true,
-            _ => item_path = ItemPath::Path(path),
+            _ => item_path = ItemPathEntry::Path(path),
           };
         }
         _ => {}

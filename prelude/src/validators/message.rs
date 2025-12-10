@@ -3,9 +3,21 @@ use message_validator_builder::{IsUnset, SetIgnore, State};
 
 use super::*;
 
-pub struct GenericMessage;
+impl<T: ProtoMessage, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<S> {
+  type Target = T;
+  type Validator = MessageValidator;
 
-impl_validator!(MessageValidator, GenericMessage);
+  fn build_validator(self) -> Self::Validator {
+    self.build()
+  }
+}
+
+impl<T: ProtoMessage> Validator<T> for MessageValidator {
+  fn validate(&self, _val: &T) -> Result<(), bool> {
+    Ok(())
+  }
+}
+
 impl_into_option!(MessageValidator);
 
 #[derive(Debug, Clone, Builder)]

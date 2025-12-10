@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Debug, Clone, Default)]
 pub struct OneofInfo {
-  pub path: ItemPath,
+  pub path: ItemPathEntry,
   pub tags: Vec<i32>,
   pub default: bool,
 }
@@ -26,7 +26,7 @@ impl Parse for OneofInfo {
   fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
     let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
 
-    let mut oneof_path = ItemPath::default();
+    let mut oneof_path = ItemPathEntry::default();
     let mut tags: Vec<i32> = Vec::new();
     let mut default = false;
 
@@ -37,8 +37,8 @@ impl Parse for OneofInfo {
 
           match ident.as_str() {
             "default" => default = true,
-            "proxied" => oneof_path = ItemPath::Proxied,
-            _ => oneof_path = ItemPath::Path(path),
+            "proxied" => oneof_path = ItemPathEntry::Proxied,
+            _ => oneof_path = ItemPathEntry::Path(path),
           };
         }
         Meta::List(list) => {

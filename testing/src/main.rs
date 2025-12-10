@@ -147,15 +147,16 @@ mod inner {
     // #[proto(map(string, enum_), validate = |v| v.values(|val| val.defined_only()))]
     // enum_map: HashMap<String, PseudoEnum>,
     //
-    // #[proto(map(string, message(proxied)), validate = |v| v.values(|val| val.ignore_always().cel(message_rules())))]
-    // message_map: HashMap<String, Nested>,
+    #[proto(map(string, message(proxied)), validate = |v| v.values(|val| val.ignore_always().cel(message_rules())))]
+    message_map: HashMap<String, Nested>,
+
     #[proto(enum_, validate = enum_validator())]
     enum_field: PseudoEnum,
 
     #[proto(enum_)]
     optional_enum: Option<PseudoEnum>,
 
-    #[proto(message(proxied))]
+    #[proto(message(proxied), validate = |v| v.ignore_always())]
     nested: Option<Nested>,
 
     #[proto(repeated(message(proxied)))]

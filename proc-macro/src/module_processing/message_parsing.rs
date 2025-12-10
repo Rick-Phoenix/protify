@@ -118,7 +118,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
 
     if let Some(info) = oneof_info {
       let mut oneof_path = match info.path {
-        ItemPath::Path(path) => path,
+        ItemPathEntry::Path(path) => path,
         _ => {
           let rust_type = RustType::from_type(&field.ty, field_ident)?;
 
