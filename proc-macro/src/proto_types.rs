@@ -172,7 +172,7 @@ impl ProtoType {
       ProtoType::String => quote! { String },
       ProtoType::Bool => quote! { bool },
       ProtoType::Bytes => quote! { Vec<u8> },
-      ProtoType::Enum(_) => quote! { ::prelude::GenericProtoEnum },
+      ProtoType::Enum(path) => quote! { #path },
       ProtoType::Message { path, .. } => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
       ProtoType::Sint32 => quote! { ::prelude::Sint32 },

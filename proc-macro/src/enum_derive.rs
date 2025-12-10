@@ -129,6 +129,16 @@ pub fn process_enum_derive_prost(
       }
     }
 
+    impl ::prelude::ProtoValidator<#enum_name> for #enum_name {
+      type Target = Self;
+      type Validator = ::prelude::EnumValidator;
+      type Builder = ::prelude::EnumValidatorBuilder;
+
+      fn builder() -> Self::Builder {
+        ::prelude::EnumValidator::builder()
+      }
+    }
+
     impl ::prelude::AsProtoType for #enum_name {
       fn proto_type() -> ::prelude::ProtoType {
         ::prelude::ProtoType::Enum(

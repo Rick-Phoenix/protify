@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use prelude::{
-  EnumValidator, GenericProtoEnum, IntValidator, OptionValue, ProtoOption, RepeatedValidator,
+  EnumValidator, IntValidator, OptionValue, ProtoEnum, ProtoOption, RepeatedValidator,
   RepeatedValidatorBuilder, Sint32, StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
 };
 use proc_macro_impls::{Enum, Message, Oneof};
@@ -19,7 +19,7 @@ fn repeated_validator() -> impl ValidatorBuilderFor<Vec<i32>> {
   validator.items(|i| i.lt(20)).min_items(1)
 }
 
-fn enum_validator() -> impl ValidatorBuilderFor<GenericProtoEnum> {
+fn enum_validator<T: ProtoEnum>() -> impl ValidatorBuilderFor<T> {
   let validator = EnumValidator::builder();
 
   validator.defined_only()
