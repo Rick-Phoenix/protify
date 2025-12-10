@@ -148,6 +148,18 @@ impl From<std::time::Duration> for OptionValue {
   }
 }
 
+impl From<usize> for OptionValue {
+  fn from(value: usize) -> Self {
+    Self::Uint(value as u64)
+  }
+}
+
+impl From<isize> for OptionValue {
+  fn from(value: isize) -> Self {
+    Self::Int(value as i64)
+  }
+}
+
 option_value_conversion!(Arc<[(Arc<str>, OptionValue)]>, Message);
 option_value_conversion!(bool, Bool);
 option_value_conversion!(Duration, Duration);

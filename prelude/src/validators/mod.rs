@@ -19,6 +19,16 @@ pub trait ProtoValidator<T> {
     builder.into()
   }
 
+  fn builder_from_closure<F, FinalBuilder>(config_fn: F) -> FinalBuilder
+  where
+    F: FnOnce(Self::Builder) -> FinalBuilder,
+    FinalBuilder: ValidatorBuilderFor<T>,
+  {
+    let initial_builder = Self::builder();
+
+    config_fn(initial_builder)
+  }
+
   fn build_rules<F, FinalBuilder>(config_fn: F) -> ProtoOption
   where
     F: FnOnce(Self::Builder) -> FinalBuilder,
@@ -104,6 +114,7 @@ mod macros {
 
 mod any;
 mod bool;
+mod builder_internals;
 mod bytes;
 mod cel;
 mod duration;
@@ -118,6 +129,7 @@ mod timestamp;
 
 pub use any::*;
 pub use bool::*;
+use builder_internals::*;
 pub use bytes::*;
 pub use cel::*;
 pub use duration::*;

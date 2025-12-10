@@ -6,7 +6,7 @@ pub use paste::paste;
 mod oneof;
 mod options;
 mod validators;
-use std::{collections::HashSet, ops::Range};
+use std::{collections::HashSet, marker::PhantomData, ops::Range};
 mod field;
 mod file;
 mod message;
