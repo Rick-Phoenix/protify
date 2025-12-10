@@ -138,6 +138,6 @@ pub use map::*;
 pub use message::*;
 pub use numeric::*;
 pub use oneof::*;
-pub use repeated::{repeated_validator_builder, *};
+pub use repeated::*;
 pub use string::*;
 pub use timestamp::*;
