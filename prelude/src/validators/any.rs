@@ -20,8 +20,8 @@ pub struct AnyValidator {
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
   /// Specifies that the field must be set in order to be valid.
-  #[builder(with = || true)]
-  pub required: Option<bool>,
+  #[builder(default, with = || true)]
+  pub required: bool,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 }
@@ -76,7 +76,7 @@ impl From<AnyValidator> for ProtoOption {
     outer_rules.push((ANY.clone(), OptionValue::Message(rules.into())));
 
     insert_cel_rules!(validator, outer_rules);
-    insert_option!(validator, outer_rules, required);
+    insert_boolean_option!(validator, outer_rules, required);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {

@@ -64,9 +64,9 @@ pub struct BytesValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
-  #[builder(with = || true)]
+  #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
-  pub required: Option<bool>,
+  pub required: bool,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 }
@@ -111,7 +111,7 @@ impl From<BytesValidator> for ProtoOption {
     outer_rules.push((BYTES.clone(), OptionValue::Message(rules.into())));
 
     insert_cel_rules!(validator, outer_rules);
-    insert_option!(validator, outer_rules, required);
+    insert_boolean_option!(validator, outer_rules, required);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {

@@ -84,7 +84,7 @@ impl ProtoMap {
     let keys = self.keys.as_proto_type_trait_target();
     let values = self.values.as_proto_type_trait_target();
 
-    quote! { std::collections::HashMap<#keys, #values> }
+    quote! { ::prelude::ProtoMap<#keys, #values> }
   }
 
   pub fn validator_target_type(&self) -> TokenStream2 {

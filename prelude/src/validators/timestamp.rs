@@ -16,24 +16,24 @@ pub struct TimestampValidator {
   pub lt: Option<Timestamp>,
   /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount.
   pub lte: Option<Timestamp>,
-  #[builder(with = || true)]
+  #[builder(default, with = || true)]
   /// Specifies that this field's value will be valid only if it in the past.
-  pub lt_now: Option<bool>,
+  pub lt_now: bool,
   /// Specifies that this field's value will be valid only if it is greater than the specified amount.
   pub gt: Option<Timestamp>,
   /// Specifies that this field's value will be valid only if it is greater than, or equal to, the specified amount.
   pub gte: Option<Timestamp>,
-  #[builder(with = || true)]
+  #[builder(default, with = || true)]
   /// Specifies that this field's value will be valid only if it in the future.
-  pub gt_now: Option<bool>,
+  pub gt_now: bool,
   /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
   pub within: Option<Duration>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Box<[CelRule]>>,
-  #[builder(with = || true)]
+  #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
-  pub required: Option<bool>,
+  pub required: bool,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 }
@@ -60,8 +60,8 @@ impl From<TimestampValidator> for ProtoOption {
     insert_option!(validator, rules, lte);
     insert_option!(validator, rules, gt);
     insert_option!(validator, rules, gte);
-    insert_option!(validator, rules, lt_now);
-    insert_option!(validator, rules, gt_now);
+    insert_boolean_option!(validator, rules, lt_now);
+    insert_boolean_option!(validator, rules, gt_now);
     insert_option!(validator, rules, within);
 
     let mut outer_rules: OptionValueList = vec![];
@@ -69,7 +69,7 @@ impl From<TimestampValidator> for ProtoOption {
     outer_rules.push((TIMESTAMP.clone(), OptionValue::Message(rules.into())));
 
     insert_cel_rules!(validator, outer_rules);
-    insert_option!(validator, outer_rules, required);
+    insert_boolean_option!(validator, outer_rules, required);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {

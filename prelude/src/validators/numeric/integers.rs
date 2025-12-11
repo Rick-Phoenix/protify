@@ -5,19 +5,32 @@ use int_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
 
 use super::*;
 
-impl<Num> Validator<Num::RustType> for IntValidator<Num>
+impl<S: State, Num: IntWrapper> ValidatorBuilderFor<Num> for IntValidatorBuilder<Num, S> {
+  type Target = Num::RustType;
+  type Validator = IntValidator<Num>;
+
+  fn build_validator(self) -> Self::Validator {
+    self.build()
+  }
+}
+
+impl<Num> Validator<Num> for IntValidator<Num>
 where
   Num: IntWrapper,
 {
+  type Target = Num::RustType;
+
   fn validate(&self, _val: Option<&Num::RustType>) -> Result<(), bool> {
     Ok(())
   }
 }
 
-impl<Num, S: State> Validator<Num::RustType> for IntValidatorBuilder<Num, S>
+impl<Num, S: State> Validator<Num> for IntValidatorBuilder<Num, S>
 where
   Num: IntWrapper,
 {
+  type Target = Num::RustType;
+
   fn validate(&self, _val: Option<&Num::RustType>) -> Result<(), bool> {
     Ok(())
   }
@@ -50,7 +63,8 @@ where
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
   /// Specifies that the field must be set in order to be valid.
-  pub required: Option<bool>,
+  #[builder(default, with = || true)]
+  pub required: bool,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 }
@@ -102,7 +116,7 @@ where
       vec![(N::type_name(), OptionValue::Message(values.into()))];
 
     insert_cel_rules!(validator, outer_rules);
-    insert_option!(validator, outer_rules, required);
+    insert_boolean_option!(validator, outer_rules, required);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {
@@ -160,17 +174,6 @@ macro_rules! impl_int_validator {
 
         fn builder() -> IntValidatorBuilder<$wrapper> {
           IntValidator::builder()
-        }
-      }
-
-      impl<S: State> ValidatorBuilderFor<$wrapper>
-      for IntValidatorBuilder<$wrapper, S>
-      {
-        type Target = $rust_type;
-        type Validator = IntValidator<$wrapper>;
-
-        fn build_validator(self) -> Self::Validator {
-          self.build()
         }
       }
     }

@@ -32,12 +32,13 @@ where
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
   /// Specifies that the field must be set in order to be valid.
-  pub required: Option<bool>,
+  #[builder(default, with = || true)]
+  pub required: bool,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
   /// Specifies that this field must be finite (i.e. it can't represent Infinity or NaN)
-  #[builder(with = || true)]
-  pub finite: Option<bool>,
+  #[builder(default, with = || true)]
+  pub finite: bool,
 }
 
 impl<S: State, N: FloatWrapper> FloatValidatorBuilder<N, S>
@@ -76,6 +77,7 @@ where
       values.push((CONST_.clone(), const_val.into()));
     }
 
+    insert_boolean_option!(validator, values, finite);
     insert_option!(validator, values, lt);
     insert_option!(validator, values, lte);
     insert_option!(validator, values, gt);
@@ -88,7 +90,7 @@ where
     outer_rules.push((N::type_name(), OptionValue::Message(values.into())));
 
     insert_cel_rules!(validator, outer_rules);
-    insert_option!(validator, outer_rules, required);
+    insert_boolean_option!(validator, outer_rules, required);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {
@@ -142,12 +144,16 @@ impl<S: State> ValidatorBuilderFor<f64> for FloatValidatorBuilder<f64, S> {
 }
 
 impl Validator<f32> for FloatValidator<f32> {
+  type Target = f32;
+
   fn validate(&self, _val: Option<&f32>) -> Result<(), bool> {
     Ok(())
   }
 }
 
 impl Validator<f64> for FloatValidator<f64> {
+  type Target = f64;
+
   fn validate(&self, _val: Option<&f64>) -> Result<(), bool> {
     Ok(())
   }

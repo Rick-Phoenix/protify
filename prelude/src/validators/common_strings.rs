@@ -74,3 +74,4 @@ reusable_string!(DOUBLE);
 reusable_string!(LT_NOW);
 reusable_string!(GT_NOW);
 reusable_string!(WITHIN);
+reusable_string!(FINITE);

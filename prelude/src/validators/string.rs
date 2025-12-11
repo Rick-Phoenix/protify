@@ -77,9 +77,9 @@ pub struct StringValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
-  #[builder(with = || true)]
+  #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
-  pub required: Option<bool>,
+  pub required: bool,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 }
@@ -132,7 +132,7 @@ impl From<StringValidator> for ProtoOption {
     // These must be added on the outer grouping, as they are generic rules
     // It's (buf.validate.field).required, NOT (buf.validate.field).string.required
     insert_cel_rules!(validator, outer_rules);
-    insert_option!(validator, outer_rules, required);
+    insert_boolean_option!(validator, outer_rules, required);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {

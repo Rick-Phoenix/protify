@@ -24,22 +24,21 @@ where
   T: AsProtoType + ProtoValidator<T>,
 {
   type Target = Vec<T::Target>;
-  type Validator = RepeatedValidator<T, T::Validator>;
-  type Builder = RepeatedValidatorBuilder<T, T::Validator>;
+  type Validator = RepeatedValidator<T>;
+  type Builder = RepeatedValidatorBuilder<T>;
 
   fn builder() -> Self::Builder {
     RepeatedValidator::builder()
   }
 }
 
-impl<T, IV, S> ValidatorBuilderFor<Vec<T>> for RepeatedValidatorBuilder<T, IV, S>
+impl<T, S> ValidatorBuilderFor<Vec<T>> for RepeatedValidatorBuilder<T, S>
 where
   S: State,
-  T: AsProtoType + ProtoValidator<T, Validator = IV>,
-  IV: Validator<T::Target>,
+  T: AsProtoType + ProtoValidator<T>,
 {
   type Target = Vec<T::Target>;
-  type Validator = RepeatedValidator<T, IV>;
+  type Validator = RepeatedValidator<T>;
 
   fn build_validator(self) -> Self::Validator {
     self.build()
@@ -47,53 +46,52 @@ where
 }
 
 #[derive(Clone, Debug)]
-pub struct RepeatedValidator<T, IV = <T as ProtoValidator<T>>::Validator>
+pub struct RepeatedValidator<T>
 where
   T: AsProtoType + ProtoValidator<T>,
-  IV: Validator<T::Target>,
 {
   _inner_type: PhantomData<T>,
 
-  pub items: Option<IV>,
+  pub items: Option<T::Validator>,
   /// The minimum amount of items that this field must contain in order to be valid.
   pub min_items: Option<usize>,
   /// The maximum amount of items that this field must contain in order to be valid.
   pub max_items: Option<usize>,
   /// Specifies that this field must contain only unique values (only applies to scalar fields).
-  pub unique: Option<bool>,
+  pub unique: bool,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   /// These will apply to the list as a whole. To apply rules to the individual items, use the items validator instead.
   pub cel: Option<Arc<[CelRule]>>,
   pub ignore: Option<Ignore>,
 }
 
-impl<T, IV> Validator<Vec<T::Target>> for RepeatedValidator<T, IV>
+impl<T> Validator<Vec<T>> for RepeatedValidator<T>
 where
   T: AsProtoType + ProtoValidator<T>,
-  IV: Validator<T::Target>,
 {
+  type Target = Vec<T::Target>;
+
   fn validate(&self, val: Option<&Vec<T::Target>>) -> Result<(), bool> {
     self.validate(val)
   }
 }
 
-impl<T, IV> RepeatedValidator<T, IV>
+impl<T> RepeatedValidator<T>
 where
   T: AsProtoType + ProtoValidator<T>,
-  IV: Validator<T::Target>,
 {
   pub fn validate(&self, _val: Option<&Vec<T::Target>>) -> Result<(), bool> {
     Ok(())
   }
 
-  pub fn builder() -> RepeatedValidatorBuilder<T, IV> {
+  pub fn builder() -> RepeatedValidatorBuilder<T> {
     RepeatedValidatorBuilder {
       _state: PhantomData,
       _inner_type: PhantomData,
       items: None,
       min_items: None,
       max_items: None,
-      unique: None,
+      unique: false,
       cel: None,
       ignore: None,
     }
@@ -101,34 +99,32 @@ where
 }
 
 #[derive(Clone, Debug)]
-pub struct RepeatedValidatorBuilder<T, IV = <T as ProtoValidator<T>>::Validator, S: State = Empty>
+pub struct RepeatedValidatorBuilder<T, S: State = Empty>
 where
   T: AsProtoType + ProtoValidator<T>,
-  IV: Validator<T::Target>,
 {
   _state: PhantomData<S>,
   _inner_type: PhantomData<T>,
 
   /// Specifies the rules that will be applied to the individual items of this repeated field.
-  pub items: Option<IV>,
+  pub items: Option<T::Validator>,
   /// The minimum amount of items that this field must contain in order to be valid.
   pub min_items: Option<usize>,
   /// The maximum amount of items that this field must contain in order to be valid.
   pub max_items: Option<usize>,
   /// Specifies that this field must contain only unique values (only applies to scalar fields).
-  pub unique: Option<bool>,
+  pub unique: bool,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   /// These will apply to the list as a whole. To apply rules to the individual items, use the items validator instead.
   pub cel: Option<Arc<[CelRule]>>,
   pub ignore: Option<Ignore>,
 }
 
-impl<T, IV, S: State> RepeatedValidatorBuilder<T, IV, S>
+impl<T, S: State> RepeatedValidatorBuilder<T, S>
 where
-  T: AsProtoType + ProtoValidator<T, Validator = IV>,
-  IV: Validator<T::Target>,
+  T: AsProtoType + ProtoValidator<T>,
 {
-  pub fn build(self) -> RepeatedValidator<T, IV> {
+  pub fn build(self) -> RepeatedValidator<T> {
     let Self {
       _inner_type,
       items,
@@ -152,7 +148,7 @@ where
   }
 
   /// Specifies the rules that will be applied to the individual items of this repeated field.
-  pub fn items<F, FinalBuilder>(self, config_fn: F) -> RepeatedValidatorBuilder<T, IV, SetItems<S>>
+  pub fn items<F, FinalBuilder>(self, config_fn: F) -> RepeatedValidatorBuilder<T, SetItems<S>>
   where
     S::Items: IsUnset,
     T: ProtoValidator<T>,
@@ -174,7 +170,7 @@ where
   }
 
   /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> RepeatedValidatorBuilder<T, IV, SetIgnore<S>>
+  pub fn ignore_always(self) -> RepeatedValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
@@ -190,7 +186,7 @@ where
     }
   }
 
-  pub fn min_items(self, num: usize) -> RepeatedValidatorBuilder<T, IV, SetMinItems<S>>
+  pub fn min_items(self, num: usize) -> RepeatedValidatorBuilder<T, SetMinItems<S>>
   where
     S::MinItems: IsUnset,
   {
@@ -206,7 +202,7 @@ where
     }
   }
 
-  pub fn max_items(self, num: usize) -> RepeatedValidatorBuilder<T, IV, SetMaxItems<S>>
+  pub fn max_items(self, num: usize) -> RepeatedValidatorBuilder<T, SetMaxItems<S>>
   where
     S::MaxItems: IsUnset,
   {
@@ -222,7 +218,7 @@ where
     }
   }
 
-  pub fn unique(self) -> RepeatedValidatorBuilder<T, IV, SetUnique<S>>
+  pub fn unique(self) -> RepeatedValidatorBuilder<T, SetUnique<S>>
   where
     S::Unique: IsUnset,
   {
@@ -232,13 +228,13 @@ where
       items: self.items,
       min_items: self.min_items,
       max_items: self.max_items,
-      unique: Some(true),
+      unique: true,
       cel: self.cel,
       ignore: self.ignore,
     }
   }
 
-  pub fn cel(self, rules: impl Into<Arc<[CelRule]>>) -> RepeatedValidatorBuilder<T, IV, SetCel<S>>
+  pub fn cel(self, rules: impl Into<Arc<[CelRule]>>) -> RepeatedValidatorBuilder<T, SetCel<S>>
   where
     S::Cel: IsUnset,
   {
@@ -255,25 +251,23 @@ where
   }
 }
 
-impl<T, IV, S: State> From<RepeatedValidatorBuilder<T, IV, S>> for ProtoOption
+impl<T, S: State> From<RepeatedValidatorBuilder<T, S>> for ProtoOption
 where
-  T: AsProtoType + ProtoValidator<T, Validator = IV>,
-  IV: Validator<T::Target>,
+  T: AsProtoType + ProtoValidator<T>,
 {
-  fn from(value: RepeatedValidatorBuilder<T, IV, S>) -> Self {
+  fn from(value: RepeatedValidatorBuilder<T, S>) -> Self {
     value.build().into()
   }
 }
 
-impl<T, IV> From<RepeatedValidator<T, IV>> for ProtoOption
+impl<T> From<RepeatedValidator<T>> for ProtoOption
 where
   T: AsProtoType + ProtoValidator<T>,
-  IV: Validator<T::Target>,
 {
-  fn from(validator: RepeatedValidator<T, IV>) -> ProtoOption {
+  fn from(validator: RepeatedValidator<T>) -> ProtoOption {
     let mut rules: OptionValueList = Vec::new();
 
-    insert_option!(validator, rules, unique);
+    insert_boolean_option!(validator, rules, unique);
     insert_option!(validator, rules, min_items);
     insert_option!(validator, rules, max_items);
 

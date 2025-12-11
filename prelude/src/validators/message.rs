@@ -13,6 +13,8 @@ impl<T: ProtoMessage, S: State> ValidatorBuilderFor<T> for MessageValidatorBuild
 }
 
 impl<T: ProtoMessage> Validator<T> for MessageValidator {
+  type Target = T;
+
   fn validate(&self, _val: Option<&T>) -> Result<(), bool> {
     Ok(())
   }
@@ -26,9 +28,9 @@ pub struct MessageValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(into)]
   pub cel: Option<Arc<[CelRule]>>,
-  #[builder(with = || true)]
+  #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
-  pub required: Option<bool>,
+  pub required: bool,
   #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 }
@@ -48,7 +50,7 @@ impl From<MessageValidator> for ProtoOption {
     let mut rules: OptionValueList = Vec::new();
 
     insert_cel_rules!(validator, rules);
-    insert_option!(validator, rules, required);
+    insert_boolean_option!(validator, rules, required);
 
     ProtoOption {
       name: BUF_VALIDATE_FIELD.clone(),

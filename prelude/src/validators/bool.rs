@@ -10,9 +10,9 @@ impl_into_option!(BoolValidator);
 pub struct BoolValidator {
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<bool>,
-  #[builder(with = || true)]
+  #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
-  pub required: Option<bool>,
+  pub required: bool,
 }
 
 impl From<BoolValidator> for ProtoOption {
@@ -25,7 +25,7 @@ impl From<BoolValidator> for ProtoOption {
 
     outer_rules.push((BOOL.clone(), OptionValue::Message(rules.into())));
 
-    insert_option!(validator, outer_rules, required);
+    insert_boolean_option!(validator, outer_rules, required);
 
     ProtoOption {
       name: BUF_VALIDATE_FIELD.clone(),
