@@ -12,6 +12,7 @@ pub trait ProtoMessage {
 
   fn nested_validate(
     &self,
+    _field_context: &FieldContext,
     _parent_messages: &mut Vec<FieldPathElement>,
   ) -> Result<(), Vec<Violation>> {
     Ok(())

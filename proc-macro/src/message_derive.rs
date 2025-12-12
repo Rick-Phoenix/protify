@@ -172,26 +172,42 @@ pub fn process_message_derive_shadow(
     #into_proto_impl
 
     impl #shadow_struct_ident {
-      pub fn validate(&self) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
-        use ::prelude::{ProtoValidator, Validator, ValidationResult};
-
-        let mut parent_elements: Vec<FieldPathElement> = Vec::new();
-
-        self.nested_validate(&mut parent_elements)
-      }
-
-      pub fn nested_validate(&self, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+      #[doc(hidden)]
+      fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
         use ::prelude::{ProtoValidator, Validator, ValidationResult};
 
         let mut violations = Vec::new();
 
+        if let Some(field_context) = field_context {
+          parent_elements.push(FieldPathElement {
+            field_number: Some(field_context.tag),
+            field_name: Some(field_context.name.to_string()),
+            field_type: Some(Type::Message as i32),
+            key_type: field_context.key_type.map(|t| t as i32),
+            value_type: field_context.value_type.map(|t| t as i32),
+            subscript: field_context.subscript.clone(),
+          });
+        }
+
         #validator_tokens
+
+        if field_context.is_some() {
+          parent_elements.pop();
+        }
 
         if violations.is_empty() {
           Ok(())
         } else {
           Err(violations)
         }
+      }
+
+      pub fn validate(&self) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+        self.__validate_internal(None, &mut vec![])
+      }
+
+      pub fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+        self.__validate_internal(Some(field_context), parent_elements)
       }
     }
 
@@ -212,6 +228,14 @@ pub fn process_message_derive_shadow(
 
       fn proto_schema() -> ::prelude::Message {
         #orig_struct_ident::proto_schema()
+      }
+
+      fn validate(&self) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+        self.validate()
+      }
+
+      fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+        self.nested_validate(field_context, parent_elements)
       }
     }
 

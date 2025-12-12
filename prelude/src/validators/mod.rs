@@ -3,10 +3,7 @@ mod common_strings;
 use std::{fmt::Debug, hash::Hash, sync::Arc};
 
 use common_strings::*;
-use proto_types::{
-  field_descriptor_proto::Type,
-  protovalidate::{field_path_element::Subscript, *},
-};
+use proto_types::{field_descriptor_proto::Type, protovalidate::*};
 
 pub trait Validator<T>: Into<ProtoOption> {
   type Target;

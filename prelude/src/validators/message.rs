@@ -26,20 +26,9 @@ impl<T: ProtoMessage> Validator<T> for MessageValidator {
     let violations = &mut violations_agg;
 
     if let Some(val) = val {
-      parent_elements.push(FieldPathElement {
-        field_number: Some(field_context.tag),
-        field_name: Some(field_context.name.to_string()),
-        field_type: Some(Type::Message as i32),
-        key_type: field_context.key_type.map(|t| t as i32),
-        value_type: field_context.value_type.map(|t| t as i32),
-        subscript: field_context.subscript.clone(),
-      });
-
       val
-        .nested_validate(parent_elements)
+        .nested_validate(field_context, parent_elements)
         .push_violations(violations);
-
-      parent_elements.pop();
     } else {
       violations.add(
         field_context,
