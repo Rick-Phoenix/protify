@@ -26,3 +26,4 @@ proto-types = { version = "0.1.11", path = "../protocheck/proto_types/", feature
   "protovalidate",
 ] }
 serde = { version = "1", features = ["derive"] }
+chrono = "0.4"

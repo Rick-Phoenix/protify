@@ -2,8 +2,10 @@ use std::{fmt::Display, marker::PhantomData};
 
 use bon::Builder;
 use int_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
+use proto_types::protovalidate::violations_data::*;
 
 use super::*;
+use crate::field_context::Violations;
 
 impl<S: State, Num: IntWrapper> ValidatorBuilderFor<Num> for IntValidatorBuilder<Num, S> {
   type Target = Num::RustType;
@@ -19,6 +21,45 @@ where
   Num: IntWrapper,
 {
   type Target = Num::RustType;
+
+  fn validate(
+    &self,
+    field_context: &FieldContext,
+    parent_elements: &mut Vec<FieldPathElement>,
+    val: Option<&Self::Target>,
+  ) -> Result<(), Vec<Violation>> {
+    let mut violations_agg: Vec<Violation> = Vec::new();
+    let violations = &mut violations_agg;
+
+    if let Some(&val) = val {
+      if let Some(gt) = self.gt && val <= gt {
+        violations.add(field_context, parent_elements, Num::GT_VIOLATION, &format!("must be greater than {gt}"));
+      }
+
+      if let Some(cel_rules) = &self.cel {
+        for rule in cel_rules.iter() {
+          let program = CelProgram::new(rule.clone());
+
+          match program.execute(val) {
+            Ok(was_successful) => {
+              if !was_successful {
+                violations.add_cel(rule, Some(field_context), parent_elements);
+              }
+            }
+            Err(e) => violations.push(e.into_violation(rule, Some(field_context), parent_elements)),
+          };
+        }
+      }
+    } else if self.required {
+      violations.add_required(field_context, parent_elements);
+    }
+
+    if violations.is_empty() {
+      Ok(())
+    } else {
+      Err(violations_agg)
+    }
+  }
 }
 
 impl<Num, S: State> Validator<Num> for IntValidatorBuilder<Num, S>
@@ -119,40 +160,64 @@ where
 }
 
 pub trait IntWrapper: AsProtoType {
-  type RustType: PartialOrd + PartialEq + Copy + Into<OptionValue> + Hash + Debug + Display + Eq;
+  type RustType: PartialOrd
+    + PartialEq
+    + Copy
+    + Into<OptionValue>
+    + Hash
+    + Debug
+    + Display
+    + Eq
+    + Into<::cel::Value>;
+  const LT_VIOLATION: &'static LazyLock<ViolationData>;
+  const LTE_VIOLATION: &'static LazyLock<ViolationData>;
+  const GT_VIOLATION: &'static LazyLock<ViolationData>;
+  const GTE_VIOLATION: &'static LazyLock<ViolationData>;
+  const IN_VIOLATION: &'static LazyLock<ViolationData>;
+  const NOT_IN_VIOLATION: &'static LazyLock<ViolationData>;
+  const CONST_VIOLATION: &'static LazyLock<ViolationData>;
 
   fn type_name() -> Arc<str>;
 }
 
 macro_rules! impl_int_wrapper {
-  ($rust_type:ty, $proto_type:ident, primitive) => {
-    impl IntWrapper for $rust_type {
-      type RustType = $rust_type;
+  ($wrapper:ty, $target_type:ty, $proto_type:ident) => {
+    paste::paste! {
+      impl IntWrapper for $wrapper {
+        type RustType = $target_type;
+        const LT_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _LT_VIOLATION >];
+        const LTE_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _LTE_VIOLATION >];
+        const GT_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _GT_VIOLATION >];
+        const GTE_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _GTE_VIOLATION >];
+        const IN_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _IN_VIOLATION >];
+        const NOT_IN_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _NOT_IN_VIOLATION >];
+        const CONST_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _CONST_VIOLATION >];
 
-      fn type_name() -> Arc<str> {
-        $crate::paste!([< $proto_type:upper >]).clone()
+        fn type_name() -> Arc<str> {
+          $proto_type.clone()
+        }
       }
     }
+  };
+}
 
-    impl_proto_type!($rust_type, stringify!($proto_type));
-    impl_int_validator!($rust_type, $rust_type);
+macro_rules! impl_int {
+  ($rust_type:ty, $proto_type:ident, primitive) => {
+    paste::paste! {
+      impl_int_wrapper!($rust_type, $rust_type, [< $proto_type:upper >]);
+      impl_proto_type!($rust_type, stringify!($proto_type));
+      impl_int_validator!($rust_type, $rust_type);
+    }
   };
 
   ($rust_type:ty, $wrapper:ident) => {
     pub struct $wrapper;
 
-    impl IntWrapper for $wrapper {
-      type RustType = $rust_type;
-
-      fn type_name() -> Arc<str> {
-        $crate::paste!([< $wrapper:upper >]).clone()
-      }
-    }
-
-    $crate::paste!(
+    paste::paste! {
+      impl_int_wrapper!($wrapper, $rust_type, [< $wrapper:upper >]);
       impl_proto_type!($wrapper, stringify!([< $wrapper:lower >]));
       impl_int_validator!($wrapper, $rust_type);
-    );
+    }
   };
 }
 
@@ -172,5 +237,5 @@ macro_rules! impl_int_validator {
   };
 }
 
-impl_int_wrapper!(i32, Sint32);
-impl_int_wrapper!(i32, INT32, primitive);
+impl_int!(i32, Sint32);
+impl_int!(i32, INT32, primitive);

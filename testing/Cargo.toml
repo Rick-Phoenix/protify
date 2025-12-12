@@ -10,8 +10,12 @@ keywords.workspace = true
 [dependencies]
 proc-macro-impls = { path = "../proc-macro/" }
 prelude = { path = "../prelude" }
-proto-types = { workspace = true }
+proto-types = { workspace = true, features = ["serde"] }
 prost = "0.14.1"
+serde = { version = "1", features = ["derive"] }
+protocheck-proc-macro = { version = "0.1", path = "../../protocheck/proc_macro/" }
+protocheck = { version = "0.1", path = "../../protocheck/protocheck/" }
+env_logger = "0.11"
 
 [features]
 abc = []

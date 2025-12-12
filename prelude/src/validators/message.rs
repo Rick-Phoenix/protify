@@ -29,13 +29,8 @@ impl<T: ProtoMessage> Validator<T> for MessageValidator {
       val
         .nested_validate(field_context, parent_elements)
         .push_violations(violations);
-    } else {
-      violations.add(
-        field_context,
-        parent_elements,
-        &REQUIRED_VIOLATION,
-        "is required",
-      );
+    } else if self.required {
+      violations.add_required(field_context, parent_elements);
     }
 
     if violations.is_empty() {

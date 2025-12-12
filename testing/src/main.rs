@@ -40,7 +40,7 @@ fn random_option() -> ProtoOption {
 
 #[proc_macro_impls::proto_module(file = "abc.proto", package = "myapp.v1")]
 mod inner {
-  use prelude::{cel_rule, CelRule, FieldContext, FieldKind, Validator, DEPRECATED};
+  use prelude::{cel_rule, CelProgram, CelRule, FieldContext, FieldKind, Validator, DEPRECATED};
   use proc_macro_impls::{
     proto_enum, proto_extension, proto_message, proto_oneof, proto_service, Extension, Service,
   };
@@ -136,10 +136,10 @@ mod inner {
   #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
   #[proto(options = vec![ random_option() ])]
-  #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "abc") ])]
+  #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "this.timestampz == timestamp('1975-01-01T00:00:00Z')") ])]
   pub struct Abc {
     #[proto(timestamp, validate = |v| v.lt_now())]
-    timestamp: Option<Timestamp>,
+    pub timestamp: Option<Timestamp>,
 
     #[proto(duration, validate = |v| v.lt(Duration { seconds: 2000, nanos: 0 }))]
     duration: Option<Duration>,
@@ -180,8 +180,8 @@ mod inner {
     #[proto(sint32, validate = numeric_validator())]
     sint32: i32,
 
-    #[proto(repeated(sint32), validate = |v| v.items(|it| it.gt(0)))]
-    sint32_repeated: Vec<i32>,
+    #[proto(repeated(sint32), validate = |v| v.items(|it| it.gt(0).cel([ cel_rule!(id = "num.more_than_20", msg = "must be greater than 20", expr = "this > 20") ])))]
+    pub sint32_repeated: Vec<i32>,
 
     #[proto(map(sint32, sint32), validate = |v| v.keys(|k| k.gt(0)).values(|vals| vals.gt(0)))]
     sint32_map: HashMap<i32, i32>,
@@ -219,7 +219,9 @@ fn main() {
 
   // println!("{file2}");
 
-  let msg2 = AbcProto::default();
+  let mut msg2 = AbcProto::default();
+
+  msg2.sint32_repeated = vec![-1, -2, -3];
 
   let result = msg2.validate().unwrap_err();
 

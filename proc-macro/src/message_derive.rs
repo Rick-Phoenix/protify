@@ -161,10 +161,14 @@ pub fn process_message_derive_shadow(
     .shadow_derives
     .map(|list| quote! { #[#list] });
 
+  let cel_rules = &message_attrs
+    .validator
+    .map_or_else(|| quote! { vec![] }, |v| v.to_token_stream());
+
   output_tokens.extend(quote! {
     #schema_impls
 
-    #[derive(::prost::Message, Clone, PartialEq)]
+    #[derive(::prost::Message, Clone, PartialEq, ::protocheck_proc_macro::TryIntoCelValue)]
     #shadow_struct_derives
     #shadow_struct
 
@@ -174,7 +178,7 @@ pub fn process_message_derive_shadow(
     impl #shadow_struct_ident {
       #[doc(hidden)]
       fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
-        use ::prelude::{ProtoValidator, Validator, ValidationResult};
+        use ::prelude::{ProtoValidator, Validator, ValidationResult, field_context::Violations};
 
         let mut violations = Vec::new();
 
@@ -188,6 +192,22 @@ pub fn process_message_derive_shadow(
             subscript: field_context.subscript.clone(),
           });
         }
+
+        let mut cel_rules: Vec<CelRule> = #cel_rules;
+
+        for rule in cel_rules {
+          let program = CelProgram::new(rule);
+
+          match program.execute(self.clone()) {
+            Ok(was_successful) => {
+              if !was_successful {
+                violations.add_cel(&program.rule, None, parent_elements);
+              }
+            }
+            Err(e) => violations.push(e.into_violation(&program.rule, None, parent_elements))
+          };
+        }
+
 
         #validator_tokens
 
