@@ -43,7 +43,7 @@ impl<'a> FieldOrVariant<'a> {
 
 pub fn process_field(
   field: &mut FieldOrVariant,
-  field_attrs: FieldAttrs,
+  field_attrs: &FieldAttrs,
   type_info: &TypeContext,
 ) -> Result<TokenStream2, Error> {
   let FieldAttrs {
@@ -59,7 +59,7 @@ pub fn process_field(
 
   field.change_type(proto_output_type_outer)?;
 
-  let prost_attr = type_info.as_prost_attr(tag);
+  let prost_attr = type_info.as_prost_attr(*tag);
   let field_prost_attr: Attribute = parse_quote!(#prost_attr);
   field.inject_attr(field_prost_attr);
 

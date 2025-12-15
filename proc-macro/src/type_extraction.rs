@@ -1,12 +1,12 @@
 use crate::*;
 
 #[derive(Clone)]
-pub struct TypeContext {
+pub struct TypeContext<'a> {
   pub rust_type: TypeInfo,
-  pub proto_field: ProtoField,
+  pub proto_field: &'a ProtoField,
 }
 
-impl TypeContext {
+impl<'a> TypeContext<'a> {
   pub fn as_prost_attr(&self, tag: i32) -> TokenStream2 {
     let type_attr = self.proto_field.as_prost_attr_type();
 
@@ -94,7 +94,7 @@ impl TypeContext {
     }
   }
 
-  pub fn from_type(rust_type: TypeInfo, proto_field: ProtoField) -> Result<Self, Error> {
+  pub fn from_type(rust_type: TypeInfo, proto_field: &'a ProtoField) -> Result<Self, Error> {
     Ok(Self {
       rust_type,
       proto_field,

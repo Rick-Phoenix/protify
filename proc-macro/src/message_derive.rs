@@ -72,7 +72,7 @@ pub fn process_message_derive_shadow(
         FieldAttrData::Normal(field_attrs) => *field_attrs,
       };
 
-    let type_ctx = TypeContext::from_type(rust_type, field_attrs.proto_field.clone())?;
+    let type_ctx = TypeContext::from_type(rust_type, &field_attrs.proto_field)?;
 
     if message_attrs.from_proto.is_none() {
       let from_proto_expr = field_from_proto_expression(FromProto {
@@ -88,7 +88,7 @@ pub fn process_message_derive_shadow(
 
     let field_tokens = process_field(
       &mut FieldOrVariant::Field(dst_field),
-      field_attrs.clone(),
+      &field_attrs,
       &type_ctx,
     )?;
 
@@ -306,7 +306,7 @@ pub fn process_message_derive_direct(
         FieldAttrData::Normal(attrs) => *attrs,
       };
 
-    let type_ctx = TypeContext::from_type(rust_type, field_attrs.proto_field.clone())?;
+    let type_ctx = TypeContext::from_type(rust_type, &field_attrs.proto_field)?;
 
     match type_ctx.rust_type.type_.as_ref() {
       RustType::Box(inner) => {
@@ -338,7 +338,7 @@ pub fn process_message_derive_direct(
 
     let field_tokens = process_field(
       &mut FieldOrVariant::Field(src_field),
-      field_attrs,
+      &field_attrs,
       &type_ctx,
     )?;
 

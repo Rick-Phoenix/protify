@@ -84,11 +84,11 @@ pub(crate) fn process_oneof_derive_shadow(
       FieldAttrData::Normal(field_attrs) => *field_attrs,
     };
 
-    let type_ctx = TypeContext::from_type(rust_type, field_attrs.proto_field.clone())?;
+    let type_ctx = TypeContext::from_type(rust_type, &field_attrs.proto_field)?;
 
     let variant_proto_tokens = process_field(
       &mut FieldOrVariant::Variant(dst_variant),
-      field_attrs.clone(),
+      &field_attrs,
       &type_ctx,
     )?;
 
@@ -215,7 +215,7 @@ pub(crate) fn process_oneof_derive_direct(
       FieldAttrData::Normal(field_attrs) => *field_attrs,
     };
 
-    let type_ctx = TypeContext::from_type(rust_type, field_attrs.proto_field.clone())?;
+    let type_ctx = TypeContext::from_type(rust_type, &field_attrs.proto_field)?;
 
     match type_ctx.rust_type.type_.as_ref() {
       RustType::Box(_) => {
@@ -229,7 +229,7 @@ pub(crate) fn process_oneof_derive_direct(
 
     let variant_proto_tokens = process_field(
       &mut FieldOrVariant::Variant(variant),
-      field_attrs,
+      &field_attrs,
       &type_ctx,
     )?;
 
