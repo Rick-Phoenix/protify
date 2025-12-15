@@ -20,11 +20,9 @@ impl ProtoField {
       ProtoField::Repeated(inner) => inner.field_type_tokens(),
       ProtoField::Optional(inner) => inner.field_type_tokens(),
       ProtoField::Single(inner) => inner.field_type_tokens(),
-      ProtoField::Oneof {
-        path,
-        tags,
-        default,
-      } => todo!(),
+      ProtoField::Oneof { .. } => {
+        quote! { compile_error!("Validator tokens should not be triggered for a oneof field") }
+      }
     }
   }
 

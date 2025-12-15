@@ -79,7 +79,7 @@ pub fn process_derive_field_attrs(
             "name" => {
               name = Some(extract_string_lit(&nv.value)?);
             }
-            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(nv.path, "Unknown attribute `{ident}`"),
           };
         }
         Meta::List(list) => {
@@ -101,7 +101,7 @@ pub fn process_derive_field_attrs(
               };
 
               let inner = ProtoType::from_meta(args, fallback.as_ref())?
-                .ok_or(error!(span, "Missing inner type"))?;
+                .ok_or(error_with_span!(span, "Missing inner type"))?;
 
               proto_field = Some(ProtoField::Repeated(inner));
             }
@@ -117,7 +117,7 @@ pub fn process_derive_field_attrs(
               };
 
               let inner = ProtoType::from_meta(args, fallback.as_ref())?
-                .ok_or(error!(span, "Missing inner type"))?;
+                .ok_or(error_with_span!(span, "Missing inner type"))?;
 
               proto_field = Some(ProtoField::Optional(inner));
             }
@@ -138,7 +138,7 @@ pub fn process_derive_field_attrs(
               {
                 proto_field = Some(ProtoField::Single(field_info));
               } else {
-                return Err(error!(list_span, format!("Unknown attribute `{ident}`")));
+                return Err(error_with_span!(list_span, "Unknown attribute `{ident}`"));
               }
             }
           };
@@ -157,7 +157,7 @@ pub fn process_derive_field_attrs(
               if let Some(parsed_kind) = ProtoType::from_ident(&ident, span, fallback.as_ref())? {
                 proto_field = Some(ProtoField::Single(parsed_kind));
               } else {
-                return Err(error!(span, format!("Unknown attribute `{ident}`")));
+                return Err(error_with_span!(span, "Unknown attribute `{ident}`"));
               }
             }
           };
@@ -204,7 +204,7 @@ pub fn process_derive_field_attrs(
 
     let oneof_path = oneof_path
       .get_path_or_fallback(fallback.as_ref())
-      .ok_or(error!(
+      .ok_or(error_with_span!(
         // Just an overly cautious fallback here, the span cannot be empty
         attr_span.unwrap_or_else(Span::call_site),
         "Failed to infer the path to the oneof. Please set it manually"
@@ -228,8 +228,9 @@ pub fn process_derive_field_attrs(
   } else {
     match type_info.type_.as_ref() {
       RustType::HashMap((k, v)) => {
-        let keys = ProtoMapKeys::from_path(&k.as_path().unwrap())?;
-        let values = ProtoType::from_primitive(&v.as_path().unwrap())?;
+        let keys = ProtoMapKeys::from_path(&k.require_path()?)?;
+
+        let values = ProtoType::from_primitive(&v.require_path()?)?;
 
         let proto_map = ProtoMap { keys, values };
 
@@ -237,17 +238,17 @@ pub fn process_derive_field_attrs(
       }
       RustType::Option(inner) => {
         if inner.is_box() {
-        return Err(spanned_error!(inner, "You seem to be using Option<Box<T>>. If you are using a boxed message, please use message(boxed)"))
+        return Err(error!(inner, "You seem to be using Option<Box<T>>. If you are using a boxed message, please use message(boxed)"))
         } else {
-          ProtoField::Optional(ProtoType::from_primitive(&inner.as_path().unwrap())?)
+          ProtoField::Optional(ProtoType::from_primitive(&inner.require_path()?)?)
         }
       },
       RustType::Box(inner) => {
-        return Err(spanned_error!(inner, "You seem to be using Box<T>. If you meant to use a boxed message as a oneof variant, please use message(boxed)"))
+        return Err(error!(inner, "You seem to be using Box<T>. If you meant to use a boxed message as a oneof variant, please use message(boxed)"))
       },
-      RustType::Vec(inner) => ProtoField::Repeated(ProtoType::from_primitive(&inner.as_path().unwrap())?),
+      RustType::Vec(inner) => ProtoField::Repeated(ProtoType::from_primitive(&inner.require_path()?)?),
       RustType::Other(inner) => ProtoField::Single(ProtoType::from_primitive(&inner.path)?),
-      _ => panic!("Unsupported field type")
+      _ => bail!(type_info, "Failed to infer the protobuf type. Please set it manually")
     }
   };
 
@@ -256,7 +257,7 @@ pub fn process_derive_field_attrs(
   } else if proto_field.is_oneof() {
     0
   } else {
-    return Err(spanned_error!(original_name, "Field tag is missing"));
+    return Err(error!(original_name, "Field tag is missing"));
   };
 
   let name = name.unwrap_or_else(|| ccase!(snake, original_name.to_string()));

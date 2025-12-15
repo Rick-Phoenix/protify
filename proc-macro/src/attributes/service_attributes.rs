@@ -38,7 +38,7 @@ pub fn process_service_or_handler_attrs(
               package = Some(extract_string_lit(&nv.value)?);
             }
 
-            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(nv.path, "Unknown attribute `{ident}`"),
           };
         }
         Meta::List(_) => {}

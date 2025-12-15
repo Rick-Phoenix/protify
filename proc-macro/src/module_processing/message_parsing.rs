@@ -85,7 +85,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
   let fields = if let Fields::Named(fields) = fields {
     fields.named
   } else {
-    return Err(spanned_error!(ident, "Expected a struct with named fields"));
+    return Err(error!(ident, "Expected a struct with named fields"));
   };
 
   let ModuleMessageAttrs {
@@ -106,7 +106,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
     let field_ident = field
       .ident
       .as_ref()
-      .ok_or(spanned_error!(&field, "Expected a named field"))?;
+      .ok_or(error!(&field, "Expected a named field"))?;
 
     let ModuleFieldAttrs {
       tag,
@@ -125,7 +125,7 @@ pub fn parse_message(msg: ItemStruct) -> Result<MessageData, Error> {
         _ => {
           let rust_type = TypeInfo::from_type(&field.ty)?;
 
-          rust_type.inner().as_path().ok_or(spanned_error!(
+          rust_type.inner().as_path().ok_or(error!(
             &field,
             "Could not infer the path to the oneof. Please set it manually"
           ))?

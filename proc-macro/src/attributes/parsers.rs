@@ -23,7 +23,7 @@ pub fn parse_path_or_closure(expr: Expr) -> Result<PathOrClosure, Error> {
   match expr {
     Expr::Closure(closure) => Ok(PathOrClosure::Closure(closure)),
     Expr::Path(expr_path) => Ok(PathOrClosure::Path(expr_path.path)),
-    _ => Err(spanned_error!(expr, "Expected a path or a closure")),
+    _ => Err(error!(expr, "Expected a path or a closure")),
   }
 }
 
@@ -61,7 +61,7 @@ pub fn extract_i32(expr: &Expr) -> Result<i32, Error> {
   if let Expr::Lit(expr_lit) = expr && let Lit::Int(value) = &expr_lit.lit {
     Ok(value.base10_parse()?)
   } else {
-    Err(spanned_error!(expr, "Expected an integer literal"))
+    Err(error!(expr, "Expected an integer literal"))
   }
 }
 
@@ -73,7 +73,10 @@ impl Parse for StringList {
   fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
     let items = Punctuated::<LitStr, Token![,]>::parse_terminated(input)?;
 
-    let list: Vec<String> = items.into_iter().map(|lit_str| lit_str.value()).collect();
+    let list: Vec<String> = items
+      .into_iter()
+      .map(|lit_str| lit_str.value())
+      .collect();
 
     Ok(Self { list })
   }
@@ -83,7 +86,7 @@ pub fn extract_string_lit(expr: &Expr) -> Result<String, Error> {
   if let Expr::Lit(expr_lit) = expr && let Lit::Str(value) = &expr_lit.lit {
     Ok(value.value())
   } else {
-    Err(spanned_error!(expr, "Expected a string literal"))
+    Err(error!(expr, "Expected a string literal"))
   }
 }
 
@@ -91,6 +94,6 @@ pub fn extract_path(expr: &Expr) -> Result<&Path, Error> {
   if let Expr::Path(expr_path) = expr {
     Ok(&expr_path.path)
   } else {
-    Err(spanned_error!(expr, "Expected a path"))
+    Err(error!(expr, "Expected a path"))
   }
 }

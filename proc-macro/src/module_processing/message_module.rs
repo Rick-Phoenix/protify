@@ -16,9 +16,9 @@ pub fn process_message_from_module(
   } = msg;
 
   for oneof in oneofs.iter() {
-    let oneof_data = oneofs_map.get_mut(oneof).ok_or(spanned_error!(
+    let oneof_data = oneofs_map.get_mut(oneof).ok_or(error!(
       oneof,
-      format!("Failed to find the data for the oneof `{oneof}`")
+      "Failed to find the data for the oneof `{oneof}`"
     ))?;
 
     for tag in &oneof_data.used_tags {
@@ -26,7 +26,9 @@ pub fn process_message_from_module(
     }
   }
 
-  let unavailable_tags = reserved_numbers.clone().build_unavailable_ranges(used_tags);
+  let unavailable_tags = reserved_numbers
+    .clone()
+    .build_unavailable_ranges(used_tags);
 
   let mut tag_allocator = TagAllocator::new(&unavailable_tags);
 
@@ -36,9 +38,9 @@ pub fn process_message_from_module(
     }
 
     if let Some(ident) = &field.oneof_ident {
-      let oneof = oneofs_map.get_mut(ident).ok_or(spanned_error!(
+      let oneof = oneofs_map.get_mut(ident).ok_or(error!(
         ident,
-        format!("Failed to find the data for the oneof `{ident}`. If you are using a proxied oneof, use the `#[proto(oneof(proxied))]` attribute rather than using the proxied ident (ending with `Proto`) directly")
+        "Failed to find the data for the oneof `{ident}`. If you are using a proxied oneof, use the `#[proto(oneof(proxied))]` attribute rather than using the proxied ident (ending with `Proto`) directly"
       ))?;
 
       for variant in &mut oneof.variants {
@@ -49,10 +51,8 @@ pub fn process_message_from_module(
         if reserved_names.contains(&variant.name) {
           bail!(
             &variant.tokens,
-            format!(
-              "Name `{}` is a reserved name for message `{name}`",
-              variant.name
-            )
+            "Name `{}` is a reserved name for message `{name}`",
+            variant.name
           )
         }
 
@@ -60,13 +60,13 @@ pub fn process_message_from_module(
           if reserved_numbers.contains(tag) {
             bail!(
               &field.tokens,
-              format!("Tag {tag} used by oneof {ident} is a reserved number")
+              "Tag {tag} used by oneof {ident} is a reserved number"
             );
           }
         } else {
           let tag = tag_allocator
             .next_tag()
-            .map_err(|e| spanned_error!(&variant.tokens, e))?;
+            .map_err(|e| error!(&variant.tokens, "{e}"))?;
 
           variant.tag = Some(tag);
           oneof.used_tags.push(tag);
@@ -85,17 +85,17 @@ pub fn process_message_from_module(
     }
 
     if reserved_names.contains(&field.name) {
-      bail!(&field.tokens, format!("Name `{}` is reserved", field.name));
+      bail!(&field.tokens, "Name `{}` is reserved", field.name);
     }
 
     if let Some(tag) = &field.tag {
       if reserved_numbers.contains(*tag) {
-        bail!(&field.tokens, format!("Tag {tag} is a reserved number"));
+        bail!(&field.tokens, "Tag {tag} is a reserved number");
       }
     } else {
       let tag = tag_allocator
         .next_tag()
-        .map_err(|e| spanned_error!(&field.tokens, e))?;
+        .map_err(|e| error!(&field.tokens, "{e}"))?;
 
       field.tag = Some(tag);
 

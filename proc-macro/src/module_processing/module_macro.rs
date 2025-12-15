@@ -70,7 +70,7 @@ pub fn process_module_items(
 
             for oneof in &message_data.oneofs {
               if let Some(oneof_data) = oneofs.get(oneof) && !oneof_data.has_all_tags_assigned() {
-                bail!(oneof, format!("Oneof `{oneof}` must have all tags manually assigned in order to be used by multiple messages"));
+                bail!(oneof, "Oneof `{oneof}` must have all tags manually assigned in order to be used by multiple messages");
               } else {
                 used_oneofs.insert(oneof.clone());
               }
@@ -97,7 +97,8 @@ pub fn process_module_items(
           ItemKind::Service => {
             let package = &module_attrs.package;
 
-            e.attrs.push(parse_quote!(#[proto(package = #package)]));
+            e.attrs
+              .push(parse_quote!(#[proto(package = #package)]));
 
             mod_items.push(ModuleItem::Raw(Item::Enum(e).into()));
             services.push(item_ident);
@@ -130,9 +131,9 @@ pub fn process_module_items(
 
   for (ident, enum_) in enums.iter_mut() {
     if let Some(parent) = enums_relational_map.get(ident) {
-      let parent = messages.get(parent).ok_or(spanned_error!(
+      let parent = messages.get(parent).ok_or(error!(
         parent,
-        format!("Failed to find the data for the message `{parent}`")
+        "Failed to find the data for the message `{parent}`"
       ))?;
 
       let parent_message_name = parent.full_name.get().unwrap_or(&parent.name);
@@ -146,7 +147,10 @@ pub fn process_module_items(
       top_level_enums.push(ident.clone());
     };
 
-    enum_.tokens.attrs.push(module_attrs.as_attribute());
+    enum_
+      .tokens
+      .attrs
+      .push(module_attrs.as_attribute());
   }
 
   let mut processed_items: Vec<Item> = Vec::new();
@@ -157,27 +161,27 @@ pub fn process_module_items(
       ModuleItem::Oneof(ident) => Item::Enum(
         oneofs
           .remove(&ident)
-          .ok_or(spanned_error!(
+          .ok_or(error!(
             &ident,
-            format!("Failed to find the data for the oneof `{ident}`")
+            "Failed to find the data for the oneof `{ident}`"
           ))?
           .into(),
       ),
       ModuleItem::Message(ident) => Item::Struct(
         messages
           .remove(&ident)
-          .ok_or(spanned_error!(
+          .ok_or(error!(
             &ident,
-            format!("Failed to find the data for the message `{ident}`")
+            "Failed to find the data for the message `{ident}`"
           ))?
           .into(),
       ),
       ModuleItem::Enum(ident) => Item::Enum(
         enums
           .remove(&ident)
-          .ok_or(spanned_error!(
+          .ok_or(error!(
             &ident,
-            format!("Failed to find the data for the enum `{ident}`")
+            "Failed to find the data for the enum `{ident}`"
           ))?
           .into(),
       ),
@@ -216,9 +220,9 @@ fn register_full_name(
   relational_map: &HashMap<Ident, Ident>,
   messages_map: &mut HashMap<Ident, MessageData>,
 ) -> Result<(), Error> {
-  let target = messages_map.get(msg).ok_or(spanned_error!(
+  let target = messages_map.get(msg).ok_or(error!(
     msg,
-    format!("Could not find the data for the message `{msg}`")
+    "Could not find the data for the message `{msg}`"
   ))?;
 
   let has_full_name = target.full_name.get().is_some();
@@ -233,9 +237,9 @@ fn register_full_name(
 
       let _ = messages_map
         .get_mut(msg)
-        .ok_or(spanned_error!(
+        .ok_or(error!(
           msg,
-          format!("Could not find the data for the message `{msg}`")
+          "Could not find the data for the message `{msg}`"
         ))?
         .full_name
         .set(full_name);
@@ -253,9 +257,9 @@ fn get_full_name(
   let mut found_full_name = false;
 
   let name = {
-    let msg_data = messages_map.get(msg).ok_or(spanned_error!(
+    let msg_data = messages_map.get(msg).ok_or(error!(
       msg,
-      format!("Could not find the data for the message `{msg}`")
+      "Could not find the data for the message `{msg}`"
     ))?;
 
     if let Some(full_name) = msg_data.full_name.get() {
@@ -321,49 +325,34 @@ impl ItemKind {
       match ident.as_str() {
         "proto_message" => {
           if !is_struct {
-            return Err(spanned_error!(
-              attr,
-              "proto_message can only be used on a struct"
-            ));
+            return Err(error!(attr, "proto_message can only be used on a struct"));
           }
 
           return Ok(Some(Self::Message));
         }
         "proto_extension" => {
           if !is_struct {
-            return Err(spanned_error!(
-              attr,
-              "proto_extension can only be used on a struct"
-            ));
+            return Err(error!(attr, "proto_extension can only be used on a struct"));
           }
 
           return Ok(Some(Self::Extension));
         }
         "proto_enum" => {
           if is_struct {
-            return Err(spanned_error!(
-              attr,
-              "proto_enum can only be used on an enum"
-            ));
+            return Err(error!(attr, "proto_enum can only be used on an enum"));
           }
           return Ok(Some(Self::Enum));
         }
         "proto_oneof" => {
           if is_struct {
-            return Err(spanned_error!(
-              attr,
-              "proto_oneof can only be used on an enum"
-            ));
+            return Err(error!(attr, "proto_oneof can only be used on an enum"));
           }
 
           return Ok(Some(Self::Oneof));
         }
         "proto_service" => {
           if is_struct {
-            return Err(spanned_error!(
-              attr,
-              "proto_service can only be used on an enum"
-            ));
+            return Err(error!(attr, "proto_service can only be used on an enum"));
           }
 
           return Ok(Some(Self::Service));

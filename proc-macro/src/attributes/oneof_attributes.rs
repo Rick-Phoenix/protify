@@ -39,7 +39,7 @@ pub fn process_oneof_attrs(
           match ident.as_str() {
             "required" => required = true,
             "direct" => direct = true,
-            _ => bail!(path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(path, "Unknown attribute `{ident}`"),
           };
         }
         Meta::List(list) => {
@@ -47,7 +47,7 @@ pub fn process_oneof_attrs(
 
           match ident.as_str() {
             "derive" => shadow_derives = Some(list),
-            _ => bail!(list, format!("Unknown attribute `{ident}`")),
+            _ => bail!(list, "Unknown attribute `{ident}`"),
           };
         }
         Meta::NameValue(nv) => {
@@ -71,7 +71,7 @@ pub fn process_oneof_attrs(
               into_proto = Some(expr);
             }
             "name" => name = Some(extract_string_lit(&nv.value)?),
-            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(nv.path, "Unknown attribute `{ident}`"),
           };
         }
       }

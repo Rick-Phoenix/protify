@@ -72,7 +72,7 @@ pub fn process_enum_derive_prost(
       process_derive_enum_variants_attrs(&proto_name, variant_ident, &variant.attrs, no_prefix)?;
 
     if reserved_names.contains(&name) {
-      bail!(&variant, format!("Name `{name}` is reserved"));
+      bail!(&variant, "Name `{name}` is reserved");
     }
 
     from_str_tokens.extend(quote! {
@@ -94,7 +94,7 @@ pub fn process_enum_derive_prost(
       }
 
       if reserved_numbers.contains(tag) {
-        bail!(&variant, format!("Tag {tag} is reserved"));
+        bail!(&variant, "Tag {tag} is reserved");
       }
 
       tag
@@ -104,7 +104,7 @@ pub fn process_enum_derive_prost(
       } else {
         tag_allocator
           .next_tag()
-          .map_err(|e| spanned_error!(&variant, e))?
+          .map_err(|e| error!(&variant, "{e}"))?
       };
 
       let tag_expr: Expr = parse_quote!(#next_tag);

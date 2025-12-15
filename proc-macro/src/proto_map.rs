@@ -55,7 +55,7 @@ impl ProtoMapKeys {
       "sint32" => Self::Sint32,
       _ => bail!(
         ident,
-        format!("Type {} is not a supported map key primitive", ident_str)
+        "Type {ident_str} is not a supported map key primitive"
       ),
     };
 
@@ -130,7 +130,7 @@ pub fn parse_map_with_context(
       };
 
       ProtoType::from_ident(&ident, span, fallback.as_ref())?
-        .ok_or(error!(span, "Unrecognized map keys type"))?
+        .ok_or(error_with_span!(span, "Unrecognized map keys type"))?
     }
     Meta::List(list) => {
       let list_ident = ident_string!(list.path);
@@ -144,7 +144,7 @@ pub fn parse_map_with_context(
 
       ProtoType::from_meta_list(&list_ident, list, fallback.as_ref())
         .map_err(|e| input.error(e))?
-        .ok_or(error!(span, "Unrecognized map values type"))?
+        .ok_or(error_with_span!(span, "Unrecognized map values type"))?
     }
     Meta::NameValue(nv) => bail!(nv, "Expected the values to be a list or path"),
   };

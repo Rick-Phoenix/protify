@@ -62,17 +62,21 @@ pub fn process_derive_message_attrs(
               reserved_numbers = numbers;
             }
             "nested_messages" => {
-              let idents = list.parse_args::<PunctuatedParser<Ident>>()?.inner;
+              let idents = list
+                .parse_args::<PunctuatedParser<Ident>>()?
+                .inner;
 
               nested_messages.extend(idents.into_iter());
             }
             "nested_enums" => {
-              let idents = list.parse_args::<PunctuatedParser<Ident>>()?.inner;
+              let idents = list
+                .parse_args::<PunctuatedParser<Ident>>()?
+                .inner;
 
               nested_enums.extend(idents.into_iter());
             }
             "derive" => shadow_derives = Some(list),
-            _ => bail!(list, format!("Unknown attribute `{ident}`")),
+            _ => bail!(list, "Unknown attribute `{ident}`"),
           };
         }
         Meta::NameValue(nv) => {
@@ -110,7 +114,7 @@ pub fn process_derive_message_attrs(
             "package" => {
               package = Some(extract_string_lit(&nv.value)?);
             }
-            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(nv.path, "Unknown attribute `{ident}`"),
           };
         }
         Meta::Path(path) => {
@@ -118,18 +122,17 @@ pub fn process_derive_message_attrs(
 
           match ident.as_str() {
             "direct" => direct = true,
-            _ => bail!(path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(path, "Unknown attribute `{ident}`"),
           };
         }
       }
     }
   }
 
-  let file = file.ok_or(error!(
-    Span::call_site(),
+  let file = file.ok_or(error_call_site!(
     r#"`file` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(file = "my_file.proto")]"#
   ))?;
-  let package = package.ok_or(error!(Span::call_site(), r#"`package` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(package = "mypackage.v1")]"#))?;
+  let package = package.ok_or(error_call_site!(r#"`package` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(package = "mypackage.v1")]"#))?;
 
   let name = proto_name.unwrap_or_else(|| ccase!(pascal, rust_name.to_string()));
 

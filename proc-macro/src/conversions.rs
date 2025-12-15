@@ -105,10 +105,7 @@ pub fn field_from_proto_expression(info: FromProto) -> Result<TokenStream2, Erro
       match expr {
         PathOrClosure::Path(path) => quote! { #path() },
         PathOrClosure::Closure(closure) => {
-          return Err(spanned_error!(
-            closure,
-            "Cannot use a closure for ignored fields"
-          ))
+          return Err(error!(closure, "Cannot use a closure for ignored fields"))
         }
       }
     } else {

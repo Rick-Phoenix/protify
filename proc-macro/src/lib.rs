@@ -25,7 +25,7 @@ use syn::{
   ItemFn, ItemMod, ItemStruct, Lit, LitStr, Meta, MetaList, MetaNameValue, Path, RangeLimits,
   Token, Type, Variant, Visibility,
 };
-use syn_utils::{RustType, TypeInfo};
+use syn_utils::{bail, error, error_call_site, error_with_span, RustType, TypeInfo};
 
 use crate::{
   conversions::*, enum_derive::*, extension_derive::*, item_cloners::*, message_derive::*,
@@ -58,7 +58,7 @@ pub fn proto_message(_args: TokenStream, input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
 
   if !matches!(item.fields, Fields::Named(_)) {
-    return spanned_error!(
+    return error!(
       &item.ident,
       "The proto_message macro can only be used with structs that have named fields"
     )

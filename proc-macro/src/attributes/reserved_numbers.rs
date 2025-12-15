@@ -121,7 +121,7 @@ impl Parse for ReservedNumbers {
 
         ranges.push(num..num + 1);
       } else {
-        return Err(spanned_error!(
+        return Err(error!(
           item,
           "Expected a range (e.g. `1..5`, `10..=15`)"
         ));

@@ -40,7 +40,7 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
       let field_ident = field
         .ident
         .as_ref()
-        .ok_or(spanned_error!(field, "Expected a named field"))?
+        .ok_or(error!(field, "Expected a named field"))?
         .to_string();
 
       let field_type = match &field.ty {
@@ -58,8 +58,8 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
       };
     }
 
-    let request = request.ok_or(spanned_error!(&variant, "Missing request type"))?;
-    let response = response.ok_or(spanned_error!(&variant, "Missing response type"))?;
+    let request = request.ok_or(error!(&variant, "Missing request type"))?;
+    let response = response.ok_or(error!(&variant, "Missing response type"))?;
 
     let handler_options = tokens_or_default!(handler_options, quote! { vec![] });
 
@@ -73,7 +73,7 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
     });
   }
 
-  let package = package.ok_or(spanned_error!(&ident, "Missing package attribute"))?;
+  let package = package.ok_or(error!(&ident, "Missing package attribute"))?;
   let service_options = tokens_or_default!(service_options, quote! { vec![] });
 
   Ok(quote! {

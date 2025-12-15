@@ -50,7 +50,7 @@ pub fn process_derive_enum_attrs(
               reserved_numbers = numbers;
             }
 
-            _ => bail!(list, format!("Unknown attribute `{ident}`")),
+            _ => bail!(list, "Unknown attribute `{ident}`"),
           };
         }
         Meta::NameValue(nv) => {
@@ -75,7 +75,7 @@ pub fn process_derive_enum_attrs(
             "file" => {
               file = Some(extract_string_lit(&nv.value)?);
             }
-            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(nv.path, "Unknown attribute `{ident}`"),
           };
         }
         Meta::Path(path) => {
@@ -83,7 +83,7 @@ pub fn process_derive_enum_attrs(
 
           match ident.as_str() {
             "no_prefix" => no_prefix = true,
-            _ => bail!(path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(path, "Unknown attribute `{ident}`"),
           };
         }
       }
@@ -93,11 +93,10 @@ pub fn process_derive_enum_attrs(
   let name = proto_name.unwrap_or_else(|| ccase!(pascal, enum_ident.to_string()));
   let full_name = full_name.unwrap_or_else(|| name.clone());
 
-  let file = file.ok_or(error!(
-    Span::call_site(),
+  let file = file.ok_or(error_call_site!(
     r#"`file` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(file = "my_file.proto")]"#
   ))?;
-  let package = package.ok_or(error!(Span::call_site(), r#"`package` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(package = "mypackage.v1")]"#))?;
+  let package = package.ok_or(error_call_site!(r#"`package` attribute is missing. Use the `proto_module` macro on the surrounding module or set it manually with #[proto(package = "mypackage.v1")]"#))?;
 
   Ok(EnumAttrs {
     reserved_names,

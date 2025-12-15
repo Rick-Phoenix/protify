@@ -46,7 +46,7 @@ pub fn process_message_derive_shadow(
     let src_field_ident = src_field
       .ident
       .as_ref()
-      .ok_or(spanned_error!(&src_field, "Expected a named field"))?;
+      .ok_or(error!(&src_field, "Expected a named field"))?;
 
     let rust_type = TypeInfo::from_type(&src_field.ty)?;
 
@@ -297,7 +297,7 @@ pub fn process_message_derive_direct(
     let src_field_ident = src_field
       .ident
       .as_ref()
-      .ok_or(spanned_error!(&src_field, "Expected a named field"))?;
+      .ok_or(error!(&src_field, "Expected a named field"))?;
 
     let rust_type = TypeInfo::from_type(&src_field.ty)?;
 
@@ -305,7 +305,7 @@ pub fn process_message_derive_direct(
 
     let field_attrs = match field_data {
       FieldAttrData::Ignored { .. } => {
-        return Err(spanned_error!(
+        return Err(error!(
           src_field,
           "Fields cannot be ignored in a direct impl"
         ))
@@ -317,7 +317,7 @@ pub fn process_message_derive_direct(
 
     match type_ctx.rust_type.type_.as_ref() {
       RustType::Box(inner) => {
-        return Err(spanned_error!(
+        return Err(error!(
           inner,
           "Boxed messages must be optional in a direct impl"
         ))
@@ -329,7 +329,7 @@ pub fn process_message_derive_direct(
             ProtoField::Single(ProtoType::Message { is_boxed: true, .. })
           )
         {
-          return Err(spanned_error!(inner, "Must be a boxed message"));
+          return Err(error!(inner, "Must be a boxed message"));
         }
       }
       RustType::Other(inner) => {
@@ -337,7 +337,7 @@ pub fn process_message_derive_direct(
           type_ctx.proto_field,
           ProtoField::Single(ProtoType::Message { .. })
         ) {
-          return Err(spanned_error!(
+          return Err(error!(
             &inner.path,
             "Messages must be wrapped in Option in direct impls"
           ));

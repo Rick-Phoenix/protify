@@ -69,17 +69,17 @@ pub fn process_extension_derive(
         let path = extract_path(&arg.value)?;
         target = Some(ExtendTarget::from_ident(path.require_ident()?)?);
       }
-      _ => bail!(arg, format!("Unknown attribute `{ident}`")),
+      _ => bail!(arg, "Unknown attribute `{ident}`"),
     };
   }
 
-  let target = target.ok_or(spanned_error!(&ident, "Missing target attribute"))?;
+  let target = target.ok_or(error!(&ident, "Missing target attribute"))?;
 
   for field in fields {
     let field_ident = field
       .ident
       .as_ref()
-      .ok_or(spanned_error!(&field, "Expected a named field"))?;
+      .ok_or(error!(&field, "Expected a named field"))?;
 
     let rust_type = TypeInfo::from_type(&field.ty)?;
 

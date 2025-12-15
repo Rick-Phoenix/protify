@@ -33,7 +33,7 @@ pub fn process_derive_enum_variants_attrs(
             "options" => {
               options = Some(nv.value);
             }
-            _ => bail!(nv.path, format!("Unknown attribute `{ident}`")),
+            _ => bail!(nv.path, "Unknown attribute `{ident}`"),
           };
         }
         Meta::List(_) => {}

@@ -48,7 +48,7 @@ impl ProtoType {
 
         Self::from_ident(&ident_str, span, fallback)?
       }
-      _ => return Err(spanned_error!(meta, "Expected a path or a metalist")),
+      _ => return Err(error!(meta, "Expected a path or a metalist")),
     };
 
     Ok(output)
@@ -63,7 +63,7 @@ impl ProtoType {
       "message" => {
         let MessageInfo { path, boxed } = list.parse_args::<MessageInfo>()?;
 
-        let path = path.get_path_or_fallback(fallback).ok_or(spanned_error!(
+        let path = path.get_path_or_fallback(fallback).ok_or(error!(
           list,
           "Failed to infer the message path. Please set it manually"
         ))?;
@@ -94,7 +94,7 @@ impl ProtoType {
       "sint32" => Self::Sint32,
       "message" => {
         let path = fallback
-          .ok_or(error!(
+          .ok_or(error_with_span!(
             span,
             "Failed to infer the path to the message type. Please set it manually"
           ))?
@@ -111,7 +111,7 @@ impl ProtoType {
       "timestamp" => Self::Timestamp,
       "enum_" => {
         let path = fallback
-          .ok_or(error!(
+          .ok_or(error_with_span!(
             span,
             "Failed to infer the path to the enum type. Please set it manually"
           ))?
@@ -150,12 +150,10 @@ impl ProtoType {
       "Timestamp" => Self::Timestamp,
       "Duration" => Self::Duration,
       _ => {
-        return Err(spanned_error!(
+        return Err(error!(
           path,
-          format!(
-            "Type {} does not correspond to a prost-supported primitive. Please set the protobuf type manually",
+          "Type {} does not correspond to a prost-supported primitive. Please set the protobuf type manually",
             path.to_token_stream()
-          )
         ))
       }
     };

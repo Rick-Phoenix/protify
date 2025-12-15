@@ -82,12 +82,12 @@ impl Parse for ModuleAttrs {
           package = Some(extract_string_lit(&arg.value)?);
         }
 
-        _ => bail!(arg.path, format!("Unknown attribute `{ident}`")),
+        _ => bail!(arg.path, "Unknown attribute `{ident}`"),
       };
     }
 
-    let file = file.ok_or(error!(Span::call_site(), "File attribute is missing"))?;
-    let package = package.ok_or(error!(Span::call_site(), "Package attribute is missing"))?;
+    let file = file.ok_or(error_call_site!("File attribute is missing"))?;
+    let package = package.ok_or(error_call_site!("Package attribute is missing"))?;
 
     Ok(ModuleAttrs {
       file,
