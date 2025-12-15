@@ -41,6 +41,22 @@ impl TypeInfo {
     }
   }
 
+  pub fn field_validator_schema(&self, validator: &ValidatorExpr) -> TokenStream2 {
+    let target_type = self.proto_field.validator_target_type();
+
+    let validator_expr = match validator {
+      ValidatorExpr::Call(call) => quote! { #call.build_validator() },
+
+      ValidatorExpr::Closure(closure) => {
+        quote! { <#target_type as ::prelude::ProtoValidator<#target_type>>::validator_from_closure(#closure) }
+      }
+    };
+
+    quote! {
+      #validator_expr.into_schema()
+    }
+  }
+
   pub fn cel_rules_extractor(&self, validator: &ValidatorExpr) -> TokenStream2 {
     let target_type = self.proto_field.validator_target_type();
 

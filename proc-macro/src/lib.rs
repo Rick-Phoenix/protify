@@ -69,7 +69,7 @@ pub fn proto_message(_args: TokenStream, input: TokenStream) -> TokenStream {
 
   let extra_tokens = match process_message_derive(&mut item) {
     Ok(output) => output,
-    Err(e) => return e.to_compile_error().into(),
+    Err(e) => e.into_compile_error(),
   };
 
   quote! {

@@ -74,7 +74,9 @@ pub fn process_field(
   }
 
   let validator_schema_tokens = if let Some(validator) = validator {
-    type_info.validator_schema_tokens(&validator)
+    let tokens = type_info.field_validator_schema(&validator);
+
+    quote! { Some(#tokens) }
   } else {
     quote! { None }
   };

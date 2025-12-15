@@ -12,6 +12,13 @@ pub trait Validator<T>: Into<ProtoOption> {
     None
   }
 
+  fn into_schema(self) -> FieldValidator {
+    FieldValidator {
+      cel_rules: self.cel_rules(),
+      schema: self.into(),
+    }
+  }
+
   fn validate(
     &self,
     _field_context: &FieldContext,

@@ -255,6 +255,7 @@ pub fn process_message_derive_shadow(
       fn cel_rules() -> Vec<Arc<[CelRule]>> {
         #orig_struct_ident::cel_rules()
       }
+
       fn proto_path() -> ::prelude::ProtoPath {
         <#orig_struct_ident as ::prelude::ProtoMessage>::proto_path()
       }

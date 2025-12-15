@@ -6,7 +6,13 @@ pub struct ProtoField {
   pub tag: i32,
   pub type_: ProtoFieldInfo,
   pub options: Vec<ProtoOption>,
-  pub validator: Option<ProtoOption>,
+  pub validator: Option<FieldValidator>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FieldValidator {
+  pub schema: ProtoOption,
+  pub cel_rules: Option<Arc<[CelRule]>>,
 }
 
 impl ProtoField {
@@ -21,7 +27,10 @@ impl ProtoField {
 
     let mut field_str = format!("{} {} = {}", type_.render(current_package), name, tag);
 
-    let options_iter = options.iter().chain(validator.iter()).enumerate();
+    let options_iter = options
+      .iter()
+      .chain(validator.iter().map(|v| &v.schema))
+      .enumerate();
     let options_len = if validator.is_some() {
       options.len() + 1
     } else {

@@ -3,8 +3,9 @@
 use std::collections::HashMap;
 
 use prelude::{
-  EnumValidator, IntValidator, OptionValue, ProtoEnum, ProtoOption, RepeatedValidator,
-  RepeatedValidatorBuilder, Sint32, StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
+  EnumValidator, FieldValidator, IntValidator, MessageEntry, OptionValue, ProtoEnum, ProtoOption,
+  RepeatedValidator, RepeatedValidatorBuilder, Sint32, StringValidator, StringValidatorBuilder,
+  ValidatorBuilderFor,
 };
 use proc_macro_impls::{Enum, Message, Oneof};
 use proto_types::{Duration, Timestamp};
@@ -138,7 +139,7 @@ mod inner {
   #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
   #[proto(options = vec![ random_option() ])]
-  #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "this.timestampz == timestamp('1975-01-01T00:00:00Z')") ])]
+  #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "this.timestamp == timestamp('1975-01-01T00:00:00Z')") ])]
   pub struct Abc {
     #[proto(timestamp, validate = |v| v.lt_now())]
     pub timestamp: Option<Timestamp>,
@@ -183,7 +184,6 @@ mod inner {
     sint32: i32,
 
     #[proto(repeated(sint32), validate = |v| v.items(|it| it.gt(0).cel([
-      cel_rule!(id = "num.more_than_20", msg = "must be greater than 20", expr = "this > 20"),
       cel_rule!(id = "num.more_than_20", msg = "must be greater than 20", expr = "this > 20"),
     ])))]
     pub sint32_repeated: Vec<i32>,
@@ -231,4 +231,21 @@ fn main() {
   let result = msg2.validate().unwrap_err();
 
   println!("{result:#?}");
+
+  let schema = Abc::proto_schema();
+
+  let field_validators: Vec<FieldValidator> = schema
+    .entries
+    .into_iter()
+    .filter_map(|e| {
+      if let MessageEntry::Field(field) = e {
+        Some(field)
+      } else {
+        None
+      }
+    })
+    .filter_map(|f| f.validator)
+    .collect();
+
+  println!("{field_validators:#?}");
 }

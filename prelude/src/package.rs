@@ -14,7 +14,23 @@ impl Package {
       .files
       .iter()
       .flat_map(|f| f.messages.iter())
-      .flat_map(|m| m.cel_rules.iter())
+      .flat_map(|message| {
+        message.cel_rules.iter().chain(
+          message
+            .entries
+            .iter()
+            .filter_map(|e| {
+              if let MessageEntry::Field(field) = e {
+                Some(field)
+              } else {
+                None
+              }
+            })
+            .filter_map(|f| f.validator.as_ref())
+            .filter_map(|v| v.cel_rules.as_ref())
+            .flat_map(|r| r.iter()),
+        )
+      })
     {
       let entry = rules.entry(&rule.id);
 
