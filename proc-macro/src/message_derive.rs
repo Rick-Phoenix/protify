@@ -188,7 +188,7 @@ pub fn process_message_derive_shadow(
     #conversion_helpers
 
     impl #shadow_struct_ident {
-      pub fn validate_cel(&self) {
+      pub fn validate_cel() {
         #cel_checks_tokens
       }
 
@@ -293,7 +293,7 @@ pub fn process_message_derive_direct(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
 ) -> Result<TokenStream2, Error> {
-  let prost_message_attr: Attribute = parse_quote!(#[derive(prost::Message, Clone, PartialEq)]);
+  let prost_message_attr: Attribute = parse_quote!(#[derive(prost::Message, Clone, PartialEq, ::protocheck::macros::TryIntoCelValue)]);
   item.attrs.push(prost_message_attr);
 
   let mut output_tokens = TokenStream2::new();

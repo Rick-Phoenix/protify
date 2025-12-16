@@ -12,6 +12,10 @@ pub trait Validator<T>: Into<ProtoOption> {
     None
   }
 
+  fn validate_cel_with(&self, _val: Self::Target) -> Result<(), CelError> {
+    Ok(())
+  }
+
   fn validate_cel(&self) -> Result<(), CelError> {
     Ok(())
   }

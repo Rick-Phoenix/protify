@@ -139,7 +139,7 @@ mod inner {
   #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
   #[proto(options = vec![ random_option() ])]
-  #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "this.timestamptz == timestamp('1975-01-01T00:00:00Z')") ])]
+  #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "this.timestamp == timestamp('1975-01-01T00:00:00Z')") ])]
   pub struct Abc {
     #[proto(timestamp, validate = |v| v.lt_now())]
     pub timestamp: Option<Timestamp>,
@@ -171,7 +171,7 @@ mod inner {
     #[proto(enum_)]
     optional_enum: Option<PseudoEnum>,
 
-    #[proto(message(proxied), validate = |v| v.ignore_always())]
+    #[proto(message(proxied), validate = |v| v.cel([ cel_rule!(id = "abc", msg = "abc", expr = "this.name == 3") ]))]
     nested: Option<Nested>,
 
     #[proto(repeated(message(proxied)))]
@@ -220,5 +220,5 @@ fn main() {
 
   let mut msg2 = AbcProto::default();
 
-  msg2.validate_cel();
+  AbcProto::validate_cel();
 }

@@ -1,10 +1,14 @@
 use bon::Builder;
 use message_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
+use proto_types::cel::CelConversionError;
 
 use super::*;
 use crate::field_context::Violations;
 
-impl<T: ProtoMessage, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S> {
+impl<T, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
+where
+  T: ProtoMessage + Default + TryInto<::cel::Value, Error = CelConversionError>,
+{
   type Target = T;
   type Validator = MessageValidator<T>;
 
@@ -13,8 +17,25 @@ impl<T: ProtoMessage, S: State> ValidatorBuilderFor<T> for MessageValidatorBuild
   }
 }
 
-impl<T: ProtoMessage> Validator<T> for MessageValidator<T> {
+impl<T> Validator<T> for MessageValidator<T>
+where
+  T: ProtoMessage + Default + TryInto<::cel::Value, Error = CelConversionError>,
+{
   type Target = T;
+
+  fn validate_cel(&self) -> Result<(), CelError> {
+    if let Some(rules) = &self.cel {
+      for rule in rules.iter() {
+        let program = CelProgram::new(rule.clone());
+
+        if let Err(e) = program.execute(T::default()) {
+          eprintln!("error with CEL rule with id `{}`: {e}", rule.id);
+        };
+      }
+    }
+
+    Ok(())
+  }
 
   fn validate(
     &self,

@@ -34,7 +34,7 @@ where
         let program = CelProgram::new(rule.clone());
 
         if let Err(e) = program.execute(val) {
-          log::error!("error with CEL rule with id `{}`: {e}", rule.id);
+          eprintln!("error with CEL rule with id `{}`: {e}", rule.id);
         }
       }
     }

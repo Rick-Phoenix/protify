@@ -152,11 +152,11 @@ where
 
   fn validate_cel(&self) -> Result<(), CelError> {
     if let Some(key_validator) = &self.keys {
-      key_validator.validate_cel().unwrap();
+      key_validator.validate_cel()?;
     }
 
     if let Some(values_validator) = &self.values {
-      values_validator.validate_cel().unwrap();
+      values_validator.validate_cel()?;
     }
 
     Ok(())
