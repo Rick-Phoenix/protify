@@ -43,7 +43,7 @@ fn random_option() -> ProtoOption {
 mod inner {
   use std::sync::{Arc, LazyLock};
 
-  use prelude::{cel_rule, CelProgram, CelRule, FieldContext, FieldKind, Validator, DEPRECATED};
+  use prelude::*;
   use proc_macro_impls::{
     proto_enum, proto_extension, proto_message, proto_oneof, proto_service, Extension, Service,
   };
@@ -106,13 +106,6 @@ mod inner {
     fn default() -> Self {
       Self::B(0)
     }
-  }
-
-  fn convert(map: HashMap<String, NestedProto>) -> HashMap<String, Nested> {
-    map
-      .into_iter()
-      .map(|(k, v)| (k, v.into()))
-      .collect()
   }
 
   fn message_rules() -> Vec<CelRule> {

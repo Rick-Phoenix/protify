@@ -171,7 +171,7 @@ pub(crate) fn process_oneof_derive_shadow(
     }
   });
 
-  Ok(output_tokens)
+  Ok(wrap_with_imports(orig_enum_ident, output_tokens))
 }
 
 pub(crate) fn process_oneof_derive_direct(
@@ -244,5 +244,5 @@ pub(crate) fn process_oneof_derive_direct(
 
   let oneof_schema_impl = oneof_schema_impl(&oneof_attrs, &item.ident, variants_tokens);
 
-  Ok(oneof_schema_impl)
+  Ok(wrap_with_imports(&item.ident, oneof_schema_impl))
 }
