@@ -8,7 +8,7 @@ pub struct CelChecksImplOutput {
 pub fn impl_cel_checks(
   item_ident: &Ident,
   programs_paths: &[Path],
-  cel_checks_tokens: TokenStream2,
+  field_cel_checks: Vec<TokenStream2>,
 ) -> CelChecksImplOutput {
   let static_ident = format_ident!("{}_CEL_RULES", ccase!(constant, item_ident.to_string()));
 
@@ -36,7 +36,11 @@ pub fn impl_cel_checks(
           fn validate_cel() {
             let mut errors: Vec<::prelude::CelError> = Vec::new();
 
-            #cel_checks_tokens
+            #(
+              if let Err(errs) = #field_cel_checks {
+                errors.extend(errs);
+              }
+            )*
 
             let top_level_programs = &#static_ident;
 

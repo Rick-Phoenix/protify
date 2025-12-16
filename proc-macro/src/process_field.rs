@@ -48,7 +48,7 @@ pub struct FieldCtx<'a> {
   pub field_ident: &'a Ident,
   pub validators_tokens: &'a mut TokenStream2,
   pub cel_rules: &'a mut Vec<TokenStream2>,
-  pub cel_checks: &'a mut TokenStream2,
+  pub cel_checks: &'a mut Vec<TokenStream2>,
 }
 
 pub fn process_field(ctx: FieldCtx) -> Result<TokenStream2, Error> {
@@ -88,6 +88,8 @@ pub fn process_field(ctx: FieldCtx) -> Result<TokenStream2, Error> {
   }
 
   let validator_schema_tokens = if let Some(validator) = validator {
+    let field_validator = FieldValidatorExpr::new(&type_ctx.proto_field, validator);
+
     let field_type = type_ctx.proto_field.proto_kind_tokens();
 
     let field_context_tokens = quote! {
@@ -102,18 +104,19 @@ pub fn process_field(ctx: FieldCtx) -> Result<TokenStream2, Error> {
       }
     };
 
-    let field_validator = type_ctx.validator_tokens(field_ident, field_context_tokens, validator);
+    let field_validator_tokens =
+      type_ctx.validator_tokens(field_ident, field_context_tokens, &field_validator);
 
-    validators_tokens.extend(field_validator);
+    validators_tokens.extend(field_validator_tokens);
 
-    let new_cel_rules = type_ctx.cel_rules_extractor(validator);
+    let new_cel_rules = field_validator.cel_rules_extractor_expr();
 
     cel_rules.push(new_cel_rules);
 
-    let cel_check = type_ctx.cel_check_tokens(validator);
-    cel_checks.extend(cel_check);
+    let cel_check = field_validator.cel_check_expr();
+    cel_checks.push(cel_check);
 
-    let schema_expr = type_ctx.field_validator_schema(validator);
+    let schema_expr = field_validator.schema_expr();
 
     quote! { Some(#schema_expr) }
   } else {

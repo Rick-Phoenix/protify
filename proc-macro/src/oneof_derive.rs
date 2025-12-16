@@ -46,7 +46,7 @@ pub(crate) fn process_oneof_derive_shadow(
 
   let mut validator_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens = TokenStream2::new();
+  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   for (src_variant, dst_variant) in orig_enum_variants.zip(shadow_enum_variants) {
     let variant_ident = &src_variant.ident;
@@ -189,7 +189,7 @@ pub(crate) fn process_oneof_derive_direct(
 
   let mut validator_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens = TokenStream2::new();
+  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   for variant in variants {
     let variant_type = if let Fields::Unnamed(variant_fields) = &variant.fields

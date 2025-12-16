@@ -31,7 +31,6 @@ pub fn process_message_derive_shadow(
   let orig_struct_ident = &item.ident;
   let shadow_struct_ident = &shadow_struct.ident;
 
-  let mut output_tokens = TokenStream2::new();
   let mut fields_tokens: Vec<TokenStream2> = Vec::new();
 
   let orig_struct_fields = item.fields.iter_mut();
@@ -40,7 +39,7 @@ pub fn process_message_derive_shadow(
 
   let mut validators_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens = TokenStream2::new();
+  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut proto_conversion_impls = ProtoConversionImpl {
     source_ident: orig_struct_ident,
@@ -135,17 +134,15 @@ pub fn process_message_derive_shadow(
   let from_proto_impl = proto_conversion_impls.create_from_proto_impl();
   let conversion_helpers = proto_conversion_impls.create_conversion_helpers();
 
-  let top_level_programs_ident = if let Some(paths) = &message_attrs.cel_rules {
+  let (cel_check_impl, top_level_programs_ident) = if let Some(paths) = &message_attrs.cel_rules {
     let CelChecksImplOutput {
       static_ident,
       cel_check_impl,
     } = impl_cel_checks(shadow_struct_ident, paths, cel_checks_tokens);
 
-    output_tokens.extend(cel_check_impl);
-
-    Some(static_ident)
+    (Some(cel_check_impl), Some(static_ident))
   } else {
-    None
+    (None, None)
   };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
@@ -167,7 +164,8 @@ pub fn process_message_derive_shadow(
     top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
 
-  output_tokens.extend(quote! {
+  // prost::Message already implements Debug
+  let output_tokens = quote! {
     #schema_impls
 
     #[derive(::prost::Message, Clone, PartialEq, ::protocheck_proc_macro::TryIntoCelValue)]
@@ -179,7 +177,8 @@ pub fn process_message_derive_shadow(
     #conversion_helpers
 
     #validator_impl
-  });
+    #cel_check_impl
+  };
 
   Ok(wrap_with_imports(orig_struct_ident, output_tokens))
 }
@@ -188,15 +187,15 @@ pub fn process_message_derive_direct(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
 ) -> Result<TokenStream2, Error> {
+  // prost::Message already implements Debug
   let prost_message_attr: Attribute = parse_quote!(#[derive(prost::Message, Clone, PartialEq, ::protocheck::macros::TryIntoCelValue)]);
   item.attrs.push(prost_message_attr);
 
-  let mut output_tokens = TokenStream2::new();
   let mut fields_data: Vec<TokenStream2> = Vec::new();
 
   let mut validators_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens = TokenStream2::new();
+  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   for src_field in item.fields.iter_mut() {
     let src_field_ident = src_field.require_ident()?;
@@ -257,17 +256,15 @@ pub fn process_message_derive_direct(
 
   let struct_ident = &item.ident;
 
-  let top_level_programs_ident = if let Some(paths) = &message_attrs.cel_rules {
+  let (cel_check_impl, top_level_programs_ident) = if let Some(paths) = &message_attrs.cel_rules {
     let CelChecksImplOutput {
       static_ident,
       cel_check_impl,
     } = impl_cel_checks(struct_ident, paths, cel_checks_tokens);
 
-    output_tokens.extend(cel_check_impl);
-
-    Some(static_ident)
+    (Some(cel_check_impl), Some(static_ident))
   } else {
-    None
+    (None, None)
   };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
@@ -285,10 +282,11 @@ pub fn process_message_derive_direct(
     top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
 
-  output_tokens.extend(quote! {
+  let output_tokens = quote! {
     #schema_impls
     #validator_impl
-  });
+    #cel_check_impl
+  };
 
   Ok(wrap_with_imports(struct_ident, output_tokens))
 }
