@@ -23,18 +23,12 @@ where
 {
   type Target = T;
 
-  fn validate_cel(&self) -> Result<(), CelError> {
-    if let Some(rules) = &self.cel {
-      for rule in rules.iter() {
-        let program = CelProgram::new(rule.clone());
-
-        if let Err(e) = program.execute(T::default()) {
-          eprintln!("error with CEL rule with id `{}`: {e}", rule.id);
-        };
-      }
+  fn validate_cel(&self) -> Result<(), Vec<CelError>> {
+    if !self.cel.is_empty() {
+      test_programs(&self.cel, T::default())
+    } else {
+      Ok(())
     }
-
-    Ok(())
   }
 
   fn validate(
@@ -68,8 +62,8 @@ pub struct MessageValidator<T: ProtoMessage> {
   #[builder(default, setters(vis = ""))]
   _message: PhantomData<T>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(into)]
-  pub cel: Option<Arc<[CelRule]>>,
+  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
+  pub cel: Vec<&'static CelProgram>,
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,

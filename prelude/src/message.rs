@@ -10,7 +10,7 @@ pub trait ProtoMessage {
     Ok(())
   }
 
-  fn cel_rules() -> Vec<Arc<[CelRule]>> {
+  fn cel_rules() -> Vec<&'static CelRule> {
     Vec::new()
   }
 
@@ -49,7 +49,7 @@ pub struct Message {
   pub options: Vec<ProtoOption>,
   pub reserved_names: Vec<&'static str>,
   pub reserved_numbers: Vec<Range<i32>>,
-  pub cel_rules: Vec<CelRule>,
+  pub cel_rules: Vec<&'static CelProgram>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -84,8 +84,7 @@ impl Message {
     let cel_rules_options: Vec<ProtoOption> = self
       .cel_rules
       .iter()
-      .cloned()
-      .map(|rule| rule.into())
+      .map(|program| program.rule.clone().into())
       .collect();
 
     let options = self

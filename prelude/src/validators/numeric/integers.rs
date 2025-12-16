@@ -22,24 +22,22 @@ where
 {
   type Target = Num::RustType;
 
-  fn cel_rules(&self) -> Option<Arc<[CelRule]>> {
-    self.cel.clone()
+  fn cel_rules(&self) -> Vec<&'static CelRule> {
+    self.cel.iter().map(|prog| &prog.rule).collect()
   }
 
-  fn validate_cel(&self) -> Result<(), CelError> {
+  fn validate_cel_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+    if !self.cel.is_empty() {
+      test_programs(&self.cel, val)
+    } else {
+      Ok(())
+    }
+  }
+
+  fn validate_cel(&self) -> Result<(), Vec<CelError>> {
     let val = Self::Target::default();
 
-    if let Some(cel_rules) = &self.cel {
-      for rule in cel_rules.iter() {
-        let program = CelProgram::new(rule.clone());
-
-        if let Err(e) = program.execute(val) {
-          eprintln!("error with CEL rule with id `{}`: {e}", rule.id);
-        }
-      }
-    }
-
-    Ok(())
+    self.validate_cel_with(val)
   }
 
   fn validate(
@@ -56,20 +54,19 @@ where
         violations.add(field_context, parent_elements, Num::GT_VIOLATION, &format!("must be greater than {gt}"));
       }
 
-      if let Some(cel_rules) = &self.cel {
-        for rule in cel_rules.iter() {
-          let program = CelProgram::new(rule.clone());
-
-          match program.execute(val) {
-            Ok(was_successful) => {
-              if !was_successful {
-                violations.add_cel(rule, Some(field_context), parent_elements);
-              }
-            }
-            Err(e) => violations.push(e.into_violation(rule, Some(field_context), parent_elements)),
-          };
-        }
-      }
+      // for rule in cel_rules.iter() {
+      //   let program = CelProgram::new(rule.clone());
+      //   let ctx = initialize_context(val)?;
+      //
+      //   match program.execute(&ctx) {
+      //     Ok(was_successful) => {
+      //       if !was_successful {
+      //         violations.add_cel(rule, Some(field_context), parent_elements);
+      //       }
+      //     }
+      //     Err(e) => violations.push(e.into_violation(rule, Some(field_context), parent_elements)),
+      //   };
+      // }
     } else if self.required {
       violations.add_required(field_context, parent_elements);
     }
@@ -113,8 +110,8 @@ where
   #[builder(into)]
   pub not_in: Option<Arc<[Num::RustType]>>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(into)]
-  pub cel: Option<Arc<[CelRule]>>,
+  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
+  pub cel: Vec<&'static CelProgram>,
   /// Specifies that the field must be set in order to be valid.
   #[builder(default, with = || true)]
   pub required: bool,

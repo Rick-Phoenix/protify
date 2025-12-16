@@ -31,8 +31,8 @@ pub struct DurationValidator {
   /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
   pub gte: Option<Duration>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(into)]
-  pub cel: Option<Arc<[CelRule]>>,
+  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
+  pub cel: Vec<&'static CelProgram>,
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,

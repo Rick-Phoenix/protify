@@ -33,8 +33,8 @@ pub struct TimestampValidator {
   /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
   pub within: Option<Duration>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(into)]
-  pub cel: Option<Box<[CelRule]>>,
+  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
+  pub cel: Vec<&'static CelProgram>,
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,

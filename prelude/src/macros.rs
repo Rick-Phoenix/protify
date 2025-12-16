@@ -9,6 +9,21 @@ macro_rules! cel_rule {
   };
 }
 
+#[macro_export]
+macro_rules! cel_program {
+  (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
+    std::sync::LazyLock::new(|| {
+      let rule = $crate::CelRule {
+        id: $id.into(),
+        message: $msg.into(),
+        expression: $expr.into(),
+      };
+
+      CelProgram::new(rule)
+    })
+  };
+}
+
 macro_rules! reusable_string {
   ($name:ident) => {
     $crate::paste! {

@@ -21,8 +21,8 @@ pub struct AnyValidator {
   #[builder(setters(vis = "", name = not_in_internal))]
   pub not_in: Option<Arc<[Arc<str>]>>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(into)]
-  pub cel: Option<Arc<[CelRule]>>,
+  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
+  pub cel: Vec<&'static CelProgram>,
   /// Specifies that the field must be set in order to be valid.
   #[builder(default, with = || true)]
   pub required: bool,

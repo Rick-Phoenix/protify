@@ -1,8 +1,6 @@
 use std::{collections::HashMap, marker::PhantomData};
 
-use map_validator_builder::{
-  SetCel, SetIgnore, SetKeys, SetMaxPairs, SetMinPairs, SetValues, State,
-};
+use map_validator_builder::{SetIgnore, SetKeys, SetMaxPairs, SetMinPairs, SetValues, State};
 use proto_types::protovalidate::{
   field_path_element::Subscript, violations_data::map_violations::*,
 };
@@ -112,10 +110,6 @@ where
   pub min_pairs: Option<usize>,
   /// The maximum amount of key-value pairs that this field should have in order to be valid.
   pub max_pairs: Option<usize>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  /// These will apply to the map field as a whole.
-  /// To apply cel rules to the individual keys or values, use the validators for those instead.
-  pub cel: Option<Arc<[CelRule]>>,
   pub ignore: Option<Ignore>,
 }
 
@@ -128,38 +122,37 @@ where
 {
   type Target = HashMap<K::Target, V::Target>;
 
-  fn cel_rules(&self) -> Option<Arc<[CelRule]>> {
-    let keys_rules = self.keys.as_ref().and_then(|k| k.cel_rules());
+  fn cel_rules(&self) -> Vec<&'static CelRule> {
+    let mut rules = Vec::new();
 
-    let values_rules = self.values.as_ref().and_then(|v| v.cel_rules());
+    rules.extend(self.keys.iter().flat_map(|k| k.cel_rules()));
+    rules.extend(self.values.iter().flat_map(|v| v.cel_rules()));
 
-    let map_rules = self.cel.clone();
-
-    if keys_rules.is_none() && values_rules.is_none() {
-      map_rules
-    } else {
-      let all_rules: Vec<CelRule> = map_rules
-        .iter()
-        .flat_map(|slice| slice.iter())
-        .chain(keys_rules.iter().flat_map(|s| s.iter()))
-        .chain(values_rules.iter().flat_map(|s| s.iter()))
-        .cloned()
-        .collect();
-
-      Some(all_rules.into())
-    }
+    rules
   }
 
-  fn validate_cel(&self) -> Result<(), CelError> {
+  fn validate_cel(&self) -> Result<(), Vec<CelError>> {
+    let mut errors: Vec<CelError> = Vec::new();
+
     if let Some(key_validator) = &self.keys {
-      key_validator.validate_cel()?;
+      match key_validator.validate_cel() {
+        Ok(_) => {}
+        Err(errs) => errors.extend(errs),
+      };
     }
 
     if let Some(values_validator) = &self.values {
-      values_validator.validate_cel()?;
+      match values_validator.validate_cel() {
+        Ok(_) => {}
+        Err(errs) => errors.extend(errs),
+      };
     }
 
-    Ok(())
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
   }
 
   fn validate(
@@ -239,7 +232,6 @@ where
       keys: None,
       min_pairs: None,
       max_pairs: None,
-      cel: None,
       ignore: None,
     }
   }
@@ -260,7 +252,6 @@ where
   pub values: Option<V::Validator>,
   pub min_pairs: Option<usize>,
   pub max_pairs: Option<usize>,
-  pub cel: Option<Arc<[CelRule]>>,
   pub ignore: Option<Ignore>,
 }
 
@@ -277,7 +268,6 @@ where
       values,
       min_pairs,
       max_pairs,
-      cel,
       ignore,
       ..
     } = self;
@@ -289,25 +279,7 @@ where
       values,
       min_pairs,
       max_pairs,
-      cel,
       ignore,
-    }
-  }
-
-  pub fn cel(self, rules: impl Into<Arc<[CelRule]>>) -> MapValidatorBuilder<K, V, SetCel<S>>
-  where
-    S::Cel: IsUnset,
-  {
-    MapValidatorBuilder {
-      _state: PhantomData,
-      keys: self.keys,
-      _key_type: self._key_type,
-      _value_type: self._value_type,
-      values: self.values,
-      min_pairs: self.min_pairs,
-      max_pairs: self.max_pairs,
-      cel: Some(rules.into()),
-      ignore: self.ignore,
     }
   }
 
@@ -323,7 +295,6 @@ where
       values: self.values,
       min_pairs: Some(num),
       max_pairs: self.max_pairs,
-      cel: self.cel,
       ignore: self.ignore,
     }
   }
@@ -340,7 +311,6 @@ where
       values: self.values,
       min_pairs: self.min_pairs,
       max_pairs: Some(num),
-      cel: self.cel,
       ignore: self.ignore,
     }
   }
@@ -358,7 +328,6 @@ where
       values: self.values,
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
-      cel: self.cel,
       ignore: Some(Ignore::Always),
     }
   }
@@ -380,7 +349,6 @@ where
       values: self.values,
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
-      cel: self.cel,
       ignore: self.ignore,
     }
   }
@@ -402,7 +370,6 @@ where
       _value_type: self._value_type,
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
-      cel: self.cel,
       ignore: self.ignore,
     }
   }
@@ -445,7 +412,6 @@ where
 
     outer_rules.push((MAP.clone(), OptionValue::Message(rules.into())));
 
-    insert_cel_rules!(validator, outer_rules);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {
@@ -466,7 +432,6 @@ mod map_validator_builder {
     pub struct Values;
     pub struct MinPairs;
     pub struct MaxPairs;
-    pub struct Cel;
     pub struct Ignore;
   }
 
@@ -479,7 +444,6 @@ mod map_validator_builder {
     type Values;
     type MinPairs;
     type MaxPairs;
-    type Cel;
     type Ignore;
     const SEALED: sealed::Sealed;
   }
@@ -488,8 +452,6 @@ mod map_validator_builder {
   pub struct SetValues<S: State = Empty>(PhantomData<fn() -> S>);
   pub struct SetMinPairs<S: State = Empty>(PhantomData<fn() -> S>);
   pub struct SetMaxPairs<S: State = Empty>(PhantomData<fn() -> S>);
-  pub struct SetCel<S: State = Empty>(PhantomData<fn() -> S>);
-
   pub struct SetIgnore<S: State = Empty>(PhantomData<fn() -> S>);
 
   #[doc(hidden)]
@@ -498,7 +460,6 @@ mod map_validator_builder {
     type Values = Unset<members::Values>;
     type MinPairs = Unset<members::MinPairs>;
     type MaxPairs = Unset<members::MaxPairs>;
-    type Cel = Unset<members::Cel>;
     type Ignore = Unset<members::Ignore>;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -509,7 +470,6 @@ mod map_validator_builder {
     type Values = S::Values;
     type MinPairs = S::MinPairs;
     type MaxPairs = S::MaxPairs;
-    type Cel = S::Cel;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -520,7 +480,6 @@ mod map_validator_builder {
     type Values = Set<members::Values>;
     type MinPairs = S::MinPairs;
     type MaxPairs = S::MaxPairs;
-    type Cel = S::Cel;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -530,7 +489,6 @@ mod map_validator_builder {
     type Values = S::Values;
     type MinPairs = Set<members::MinPairs>;
     type MaxPairs = S::MaxPairs;
-    type Cel = S::Cel;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -540,17 +498,6 @@ mod map_validator_builder {
     type Values = S::Values;
     type MinPairs = S::MinPairs;
     type MaxPairs = Set<members::MaxPairs>;
-    type Cel = S::Cel;
-    type Ignore = S::Ignore;
-    const SEALED: sealed::Sealed = sealed::Sealed;
-  }
-  #[doc(hidden)]
-  impl<S: State> State for SetCel<S> {
-    type Keys = S::Keys;
-    type Values = S::Values;
-    type MinPairs = S::MinPairs;
-    type MaxPairs = S::MaxPairs;
-    type Cel = Set<members::Cel>;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -560,7 +507,6 @@ mod map_validator_builder {
     type Values = S::Values;
     type MinPairs = S::MinPairs;
     type MaxPairs = S::MaxPairs;
-    type Cel = S::Cel;
     type Ignore = Set<members::Ignore>;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }

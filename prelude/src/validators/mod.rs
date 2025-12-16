@@ -8,15 +8,15 @@ use proto_types::{field_descriptor_proto::Type, protovalidate::*};
 pub trait Validator<T>: Into<ProtoOption> {
   type Target;
 
-  fn cel_rules(&self) -> Option<Arc<[CelRule]>> {
-    None
+  fn cel_rules(&self) -> Vec<&'static CelRule> {
+    Vec::new()
   }
 
-  fn validate_cel_with(&self, _val: Self::Target) -> Result<(), CelError> {
+  fn validate_cel_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>> {
     Ok(())
   }
 
-  fn validate_cel(&self) -> Result<(), CelError> {
+  fn validate_cel(&self) -> Result<(), Vec<CelError>> {
     Ok(())
   }
 
@@ -136,11 +136,11 @@ macro_rules! impl_ignore {
 mod macros {
   macro_rules! insert_cel_rules {
     ($validator:ident, $values:ident) => {
-      if let Some(cel_rules) = $validator.cel {
-        let rule_values: Vec<OptionValue> = cel_rules
+      if !$validator.cel.is_empty() {
+        let rule_values: Vec<OptionValue> = $validator
+          .cel
           .iter()
-          .cloned()
-          .map(OptionValue::from)
+          .map(|program| program.rule.clone().into())
           .collect();
         $values.push((CEL.clone(), OptionValue::List(rule_values.into())));
       }

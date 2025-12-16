@@ -31,8 +31,14 @@ pub fn message_schema_impls(
     nested_enums_tokens.extend(quote! { #ident::proto_schema(), });
   }
 
-  let cel_rules = if let Some(call) = cel_rules {
-    quote! { #call }
+  let top_level_rules = if let Some(call) = cel_rules {
+    quote! { #call.into_iter().map(|r| &r.rule).collect() }
+  } else {
+    quote! { vec![] }
+  };
+
+  let top_level_programs = if let Some(call) = cel_rules {
+    quote! { #call.into_iter().map(|r| &**r).collect() }
   } else {
     quote! { vec![] }
   };
@@ -49,20 +55,14 @@ pub fn message_schema_impls(
     }
 
     impl ::prelude::ProtoMessage for #struct_name {
-      fn cel_rules() -> Vec<Arc<[CelRule]>> {
+      fn cel_rules() -> Vec<&'static CelRule> {
         use ::prelude::{ProtoValidator, Validator, ValidationResult, field_context::Violations};
 
-        let mut rules_agg = Vec::new();
+        let mut rules_agg: Vec<&CelRule> = #top_level_rules;
 
         #(
           rules_agg.extend(#fields_cel_rules);
         )*
-
-        let top_level_rules = #cel_rules;
-
-        if !top_level_rules.is_empty() {
-          rules_agg.push(top_level_rules.into());
-        }
 
         rules_agg
       }
@@ -93,7 +93,7 @@ pub fn message_schema_impls(
           messages: vec![ #nested_messages_tokens ],
           enums: vec![ #nested_enums_tokens ],
           entries: vec![ #(#entries_tokens,)* ],
-          cel_rules: #cel_rules,
+          cel_rules: #top_level_programs,
         };
 
         new_msg

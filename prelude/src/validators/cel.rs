@@ -8,15 +8,34 @@ use thiserror::Error;
 
 use super::*;
 
+pub type CachedProgram = LazyLock<CelProgram>;
+
+pub(crate) fn collect_programs<I>(programs: I) -> Vec<&'static CelProgram>
+where
+  I: IntoIterator<Item = &'static LazyLock<CelProgram>>,
+{
+  programs
+    .into_iter()
+    .map(|lazy_lock| &**lazy_lock)
+    .collect()
+}
+
 #[doc(hidden)]
 pub enum CelTarget<'a> {
   Message,
   Field(&'a FieldContext<'a>),
 }
 
+#[derive(Debug)]
 pub struct CelProgram {
   pub rule: CelRule,
   pub(crate) program: OnceLock<Program>,
+}
+
+impl PartialEq for CelProgram {
+  fn eq(&self, other: &Self) -> bool {
+    self.rule == other.rule
+  }
 }
 
 impl CelError {
@@ -48,6 +67,52 @@ pub enum CelError {
   ExecutionError(#[from] ExecutionError),
 }
 
+pub fn initialize_context<'a, T, E>(value: T) -> Result<Context<'a>, CelError>
+where
+  T: TryInto<Value, Error = E>,
+  CelConversionError: From<E>,
+{
+  let mut ctx = Context::default();
+
+  ctx.add_variable_from_value(
+    "this",
+    value
+      .try_into()
+      .map_err(|e| CelError::ConversionError(e.into()))?,
+  );
+  ctx.add_variable_from_value("now", Value::Timestamp(Utc::now().into()));
+
+  Ok(ctx)
+}
+
+pub fn test_programs<'a, T, E>(programs: &[&CelProgram], value: T) -> Result<(), Vec<CelError>>
+where
+  T: TryInto<Value, Error = E>,
+  CelConversionError: From<E>,
+{
+  let mut errors: Vec<CelError> = Vec::new();
+
+  let ctx = match initialize_context(value) {
+    Ok(ctx) => ctx,
+    Err(e) => {
+      errors.push(e);
+      return Err(errors);
+    }
+  };
+
+  for program in programs {
+    if let Err(e) = program.execute(&ctx) {
+      errors.push(e);
+    }
+  }
+
+  if errors.is_empty() {
+    Ok(())
+  } else {
+    Err(errors)
+  }
+}
+
 impl CelProgram {
   pub fn new(rule: CelRule) -> Self {
     Self {
@@ -56,25 +121,21 @@ impl CelProgram {
     }
   }
 
-  pub fn execute(
-    &self,
-    value: impl TryInto<Value, Error = impl Into<CelConversionError>>,
-  ) -> Result<bool, CelError> {
-    let program = self.program.get_or_init(|| {
+  pub fn get_program(&self) -> &Program {
+    self.program.get_or_init(|| {
       Program::compile(self.rule.expression.as_ref()).unwrap_or_else(|e| {
         panic!(
           "failed to compile CEL program for rule {}: {e}",
           self.rule.id
         )
       })
-    });
+    })
+  }
 
-    let mut ctx = Context::default();
+  pub fn execute(&self, ctx: &Context) -> Result<bool, CelError> {
+    let program = self.get_program();
 
-    ctx.add_variable_from_value("this", value.try_into().map_err(|e| e.into())?);
-    ctx.add_variable_from_value("now", Value::Timestamp(Utc::now().into()));
-
-    let result = program.execute(&ctx)?;
+    let result = program.execute(ctx)?;
 
     if let Value::Bool(result) = result {
       Ok(result)

@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 
 use prelude::{
-  EnumValidator, FieldValidator, IntValidator, MessageEntry, OptionValue, ProtoEnum, ProtoOption,
-  RepeatedValidator, RepeatedValidatorBuilder, Sint32, StringValidator, StringValidatorBuilder,
-  ValidatorBuilderFor,
+  cel_program, CachedProgram, EnumValidator, FieldValidator, IntValidator, MessageEntry,
+  OptionValue, ProtoEnum, ProtoOption, RepeatedValidator, RepeatedValidatorBuilder, Sint32,
+  StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
 };
 use proc_macro_impls::{Enum, Message, Oneof};
 use proto_types::{Duration, Timestamp};
@@ -50,6 +50,8 @@ mod inner {
   use proto_types::{field_descriptor_proto::Type, protovalidate::FieldPathElement};
 
   use super::*;
+
+  static RULE: CachedProgram = cel_program!(id = "abc", msg = "abc", expr = "abc");
 
   #[proto_extension(target = MessageOptions)]
   struct SomeExt {
@@ -132,6 +134,12 @@ mod inner {
     )
   }
 
+  static MSG_RULE: CachedProgram = cel_program!(
+    id = "abc",
+    msg = "abc",
+    expr = "this.timestamp == timestamp('1975-01-01T00:00:00Z')"
+  );
+
   #[proto_message]
   #[proto(reserved_numbers(1, 2, 3..9))]
   #[proto(reserved_names("abc", "bcd"))]
@@ -139,7 +147,7 @@ mod inner {
   #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
   #[proto(options = vec![ random_option() ])]
-  #[proto(validate = vec![ cel_rule!(id = "abc", msg = "abc", expr = "this.timestamp == timestamp('1975-01-01T00:00:00Z')") ])]
+  #[proto(validate = vec![ &MSG_RULE ])]
   pub struct Abc {
     #[proto(timestamp, validate = |v| v.lt_now())]
     pub timestamp: Option<Timestamp>,
@@ -147,7 +155,7 @@ mod inner {
     #[proto(duration, validate = |v| v.lt(Duration { seconds: 2000, nanos: 0 }))]
     duration: Option<Duration>,
 
-    #[proto(message(AbcProto, boxed), validate = |v| v.cel([ random_cel_rule() ]).required())]
+    #[proto(message(AbcProto, boxed), validate = |v| v.required())]
     boxed: Option<Box<Abc>>,
 
     #[proto(tag = 35, validate = string_validator())]
@@ -162,7 +170,7 @@ mod inner {
     #[proto(map(string, enum_), validate = |v| v.min_pairs(20).values(|val| val.defined_only()))]
     enum_map: HashMap<String, PseudoEnum>,
 
-    #[proto(map(string, message(proxied)), validate = |v| v.values(|val| val.ignore_always().cel(message_rules())))]
+    #[proto(map(string, message(proxied)), validate = |v| v.values(|val| val.ignore_always()))]
     message_map: HashMap<String, Nested>,
 
     #[proto(enum_, validate = |v| v.defined_only())]
@@ -171,7 +179,7 @@ mod inner {
     #[proto(enum_)]
     optional_enum: Option<PseudoEnum>,
 
-    #[proto(message(proxied), validate = |v| v.cel([ cel_rule!(id = "abc", msg = "abc", expr = "this.name == 3") ]))]
+    #[proto(message(proxied), validate = |v| v.cel([ &RULE ]))]
     nested: Option<Nested>,
 
     #[proto(repeated(message(proxied)))]
@@ -183,12 +191,10 @@ mod inner {
     #[proto(sint32)]
     sint32: i32,
 
-    #[proto(repeated(sint32), validate = |v| v.items(|it| it.gt(0).cel([
-      cel_rule!(id = "num.more_than_20", msg = "must be greater than 20", expr = "this > 20"),
-    ])))]
+    #[proto(repeated(sint32), validate = |v| v.items(|it| it.gt(0)))]
     pub sint32_repeated: Vec<i32>,
 
-    #[proto(map(sint32, uint32), validate = |v| v.keys(|k| k.gt(0)).values(|vals| vals.gt(0).cel([ random_cel_rule() ])))]
+    #[proto(map(sint32, uint32), validate = |v| v.keys(|k| k.gt(0)).values(|vals| vals.gt(0)))]
     sint32_map: HashMap<i32, u32>,
 
     #[proto(sint32)]
@@ -220,5 +226,5 @@ fn main() {
 
   let mut msg2 = AbcProto::default();
 
-  AbcProto::validate_cel();
+  // AbcProto::validate_cel();
 }

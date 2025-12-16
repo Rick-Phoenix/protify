@@ -172,9 +172,10 @@ pub fn process_message_derive_shadow(
     .shadow_derives
     .map(|list| quote! { #[#list] });
 
-  let cel_rules = &message_attrs
-    .validator
-    .map_or_else(|| quote! { vec![] }, |v| v.to_token_stream());
+  let top_level_programs = &message_attrs.validator.map_or_else(
+    || quote! { vec![] },
+    |v| quote! { #v.into_iter().map(|r| &**r).collect() },
+  );
 
   output_tokens.extend(quote! {
     #schema_impls
@@ -209,19 +210,19 @@ pub fn process_message_derive_shadow(
           });
         }
 
-        let mut cel_rules: Vec<CelRule> = #cel_rules;
+        let mut top_level_programs: Vec<&CelProgram> = #top_level_programs;
 
-        for rule in cel_rules {
-          let program = CelProgram::new(rule);
-
-          match program.execute(self.clone()) {
-            Ok(was_successful) => {
-              if !was_successful {
-                violations.add_cel(&program.rule, None, parent_elements);
-              }
-            }
-            Err(e) => violations.push(e.into_violation(&program.rule, None, parent_elements))
-          };
+        for program in top_level_programs {
+          // let program = CelProgram::new(rule);
+          //
+          // match program.execute(self.clone()) {
+          //   Ok(was_successful) => {
+          //     if !was_successful {
+          //       violations.add_cel(&program.rule, None, parent_elements);
+          //     }
+          //   }
+          //   Err(e) => violations.push(e.into_violation(&program.rule, None, parent_elements))
+          // };
         }
 
 
@@ -258,7 +259,7 @@ pub fn process_message_derive_shadow(
     }
 
     impl ::prelude::ProtoMessage for #shadow_struct_ident {
-      fn cel_rules() -> Vec<Arc<[CelRule]>> {
+      fn cel_rules() -> Vec<&'static CelRule> {
         #orig_struct_ident::cel_rules()
       }
 

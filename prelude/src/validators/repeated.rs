@@ -1,9 +1,7 @@
 use std::marker::PhantomData;
 
 use proto_types::protovalidate::field_path_element::Subscript;
-use repeated_validator_builder::{
-  SetCel, SetIgnore, SetItems, SetMaxItems, SetMinItems, SetUnique, State,
-};
+use repeated_validator_builder::{SetIgnore, SetItems, SetMaxItems, SetMinItems, SetUnique, State};
 
 use super::{builder_internals::*, *};
 
@@ -60,9 +58,6 @@ where
   pub max_items: Option<usize>,
   /// Specifies that this field must contain only unique values (only applies to scalar fields).
   pub unique: bool,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  /// These will apply to the list as a whole. To apply rules to the individual items, use the items validator instead.
-  pub cel: Option<Arc<[CelRule]>>,
   pub ignore: Option<Ignore>,
 }
 
@@ -72,22 +67,12 @@ where
 {
   type Target = Vec<T::Target>;
 
-  fn cel_rules(&self) -> Option<Arc<[CelRule]>> {
-    let items_rules = self.items.as_ref().and_then(|i| i.cel_rules());
-    let vec_rules = self.cel.clone();
+  fn cel_rules(&self) -> Vec<&'static CelRule> {
+    let mut rules = Vec::new();
 
-    if items_rules.is_none() {
-      vec_rules
-    } else {
-      let all_rules: Vec<CelRule> = vec_rules
-        .iter()
-        .flat_map(|r| r.iter())
-        .chain(items_rules.iter().flat_map(|r| r.iter()))
-        .cloned()
-        .collect();
+    rules.extend(self.items.iter().flat_map(|i| i.cel_rules()));
 
-      Some(all_rules.into())
-    }
+    rules
   }
 
   fn validate(
@@ -135,7 +120,6 @@ where
       min_items: None,
       max_items: None,
       unique: false,
-      cel: None,
       ignore: None,
     }
   }
@@ -157,9 +141,6 @@ where
   pub max_items: Option<usize>,
   /// Specifies that this field must contain only unique values (only applies to scalar fields).
   pub unique: bool,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  /// These will apply to the list as a whole. To apply rules to the individual items, use the items validator instead.
-  pub cel: Option<Arc<[CelRule]>>,
   pub ignore: Option<Ignore>,
 }
 
@@ -174,7 +155,6 @@ where
       min_items,
       max_items,
       unique,
-      cel,
       ignore,
       ..
     } = self;
@@ -185,7 +165,6 @@ where
       min_items,
       max_items,
       unique,
-      cel,
       ignore,
     }
   }
@@ -207,7 +186,6 @@ where
       min_items: self.min_items,
       max_items: self.max_items,
       unique: self.unique,
-      cel: self.cel,
       ignore: self.ignore,
     }
   }
@@ -224,7 +202,6 @@ where
       min_items: self.min_items,
       max_items: self.max_items,
       unique: self.unique,
-      cel: self.cel,
       ignore: Some(Ignore::Always),
     }
   }
@@ -240,7 +217,6 @@ where
       min_items: Some(num),
       max_items: self.max_items,
       unique: self.unique,
-      cel: self.cel,
       ignore: self.ignore,
     }
   }
@@ -256,7 +232,6 @@ where
       min_items: self.min_items,
       max_items: Some(num),
       unique: self.unique,
-      cel: self.cel,
       ignore: self.ignore,
     }
   }
@@ -272,23 +247,6 @@ where
       min_items: self.min_items,
       max_items: self.max_items,
       unique: true,
-      cel: self.cel,
-      ignore: self.ignore,
-    }
-  }
-
-  pub fn cel(self, rules: impl Into<Arc<[CelRule]>>) -> RepeatedValidatorBuilder<T, SetCel<S>>
-  where
-    S::Cel: IsUnset,
-  {
-    RepeatedValidatorBuilder {
-      _state: PhantomData,
-      _inner_type: self._inner_type,
-      items: self.items,
-      min_items: self.min_items,
-      max_items: self.max_items,
-      unique: self.unique,
-      cel: Some(rules.into()),
       ignore: self.ignore,
     }
   }
@@ -324,7 +282,6 @@ where
 
     outer_rules.push((REPEATED.clone(), OptionValue::Message(rules.into())));
 
-    insert_cel_rules!(validator, outer_rules);
     insert_option!(validator, outer_rules, ignore);
 
     ProtoOption {
@@ -344,7 +301,6 @@ mod repeated_validator_builder {
     pub struct Items;
     pub struct MinItems;
     pub struct MaxItems;
-    pub struct Cel;
     pub struct Unique;
     pub struct Ignore;
   }
@@ -358,7 +314,6 @@ mod repeated_validator_builder {
     type MinItems;
     type MaxItems;
     type Unique;
-    type Cel;
     type Ignore;
     const SEALED: sealed::Sealed;
   }
@@ -367,7 +322,6 @@ mod repeated_validator_builder {
   pub struct SetMinItems<S: State = Empty>(PhantomData<fn() -> S>);
   pub struct SetMaxItems<S: State = Empty>(PhantomData<fn() -> S>);
   pub struct SetUnique<S: State = Empty>(PhantomData<fn() -> S>);
-  pub struct SetCel<S: State = Empty>(PhantomData<fn() -> S>);
   pub struct SetIgnore<S: State = Empty>(PhantomData<fn() -> S>);
 
   #[doc(hidden)]
@@ -375,7 +329,6 @@ mod repeated_validator_builder {
     type Items = Unset<members::Items>;
     type MinItems = Unset<members::MinItems>;
     type MaxItems = Unset<members::MaxItems>;
-    type Cel = Unset<members::Cel>;
     type Unique = Unset<members::Unique>;
     type Ignore = Unset<members::Ignore>;
     const SEALED: sealed::Sealed = sealed::Sealed;
@@ -387,7 +340,6 @@ mod repeated_validator_builder {
     type MinItems = S::MinItems;
     type MaxItems = S::MaxItems;
     type Unique = S::Unique;
-    type Cel = S::Cel;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -398,7 +350,6 @@ mod repeated_validator_builder {
     type MinItems = S::MinItems;
     type MaxItems = S::MaxItems;
     type Unique = Set<members::Unique>;
-    type Cel = S::Cel;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -408,7 +359,6 @@ mod repeated_validator_builder {
     type Unique = S::Unique;
     type MinItems = Set<members::MinItems>;
     type MaxItems = S::MaxItems;
-    type Cel = S::Cel;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -418,17 +368,6 @@ mod repeated_validator_builder {
     type Unique = S::Unique;
     type MinItems = S::MinItems;
     type MaxItems = Set<members::MaxItems>;
-    type Cel = S::Cel;
-    type Ignore = S::Ignore;
-    const SEALED: sealed::Sealed = sealed::Sealed;
-  }
-  #[doc(hidden)]
-  impl<S: State> State for SetCel<S> {
-    type Items = S::Items;
-    type Unique = S::Unique;
-    type MinItems = S::MinItems;
-    type MaxItems = S::MaxItems;
-    type Cel = Set<members::Cel>;
     type Ignore = S::Ignore;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
@@ -438,7 +377,6 @@ mod repeated_validator_builder {
     type Unique = S::Unique;
     type MinItems = S::MinItems;
     type MaxItems = S::MaxItems;
-    type Cel = S::Cel;
     type Ignore = Set<members::Ignore>;
     const SEALED: sealed::Sealed = sealed::Sealed;
   }
