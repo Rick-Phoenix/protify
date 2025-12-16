@@ -49,8 +49,6 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
   let cel_rules_method = top_level_programs_ident.map(|ident| {
     quote! {
       fn cel_rules() -> Vec<&'static CelRule> {
-        use ::prelude::{ProtoValidator, Validator, ValidationResult, field_context::Violations};
-
         let mut rules_agg: Vec<&CelRule> = #ident.iter().map(|prog| &prog.rule).collect();
 
         #(

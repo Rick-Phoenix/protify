@@ -38,7 +38,7 @@ pub fn process_message_derive_shadow(
   let shadow_struct_fields = shadow_struct.fields.iter_mut();
   let mut ignored_fields: Vec<&Ident> = Vec::new();
 
-  let mut validator_tokens = TokenStream2::new();
+  let mut validators_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens = TokenStream2::new();
 
@@ -87,7 +87,7 @@ pub fn process_message_derive_shadow(
       field_attrs: &field_attrs,
       type_ctx: &type_ctx,
       field_ident: src_field_ident,
-      validators_tokens: &mut validator_tokens,
+      validators_tokens: &mut validators_tokens,
       cel_rules: &mut cel_rules_collection,
       cel_checks: &mut cel_checks_tokens,
     })?;
@@ -161,7 +161,11 @@ pub fn process_message_derive_shadow(
     .shadow_derives
     .map(|list| quote! { #[#list] });
 
-  let top_level_programs_expr = tokens_or_default!(top_level_programs_ident, quote! { vec![] });
+  let validator_impl = impl_validator(ValidatorImplCtx {
+    target_ident: shadow_struct_ident,
+    validators_tokens,
+    top_level_programs_ident: top_level_programs_ident.as_ref(),
+  });
 
   output_tokens.extend(quote! {
     #schema_impls
@@ -174,65 +178,7 @@ pub fn process_message_derive_shadow(
     #into_proto_impl
     #conversion_helpers
 
-    impl #shadow_struct_ident {
-      #[doc(hidden)]
-      fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
-        let mut violations = Vec::new();
-
-        if let Some(field_context) = field_context {
-          parent_elements.push(FieldPathElement {
-            field_number: Some(field_context.tag),
-            field_name: Some(field_context.name.to_string()),
-            field_type: Some(Type::Message as i32),
-            key_type: field_context.key_type.map(|t| t as i32),
-            value_type: field_context.value_type.map(|t| t as i32),
-            subscript: field_context.subscript.clone(),
-          });
-        }
-
-        let top_level_programs: &Vec<&CelProgram> = &#top_level_programs_expr;
-
-        if !top_level_programs.is_empty() {
-          ::prelude::execute_cel_programs(::prelude::ProgramsExecutionCtx {
-            programs: top_level_programs,
-            value: self.clone(),
-            violations: &mut violations,
-            field_context,
-            parent_elements,
-          });
-        }
-
-        #validator_tokens
-
-        if field_context.is_some() {
-          parent_elements.pop();
-        }
-
-        if violations.is_empty() {
-          Ok(())
-        } else {
-          Err(violations)
-        }
-      }
-
-      pub fn validate(&self) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
-        self.__validate_internal(None, &mut vec![])
-      }
-
-      pub fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
-        self.__validate_internal(Some(field_context), parent_elements)
-      }
-    }
-
-    impl ::prelude::ProtoValidator<#shadow_struct_ident> for #shadow_struct_ident {
-      type Target = Self;
-      type Validator = ::prelude::MessageValidator<Self>;
-      type Builder = ::prelude::MessageValidatorBuilder<Self>;
-
-      fn builder() -> Self::Builder {
-        ::prelude::MessageValidator::builder()
-      }
-    }
+    #validator_impl
   });
 
   Ok(wrap_with_imports(orig_struct_ident, output_tokens))
@@ -248,7 +194,7 @@ pub fn process_message_derive_direct(
   let mut output_tokens = TokenStream2::new();
   let mut fields_data: Vec<TokenStream2> = Vec::new();
 
-  let mut validator_tokens = TokenStream2::new();
+  let mut validators_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens = TokenStream2::new();
 
@@ -301,7 +247,7 @@ pub fn process_message_derive_direct(
       field: &mut FieldOrVariant::Field(src_field),
       field_attrs: &field_attrs,
       type_ctx: &type_ctx,
-      validators_tokens: &mut validator_tokens,
+      validators_tokens: &mut validators_tokens,
       cel_rules: &mut cel_rules_collection,
       cel_checks: &mut cel_checks_tokens,
     })?;
@@ -333,80 +279,16 @@ pub fn process_message_derive_direct(
     top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
 
-  output_tokens.extend(schema_impls);
+  let validator_impl = impl_validator(ValidatorImplCtx {
+    target_ident: struct_ident,
+    validators_tokens,
+    top_level_programs_ident: top_level_programs_ident.as_ref(),
+  });
 
   output_tokens.extend(quote! {
-    impl ::prelude::ProtoValidator<#struct_ident> for #struct_ident {
-      type Target = Self;
-      type Validator = ::prelude::MessageValidator<Self>;
-      type Builder = ::prelude::MessageValidatorBuilder<Self>;
-
-      fn builder() -> Self::Builder {
-        ::prelude::MessageValidator::builder()
-      }
-    }
+    #schema_impls
+    #validator_impl
   });
 
   Ok(wrap_with_imports(struct_ident, output_tokens))
-}
-
-struct CelChecksImplOutput {
-  static_ident: Ident,
-  cel_check_impl: TokenStream2,
-}
-
-fn impl_cel_checks(
-  item_ident: &Ident,
-  programs_paths: &[Path],
-  cel_checks_tokens: TokenStream2,
-) -> CelChecksImplOutput {
-  let static_ident = format_ident!("{}_CEL_RULES", ccase!(constant, item_ident.to_string()));
-
-  let top_level_programs = quote! { #(&*#programs_paths),* };
-
-  let test_module_ident = format_ident!("__{}_cel_test", ccase!(snake, item_ident.to_string()));
-
-  CelChecksImplOutput {
-    cel_check_impl: quote! {
-      static #static_ident: LazyLock<Vec<&'static CelProgram>> = LazyLock::new(|| {
-        vec![ #top_level_programs ]
-      });
-
-      #[cfg(test)]
-      mod #test_module_ident {
-        use super::*;
-
-        #[test]
-        fn test() {
-          #item_ident::validate_cel()
-        }
-
-        impl #item_ident {
-          #[track_caller]
-          fn validate_cel() {
-            let mut errors: Vec<::prelude::CelError> = Vec::new();
-
-            #cel_checks_tokens
-
-            let top_level_programs = &#static_ident;
-
-            if !top_level_programs.is_empty() {
-              if let Err(errs) = ::prelude::test_programs(&top_level_programs, Self::default()) {
-                errors.extend(errs);
-              }
-            }
-
-            if !errors.is_empty() {
-              for error in errors {
-                eprintln!("{error}");
-              }
-
-              panic!();
-            }
-          }
-        }
-      }
-    },
-    static_ident,
-  }
 }
