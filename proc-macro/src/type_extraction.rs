@@ -59,7 +59,7 @@ impl<'a> TypeContext<'a> {
     }
   }
 
-  pub fn cel_check_tokens(&self, field_ident: &Ident, validator: &CallOrClosure) -> TokenStream2 {
+  pub fn cel_check_tokens(&self, validator: &CallOrClosure) -> TokenStream2 {
     let target_type = self.proto_field.validator_target_type();
 
     let validation_expr = match validator {

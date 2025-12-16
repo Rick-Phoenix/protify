@@ -39,7 +39,23 @@ impl PartialEq for CelProgram {
 }
 
 impl CelError {
-  pub fn into_violation(
+  pub fn into_msg_violation(
+    self,
+    field_context: Option<&FieldContext>,
+    parent_elements: &[FieldPathElement],
+  ) -> Violation {
+    log::error!("failed to convert message");
+
+    create_violation_core(
+      None,
+      field_context,
+      parent_elements,
+      &CEL_VIOLATION,
+      "internal server error",
+    )
+  }
+
+  pub fn into_rule_violation(
     self,
     rule: &CelRule,
     field_context: Option<&FieldContext>,
@@ -85,7 +101,7 @@ where
   Ok(ctx)
 }
 
-pub fn test_programs<'a, T, E>(programs: &[&CelProgram], value: T) -> Result<(), Vec<CelError>>
+pub fn test_programs<T, E>(programs: &[&CelProgram], value: T) -> Result<(), Vec<CelError>>
 where
   T: TryInto<Value, Error = E>,
   CelConversionError: From<E>,

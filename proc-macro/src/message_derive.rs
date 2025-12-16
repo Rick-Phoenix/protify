@@ -116,7 +116,7 @@ pub fn process_message_derive_shadow(
 
       cel_rules_collection.push(cel_rules);
 
-      let cel_check = type_ctx.cel_check_tokens(src_field_ident, validator);
+      let cel_check = type_ctx.cel_check_tokens(validator);
       cel_checks_tokens.extend(cel_check);
     }
 
@@ -212,17 +212,24 @@ pub fn process_message_derive_shadow(
 
         let mut top_level_programs: Vec<&CelProgram> = #top_level_programs;
 
-        for program in top_level_programs {
-          // let program = CelProgram::new(rule);
-          //
-          // match program.execute(self.clone()) {
-          //   Ok(was_successful) => {
-          //     if !was_successful {
-          //       violations.add_cel(&program.rule, None, parent_elements);
-          //     }
-          //   }
-          //   Err(e) => violations.push(e.into_violation(&program.rule, None, parent_elements))
-          // };
+        if !top_level_programs.is_empty() {
+          match ::prelude::initialize_context(self.clone()) {
+            Ok(ctx) => {
+              for program in top_level_programs {
+                match program.execute(&ctx) {
+                  Ok(was_successful) => {
+                    if !was_successful {
+                      violations.add_cel(&program.rule, None, parent_elements);
+                    }
+                  }
+                  Err(e) => violations.push(e.into_rule_violation(&program.rule, None, parent_elements))
+                };
+              }
+            },
+            Err(e) => {
+              violations.push(e.into_msg_violation(field_context, parent_elements));
+            }
+          };
         }
 
 

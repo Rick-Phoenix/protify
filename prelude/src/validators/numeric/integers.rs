@@ -54,19 +54,27 @@ where
         violations.add(field_context, parent_elements, Num::GT_VIOLATION, &format!("must be greater than {gt}"));
       }
 
-      // for rule in cel_rules.iter() {
-      //   let program = CelProgram::new(rule.clone());
-      //   let ctx = initialize_context(val)?;
-      //
-      //   match program.execute(&ctx) {
-      //     Ok(was_successful) => {
-      //       if !was_successful {
-      //         violations.add_cel(rule, Some(field_context), parent_elements);
-      //       }
-      //     }
-      //     Err(e) => violations.push(e.into_violation(rule, Some(field_context), parent_elements)),
-      //   };
-      // }
+      if !self.cel.is_empty() {
+        match initialize_context(val) {
+          Ok(ctx) => {
+            for program in &self.cel {
+              match program.execute(&ctx) {
+                Ok(was_successful) => {
+                  if !was_successful {
+                    violations.add_cel(&program.rule, Some(field_context), parent_elements);
+                  }
+                }
+                Err(e) => violations.push(e.into_rule_violation(
+                  &program.rule,
+                  Some(field_context),
+                  parent_elements,
+                )),
+              };
+            }
+          }
+          Err(e) => violations.push(e.into_msg_violation(Some(field_context), parent_elements)),
+        };
+      }
     } else if self.required {
       violations.add_required(field_context, parent_elements);
     }
