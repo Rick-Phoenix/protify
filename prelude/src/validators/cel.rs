@@ -24,7 +24,7 @@ where
 #[derive(Debug)]
 pub struct CelProgram {
   pub rule: CelRule,
-  pub(crate) program: OnceLock<Program>,
+  program: OnceLock<Program>,
 }
 
 impl PartialEq for CelProgram {
@@ -68,7 +68,7 @@ pub enum CelError {
   ExecutionError(#[from] ExecutionError),
 }
 
-pub fn initialize_context<'a, T, E>(value: T) -> Result<Context<'a>, CelError>
+fn initialize_context<'a, T, E>(value: T) -> Result<Context<'a>, CelError>
 where
   T: TryInto<Value, Error = E>,
   CelConversionError: From<E>,
@@ -131,6 +131,7 @@ where
   }
 }
 
+#[cfg(feature = "testing")]
 pub fn test_programs<T, E>(programs: &[&CelProgram], value: T) -> Result<(), Vec<CelError>>
 where
   T: TryInto<Value, Error = E>,

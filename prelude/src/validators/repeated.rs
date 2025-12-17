@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
 use proto_types::protovalidate::field_path_element::Subscript;
+use protocheck_core::validators::repeated::UniqueLookup;
 use repeated_validator_builder::{SetIgnore, SetItems, SetMaxItems, SetMinItems, SetUnique, State};
 
 use super::{builder_internals::*, *};
@@ -21,6 +22,7 @@ impl<T: AsProtoField> AsProtoField for Vec<T> {
 impl<T> ProtoValidator<Vec<T>> for Vec<T>
 where
   T: AsProtoType + ProtoValidator<T>,
+  T::Target: UniqueItem,
 {
   type Target = Vec<T::Target>;
   type Validator = RepeatedValidator<T>;
@@ -35,6 +37,7 @@ impl<T, S> ValidatorBuilderFor<Vec<T>> for RepeatedValidatorBuilder<T, S>
 where
   S: State,
   T: AsProtoType + ProtoValidator<T>,
+  T::Target: UniqueItem,
 {
   type Target = Vec<T::Target>;
   type Validator = RepeatedValidator<T>;
@@ -64,6 +67,7 @@ where
 impl<T> Validator<Vec<T>> for RepeatedValidator<T>
 where
   T: AsProtoType + ProtoValidator<T>,
+  T::Target: UniqueItem,
 {
   type Target = Vec<T::Target>;
 
@@ -87,7 +91,17 @@ where
     if let Some(val) = val {
       let items_validator = self.items.as_ref().filter(|_| !val.is_empty());
 
+      let mut processed_values = self
+        .unique
+        .then(|| UniqueLookup::<<T::Target as UniqueItem>::LookupTarget<'_>>::from_len(val.len()));
+
+      let mut has_unique_values = true;
+
       for (i, value) in val.iter().enumerate() {
+        if let Some(processed_values) = processed_values.as_mut() && has_unique_values {
+          has_unique_values = <T::Target as UniqueItem>::check_unique(processed_values, value);
+        }
+
         if let Some(validator) = &items_validator {
           let mut ctx = field_context.clone();
           ctx.kind = FieldKind::RepeatedItem;
@@ -97,6 +111,15 @@ where
             .validate(&ctx, parent_elements, Some(value))
             .ok_or_push_violations(violations);
         }
+      }
+
+      if !has_unique_values {
+        violations.add(
+          field_context,
+          parent_elements,
+          &REPEATED_UNIQUE_VIOLATION,
+          "must contain unique values",
+        );
       }
     }
 

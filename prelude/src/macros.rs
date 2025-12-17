@@ -1,3 +1,24 @@
+macro_rules! impl_cel_check {
+  () => {
+    #[cfg(feature = "testing")]
+    fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+      if !self.cel.is_empty() {
+        test_programs(&self.cel, val)
+      } else {
+        Ok(())
+      }
+    }
+  };
+}
+
+macro_rules! impl_rules_collection {
+  () => {
+    fn cel_rules(&self) -> Vec<&'static CelRule> {
+      self.cel.iter().map(|prog| &prog.rule).collect()
+    }
+  };
+}
+
 #[macro_export]
 macro_rules! cel_rule {
   (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {

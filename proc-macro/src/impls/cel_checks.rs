@@ -21,12 +21,12 @@ pub fn impl_cel_checks(
 
       #[test]
       fn test() {
-        #item_ident::validate_cel()
+        #item_ident::check_cel_programs()
       }
 
       impl #item_ident {
         #[track_caller]
-        fn validate_cel() {
+        fn check_cel_programs() {
           let mut errors: Vec<::prelude::CelError> = Vec::new();
 
           #(
@@ -48,7 +48,7 @@ pub fn impl_cel_checks(
               eprintln!("{error}");
             }
 
-            panic!();
+            panic!("Failed CEL program test");
           }
         }
       }

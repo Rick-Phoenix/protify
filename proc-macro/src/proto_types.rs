@@ -13,6 +13,7 @@ pub enum ProtoType {
     path: Path,
     is_boxed: bool,
   },
+  Float,
   Int32,
   Uint32,
   Sint32,
@@ -34,6 +35,7 @@ impl ProtoType {
       ProtoType::Sint32 => quote! { #prefix::Sint32 },
       ProtoType::Duration => quote! { #prefix::Message },
       ProtoType::Timestamp => quote! { #prefix::Message },
+      ProtoType::Float => quote! { #prefix::Float },
     }
   }
 
@@ -95,6 +97,7 @@ impl ProtoType {
       "string" => Self::String,
       "sint32" => Self::Sint32,
       "uint32" => Self::Uint32,
+      "float" => Self::Float,
       "message" => {
         let path = fallback
           .ok_or(error_with_span!(
@@ -140,6 +143,7 @@ impl ProtoType {
       ProtoType::Duration => quote! { proto_types::Duration },
       ProtoType::Timestamp => quote! { proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
+      ProtoType::Float => quote! { f32 },
     }
   }
 
@@ -154,6 +158,7 @@ impl ProtoType {
       "u32" => Self::Uint32,
       "Timestamp" => Self::Timestamp,
       "Duration" => Self::Duration,
+      "f32" => Self::Float,
       _ => {
         return Err(error!(
           path,
@@ -197,6 +202,7 @@ impl ProtoType {
       ProtoType::Duration => quote! { ::proto_types::Duration },
       ProtoType::Timestamp => quote! { ::proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
+      ProtoType::Float => quote! { f32 },
     }
   }
 
@@ -214,6 +220,7 @@ impl ProtoType {
       ProtoType::Int32 => "int32".into(),
       ProtoType::Sint32 => "sint32".into(),
       ProtoType::Uint32 => "uint32".into(),
+      ProtoType::Float => "float".into(),
     }
   }
 
@@ -235,6 +242,7 @@ impl ProtoType {
       ProtoType::Duration => quote! { proto_types::Duration },
       ProtoType::Timestamp => quote! { proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
+      ProtoType::Float => quote! { f32 },
     }
   }
 
@@ -259,6 +267,7 @@ impl ProtoType {
       ProtoType::Sint32 => quote! { sint32 },
       ProtoType::Duration | ProtoType::Timestamp => quote! { message },
       ProtoType::Uint32 => quote! { uint32 },
+      ProtoType::Float => quote! { float },
     }
   }
 

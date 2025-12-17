@@ -5,6 +5,7 @@ use std::sync::Arc;
 use askama::Template;
 pub use common_options::*;
 use proto_types::{Duration, Timestamp};
+use protocheck_core::ordered_float::OrderedFloat;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProtoOption {
@@ -76,6 +77,12 @@ impl OptionValue {
     let items: Vec<OptionValue> = items.into_iter().map(|v| v.into()).collect();
 
     Self::List(items.into())
+  }
+}
+
+impl<T: Clone + Into<OptionValue>> From<&T> for OptionValue {
+  fn from(value: &T) -> Self {
+    value.clone().into()
   }
 }
 

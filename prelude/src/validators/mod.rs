@@ -4,20 +4,29 @@ use std::{fmt::Debug, hash::Hash, sync::Arc};
 
 use common_strings::*;
 use proto_types::{field_descriptor_proto::Type, protovalidate::*};
+use protocheck_core::{
+  ordered_float::OrderedFloat,
+  validators::{
+    containing::{ItemLookup, ListRules},
+    repeated::UniqueItem,
+  },
+};
 
 pub trait Validator<T>: Into<ProtoOption> {
-  type Target;
+  type Target: Default;
 
   fn cel_rules(&self) -> Vec<&'static CelRule> {
     Vec::new()
   }
 
-  fn validate_cel_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>> {
+  #[cfg(feature = "testing")]
+  fn check_cel_programs_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>> {
     Ok(())
   }
 
-  fn validate_cel(&self) -> Result<(), Vec<CelError>> {
-    Ok(())
+  #[cfg(feature = "testing")]
+  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+    self.check_cel_programs_with(Self::Target::default())
   }
 
   fn into_schema(self) -> FieldValidator {
@@ -143,6 +152,20 @@ mod macros {
           .map(|program| program.rule.clone().into())
           .collect();
         $values.push((CEL.clone(), OptionValue::List(rule_values.into())));
+      }
+    };
+  }
+
+  macro_rules! insert_list_option {
+    (
+    $validator:ident,
+    $values:ident,
+    $field:ident
+  ) => {
+      $crate::paste! {
+        if let Some(value) = $validator.$field {
+          $values.push(([< $field:snake:upper >].clone(), OptionValue::new_list(value)))
+        }
       }
     };
   }

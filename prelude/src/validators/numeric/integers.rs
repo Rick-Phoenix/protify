@@ -22,23 +22,8 @@ where
 {
   type Target = Num::RustType;
 
-  fn cel_rules(&self) -> Vec<&'static CelRule> {
-    self.cel.iter().map(|prog| &prog.rule).collect()
-  }
-
-  fn validate_cel_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
-    if !self.cel.is_empty() {
-      test_programs(&self.cel, val)
-    } else {
-      Ok(())
-    }
-  }
-
-  fn validate_cel(&self) -> Result<(), Vec<CelError>> {
-    let val = Self::Target::default();
-
-    self.validate_cel_with(val)
-  }
+  impl_rules_collection!();
+  impl_cel_check!();
 
   fn validate(
     &self,

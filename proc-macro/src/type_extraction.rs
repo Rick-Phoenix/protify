@@ -110,7 +110,7 @@ impl<'a> FieldValidatorExpr<'a> {
     let validator_expr = self.build_expr();
 
     quote! {
-      #validator_expr.validate_cel()
+      #validator_expr.check_cel_programs()
     }
   }
 }

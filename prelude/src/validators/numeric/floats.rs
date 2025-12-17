@@ -5,6 +5,56 @@ use float_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
 
 use super::*;
 
+impl<Num> Validator<Num> for FloatValidator<Num>
+where
+  Num: FloatWrapper,
+{
+  type Target = Num::RustType;
+
+  impl_rules_collection!();
+  impl_cel_check!();
+
+  fn validate(
+    &self,
+    field_context: &FieldContext,
+    parent_elements: &mut Vec<FieldPathElement>,
+    val: Option<&Self::Target>,
+  ) -> Result<(), Violations> {
+    let mut violations_agg = Violations::new();
+    let violations = &mut violations_agg;
+
+    if let Some(&val) = val {
+      if let Some(gt) = self.gt && val <= gt {
+        violations.add(field_context, parent_elements, Num::GT_VIOLATION, &format!("must be greater than {gt}"));
+      }
+
+      if let Some(allowed_list) = &self.in_ && Num::RustType::is_in(allowed_list, val) {
+        violations.add(field_context, parent_elements, Num::IN_VIOLATION, &format!("must be one of these values: {allowed_list:?}"));
+      }
+
+      if !self.cel.is_empty() {
+        let ctx = ProgramsExecutionCtx {
+          programs: &self.cel,
+          value: val,
+          violations,
+          field_context: Some(field_context),
+          parent_elements,
+        };
+
+        ctx.execute_programs();
+      }
+    } else if self.required {
+      violations.add_required(field_context, parent_elements);
+    }
+
+    if violations.is_empty() {
+      Ok(())
+    } else {
+      Err(violations_agg)
+    }
+  }
+}
+
 #[derive(Clone, Debug, Builder)]
 pub struct FloatValidator<Num>
 where
@@ -24,10 +74,10 @@ where
   pub gte: Option<Num::RustType>,
   /// Specifies that only the values in this list will be considered valid for this field.
   #[builder(into)]
-  pub in_: Option<Arc<[Num::RustType]>>,
+  pub in_: Option<ItemLookup<'static, OrderedFloat<Num::RustType>>>,
   /// Specifies that the values in this list will be considered NOT valid for this field.
   #[builder(into)]
-  pub not_in: Option<Arc<[Num::RustType]>>,
+  pub not_in: Option<ItemLookup<'static, OrderedFloat<Num::RustType>>>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
   pub cel: Vec<&'static CelProgram>,
@@ -82,8 +132,20 @@ where
     insert_option!(validator, values, lte);
     insert_option!(validator, values, gt);
     insert_option!(validator, values, gte);
-    insert_option!(validator, values, in_);
-    insert_option!(validator, values, not_in);
+
+    if let Some(allowed_list) = &validator.in_ {
+      values.push((
+        IN_.clone(),
+        OptionValue::new_list(allowed_list.into_iter().map(|of| of.0)),
+      ));
+    }
+
+    if let Some(forbidden_list) = &validator.not_in {
+      values.push((
+        NOT_IN.clone(),
+        OptionValue::new_list(forbidden_list.into_iter().map(|of| of.0)),
+      ));
+    }
 
     let mut outer_rules: OptionValueList = vec![];
 
@@ -104,69 +166,64 @@ impl_proto_type!(f32, "float");
 impl_proto_type!(f64, "double");
 
 pub trait FloatWrapper: AsProtoType {
-  type RustType: PartialOrd + PartialEq + Copy + Into<OptionValue> + Debug + Display;
+  type RustType: PartialOrd
+    + PartialEq
+    + Copy
+    + Into<OptionValue>
+    + Debug
+    + Display
+    + Default
+    + Into<::cel::Value>
+    + ListRules<LookupTarget = OrderedFloat<Self::RustType>>
+    + 'static;
+  const LT_VIOLATION: &'static LazyLock<ViolationData>;
+  const LTE_VIOLATION: &'static LazyLock<ViolationData>;
+  const GT_VIOLATION: &'static LazyLock<ViolationData>;
+  const GTE_VIOLATION: &'static LazyLock<ViolationData>;
+  const IN_VIOLATION: &'static LazyLock<ViolationData> = Self::RustType::IN_VIOLATION;
+  const NOT_IN_VIOLATION: &'static LazyLock<ViolationData> = Self::RustType::NOT_IN_VIOLATION;
+  const CONST_VIOLATION: &'static LazyLock<ViolationData>;
 
   fn type_name() -> Arc<str>;
 }
 
-impl FloatWrapper for f32 {
-  type RustType = f32;
+macro_rules! impl_float_wrapper {
+  ($target_type:ty, $proto_type:ident) => {
+    paste::paste! {
+      impl FloatWrapper for $target_type {
+        type RustType = $target_type;
+        const LT_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _LT_VIOLATION >];
+        const LTE_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _LTE_VIOLATION >];
+        const GT_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _GT_VIOLATION >];
+        const GTE_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _GTE_VIOLATION >];
+        const CONST_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _CONST_VIOLATION >];
 
-  fn type_name() -> Arc<str> {
-    FLOAT.clone()
-  }
+        fn type_name() -> Arc<str> {
+          $proto_type.clone()
+        }
+      }
+
+      impl ProtoValidator<$target_type> for $target_type {
+        type Target = $target_type;
+        type Validator = FloatValidator<$target_type>;
+        type Builder = FloatValidatorBuilder<$target_type>;
+
+        fn builder() -> Self::Builder {
+          FloatValidator::builder()
+        }
+      }
+
+      impl<S: State> ValidatorBuilderFor<$target_type> for FloatValidatorBuilder<$target_type, S> {
+        type Target = $target_type;
+        type Validator = FloatValidator<$target_type>;
+
+        fn build_validator(self) -> Self::Validator {
+          self.build()
+        }
+      }
+    }
+  };
 }
 
-impl FloatWrapper for f64 {
-  type RustType = f64;
-
-  fn type_name() -> Arc<str> {
-    DOUBLE.clone()
-  }
-}
-
-impl<S: State> ValidatorBuilderFor<f32> for FloatValidatorBuilder<f32, S> {
-  type Target = f32;
-  type Validator = FloatValidator<f32>;
-
-  fn build_validator(self) -> Self::Validator {
-    self.build()
-  }
-}
-
-impl<S: State> ValidatorBuilderFor<f64> for FloatValidatorBuilder<f64, S> {
-  type Target = f64;
-  type Validator = FloatValidator<f64>;
-
-  fn build_validator(self) -> Self::Validator {
-    self.build()
-  }
-}
-
-impl Validator<f32> for FloatValidator<f32> {
-  type Target = f32;
-}
-
-impl Validator<f64> for FloatValidator<f64> {
-  type Target = f64;
-}
-
-impl ProtoValidator<f32> for f32 {
-  type Target = f32;
-  type Validator = FloatValidator<f32>;
-  type Builder = FloatValidatorBuilder<f32>;
-
-  fn builder() -> Self::Builder {
-    FloatValidator::builder()
-  }
-}
-
-impl ProtoValidator<f64> for f64 {
-  type Target = f64;
-  type Validator = FloatValidator<f64>;
-  type Builder = FloatValidatorBuilder<f64>;
-
-  fn builder() -> Self::Builder {
-    FloatValidator::builder()
-  }
-}
+impl_float_wrapper!(f32, FLOAT);
+impl_float_wrapper!(f64, DOUBLE);

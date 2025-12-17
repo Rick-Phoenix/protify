@@ -19,3 +19,7 @@ cel = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 log = "0.4"
+protocheck-core = { workspace = true }
+
+[features]
+testing = []

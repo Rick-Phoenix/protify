@@ -7,6 +7,9 @@ authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
+[dev-dependencies]
+prelude = { path = "../prelude", features = ["testing"] }
+
 [dependencies]
 proc-macro-impls = { path = "../proc-macro/" }
 prelude = { path = "../prelude" }

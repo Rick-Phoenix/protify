@@ -142,6 +142,8 @@ mod inner {
   #[proto(options = vec![ random_option() ])]
   #[proto(cel_rules(MSG_RULE))]
   pub struct Abc {
+    #[proto(repeated(float), validate = |v| v.unique())]
+    pub repeated_float: Vec<f32>,
     #[proto(timestamp, validate = |v| v.lt_now())]
     pub timestamp: Option<Timestamp>,
 
@@ -218,4 +220,10 @@ fn main() {
   env_logger::init();
 
   let mut msg2 = AbcProto::default();
+
+  msg2.repeated_float = vec![1.2, 1.2];
+
+  let err = msg2.validate().unwrap_err();
+
+  eprintln!("{err:#?}");
 }

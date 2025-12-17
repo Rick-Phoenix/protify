@@ -91,6 +91,14 @@ impl ValidationResult for Result<(), Violations> {
   }
 }
 
+impl ValidationResult for Result<(), Violation> {
+  fn ok_or_push_violations(self, violations: &mut Violations) {
+    if let Err(new_violation) = self {
+      violations.push(new_violation);
+    }
+  }
+}
+
 impl IntoSubscript for Subscript {
   fn into_subscript(self) -> Subscript {
     self

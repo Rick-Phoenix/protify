@@ -131,18 +131,19 @@ where
     rules
   }
 
-  fn validate_cel(&self) -> Result<(), Vec<CelError>> {
+  #[cfg(feature = "testing")]
+  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     let mut errors: Vec<CelError> = Vec::new();
 
     if let Some(key_validator) = &self.keys {
-      match key_validator.validate_cel() {
+      match key_validator.check_cel_programs() {
         Ok(_) => {}
         Err(errs) => errors.extend(errs),
       };
     }
 
     if let Some(values_validator) = &self.values {
-      match values_validator.validate_cel() {
+      match values_validator.check_cel_programs() {
         Ok(_) => {}
         Err(errs) => errors.extend(errs),
       };
