@@ -79,6 +79,16 @@ pub struct ProtoConversionImpl<'a> {
 }
 
 impl<'a> ProtoConversionImpl<'a> {
+  pub fn generate_conversion_impls(&self) -> TokenStream2 {
+    let mut tokens = TokenStream2::new();
+
+    tokens.extend(self.create_into_proto_impl());
+    tokens.extend(self.create_from_proto_impl());
+    tokens.extend(self.create_conversion_helpers());
+
+    tokens
+  }
+
   pub fn create_into_proto_impl(&self) -> TokenStream2 {
     let Self {
       source_ident,

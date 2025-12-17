@@ -1,0 +1,91 @@
+use crate::*;
+
+pub struct ProcessFieldInput<'a, 'b, 'field> {
+  pub field_or_variant: FieldOrVariant<'field>,
+  pub input_item: &'b mut InputItem<'a, 'field>,
+  pub field_attrs: FieldAttrData,
+}
+
+pub fn process_field(input: ProcessFieldInput) -> syn::Result<TokenStream2> {
+  let ProcessFieldInput {
+    mut field_or_variant,
+    input_item:
+      InputItem {
+        impl_kind,
+        validators_tokens,
+        cel_rules_collection,
+        cel_checks_tokens,
+        ..
+      },
+    field_attrs,
+  } = input;
+
+  let field_ident = field_or_variant.ident()?;
+  let rust_type = TypeInfo::from_type(field_or_variant.get_type()?)?;
+
+  let field_attrs = match field_attrs {
+    FieldAttrData::Ignored { from_proto } => {
+      if let ImplKind::Shadow {
+        ignored_fields,
+        proto_conversion_data: proto_conversion_impls,
+        ..
+      } = impl_kind
+      {
+        ignored_fields.push(field_ident.clone());
+
+        if !proto_conversion_impls
+          .from_proto
+          .has_custom_impl()
+        {
+          proto_conversion_impls.add_field_from_proto_impl(&from_proto, None, field_ident);
+        }
+
+        // We close the loop early if the field is ignored
+        return Ok(TokenStream2::new());
+      } else {
+        bail!(field_ident, "Cannot ignore fields in a direct impl")
+      }
+    }
+
+    FieldAttrData::Normal(field_attrs) => *field_attrs,
+  };
+
+  let type_ctx = TypeContext::new(rust_type, &field_attrs.proto_field)?;
+
+  if let ImplKind::Shadow {
+    proto_conversion_data: proto_conversion_impls,
+    ..
+  } = impl_kind
+  {
+    if !proto_conversion_impls
+      .into_proto
+      .has_custom_impl()
+    {
+      proto_conversion_impls.add_field_into_proto_impl(
+        &field_attrs.into_proto,
+        &type_ctx,
+        field_ident,
+      );
+    }
+
+    if !proto_conversion_impls
+      .from_proto
+      .has_custom_impl()
+    {
+      proto_conversion_impls.add_field_from_proto_impl(
+        &field_attrs.from_proto,
+        Some(&type_ctx),
+        field_ident,
+      );
+    }
+  }
+
+  field_proto_impls(FieldCtx {
+    field: &mut field_or_variant,
+    field_attrs: &field_attrs,
+    type_ctx: &type_ctx,
+    validators_tokens,
+    cel_rules: cel_rules_collection,
+    cel_checks: cel_checks_tokens,
+  })
+}

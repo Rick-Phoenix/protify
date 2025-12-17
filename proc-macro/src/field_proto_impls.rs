@@ -1,57 +1,15 @@
 use crate::*;
 
-pub enum FieldOrVariant<'a> {
-  Field(&'a mut Field),
-  Variant(&'a mut Variant),
-}
-
-impl<'a> FieldOrVariant<'a> {
-  pub fn inject_attr(&mut self, attr: Attribute) {
-    match self {
-      FieldOrVariant::Field(field) => field.attrs.push(attr),
-      FieldOrVariant::Variant(variant) => variant.attrs.push(attr),
-    }
-  }
-
-  pub fn change_type(&mut self, ty: Type) -> Result<(), Error> {
-    let src_type = match self {
-      FieldOrVariant::Field(field) => &mut field.ty,
-      FieldOrVariant::Variant(variant) => {
-        if let Fields::Unnamed(variant_fields) = &mut variant.fields {
-          if variant_fields.unnamed.len() != 1 {
-            bail!(
-              &variant.fields,
-              "Oneof variants must contain a single unnamed value"
-            );
-          }
-
-          &mut variant_fields.unnamed.first_mut().unwrap().ty
-        } else {
-          bail!(
-            &variant.fields,
-            "Oneof variants must contain a single unnamed value"
-          );
-        }
-      }
-    };
-
-    *src_type = ty;
-
-    Ok(())
-  }
-}
-
-pub struct FieldCtx<'a> {
-  pub field: &'a mut FieldOrVariant<'a>,
+pub struct FieldCtx<'a, 'field> {
+  pub field: &'a mut FieldOrVariant<'field>,
   pub field_attrs: &'a FieldAttrs,
   pub type_ctx: &'a TypeContext<'a>,
-  pub field_ident: &'a Ident,
   pub validators_tokens: &'a mut TokenStream2,
   pub cel_rules: &'a mut Vec<TokenStream2>,
   pub cel_checks: &'a mut Vec<TokenStream2>,
 }
 
-pub fn process_proto_field(ctx: FieldCtx) -> Result<TokenStream2, Error> {
+pub fn field_proto_impls(ctx: FieldCtx) -> Result<TokenStream2, Error> {
   let FieldCtx {
     field,
     field_attrs: FieldAttrs {
@@ -62,7 +20,6 @@ pub fn process_proto_field(ctx: FieldCtx) -> Result<TokenStream2, Error> {
       ..
     },
     type_ctx,
-    field_ident,
     validators_tokens,
     cel_rules,
     cel_checks,
@@ -76,6 +33,8 @@ pub fn process_proto_field(ctx: FieldCtx) -> Result<TokenStream2, Error> {
   let prost_attr = type_ctx.as_prost_attr(*tag);
   let field_prost_attr: Attribute = parse_quote!(#prost_attr);
   field.inject_attr(field_prost_attr);
+
+  let field_ident = field.ident()?;
 
   if let ProtoField::Oneof {
     path: oneof_path, ..

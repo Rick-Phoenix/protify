@@ -27,7 +27,7 @@ impl FieldAttrData {
 }
 
 pub fn process_derive_field_attrs(
-  original_name: &Ident,
+  field_ident: &Ident,
   type_info: &TypeInfo,
   attrs: &[Attribute],
 ) -> Result<FieldAttrData, Error> {
@@ -253,10 +253,12 @@ pub fn process_derive_field_attrs(
   } else if proto_field.is_oneof() {
     0
   } else {
-    return Err(error!(original_name, "Field tag is missing"));
+    return Err(error!(field_ident, "Field tag is missing"));
   };
 
-  let name = name.unwrap_or_else(|| ccase!(snake, original_name.to_string()));
+  let name = name.unwrap_or_else(|| ccase!(snake, field_ident.to_string()));
+
+  let type_ctx = TypeContext::new(type_info.clone(), &proto_field)?;
 
   Ok(FieldAttrData::Normal(Box::new(FieldAttrs {
     validator,

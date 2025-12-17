@@ -35,13 +35,13 @@ pub fn process_message_derive_shadow(
 
   let orig_struct_fields = item.fields.iter_mut();
   let shadow_struct_fields = shadow_struct.fields.iter_mut();
-  let mut ignored_fields: Vec<&Ident> = Vec::new();
+  let mut ignored_fields: Vec<Ident> = Vec::new();
 
   let mut validators_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
-  let mut proto_conversion_impls = ProtoConversionImpl {
+  let mut proto_conversion_data = ProtoConversionImpl {
     source_ident: orig_struct_ident,
     target_ident: shadow_struct_ident,
     kind: InputItemKind::Struct,
@@ -49,66 +49,35 @@ pub fn process_message_derive_shadow(
     from_proto: ConversionData::new(&message_attrs.from_proto),
   };
 
+  let mut input_item = InputItem {
+    impl_kind: ImplKind::Shadow {
+      ignored_fields: &mut ignored_fields,
+      proto_conversion_data: &mut proto_conversion_data,
+    },
+    validators_tokens: &mut validators_tokens,
+    cel_rules_collection: &mut cel_rules_collection,
+    cel_checks_tokens: &mut cel_checks_tokens,
+  };
+
   for (src_field, dst_field) in orig_struct_fields.zip(shadow_struct_fields) {
     let src_field_ident = src_field.require_ident()?;
+    let type_info = TypeInfo::from_type(&src_field.ty)?;
+    let field_attrs = process_derive_field_attrs(src_field_ident, &type_info, &src_field.attrs)?;
 
-    let rust_type = TypeInfo::from_type(&src_field.ty)?;
+    let field_data = ProcessFieldInput {
+      field_or_variant: FieldOrVariant::Field(dst_field),
+      input_item: &mut input_item,
+      field_attrs,
+    };
 
-    let field_attrs =
-      match process_derive_field_attrs(src_field_ident, &rust_type, &src_field.attrs)? {
-        FieldAttrData::Ignored { from_proto } => {
-          ignored_fields.push(src_field_ident);
+    let field_tokens = process_field(field_data)?;
 
-          if !proto_conversion_impls
-            .from_proto
-            .has_custom_impl()
-          {
-            proto_conversion_impls.add_field_from_proto_impl(&from_proto, None, src_field_ident);
-          }
-
-          // We close the loop early if the field is ignored
-          continue;
-        }
-
-        FieldAttrData::Normal(field_attrs) => *field_attrs,
-      };
-
-    let type_ctx = TypeContext::new(rust_type, &field_attrs.proto_field)?;
-
-    let field_tokens = process_proto_field(FieldCtx {
-      field: &mut FieldOrVariant::Field(dst_field),
-      field_attrs: &field_attrs,
-      type_ctx: &type_ctx,
-      field_ident: src_field_ident,
-      validators_tokens: &mut validators_tokens,
-      cel_rules: &mut cel_rules_collection,
-      cel_checks: &mut cel_checks_tokens,
-    })?;
-
-    fields_tokens.push(field_tokens);
-
-    if !proto_conversion_impls
-      .into_proto
-      .has_custom_impl()
-    {
-      proto_conversion_impls.add_field_into_proto_impl(
-        &field_attrs.into_proto,
-        &type_ctx,
-        src_field_ident,
-      );
-    }
-
-    if !proto_conversion_impls
-      .from_proto
-      .has_custom_impl()
-    {
-      proto_conversion_impls.add_field_from_proto_impl(
-        &field_attrs.from_proto,
-        Some(&type_ctx),
-        src_field_ident,
-      );
+    if !field_tokens.is_empty() {
+      fields_tokens.push(field_tokens);
     }
   }
+
+  let proto_conversion_impls = proto_conversion_data.generate_conversion_impls();
 
   // We strip away the ignored fields from the shadow struct
   if let Fields::Named(fields) = &mut shadow_struct.fields {
@@ -116,19 +85,18 @@ pub fn process_message_derive_shadow(
 
     fields.named = old_fields
       .into_iter()
-      .filter(|f| !ignored_fields.contains(&f.ident.as_ref().unwrap()))
+      .filter(|f| !ignored_fields.contains(f.ident.as_ref().unwrap()))
       .collect();
   }
 
-  let into_proto_impl = proto_conversion_impls.create_into_proto_impl();
-  let from_proto_impl = proto_conversion_impls.create_from_proto_impl();
-  let conversion_helpers = proto_conversion_impls.create_conversion_helpers();
-
   let (cel_check_impl, top_level_programs_ident) = if let Some(paths) = &message_attrs.cel_rules {
-    let CelChecksImplOutput {
-      static_ident,
-      cel_check_impl,
-    } = impl_cel_checks(shadow_struct_ident, paths, cel_checks_tokens);
+    let static_ident = format_ident!(
+      "{}_CEL_RULES",
+      ccase!(constant, orig_struct_ident.to_string())
+    );
+
+    let cel_check_impl =
+      impl_cel_checks(shadow_struct_ident, &static_ident, paths, cel_checks_tokens);
 
     (Some(cel_check_impl), Some(static_ident))
   } else {
@@ -162,9 +130,7 @@ pub fn process_message_derive_shadow(
     #shadow_struct_derives
     #shadow_struct
 
-    #from_proto_impl
-    #into_proto_impl
-    #conversion_helpers
+    #proto_conversion_impls
 
     #validator_impl
     #cel_check_impl
@@ -181,76 +147,73 @@ pub fn process_message_derive_direct(
   let prost_message_attr: Attribute = parse_quote!(#[derive(prost::Message, Clone, PartialEq, ::protocheck::macros::TryIntoCelValue)]);
   item.attrs.push(prost_message_attr);
 
-  let mut fields_data: Vec<TokenStream2> = Vec::new();
+  let mut fields_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut validators_tokens = TokenStream2::new();
   let mut cel_rules_collection: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
+  let mut input_item = InputItem {
+    impl_kind: ImplKind::Direct,
+    validators_tokens: &mut validators_tokens,
+    cel_rules_collection: &mut cel_rules_collection,
+    cel_checks_tokens: &mut cel_checks_tokens,
+  };
+
   for src_field in item.fields.iter_mut() {
     let src_field_ident = src_field.require_ident()?;
+    let type_info = TypeInfo::from_type(&src_field.ty)?;
+    let field_attrs = process_derive_field_attrs(src_field_ident, &type_info, &src_field.attrs)?;
 
-    let rust_type = TypeInfo::from_type(&src_field.ty)?;
-
-    let field_attrs =
-      match process_derive_field_attrs(src_field_ident, &rust_type, &src_field.attrs)? {
-        FieldAttrData::Ignored { .. } => {
-          bail!(src_field, "Fields cannot be ignored in a direct impl")
+    if let FieldAttrData::Normal(data) = &field_attrs {
+      match type_info.type_.as_ref() {
+        RustType::Box(inner) => {
+          bail!(inner, "Boxed messages must be optional in a direct impl")
         }
-
-        FieldAttrData::Normal(attrs) => *attrs,
+        RustType::Option(inner) => {
+          if inner.is_box()
+            && !matches!(
+              data.proto_field,
+              ProtoField::Single(ProtoType::Message { is_boxed: true, .. })
+            )
+          {
+            bail!(inner, "Detected usage of `Option<Box<..>>`, but the field was not marked as a boxed message. Please use `#[proto(message(boxed))]` to mark it as a boxed message.");
+          }
+        }
+        RustType::Other(inner) => {
+          if matches!(
+            data.proto_field,
+            ProtoField::Single(ProtoType::Message { .. })
+          ) {
+            bail!(
+              &inner.path,
+              "Messages must be wrapped in Option in direct impls"
+            );
+          }
+        }
+        _ => {}
       };
+    }
 
-    let type_ctx = TypeContext::new(rust_type, &field_attrs.proto_field)?;
-
-    match type_ctx.rust_type.type_.as_ref() {
-      RustType::Box(inner) => {
-        bail!(inner, "Boxed messages must be optional in a direct impl")
-      }
-      RustType::Option(inner) => {
-        if inner.is_box()
-          && !matches!(
-            type_ctx.proto_field,
-            ProtoField::Single(ProtoType::Message { is_boxed: true, .. })
-          )
-        {
-          bail!(inner, "Detected usage of `Option<Box<..>>`, but the field was not marked as a boxed message. Please use `#[proto(message(boxed))]` to mark it as a boxed message.");
-        }
-      }
-      RustType::Other(inner) => {
-        if matches!(
-          type_ctx.proto_field,
-          ProtoField::Single(ProtoType::Message { .. })
-        ) {
-          bail!(
-            &inner.path,
-            "Messages must be wrapped in Option in direct impls"
-          );
-        }
-      }
-      _ => {}
+    let field_data = ProcessFieldInput {
+      field_or_variant: FieldOrVariant::Field(src_field),
+      input_item: &mut input_item,
+      field_attrs,
     };
 
-    let field_tokens = process_proto_field(FieldCtx {
-      field_ident: &src_field_ident.clone(),
-      field: &mut FieldOrVariant::Field(src_field),
-      field_attrs: &field_attrs,
-      type_ctx: &type_ctx,
-      validators_tokens: &mut validators_tokens,
-      cel_rules: &mut cel_rules_collection,
-      cel_checks: &mut cel_checks_tokens,
-    })?;
+    let field_tokens = process_field(field_data)?;
 
-    fields_data.push(field_tokens);
+    if !field_tokens.is_empty() {
+      fields_tokens.push(field_tokens);
+    }
   }
 
   let struct_ident = &item.ident;
 
   let (cel_check_impl, top_level_programs_ident) = if let Some(paths) = &message_attrs.cel_rules {
-    let CelChecksImplOutput {
-      static_ident,
-      cel_check_impl,
-    } = impl_cel_checks(struct_ident, paths, cel_checks_tokens);
+    let static_ident = format_ident!("{}_CEL_RULES", ccase!(constant, struct_ident.to_string()));
+
+    let cel_check_impl = impl_cel_checks(struct_ident, &static_ident, paths, cel_checks_tokens);
 
     (Some(cel_check_impl), Some(static_ident))
   } else {
@@ -261,7 +224,7 @@ pub fn process_message_derive_direct(
     orig_struct_ident: struct_ident,
     shadow_struct_ident: None,
     message_attrs: &message_attrs,
-    entries_tokens: fields_data,
+    entries_tokens: fields_tokens,
     fields_cel_rules: cel_rules_collection,
     top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
