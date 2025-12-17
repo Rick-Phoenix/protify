@@ -94,38 +94,40 @@ pub struct ProgramsExecutionCtx<'a, T> {
   pub parent_elements: &'a [FieldPathElement],
 }
 
-pub fn execute_cel_programs<T, E>(ctx: ProgramsExecutionCtx<T>)
+impl<'a, T, E> ProgramsExecutionCtx<'a, T>
 where
   T: TryInto<Value, Error = E>,
   CelConversionError: From<E>,
 {
-  let ProgramsExecutionCtx {
-    programs,
-    value,
-    violations,
-    field_context,
-    parent_elements,
-  } = ctx;
+  pub fn execute_programs(self) {
+    let Self {
+      programs,
+      value,
+      violations,
+      field_context,
+      parent_elements,
+    } = self;
 
-  let ctx = match initialize_context(value) {
-    Ok(ctx) => ctx,
-    Err(e) => {
-      violations.push(e.into_violation(None, field_context, parent_elements));
-      return;
-    }
-  };
-
-  for program in programs {
-    match program.execute(&ctx) {
-      Ok(was_successful) => {
-        if !was_successful {
-          violations.add_cel(&program.rule, field_context, parent_elements);
-        }
-      }
+    let ctx = match initialize_context(value) {
+      Ok(ctx) => ctx,
       Err(e) => {
-        violations.push(e.into_violation(Some(&program.rule), field_context, parent_elements))
+        violations.push(e.into_violation(None, field_context, parent_elements));
+        return;
       }
     };
+
+    for program in programs {
+      match program.execute(&ctx) {
+        Ok(was_successful) => {
+          if !was_successful {
+            violations.add_cel(&program.rule, field_context, parent_elements);
+          }
+        }
+        Err(e) => {
+          violations.push(e.into_violation(Some(&program.rule), field_context, parent_elements))
+        }
+      };
+    }
   }
 }
 

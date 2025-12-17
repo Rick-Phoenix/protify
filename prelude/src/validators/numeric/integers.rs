@@ -55,13 +55,15 @@ where
       }
 
       if !self.cel.is_empty() {
-        execute_cel_programs(ProgramsExecutionCtx {
+        let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val,
           violations,
           field_context: Some(field_context),
           parent_elements,
-        });
+        };
+
+        ctx.execute_programs();
       }
     } else if self.required {
       violations.add_required(field_context, parent_elements);

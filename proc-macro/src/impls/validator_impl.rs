@@ -35,13 +35,15 @@ pub fn impl_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
         let top_level_programs: &Vec<&CelProgram> = &#top_level_programs_expr;
 
         if !top_level_programs.is_empty() {
-          ::prelude::execute_cel_programs(::prelude::ProgramsExecutionCtx {
+          let ctx = ProgramsExecutionCtx {
             programs: top_level_programs,
             value: self.clone(),
             violations: &mut violations,
             field_context,
             parent_elements,
-          });
+          };
+
+          ctx.execute_programs();
         }
 
         #validators_tokens
