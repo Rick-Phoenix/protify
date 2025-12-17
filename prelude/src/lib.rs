@@ -2,6 +2,7 @@
 mod macros;
 
 use askama::Template;
+#[doc(hidden)]
 pub use paste::paste;
 mod oneof;
 mod options;

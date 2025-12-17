@@ -7,7 +7,7 @@ use proto_types::cel::CelConversionError;
 use thiserror::Error;
 
 use super::*;
-use crate::validators::field_context::Violations;
+use crate::validators::field_context::ViolationsExt;
 
 pub type CachedProgram = LazyLock<CelProgram>;
 
@@ -19,12 +19,6 @@ where
     .into_iter()
     .map(|lazy_lock| &**lazy_lock)
     .collect()
-}
-
-#[doc(hidden)]
-pub enum CelTarget<'a> {
-  Message,
-  Field(&'a FieldContext<'a>),
 }
 
 #[derive(Debug)]

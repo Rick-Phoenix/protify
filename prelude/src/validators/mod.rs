@@ -32,7 +32,7 @@ pub trait Validator<T>: Into<ProtoOption> {
     _field_context: &FieldContext,
     _parent_elements: &mut Vec<FieldPathElement>,
     _val: Option<&Self::Target>,
-  ) -> Result<(), Vec<Violation>> {
+  ) -> Result<(), Violations> {
     Ok(())
   }
 }

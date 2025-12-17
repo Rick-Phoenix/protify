@@ -3,7 +3,7 @@ use message_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
 use proto_types::cel::CelConversionError;
 
 use super::*;
-use crate::field_context::Violations;
+use crate::field_context::ViolationsExt;
 
 impl<T, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
 where
@@ -36,14 +36,14 @@ where
     field_context: &FieldContext,
     parent_elements: &mut Vec<FieldPathElement>,
     val: Option<&Self::Target>,
-  ) -> Result<(), Vec<Violation>> {
-    let mut violations_agg: Vec<Violation> = Vec::new();
+  ) -> Result<(), Violations> {
+    let mut violations_agg = Violations::new();
     let violations = &mut violations_agg;
 
     if let Some(val) = val {
       val
         .nested_validate(field_context, parent_elements)
-        .push_violations(violations);
+        .ok_or_push_violations(violations);
     } else if self.required {
       violations.add_required(field_context, parent_elements);
     }

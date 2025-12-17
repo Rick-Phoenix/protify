@@ -50,7 +50,7 @@ impl<'a> TypeContext<'a> {
     };
 
     quote! {
-      #validator_expr.validate(&#field_context_tokens, parent_elements, #argument).push_violations(&mut violations);
+      #validator_expr.validate(&#field_context_tokens, parent_elements, #argument).ok_or_push_violations(&mut violations);
     }
   }
 

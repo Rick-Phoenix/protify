@@ -5,7 +5,7 @@ use int_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
 use proto_types::protovalidate::violations_data::*;
 
 use super::*;
-use crate::field_context::Violations;
+use crate::field_context::ViolationsExt;
 
 impl<S: State, Num: IntWrapper> ValidatorBuilderFor<Num> for IntValidatorBuilder<Num, S> {
   type Target = Num::RustType;
@@ -45,8 +45,8 @@ where
     field_context: &FieldContext,
     parent_elements: &mut Vec<FieldPathElement>,
     val: Option<&Self::Target>,
-  ) -> Result<(), Vec<Violation>> {
-    let mut violations_agg: Vec<Violation> = Vec::new();
+  ) -> Result<(), Violations> {
+    let mut violations_agg = Violations::new();
     let violations = &mut violations_agg;
 
     if let Some(&val) = val {

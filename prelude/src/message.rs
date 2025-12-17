@@ -1,4 +1,4 @@
-use proto_types::protovalidate::{FieldPathElement, Violation};
+use proto_types::protovalidate::{FieldPathElement, Violations};
 
 use crate::{validators::CelRule, *};
 
@@ -6,7 +6,7 @@ pub trait ProtoMessage {
   fn proto_path() -> ProtoPath;
   fn proto_schema() -> Message;
 
-  fn validate(&self) -> Result<(), Vec<Violation>> {
+  fn validate(&self) -> Result<(), Violations> {
     Ok(())
   }
 
@@ -18,7 +18,7 @@ pub trait ProtoMessage {
     &self,
     _field_context: &FieldContext,
     _parent_messages: &mut Vec<FieldPathElement>,
-  ) -> Result<(), Vec<Violation>> {
+  ) -> Result<(), Violations> {
     Ok(())
   }
 }

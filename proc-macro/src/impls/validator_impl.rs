@@ -18,8 +18,8 @@ pub fn impl_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
   quote! {
     impl #target_ident {
       #[doc(hidden)]
-      fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
-        let mut violations = Vec::new();
+      fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
+        let mut violations = Violations::new();
 
         if let Some(field_context) = field_context {
           parent_elements.push(FieldPathElement {
@@ -57,11 +57,11 @@ pub fn impl_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
         }
       }
 
-      pub fn validate(&self) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+      pub fn validate(&self) -> Result<(), Violations> {
         self.__validate_internal(None, &mut vec![])
       }
 
-      pub fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+      pub fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
         self.__validate_internal(Some(field_context), parent_elements)
       }
     }

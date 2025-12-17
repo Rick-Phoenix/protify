@@ -6,7 +6,7 @@ use proto_types::protovalidate::{
 };
 
 use super::*;
-use crate::field_context::Violations;
+use crate::field_context::ViolationsExt;
 
 pub struct ProtoMap<K, V>(PhantomData<K>, PhantomData<V>);
 
@@ -160,8 +160,8 @@ where
     field_context: &FieldContext,
     parent_elements: &mut Vec<FieldPathElement>,
     val: Option<&HashMap<K::Target, V::Target>>,
-  ) -> Result<(), Vec<Violation>> {
-    let mut violations_agg: Vec<Violation> = Vec::new();
+  ) -> Result<(), Violations> {
+    let mut violations_agg = Violations::new();
     let violations = &mut violations_agg;
 
     if let Some(val) = val {
@@ -195,7 +195,7 @@ where
 
           validator
             .validate(&ctx, parent_elements, Some(k))
-            .push_violations(violations);
+            .ok_or_push_violations(violations);
         }
 
         if let Some(validator) = &value_validator {
@@ -205,7 +205,7 @@ where
 
           validator
             .validate(&ctx, parent_elements, Some(v))
-            .push_violations(violations);
+            .ok_or_push_violations(violations);
         }
       }
     }

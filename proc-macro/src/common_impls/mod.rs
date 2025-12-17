@@ -30,7 +30,11 @@ pub fn wrap_with_imports(item_ident: &Ident, tokens: TokenStream2) -> TokenStrea
     mod #module_ident {
       use super::*;
       use std::sync::LazyLock;
-      use ::prelude::{*, field_context::Violations};
+      use ::prelude::{*, field_context::ViolationsExt};
+      use ::proto_types::{
+        protovalidate::{Violations, FieldPathElement},
+        field_descriptor_proto::Type,
+      };
 
       #tokens
     }

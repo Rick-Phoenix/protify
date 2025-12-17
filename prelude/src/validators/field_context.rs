@@ -1,6 +1,6 @@
 use super::{field_path_element::Subscript, *};
 
-pub trait Violations {
+pub trait ViolationsExt {
   fn add(
     &mut self,
     field_context: &FieldContext,
@@ -43,7 +43,7 @@ pub trait Violations {
   );
 }
 
-impl Violations for Vec<Violation> {
+impl ViolationsExt for Vec<Violation> {
   fn add(
     &mut self,
     field_context: &FieldContext,
@@ -80,11 +80,11 @@ impl Violations for Vec<Violation> {
 }
 
 pub trait ValidationResult {
-  fn push_violations(self, violations: &mut Vec<Violation>);
+  fn ok_or_push_violations(self, violations: &mut Violations);
 }
 
-impl ValidationResult for Result<(), Vec<Violation>> {
-  fn push_violations(self, violations: &mut Vec<Violation>) {
+impl ValidationResult for Result<(), Violations> {
+  fn ok_or_push_violations(self, violations: &mut Violations) {
     if let Err(new_violations) = self {
       violations.extend(new_violations);
     }

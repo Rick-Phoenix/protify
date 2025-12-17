@@ -124,11 +124,11 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
           #orig_struct_ident::proto_schema()
         }
 
-        fn validate(&self) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+        fn validate(&self) -> Result<(), Violations> {
           self.validate()
         }
 
-        fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Vec<::proto_types::protovalidate::Violation>> {
+        fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
           self.nested_validate(field_context, parent_elements)
         }
       }

@@ -80,8 +80,8 @@ where
     field_context: &FieldContext,
     parent_elements: &mut Vec<FieldPathElement>,
     val: Option<&Vec<T::Target>>,
-  ) -> Result<(), Vec<Violation>> {
-    let mut violations_agg: Vec<Violation> = Vec::new();
+  ) -> Result<(), Violations> {
+    let mut violations_agg = Violations::new();
     let violations = &mut violations_agg;
 
     if let Some(val) = val {
@@ -95,7 +95,7 @@ where
 
           validator
             .validate(&ctx, parent_elements, Some(value))
-            .push_violations(violations);
+            .ok_or_push_violations(violations);
         }
       }
     }
