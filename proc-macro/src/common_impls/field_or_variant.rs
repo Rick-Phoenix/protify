@@ -1,3 +1,5 @@
+use syn_utils::EnumVariant;
+
 use crate::*;
 
 pub enum FieldOrVariant<'a> {
@@ -16,18 +18,7 @@ impl<'a> FieldOrVariant<'a> {
   pub fn get_type(&self) -> syn::Result<&Type> {
     let output = match self {
       FieldOrVariant::Field(field) => &field.ty,
-      FieldOrVariant::Variant(variant) => {
-        if let Fields::Unnamed(variant_fields) = &variant.fields
-          && variant_fields.unnamed.len() == 1
-        {
-          &variant_fields.unnamed.first().unwrap().ty
-        } else {
-          bail!(
-            &variant.fields,
-            "Oneof variants must contain a single unnamed value"
-          );
-        }
-      }
+      FieldOrVariant::Variant(variant) => variant.type_()?,
     };
 
     Ok(output)
@@ -43,23 +34,7 @@ impl<'a> FieldOrVariant<'a> {
   pub fn change_type(&mut self, ty: Type) -> Result<(), Error> {
     let src_type = match self {
       FieldOrVariant::Field(field) => &mut field.ty,
-      FieldOrVariant::Variant(variant) => {
-        if let Fields::Unnamed(variant_fields) = &mut variant.fields {
-          if variant_fields.unnamed.len() != 1 {
-            bail!(
-              &variant.fields,
-              "Oneof variants must contain a single unnamed value"
-            );
-          }
-
-          &mut variant_fields.unnamed.first_mut().unwrap().ty
-        } else {
-          bail!(
-            &variant.fields,
-            "Oneof variants must contain a single unnamed value"
-          );
-        }
-      }
+      FieldOrVariant::Variant(variant) => variant.type_mut()?,
     };
 
     *src_type = ty;

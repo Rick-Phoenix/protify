@@ -31,14 +31,13 @@ use syn_utils::{
 };
 
 use crate::{
-  common_impls::*, conversions::*, enum_derive::*, extension_derive::*, field_proto_impls::*,
-  impls::*, item_cloners::*, message_derive::*, message_schema_impl::*, module_processing::*,
+  common_impls::*, enum_derive::*, extension_derive::*, field_proto_impls::*, impls::*,
+  item_cloners::*, message_derive::*, message_schema_impl::*, module_processing::*,
   oneof_derive::*, oneof_schema_impl::*, path_utils::*, proto_field::*, proto_map::*,
   proto_types::*, service_derive::*, type_extraction::*,
 };
 
 mod common_impls;
-mod conversions;
 mod enum_derive;
 mod extension_derive;
 mod field_proto_impls;

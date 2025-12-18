@@ -1,8 +1,8 @@
 use crate::*;
 
-pub struct ProcessFieldInput<'a, 'b, 'field> {
+pub struct ProcessFieldInput<'item, 'a, 'field> {
   pub field_or_variant: FieldOrVariant<'field>,
-  pub input_item: &'b mut InputItem<'a, 'field>,
+  pub input_item: &'a mut InputItem<'item, 'field>,
   pub field_attrs: FieldAttrData,
 }
 
@@ -21,7 +21,7 @@ pub fn process_field(input: ProcessFieldInput) -> syn::Result<TokenStream2> {
   } = input;
 
   let field_ident = field_or_variant.ident()?;
-  let rust_type = TypeInfo::from_type(field_or_variant.get_type()?)?;
+  let type_info = TypeInfo::from_type(field_or_variant.get_type()?)?;
 
   let field_attrs = match field_attrs {
     FieldAttrData::Ignored { from_proto } => {
@@ -50,29 +50,23 @@ pub fn process_field(input: ProcessFieldInput) -> syn::Result<TokenStream2> {
     FieldAttrData::Normal(field_attrs) => *field_attrs,
   };
 
-  let type_ctx = TypeContext::new(rust_type, &field_attrs.proto_field)?;
+  let type_ctx = TypeContext::new(type_info, &field_attrs.proto_field)?;
 
   if let ImplKind::Shadow {
-    proto_conversion_data: proto_conversion_impls,
+    proto_conversion_data,
     ..
   } = impl_kind
   {
-    if !proto_conversion_impls
-      .into_proto
-      .has_custom_impl()
-    {
-      proto_conversion_impls.add_field_into_proto_impl(
+    if !proto_conversion_data.into_proto.has_custom_impl() {
+      proto_conversion_data.add_field_into_proto_impl(
         &field_attrs.into_proto,
         &type_ctx,
         field_ident,
       );
     }
 
-    if !proto_conversion_impls
-      .from_proto
-      .has_custom_impl()
-    {
-      proto_conversion_impls.add_field_from_proto_impl(
+    if !proto_conversion_data.from_proto.has_custom_impl() {
+      proto_conversion_data.add_field_from_proto_impl(
         &field_attrs.from_proto,
         Some(&type_ctx),
         field_ident,
