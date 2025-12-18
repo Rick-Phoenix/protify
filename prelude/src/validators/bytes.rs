@@ -63,11 +63,11 @@ impl Validator<Bytes> for BytesValidator {
         violations.add(field_context, parent_elements, &BYTES_PATTERN_VIOLATION, &format!("must match the pattern `{pattern}`"));
       }
 
-      if let Some(prefix) = &self.prefix && !val.starts_with(&prefix) {
+      if let Some(prefix) = &self.prefix && !val.starts_with(prefix) {
         violations.add(field_context, parent_elements, &BYTES_PREFIX_VIOLATION, &format!("must start with {}", prefix.escape_ascii()));
       }
 
-      if let Some(suffix) = &self.suffix && !val.ends_with(&suffix) {
+      if let Some(suffix) = &self.suffix && !val.ends_with(suffix) {
         violations.add(field_context, parent_elements, &BYTES_SUFFIX_VIOLATION, &format!("must end with {}", suffix.escape_ascii()));
       }
 
@@ -76,11 +76,11 @@ impl Validator<Bytes> for BytesValidator {
       }
 
       if let Some(allowed_list) = &self.in_ && !<&Bytes>::is_in(allowed_list, val) {
-        violations.add(field_context, parent_elements, &BYTES_IN_VIOLATION, &format!("must be one of these values: {}", format_bytes_list(allowed_list.into_iter().map(|b| *b))));
+        violations.add(field_context, parent_elements, &BYTES_IN_VIOLATION, &format!("must be one of these values: {}", format_bytes_list(allowed_list.into_iter().copied())));
       }
 
       if let Some(forbidden_list) = &self.not_in && <&Bytes>::is_in(forbidden_list, val) {
-        violations.add(field_context, parent_elements, &BYTES_IN_VIOLATION, &format!("cannot be one of these values: {}", format_bytes_list(forbidden_list.into_iter().map(|b| *b))));
+        violations.add(field_context, parent_elements, &BYTES_IN_VIOLATION, &format!("cannot be one of these values: {}", format_bytes_list(forbidden_list.into_iter().copied())));
       }
 
       if let Some(well_known) = &self.well_known {
@@ -228,7 +228,7 @@ impl From<BytesValidator> for ProtoOption {
         OptionValue::new_list(
           allowed_list
             .iter()
-            .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b.as_ref()).into())),
+            .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b).into())),
         ),
       ));
     }
@@ -239,7 +239,7 @@ impl From<BytesValidator> for ProtoOption {
         OptionValue::new_list(
           forbidden_list
             .iter()
-            .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b.as_ref()).into())),
+            .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b).into())),
         ),
       ));
     }

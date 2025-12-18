@@ -7,7 +7,7 @@ use crate::field_context::ViolationsExt;
 
 impl<T, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
 where
-  T: ProtoMessage + Default + TryInto<::cel::Value, Error = CelConversionError>,
+  T: ProtoMessage + Clone + Default + TryInto<::cel::Value, Error = CelConversionError>,
 {
   type Target = T;
   type Validator = MessageValidator<T>;
@@ -19,7 +19,7 @@ where
 
 impl<T> Validator<T> for MessageValidator<T>
 where
-  T: ProtoMessage + Default + TryInto<::cel::Value, Error = CelConversionError>,
+  T: ProtoMessage + Clone + Default + TryInto<::cel::Value, Error = CelConversionError>,
 {
   type Target = T;
 
@@ -38,6 +38,9 @@ where
     parent_elements: &mut Vec<FieldPathElement>,
     val: Option<&Self::Target>,
   ) -> Result<(), Violations> {
+    handle_ignore_always!(&self.ignore);
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none());
+
     let mut violations_agg = Violations::new();
     let violations = &mut violations_agg;
 
@@ -45,6 +48,18 @@ where
       val
         .nested_validate(field_context, parent_elements)
         .ok_or_push_violations(violations);
+
+      if !self.cel.is_empty() {
+        let ctx = ProgramsExecutionCtx {
+          programs: &self.cel,
+          value: val.clone(),
+          violations,
+          field_context: Some(field_context),
+          parent_elements,
+        };
+
+        ctx.execute_programs();
+      }
     } else if self.required {
       violations.add_required(field_context, parent_elements);
     }

@@ -317,8 +317,8 @@ impl From<StringValidator> for ProtoOption {
     insert_option!(validator, rules, suffix);
     insert_option!(validator, rules, contains);
     insert_option!(validator, rules, not_contains);
-    insert_option!(validator, rules, in_);
-    insert_option!(validator, rules, not_in);
+    insert_list_option!(validator, rules, in_);
+    insert_list_option!(validator, rules, not_in);
 
     if let Some(v) = validator.well_known {
       v.to_option(&mut rules)

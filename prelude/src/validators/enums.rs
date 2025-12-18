@@ -15,15 +15,61 @@ impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, 
 impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
   type Target = i32;
 
-  // fn validate(&self, val: Option<&i32>) -> Result<(), bool> {
-  //   if let Some(val) = val {
-  //     if self.defined_only && T::try_from(*val).is_err() {
-  //       println!("Must be a defined value");
-  //     }
-  //   }
-  //
-  //   Ok(())
-  // }
+  fn validate(
+    &self,
+    field_context: &FieldContext,
+    parent_elements: &mut Vec<FieldPathElement>,
+    val: Option<&Self::Target>,
+  ) -> Result<(), Violations> {
+    handle_ignore_always!(&self.ignore);
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
+
+    let mut violations_agg = Violations::new();
+    let violations = &mut violations_agg;
+
+    if let Some(&val) = val {
+      if let Some(const_val) = self.const_ && val != const_val {
+        violations.add(field_context, parent_elements, &ENUM_CONST_VIOLATION, &format!("must be equal to {const_val}"));
+      }
+
+      if let Some(allowed_list) = &self.in_ && !protocheck_core::wrappers::EnumVariant::is_in(allowed_list, protocheck_core::wrappers::EnumVariant(val)) {
+        violations.add(field_context, parent_elements, &ENUM_IN_VIOLATION, &format!("must be one of these values: {}", format_list(allowed_list.into_iter())));
+      }
+
+      if let Some(forbidden_list) = &self.not_in && protocheck_core::wrappers::EnumVariant::is_in(forbidden_list, protocheck_core::wrappers::EnumVariant(val)) {
+        violations.add(field_context, parent_elements, &ENUM_NOT_IN_VIOLATION, &format!("cannot be one of these values: {}", format_list(forbidden_list.into_iter())));
+      }
+
+      if self.defined_only && T::try_from(val).is_err() {
+        violations.add(
+          field_context,
+          parent_elements,
+          &ENUM_DEFINED_ONLY_VIOLATION,
+          "must be a known enum value",
+        );
+      }
+
+      if !self.cel.is_empty() {
+        let ctx = ProgramsExecutionCtx {
+          programs: &self.cel,
+          value: val,
+          violations,
+          field_context: Some(field_context),
+          parent_elements,
+        };
+
+        ctx.execute_programs();
+      }
+    } else if self.required {
+      violations.add_required(field_context, parent_elements);
+    }
+
+    if violations.is_empty() {
+      Ok(())
+    } else {
+      Err(violations_agg)
+    }
+  }
 }
 
 #[derive(Clone, Debug, Builder)]
@@ -33,10 +79,10 @@ pub struct EnumValidator<T: ProtoEnum> {
   _enum: PhantomData<T>,
   /// Specifies that only the values in this list will be considered valid for this field.
   #[builder(into)]
-  pub in_: Option<Arc<[i32]>>,
+  pub in_: Option<ItemLookup<'static, i32>>,
   /// Specifies that the values in this list will be considered NOT valid for this field.
   #[builder(into)]
-  pub not_in: Option<Arc<[i32]>>,
+  pub not_in: Option<ItemLookup<'static, i32>>,
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
   #[builder(default, with = || true)]
@@ -85,8 +131,8 @@ impl<T: ProtoEnum> From<EnumValidator<T>> for ProtoOption {
     }
 
     insert_boolean_option!(validator, rules, defined_only);
-    insert_option!(validator, rules, in_);
-    insert_option!(validator, rules, not_in);
+    insert_list_option!(validator, rules, in_);
+    insert_list_option!(validator, rules, not_in);
 
     let mut outer_rules: OptionValueList = vec![];
 

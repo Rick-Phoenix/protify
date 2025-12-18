@@ -115,12 +115,6 @@ impl From<Ignore> for OptionValue {
   }
 }
 
-fn create_string_list<T: Into<Arc<str>>, I: IntoIterator<Item = T>>(list: I) -> Arc<[Arc<str>]> {
-  let new_list: Vec<Arc<str>> = list.into_iter().map(|i| i.into()).collect();
-
-  new_list.into()
-}
-
 macro_rules! impl_ignore {
   ($builder:ident) => {
     $crate::paste! {
