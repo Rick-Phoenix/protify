@@ -97,35 +97,6 @@ pub struct ProtoMap {
   pub values: ProtoType,
 }
 
-impl ProtoMap {
-  pub fn field_proto_type_tokens(&self) -> TokenStream2 {
-    let keys = self.keys.field_proto_type_tokens();
-    let values = self.values.field_proto_type_tokens();
-
-    quote! { ::prelude::ProtoMap<#keys, #values> }
-  }
-
-  pub fn validator_target_type(&self) -> TokenStream2 {
-    let keys = self.keys.validator_target_type();
-    let values = self.values.validator_target_type();
-
-    quote! { ::prelude::ProtoMap<#keys, #values> }
-  }
-
-  pub fn output_proto_type(&self) -> TokenStream2 {
-    let keys = self.keys.output_proto_type();
-    let values = self.values.output_proto_type();
-
-    quote! { std::collections::HashMap<#keys, #values> }
-  }
-
-  pub fn as_prost_attr_type(&self) -> TokenStream2 {
-    let map_attr = format!("{}, {}", self.keys, self.values.as_prost_map_value());
-
-    quote! { map = #map_attr }
-  }
-}
-
 pub fn parse_map_with_context(
   input: syn::parse::ParseStream,
   rust_type: &RustType,
@@ -133,7 +104,10 @@ pub fn parse_map_with_context(
   let mut metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
 
   if metas.len() != 2 {
-    bail!(metas, "Expected a list of two items");
+    bail!(
+      metas,
+      "Expected a list of two items indicating the types of keys and values"
+    );
   }
 
   let values = match metas.pop().unwrap().into_value() {
@@ -168,8 +142,7 @@ pub fn parse_map_with_context(
   };
 
   let keys_input = metas.pop().unwrap().into_value();
-  let keys_path = keys_input.require_path_only()?;
-  let keys = ProtoMapKeys::from_path(keys_path)?;
+  let keys = ProtoMapKeys::from_path(keys_input.require_path_only()?)?;
 
   Ok(ProtoMap { keys, values })
 }

@@ -28,7 +28,11 @@ impl ProtoField {
 
   pub fn as_prost_attr_type(&self) -> TokenStream2 {
     match self {
-      Self::Map(map) => map.as_prost_attr_type(),
+      Self::Map(map) => {
+        let map_attr = format!("{}, {}", map.keys, map.values.as_prost_map_value());
+
+        quote! { map = #map_attr }
+      }
       ProtoField::Oneof { path, tags, .. } => {
         let oneof_path_str = path.to_token_stream().to_string();
         let tags_str = tags_to_str(tags);
@@ -111,7 +115,12 @@ impl ProtoField {
 
   pub fn validator_target_type(&self) -> TokenStream2 {
     match self {
-      Self::Map(map) => map.validator_target_type(),
+      Self::Map(map) => {
+        let keys = map.keys.validator_target_type();
+        let values = map.values.validator_target_type();
+
+        quote! { ::prelude::ProtoMap<#keys, #values> }
+      }
       ProtoField::Oneof { .. } => quote! {},
       ProtoField::Repeated(proto_type) => {
         let inner = proto_type.validator_target_type();
@@ -125,7 +134,12 @@ impl ProtoField {
 
   pub fn field_proto_type_tokens(&self) -> TokenStream2 {
     let target_type = match self {
-      ProtoField::Map(proto_map) => proto_map.field_proto_type_tokens(),
+      ProtoField::Map(proto_map) => {
+        let keys = proto_map.keys.field_proto_type_tokens();
+        let values = proto_map.values.field_proto_type_tokens();
+
+        quote! { ::prelude::ProtoMap<#keys, #values> }
+      }
       ProtoField::Oneof { .. } => quote! {},
       ProtoField::Repeated(proto_type) => {
         let inner = proto_type.field_proto_type_tokens();
@@ -145,7 +159,12 @@ impl ProtoField {
 
   pub fn output_proto_type(&self) -> TokenStream2 {
     match self {
-      Self::Map(map) => map.output_proto_type(),
+      Self::Map(map) => {
+        let keys = map.keys.output_proto_type();
+        let values = map.values.output_proto_type();
+
+        quote! { std::collections::HashMap<#keys, #values> }
+      }
       Self::Oneof { path, .. } => quote! { Option<#path> },
       ProtoField::Repeated(inner) => {
         let inner_type = inner.output_proto_type();
