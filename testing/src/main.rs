@@ -231,9 +231,17 @@ fn main() {
 
 #[cfg(test)]
 mod test {
+  use bytes::Bytes;
   use proc_macro_impls::proto_message;
 
   use crate::inner::PseudoEnum;
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct DummyMsg {
+    #[proto(tag = 1)]
+    pub id: i32,
+  }
 
   #[proto_message(direct)]
   #[proto(package = "", file = "")]
@@ -246,6 +254,60 @@ mod test {
   fn unique_enums() {
     let mut msg = UniqueEnums {
       unique_enums: vec![PseudoEnum::AbcDeg as i32, PseudoEnum::AbcDeg as i32],
+    };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  }
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct UniqueFloats {
+    #[proto(tag = 1, validate = |v| v.unique())]
+    pub unique_floats: Vec<f32>,
+  }
+
+  #[test]
+  fn unique_floats() {
+    let mut msg = UniqueFloats {
+      unique_floats: vec![1.1, 1.1],
+    };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  }
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct UniqueMessages {
+    #[proto(repeated(message), tag = 1, validate = |v| v.unique())]
+    pub unique_messages: Vec<DummyMsg>,
+  }
+
+  #[test]
+  fn unique_messages() {
+    let mut msg = UniqueMessages {
+      unique_messages: vec![DummyMsg { id: 1 }, DummyMsg { id: 1 }],
+    };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  }
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct UniqueBytes {
+    #[proto(repeated(message), tag = 1, validate = |v| v.unique())]
+    pub unique_bytes: Vec<Bytes>,
+  }
+
+  #[test]
+  fn unique_bytes() {
+    let mut msg = UniqueBytes {
+      unique_bytes: vec![Bytes::default(), Bytes::default()],
     };
 
     let err = msg.validate().unwrap_err();

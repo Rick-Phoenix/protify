@@ -11,6 +11,7 @@ keywords.workspace = true
 prelude = { path = "../prelude", features = ["testing"] }
 
 [dependencies]
+bytes = "1"
 proc-macro-impls = { path = "../proc-macro/" }
 prelude = { path = "../prelude" }
 proto-types = { workspace = true, features = ["serde"] }

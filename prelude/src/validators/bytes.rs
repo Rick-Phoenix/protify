@@ -8,6 +8,7 @@ use super::*;
 impl_validator!(BytesValidator, Bytes);
 impl_into_option!(BytesValidator);
 impl_ignore!(BytesValidatorBuilder);
+impl_proto_type!(Bytes, "bytes");
 
 impl Validator<Bytes> for BytesValidator {
   type Target = Bytes;

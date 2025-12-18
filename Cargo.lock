@@ -973,6 +973,7 @@ dependencies = [
 name = "testing"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "env_logger",
  "prelude",
  "proc-macro-impls",
