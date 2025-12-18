@@ -10,7 +10,6 @@ pub struct MessageAttrs {
   pub package: String,
   pub nested_messages: Vec<Ident>,
   pub nested_enums: Vec<Ident>,
-  pub direct: bool,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
@@ -29,7 +28,6 @@ pub fn process_derive_message_attrs(
   let mut full_name: Option<String> = None;
   let mut file: Option<String> = None;
   let mut package: Option<String> = None;
-  let mut direct = false;
   let mut nested_messages: Vec<Ident> = Vec::new();
   let mut nested_enums: Vec<Ident> = Vec::new();
   let mut from_proto: Option<PathOrClosure> = None;
@@ -106,7 +104,10 @@ pub fn process_derive_message_attrs(
         let ident = path.require_ident()?.to_string();
 
         match ident.as_str() {
-          "direct" => direct = true,
+          "direct" => bail!(
+            path,
+            "`direct` must be set as a proc macro argument, not as an attribute"
+          ),
           _ => bail!(path, "Unknown attribute `{ident}`"),
         };
       }
@@ -130,7 +131,6 @@ pub fn process_derive_message_attrs(
     package,
     nested_messages,
     nested_enums,
-    direct,
     from_proto,
     into_proto,
     shadow_derives,

@@ -2,11 +2,11 @@ use syn_utils::EnumVariant;
 
 use crate::*;
 
-pub fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
+pub fn process_oneof_derive(item: &mut ItemEnum, is_direct: bool) -> Result<TokenStream2, Error> {
   let oneof_attrs = process_oneof_attrs(&item.ident, &item.attrs)?;
 
   match oneof_attrs.backend {
-    Backend::Prost => process_oneof_derive_prost(item, oneof_attrs),
+    Backend::Prost => process_oneof_derive_prost(item, oneof_attrs, is_direct),
     Backend::Protobuf => unimplemented!(),
   }
 }
@@ -14,8 +14,9 @@ pub fn process_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> 
 pub fn process_oneof_derive_prost(
   item: &mut ItemEnum,
   oneof_attrs: OneofAttrs,
+  is_direct: bool,
 ) -> Result<TokenStream2, Error> {
-  if oneof_attrs.direct {
+  if is_direct {
     process_oneof_derive_direct(item, oneof_attrs)
   } else {
     process_oneof_derive_shadow(item, oneof_attrs)

@@ -2,11 +2,14 @@ use syn_utils::AsNamedField;
 
 use crate::*;
 
-pub fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
+pub fn process_message_derive(
+  item: &mut ItemStruct,
+  is_direct: bool,
+) -> Result<TokenStream2, Error> {
   let message_attrs = process_derive_message_attrs(&item.ident, &item.attrs)?;
 
   match message_attrs.backend {
-    Backend::Prost => process_message_derive_prost(item, message_attrs),
+    Backend::Prost => process_message_derive_prost(item, message_attrs, is_direct),
     Backend::Protobuf => unimplemented!(),
   }
 }
@@ -14,8 +17,9 @@ pub fn process_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, Err
 pub fn process_message_derive_prost(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
+  is_direct: bool,
 ) -> Result<TokenStream2, Error> {
-  if message_attrs.direct {
+  if is_direct {
     process_message_derive_direct(item, message_attrs)
   } else {
     process_message_derive_shadow(item, message_attrs)

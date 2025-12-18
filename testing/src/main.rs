@@ -78,7 +78,7 @@ mod inner {
   #[proto(reserved_names("abc", "bcd"))]
   #[proto(options = vec![ random_option() ])]
   #[derive(Clone, Debug)]
-  enum PseudoEnum {
+  pub enum PseudoEnum {
     AbcDeg,
     B,
     C,
@@ -140,7 +140,6 @@ mod inner {
   #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
   #[proto(options = vec![ random_option() ])]
-  #[proto(cel_rules(MSG_RULE))]
   pub struct Abc {
     #[proto(repeated(float), validate = |v| v.unique())]
     pub repeated_float: Vec<f32>,
@@ -171,13 +170,16 @@ mod inner {
     #[proto(enum_, validate = |v| v.defined_only())]
     enum_field: PseudoEnum,
 
+    #[proto(repeated(enum_), validate = |v| v.unique())]
+    pub repeated_enum: Vec<PseudoEnum>,
+
     #[proto(enum_)]
     optional_enum: Option<PseudoEnum>,
 
     #[proto(message(proxied), validate = |v| v.cel([ &RULE ]))]
     nested: Option<Nested>,
 
-    #[proto(repeated(message(proxied)))]
+    #[proto(repeated(message(proxied)), validate = |v| v.min_items(1))]
     repeated_message: Vec<Nested>,
 
     #[proto(oneof(default, proxied))]
@@ -202,8 +204,7 @@ mod inner {
     name: String,
   }
 
-  #[proto_message]
-  #[proto(direct)]
+  #[proto_message(direct)]
   pub struct Nested2 {
     name: String,
 
@@ -221,9 +222,34 @@ fn main() {
 
   let mut msg2 = AbcProto::default();
 
-  msg2.repeated_float = vec![1.2, 1.2];
+  msg2.repeated_enum = vec![PseudoEnum::AbcDeg as i32, PseudoEnum::AbcDeg as i32];
 
   let err = msg2.validate().unwrap_err();
 
   eprintln!("{err:#?}");
+}
+
+#[cfg(test)]
+mod test {
+  use proc_macro_impls::proto_message;
+
+  use crate::inner::PseudoEnum;
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct UniqueEnums {
+    #[proto(repeated(enum_), tag = 1, validate = |v| v.unique())]
+    pub unique_enums: Vec<PseudoEnum>,
+  }
+
+  #[test]
+  fn unique_enums() {
+    let mut msg = UniqueEnums {
+      unique_enums: vec![PseudoEnum::AbcDeg as i32, PseudoEnum::AbcDeg as i32],
+    };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  }
 }

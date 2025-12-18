@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 
 use proto_types::protovalidate::field_path_element::Subscript;
-use protocheck_core::validators::repeated::UniqueLookup;
 use repeated_validator_builder::{SetIgnore, SetItems, SetMaxItems, SetMinItems, SetUnique, State};
 
 use super::{builder_internals::*, *};
@@ -93,7 +92,7 @@ where
 
       let mut processed_values = self
         .unique
-        .then(|| UniqueLookup::<<T::Target as UniqueItem>::LookupTarget<'_>>::from_len(val.len()));
+        .then(|| <T::Target as UniqueItem>::new_container(val.len()));
 
       let mut has_unique_values = true;
 

@@ -4,7 +4,6 @@ pub struct OneofAttrs {
   pub options: Option<Expr>,
   pub name: String,
   pub required: bool,
-  pub direct: bool,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
@@ -15,7 +14,6 @@ pub fn process_oneof_attrs(enum_ident: &Ident, attrs: &[Attribute]) -> Result<On
   let mut options: Option<Expr> = None;
   let mut name: Option<String> = None;
   let mut required = false;
-  let mut direct = false;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Option<MetaList> = None;
@@ -28,7 +26,10 @@ pub fn process_oneof_attrs(enum_ident: &Ident, attrs: &[Attribute]) -> Result<On
 
         match ident.as_str() {
           "required" => required = true,
-          "direct" => direct = true,
+          "direct" => bail!(
+            path,
+            "`direct` must be set as a proc macro argument, not as an attribute"
+          ),
           _ => bail!(path, "Unknown attribute `{ident}`"),
         };
       }
@@ -67,7 +68,6 @@ pub fn process_oneof_attrs(enum_ident: &Ident, attrs: &[Attribute]) -> Result<On
     options,
     name: name.unwrap_or_else(|| ccase!(snake, enum_ident.to_string())),
     required,
-    direct,
     from_proto,
     into_proto,
     shadow_derives,

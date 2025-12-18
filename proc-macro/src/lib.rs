@@ -59,8 +59,20 @@ mod type_extraction;
 mod attributes;
 
 #[proc_macro_attribute]
-pub fn proto_message(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn proto_message(args: TokenStream, input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
+
+  let mut is_direct = false;
+
+  let parser = syn::meta::parser(|meta| {
+    if meta.path.is_ident("direct") {
+      is_direct = true;
+    }
+
+    Ok(())
+  });
+
+  parse_macro_input!(args with parser);
 
   if !matches!(item.fields, Fields::Named(_)) {
     return error!(
@@ -71,13 +83,13 @@ pub fn proto_message(_args: TokenStream, input: TokenStream) -> TokenStream {
     .into();
   }
 
-  let extra_tokens = match process_message_derive(&mut item) {
+  let extra_tokens = match process_message_derive(&mut item, is_direct) {
     Ok(output) => output,
     Err(e) => e.into_compile_error(),
   };
 
   quote! {
-    #[derive(Message)]
+    #[derive(::proc_macro_impls::Message)]
     #item
 
     #extra_tokens
@@ -154,10 +166,22 @@ pub fn enum_derive(_input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn proto_oneof(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn proto_oneof(args: TokenStream, input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemEnum);
 
-  let extra_tokens = match process_oneof_derive(&mut item) {
+  let mut is_direct = false;
+
+  let parser = syn::meta::parser(|meta| {
+    if meta.path.is_ident("direct") {
+      is_direct = true;
+    }
+
+    Ok(())
+  });
+
+  parse_macro_input!(args with parser);
+
+  let extra_tokens = match process_oneof_derive(&mut item, is_direct) {
     Ok(output) => output,
     Err(e) => return e.to_compile_error().into(),
   };

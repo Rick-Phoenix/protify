@@ -16,6 +16,33 @@ pub fn impl_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
   let top_level_programs_expr = tokens_or_default!(top_level_programs_ident, quote! { vec![] });
 
   quote! {
+    use protocheck::validators::repeated::{UniqueItem, UniqueLookup};
+    impl UniqueItem for #target_ident {
+      type LookupTarget<'a> = &'a Self
+        where Self: 'a;
+
+      fn new_container<'a>(len: usize) -> UniqueLookup<Self::LookupTarget<'a>> {
+        UniqueLookup::Vec(Vec::with_capacity(len))
+      }
+
+      fn check_unique<'a>(container: &mut UniqueLookup<Self::LookupTarget<'a>>, item: &'a Self) -> bool {
+        match container {
+          UniqueLookup::Vec(vec) => {
+            if vec.contains(&item) {
+              false
+            } else {
+              vec.push(item);
+              true
+            }
+          }
+          UniqueLookup::Set(_) => {
+            eprintln!("Set lookup cannot be used with messages");
+            true
+          },
+        }
+      }
+    }
+
     impl #target_ident {
       #[doc(hidden)]
       fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
