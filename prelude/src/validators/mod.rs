@@ -9,6 +9,7 @@ use protocheck_core::{
   validators::{
     containing::{ItemLookup, ListRules},
     repeated::UniqueItem,
+    well_known_strings::*,
   },
 };
 

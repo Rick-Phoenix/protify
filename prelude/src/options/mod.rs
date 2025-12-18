@@ -5,7 +5,6 @@ use std::sync::Arc;
 use askama::Template;
 pub use common_options::*;
 use proto_types::{Duration, Timestamp};
-use protocheck_core::ordered_float::OrderedFloat;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProtoOption {

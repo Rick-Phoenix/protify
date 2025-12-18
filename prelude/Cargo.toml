@@ -9,7 +9,7 @@ keywords.workspace = true
 
 [dependencies]
 bon = "3.8"
-regex = "1"
+regex = { version = "1", optional = true }
 proto-types = { workspace = true }
 paste = "1"
 bytes = "1"
@@ -22,4 +22,7 @@ log = "0.4"
 protocheck-core = { workspace = true }
 
 [features]
+default = ["regex"]
+
 testing = []
+regex = ["dep:regex", "protocheck-core/regex"]

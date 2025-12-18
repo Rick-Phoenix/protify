@@ -2,6 +2,7 @@
 mod macros;
 
 use askama::Template;
+use bytes::Bytes;
 #[doc(hidden)]
 pub use paste::paste;
 mod oneof;
