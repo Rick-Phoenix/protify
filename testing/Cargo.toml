@@ -11,6 +11,7 @@ keywords.workspace = true
 prelude = { path = "../prelude", features = ["testing"] }
 
 [dependencies]
+regex = { workspace = true }
 bytes = "1"
 proc-macro-impls = { path = "../proc-macro/" }
 prelude = { path = "../prelude" }

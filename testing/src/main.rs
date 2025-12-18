@@ -43,11 +43,13 @@ fn random_option() -> ProtoOption {
 mod inner {
   use std::sync::{Arc, LazyLock};
 
-  use prelude::*;
+  use bytes::Bytes;
+  use prelude::{bytes_regex, CachedBytesRegex, *};
   use proc_macro_impls::{
     proto_enum, proto_extension, proto_message, proto_oneof, proto_service, Extension, Service,
   };
   use proto_types::{field_descriptor_proto::Type, protovalidate::FieldPathElement};
+  use regex::Regex;
 
   use super::*;
 
@@ -108,30 +110,18 @@ mod inner {
     }
   }
 
-  fn message_rules() -> Vec<CelRule> {
-    vec![
-      CelRule::builder()
-        .id("abc")
-        .message("abc")
-        .expression("abc")
-        .build(),
-      cel_rule!(id = "abc", msg = "abc", expr = "abc"),
-    ]
-  }
-
   fn random_cel_rule() -> CelRule {
-    cel_rule!(
-      id = "hobbits",
-      msg = "they're taking the hobbits to isengard!",
-      expr = "hobbits.location == isengard"
-    )
+    CelRule::builder()
+      .id("hobbits")
+      .message("they're taking the hobbits to isengard!")
+      .expression("hobbits.location == isengard")
+      .build()
   }
 
-  static MSG_RULE: CachedProgram = cel_program!(
-    id = "abc",
-    msg = "abc",
-    expr = "this.timestamp == timestamp('1975-01-01T00:00:00Z')"
-  );
+  static MSG_RULE: CachedProgram = cel_program!(random_cel_rule());
+
+  static ABC: CachedRegex = regex!("abc", "abcde");
+  static BYTES_REGEX: CachedBytesRegex = bytes_regex!("abc", "abcde");
 
   #[proto_message]
   #[proto(reserved_numbers(1, 2, 3..9))]
@@ -153,7 +143,10 @@ mod inner {
     #[proto(message(AbcProto, boxed), validate = |v| v.required())]
     boxed: Option<Box<Abc>>,
 
-    #[proto(tag = 35, validate = string_validator())]
+    #[proto(bytes, validate = |v| v.pattern(&BYTES_REGEX))]
+    pub bytes: Bytes,
+
+    #[proto(tag = 35, validate = |v| v.pattern(&ABC))]
     name: String,
 
     #[proto(ignore, from_proto = Default::default)]

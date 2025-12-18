@@ -981,6 +981,7 @@ dependencies = [
  "proto-types",
  "protocheck",
  "protocheck-proc-macro",
+ "regex",
  "serde",
 ]
 

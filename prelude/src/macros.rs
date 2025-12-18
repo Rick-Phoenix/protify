@@ -1,3 +1,21 @@
+#[macro_export]
+macro_rules! regex {
+  ($id:literal, $content:expr) => {
+    std::sync::LazyLock::new(|| {
+      ::regex::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
+    })
+  };
+}
+
+#[macro_export]
+macro_rules! bytes_regex {
+  ($id:literal, $content:expr) => {
+    std::sync::LazyLock::new(|| {
+      ::regex::bytes::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
+    })
+  };
+}
+
 macro_rules! handle_ignore_always {
   ($ignore:expr) => {
     if matches!($ignore, Some(Ignore::Always)) {
@@ -33,17 +51,6 @@ macro_rules! impl_testing_methods {
 }
 
 #[macro_export]
-macro_rules! cel_rule {
-  (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
-    $crate::CelRule {
-      id: $id.into(),
-      message: $msg.into(),
-      expression: $expr.into(),
-    }
-  };
-}
-
-#[macro_export]
 macro_rules! cel_program {
   (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
     std::sync::LazyLock::new(|| {
@@ -55,6 +62,10 @@ macro_rules! cel_program {
 
       CelProgram::new(rule)
     })
+  };
+
+  ($rule:expr) => {
+    std::sync::LazyLock::new(|| CelProgram::new($rule))
   };
 }
 

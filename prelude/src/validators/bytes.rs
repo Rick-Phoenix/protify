@@ -11,6 +11,9 @@ impl_into_option!(BytesValidator);
 impl_ignore!(BytesValidatorBuilder);
 impl_proto_type!(Bytes, "bytes");
 
+#[cfg(feature = "regex")]
+pub type CachedBytesRegex = LazyLock<Regex>;
+
 pub(crate) fn format_bytes_list<'a, I: IntoIterator<Item = &'a [u8]>>(list: I) -> String {
   let mut string = String::new();
   let mut iter = list.into_iter().peekable();

@@ -1,8 +1,12 @@
 use bon::Builder;
+#[cfg(feature = "regex")]
 use regex::Regex;
 use string_validator_builder::{IsUnset, SetWellKnown, State};
 
 use super::*;
+
+#[cfg(feature = "regex")]
+pub type CachedRegex = LazyLock<Regex>;
 
 impl_proto_type!(String, "string");
 
@@ -256,7 +260,7 @@ pub struct StringValidator {
   pub max_bytes: Option<usize>,
   #[cfg(feature = "regex")]
   /// Specifies a regex pattern that this field's value should match in order to be considered valid.
-  pub pattern: Option<Regex>,
+  pub pattern: Option<&'static Regex>,
   /// Specifies the prefix that this field's value should contain in order to be considered valid.
   pub prefix: Option<Arc<str>>,
   /// Specifies the suffix that this field's value should contain in order to be considered valid.

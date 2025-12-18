@@ -161,7 +161,7 @@ impl ProtoType {
     match self {
       ProtoType::String => quote! { String },
       ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { Vec<u8> },
+      ProtoType::Bytes => quote! { ::bytes::Bytes },
       ProtoType::Enum(path) => quote! { #path },
       ProtoType::Message { path, .. } => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
@@ -228,7 +228,7 @@ impl ProtoType {
     match self {
       ProtoType::String => quote! { String },
       ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { Vec<u8> },
+      ProtoType::Bytes => quote! { ::bytes::Bytes },
       ProtoType::Enum(path) => quote! { #path },
       ProtoType::Message { path, .. } => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
@@ -278,7 +278,7 @@ impl ProtoType {
     match self {
       ProtoType::String => quote! { String },
       ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { Vec<u8> },
+      ProtoType::Bytes => quote! { ::bytes::Bytes },
       ProtoType::Enum(_) => quote! { i32 },
       ProtoType::Message { path, is_boxed, .. } => {
         if *is_boxed {

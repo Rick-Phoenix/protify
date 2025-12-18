@@ -203,6 +203,12 @@ pub struct CelRule {
   pub expression: Arc<str>,
 }
 
+impl From<CelRule> for CelProgram {
+  fn from(value: CelRule) -> Self {
+    CelProgram::new(value)
+  }
+}
+
 impl<S: State> From<CelRuleBuilder<S>> for OptionValue
 where
   S: IsComplete,
