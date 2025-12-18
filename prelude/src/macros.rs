@@ -97,7 +97,7 @@ macro_rules! impl_validator {
         type Validator = $validator;
         type Builder = [< $validator Builder >];
 
-        fn builder() -> Self::Builder {
+        fn validator_builder() -> Self::Builder {
           $validator::builder()
         }
       }

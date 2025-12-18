@@ -100,7 +100,7 @@ pub fn impl_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
       type Validator = ::prelude::MessageValidator<Self>;
       type Builder = ::prelude::MessageValidatorBuilder<Self>;
 
-      fn builder() -> Self::Builder {
+      fn validator_builder() -> Self::Builder {
         ::prelude::MessageValidator::builder()
       }
     }

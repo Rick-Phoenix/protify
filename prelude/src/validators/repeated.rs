@@ -25,7 +25,7 @@ where
   type Validator = RepeatedValidator<T>;
   type Builder = RepeatedValidatorBuilder<T>;
 
-  fn builder() -> Self::Builder {
+  fn validator_builder() -> Self::Builder {
     RepeatedValidator::builder()
   }
 }

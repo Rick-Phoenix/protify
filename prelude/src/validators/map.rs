@@ -72,7 +72,7 @@ where
   type Validator = MapValidator<K, V>;
   type Builder = MapValidatorBuilder<K, V>;
 
-  fn builder() -> Self::Builder {
+  fn validator_builder() -> Self::Builder {
     MapValidator::builder()
   }
 }

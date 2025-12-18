@@ -134,7 +134,7 @@ pub fn process_enum_derive_prost(
       type Validator = ::prelude::EnumValidator<#enum_name>;
       type Builder = ::prelude::EnumValidatorBuilder<#enum_name>;
 
-      fn builder() -> Self::Builder {
+      fn validator_builder() -> Self::Builder {
         ::prelude::EnumValidator::builder()
       }
     }

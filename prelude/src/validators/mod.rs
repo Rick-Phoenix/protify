@@ -39,15 +39,13 @@ pub trait Validator<T>: Into<ProtoOption> {
 
   fn validate(
     &self,
-    _field_context: &FieldContext,
-    _parent_elements: &mut Vec<FieldPathElement>,
-    _val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
-    Ok(())
-  }
+    field_context: &FieldContext,
+    parent_elements: &mut Vec<FieldPathElement>,
+    val: Option<&Self::Target>,
+  ) -> Result<(), Violations>;
 }
 
-pub trait ValidatorBuilderFor<T>: Into<ProtoOption> {
+pub trait ValidatorBuilderFor<T> {
   type Target;
   type Validator: Validator<T, Target = Self::Target>;
 
@@ -59,45 +57,16 @@ pub trait ProtoValidator: std::marker::Sized {
   type Validator: Validator<Self, Target = Self::Target>;
   type Builder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
 
-  fn builder() -> Self::Builder;
-
-  fn from_builder<B>(builder: B) -> ProtoOption
-  where
-    B: ValidatorBuilderFor<Self>,
-  {
-    builder.into()
-  }
+  fn validator_builder() -> Self::Builder;
 
   fn validator_from_closure<F, FinalBuilder>(config_fn: F) -> Self::Validator
   where
     F: FnOnce(Self::Builder) -> FinalBuilder,
     FinalBuilder: ValidatorBuilderFor<Self, Validator = Self::Validator>,
   {
-    let initial_builder = Self::builder();
+    let initial_builder = Self::validator_builder();
 
     config_fn(initial_builder).build_validator()
-  }
-
-  fn builder_from_closure<F, FinalBuilder>(config_fn: F) -> FinalBuilder
-  where
-    F: FnOnce(Self::Builder) -> FinalBuilder,
-    FinalBuilder: ValidatorBuilderFor<Self>,
-  {
-    let initial_builder = Self::builder();
-
-    config_fn(initial_builder)
-  }
-
-  fn build_rules<F, FinalBuilder>(config_fn: F) -> ProtoOption
-  where
-    F: FnOnce(Self::Builder) -> FinalBuilder,
-    FinalBuilder: ValidatorBuilderFor<Self>,
-  {
-    let initial_builder = Self::builder();
-
-    let final_builder = config_fn(initial_builder);
-
-    final_builder.into()
   }
 }
 

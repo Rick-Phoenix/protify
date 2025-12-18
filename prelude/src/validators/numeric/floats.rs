@@ -266,7 +266,7 @@ macro_rules! impl_float_wrapper {
         type Validator = FloatValidator<$target_type>;
         type Builder = FloatValidatorBuilder<$target_type>;
 
-        fn builder() -> Self::Builder {
+        fn validator_builder() -> Self::Builder {
           FloatValidator::builder()
         }
       }

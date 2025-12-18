@@ -90,13 +90,6 @@ where
   }
 }
 
-impl<Num, S: State> Validator<Num> for IntValidatorBuilder<Num, S>
-where
-  Num: IntWrapper,
-{
-  type Target = Num::RustType;
-}
-
 #[derive(Clone, Debug, Builder)]
 pub struct IntValidator<Num>
 where
@@ -258,7 +251,7 @@ macro_rules! impl_int_validator {
         type Validator = IntValidator<$wrapper>;
         type Builder = IntValidatorBuilder<$wrapper>;
 
-        fn builder() -> IntValidatorBuilder<$wrapper> {
+        fn validator_builder() -> IntValidatorBuilder<$wrapper> {
           IntValidator::builder()
         }
       }
