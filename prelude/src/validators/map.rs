@@ -162,6 +162,9 @@ where
     parent_elements: &mut Vec<FieldPathElement>,
     val: Option<&HashMap<K::Target, V::Target>>,
   ) -> Result<(), Violations> {
+    handle_ignore_always!(&self.ignore);
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
+
     let mut violations_agg = Violations::new();
     let violations = &mut violations_agg;
 
@@ -184,29 +187,45 @@ where
         );
       }
 
-      let key_validator = self.keys.as_ref().filter(|_| !val.is_empty());
-
-      let value_validator = self.values.as_ref().filter(|_| !val.is_empty());
-
-      for (k, v) in val {
-        if let Some(validator) = &key_validator {
+      let mut keys_validator = self
+        .keys
+        .as_ref()
+        .filter(|_| !val.is_empty())
+        .map(|v| {
           let mut ctx = field_context.clone();
           ctx.kind = FieldKind::MapKey;
-          ctx.subscript = Some(k.clone().into_subscript());
 
-          validator
-            .validate(&ctx, parent_elements, Some(k))
-            .ok_or_push_violations(violations);
-        }
+          (v, ctx)
+        });
 
-        if let Some(validator) = &value_validator {
+      let mut values_validator = self
+        .values
+        .as_ref()
+        .filter(|_| !val.is_empty())
+        .map(|v| {
           let mut ctx = field_context.clone();
           ctx.kind = FieldKind::MapValue;
-          ctx.subscript = Some(k.clone().into_subscript());
 
-          validator
-            .validate(&ctx, parent_elements, Some(v))
-            .ok_or_push_violations(violations);
+          (v, ctx)
+        });
+
+      if keys_validator.is_some() || values_validator.is_some() {
+        for (k, v) in val {
+          if let Some((validator, ctx)) = &mut keys_validator {
+            ctx.subscript = Some(k.clone().into_subscript());
+
+            validator
+              .validate(ctx, parent_elements, Some(k))
+              .ok_or_push_violations(violations);
+          }
+
+          if let Some((validator, ctx)) = &mut values_validator {
+            ctx.subscript = Some(k.clone().into_subscript());
+
+            validator
+              .validate(ctx, parent_elements, Some(v))
+              .ok_or_push_violations(violations);
+          }
         }
       }
     }

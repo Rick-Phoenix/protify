@@ -94,6 +94,7 @@ impl ProtoType {
     fallback: Option<&Path>,
   ) -> Result<Option<Self>, Error> {
     let output = match ident_str {
+      "int32" => Self::Int32,
       "string" => Self::String,
       "sint32" => Self::Sint32,
       "uint32" => Self::Uint32,

@@ -84,35 +84,64 @@ where
     parent_elements: &mut Vec<FieldPathElement>,
     val: Option<&Vec<T::Target>>,
   ) -> Result<(), Violations> {
+    handle_ignore_always!(&self.ignore);
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
+
     let mut violations_agg = Violations::new();
     let violations = &mut violations_agg;
 
     if let Some(val) = val {
-      let items_validator = self.items.as_ref().filter(|_| !val.is_empty());
+      if let Some(min) = &self.min_items && val.len() < *min {
+        violations.add(
+          field_context, parent_elements,
+          &REPEATED_MIN_ITEMS_VIOLATION,
+          &format!("must contain at least {min} items")
+        );
+      }
 
+      if let Some(max) = &self.max_items && val.len() > *max {
+        violations.add(
+          field_context, parent_elements,
+          &REPEATED_MAX_ITEMS_VIOLATION,
+          &format!("cannot contain more than {max} items")
+        );
+      }
+
+      let mut items_validator = self
+        .items
+        .as_ref()
+        .filter(|_| !val.is_empty())
+        .map(|v| {
+          let mut ctx = field_context.clone();
+          ctx.kind = FieldKind::RepeatedItem;
+
+          (v, ctx)
+        });
+
+      // We only create this if there is a `unique` restriction
       let mut processed_values = self
         .unique
         .then(|| <T::Target as UniqueItem>::new_container(val.len()));
 
-      let mut has_unique_values = true;
+      let mut has_unique_values_so_far = true;
 
-      for (i, value) in val.iter().enumerate() {
-        if let Some(processed_values) = processed_values.as_mut() && has_unique_values {
-          has_unique_values = <T::Target as UniqueItem>::check_unique(processed_values, value);
-        }
+      if self.unique || items_validator.is_some() {
+        for (i, value) in val.iter().enumerate() {
+          if let Some(processed_values) = processed_values.as_mut() && has_unique_values_so_far {
+            has_unique_values_so_far = <T::Target as UniqueItem>::check_unique(processed_values, value);
+          }
 
-        if let Some(validator) = &items_validator {
-          let mut ctx = field_context.clone();
-          ctx.kind = FieldKind::RepeatedItem;
-          ctx.subscript = Some(Subscript::Index(i as u64));
+          if let Some((validator, ctx)) = &mut items_validator {
+            ctx.subscript = Some(Subscript::Index(i as u64));
 
-          validator
-            .validate(&ctx, parent_elements, Some(value))
-            .ok_or_push_violations(violations);
+            validator
+              .validate(ctx, parent_elements, Some(value))
+              .ok_or_push_violations(violations);
+          }
         }
       }
 
-      if !has_unique_values {
+      if !has_unique_values_so_far {
         violations.add(
           field_context,
           parent_elements,

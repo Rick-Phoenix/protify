@@ -1,3 +1,19 @@
+macro_rules! handle_ignore_always {
+  ($ignore:expr) => {
+    if matches!($ignore, Some(Ignore::Always)) {
+      return Ok(());
+    }
+  };
+}
+
+macro_rules! handle_ignore_if_zero_value {
+  ($ignore:expr, $condition:expr) => {
+    if matches!($ignore, Some(Ignore::IfZeroValue)) && $condition {
+      return Ok(());
+    }
+  };
+}
+
 macro_rules! impl_cel_check {
   () => {
     #[cfg(feature = "testing")]

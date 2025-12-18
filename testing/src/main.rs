@@ -231,6 +231,8 @@ fn main() {
 
 #[cfg(test)]
 mod test {
+  use std::collections::HashMap;
+
   use bytes::Bytes;
   use proc_macro_impls::proto_message;
 
@@ -313,5 +315,75 @@ mod test {
     let err = msg.validate().unwrap_err();
 
     assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  }
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct MinItems {
+    #[proto(repeated(int32), tag = 1, validate = |v| v.min_items(3))]
+    pub items: Vec<i32>,
+  }
+
+  #[test]
+  fn min_items() {
+    let mut msg = MinItems { items: vec![] };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "repeated.min_items");
+  }
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct MaxItems {
+    #[proto(repeated(int32), tag = 1, validate = |v| v.max_items(1))]
+    pub items: Vec<i32>,
+  }
+
+  #[test]
+  fn max_items() {
+    let mut msg = MaxItems { items: vec![1, 2] };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "repeated.max_items");
+  }
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct MinPairs {
+    #[proto(map(int32, int32), tag = 1, validate = |v| v.min_pairs(1))]
+    pub items: HashMap<i32, i32>,
+  }
+
+  #[test]
+  fn min_pairs() {
+    let mut msg = MinPairs {
+      items: HashMap::default(),
+    };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "map.min_pairs");
+  }
+
+  #[proto_message(direct)]
+  #[proto(package = "", file = "")]
+  struct MaxPairs {
+    #[proto(map(int32, int32), tag = 1, validate = |v| v.max_pairs(1))]
+    pub items: HashMap<i32, i32>,
+  }
+
+  #[test]
+  fn max_pairs() {
+    let mut map = HashMap::new();
+    map.insert(1, 1);
+    map.insert(2, 2);
+
+    let mut msg = MaxPairs { items: map };
+
+    let err = msg.validate().unwrap_err();
+
+    assert_eq!(err.first().unwrap().rule_id(), "map.max_pairs");
   }
 }
