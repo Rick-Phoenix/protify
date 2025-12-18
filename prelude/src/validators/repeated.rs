@@ -11,9 +11,7 @@ impl<T: AsProtoField> AsProtoField for Vec<T> {
 
     match inner_type {
       ProtoFieldInfo::Single(typ) => ProtoFieldInfo::Repeated(typ),
-      _ => ProtoFieldInfo::Repeated(invalid_type_output(
-        "Repeated fields cannot be optional, maps or other repeated fields",
-      )),
+      _ => panic!("Repeated fields cannot be optional, maps or other repeated fields",),
     }
   }
 }

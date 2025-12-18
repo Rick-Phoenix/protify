@@ -14,16 +14,25 @@ pub enum ProtoType {
     is_boxed: bool,
   },
   Float,
+  Double,
   Int32,
+  Int64,
   Uint32,
+  Uint64,
   Sint32,
+  Sint64,
+  Fixed32,
+  Fixed64,
+  Sfixed32,
+  Sfixed64,
   Duration,
   Timestamp,
 }
 
 impl ProtoType {
-  pub fn field_type_tokens(&self) -> TokenStream2 {
+  pub fn descriptor_type_tokens(&self) -> TokenStream2 {
     let prefix = quote! { ::proto_types::field_descriptor_proto::Type };
+
     match self {
       ProtoType::Uint32 => quote! { #prefix::Uint32 },
       ProtoType::String => quote! { #prefix::String },
@@ -36,6 +45,14 @@ impl ProtoType {
       ProtoType::Duration => quote! { #prefix::Message },
       ProtoType::Timestamp => quote! { #prefix::Message },
       ProtoType::Float => quote! { #prefix::Float },
+      ProtoType::Double => quote! { #prefix::Double },
+      ProtoType::Int64 => quote! { #prefix::Int64  },
+      ProtoType::Uint64 => quote! { #prefix::Uint64  },
+      ProtoType::Sint64 => quote! { #prefix::Sint64  },
+      ProtoType::Fixed32 => quote! { #prefix::Fixed32  },
+      ProtoType::Fixed64 => quote! { #prefix::Fixed64  },
+      ProtoType::Sfixed32 => quote! { #prefix::Sfixed32  },
+      ProtoType::Sfixed64 => quote! { #prefix::Sfixed64  },
     }
   }
 
@@ -94,11 +111,19 @@ impl ProtoType {
     fallback: Option<&Path>,
   ) -> Result<Option<Self>, Error> {
     let output = match ident_str {
-      "int32" => Self::Int32,
       "string" => Self::String,
+      "int32" => Self::Int32,
+      "int64" => Self::Int64,
       "sint32" => Self::Sint32,
+      "sint64" => Self::Sint64,
+      "sfixed32" => Self::Sfixed32,
+      "sfixed64" => Self::Sfixed64,
+      "fixed32" => Self::Fixed32,
+      "fixed64" => Self::Fixed64,
       "uint32" => Self::Uint32,
+      "uint64" => Self::Uint64,
       "float" => Self::Float,
+      "double" => Self::Double,
       "message" => {
         let path = fallback
           .ok_or(error_with_span!(
@@ -132,7 +157,7 @@ impl ProtoType {
     Ok(Some(output))
   }
 
-  pub fn as_proto_type_trait_target(&self) -> TokenStream2 {
+  pub fn field_proto_type_tokens(&self) -> TokenStream2 {
     match self {
       ProtoType::String => quote! { String },
       ProtoType::Bool => quote! { bool },
@@ -145,6 +170,14 @@ impl ProtoType {
       ProtoType::Timestamp => quote! { proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
       ProtoType::Float => quote! { f32 },
+      ProtoType::Double => quote! { f64 },
+      ProtoType::Int64 => quote! { i64  },
+      ProtoType::Uint64 => quote! { u64 },
+      ProtoType::Sint64 => quote! { prelude::Sint64  },
+      ProtoType::Fixed32 => quote! { prelude::Fixed32  },
+      ProtoType::Fixed64 => quote! { prelude::Fixed64  },
+      ProtoType::Sfixed32 => quote! { prelude::Sfixed32  },
+      ProtoType::Sfixed64 => quote! { prelude::Sfixed64  },
     }
   }
 
@@ -204,6 +237,14 @@ impl ProtoType {
       ProtoType::Timestamp => quote! { ::proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
       ProtoType::Float => quote! { f32 },
+      ProtoType::Double => quote! { f64 },
+      ProtoType::Int64 => quote! { i64  },
+      ProtoType::Uint64 => quote! { u64 },
+      ProtoType::Sint64 => quote! { prelude::Sint64  },
+      ProtoType::Fixed32 => quote! { prelude::Fixed32  },
+      ProtoType::Fixed64 => quote! { prelude::Fixed64  },
+      ProtoType::Sfixed32 => quote! { prelude::Sfixed32  },
+      ProtoType::Sfixed64 => quote! { prelude::Sfixed64  },
     }
   }
 
@@ -222,6 +263,14 @@ impl ProtoType {
       ProtoType::Sint32 => "sint32".into(),
       ProtoType::Uint32 => "uint32".into(),
       ProtoType::Float => "float".into(),
+      ProtoType::Double => "double".into(),
+      ProtoType::Int64 => "int64".into(),
+      ProtoType::Uint64 => "uint64".into(),
+      ProtoType::Sint64 => "sint64".into(),
+      ProtoType::Fixed32 => "fixed32".into(),
+      ProtoType::Fixed64 => "fixed64".into(),
+      ProtoType::Sfixed32 => "sfixed32".into(),
+      ProtoType::Sfixed64 => "sfixed64".into(),
     }
   }
 
@@ -244,6 +293,14 @@ impl ProtoType {
       ProtoType::Timestamp => quote! { proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
       ProtoType::Float => quote! { f32 },
+      ProtoType::Double => quote! { f64 },
+      ProtoType::Int64 => quote! { i64  },
+      ProtoType::Uint64 => quote! { u64 },
+      ProtoType::Sint64 => quote! { i64  },
+      ProtoType::Fixed32 => quote! { u32 },
+      ProtoType::Fixed64 => quote! { u64 },
+      ProtoType::Sfixed32 => quote! { i32 },
+      ProtoType::Sfixed64 => quote! { i64 },
     }
   }
 
@@ -269,6 +326,14 @@ impl ProtoType {
       ProtoType::Duration | ProtoType::Timestamp => quote! { message },
       ProtoType::Uint32 => quote! { uint32 },
       ProtoType::Float => quote! { float },
+      ProtoType::Double => quote! { double },
+      ProtoType::Int64 => quote! { int64  },
+      ProtoType::Uint64 => quote! { uint64 },
+      ProtoType::Sint64 => quote! { sint64  },
+      ProtoType::Fixed32 => quote! { fixed32  },
+      ProtoType::Fixed64 => quote! { fixed64  },
+      ProtoType::Sfixed32 => quote! { sfixed32  },
+      ProtoType::Sfixed64 => quote! { sfixed64  },
     }
   }
 

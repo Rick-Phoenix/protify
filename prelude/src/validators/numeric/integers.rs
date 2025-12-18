@@ -3,6 +3,7 @@ use std::{fmt::Display, marker::PhantomData};
 use bon::Builder;
 use int_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
 use proto_types::protovalidate::violations_data::*;
+pub use protocheck_core::wrappers::{Fixed32, Fixed64, Sfixed32, Sfixed64, Sint32, Sint64};
 
 use super::*;
 use crate::field_context::ViolationsExt;
@@ -241,8 +242,6 @@ macro_rules! impl_int {
   };
 
   ($rust_type:ty, $wrapper:ident) => {
-    pub struct $wrapper;
-
     paste::paste! {
       impl_int_wrapper!($wrapper, $rust_type, [< $wrapper:upper >]);
       impl_proto_type!($wrapper, stringify!([< $wrapper:lower >]));
@@ -268,5 +267,12 @@ macro_rules! impl_int_validator {
 }
 
 impl_int!(i32, Sint32);
+impl_int!(i64, Sint64);
+impl_int!(i32, Sfixed32);
+impl_int!(i64, Sfixed64);
+impl_int!(u32, Fixed32);
+impl_int!(u64, Fixed64);
 impl_int!(i32, INT32, primitive);
+impl_int!(i64, INT64, primitive);
 impl_int!(u32, UINT32, primitive);
+impl_int!(u64, UINT64, primitive);

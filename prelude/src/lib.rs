@@ -12,7 +12,7 @@ use std::{
   fmt::Write,
   marker::PhantomData,
   ops::Range,
-  sync::{Arc, LazyLock},
+  sync::LazyLock,
 };
 mod field;
 mod file;

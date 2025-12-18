@@ -99,7 +99,7 @@ pub fn process_extension_derive(
 
     let type_ctx = TypeContext::new(rust_type, &proto_field)?;
     let options_tokens = tokens_or_default!(options, quote! { vec![] });
-    let field_type_tokens = type_ctx.proto_field.as_proto_type_trait_expr();
+    let field_type_tokens = type_ctx.proto_field.field_proto_type_tokens();
 
     fields_tokens.push(quote! {
       ::prelude::ProtoField {

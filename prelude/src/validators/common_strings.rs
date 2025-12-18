@@ -1,3 +1,10 @@
+reusable_string!(INT64);
+reusable_string!(UINT64);
+reusable_string!(SINT64);
+reusable_string!(FIXED32);
+reusable_string!(FIXED64);
+reusable_string!(SFIXED32);
+reusable_string!(SFIXED64);
 reusable_string!(BUF_VALIDATE_FIELD, "(buf.validate.field)");
 reusable_string!(UINT32);
 reusable_string!(CONST_, "const");

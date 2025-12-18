@@ -14,12 +14,12 @@ impl<K: AsProtoField, V: AsProtoField> AsProtoField for ProtoMap<K, V> {
   fn as_proto_field() -> ProtoFieldInfo {
     let keys = match K::as_proto_field() {
       ProtoFieldInfo::Single(data) => data,
-      _ => invalid_type_output("Map keys cannot be repeated, optional or nested maps"),
+      _ => panic!("Map keys cannot be repeated, optional or nested maps"),
     };
 
     let values = match V::as_proto_field() {
       ProtoFieldInfo::Single(data) => data,
-      _ => invalid_type_output("Map values cannot be repeated, optional or nested maps"),
+      _ => panic!("Map values cannot be repeated, optional or nested maps"),
     };
 
     ProtoFieldInfo::Map { keys, values }

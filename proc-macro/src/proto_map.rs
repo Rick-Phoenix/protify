@@ -2,11 +2,20 @@ use syn::spanned::Spanned;
 
 use crate::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ProtoMapKeys {
   String,
+  Bool,
   Int32,
+  Int64,
   Sint32,
+  Sint64,
+  Sfixed32,
+  Sfixed64,
+  Fixed32,
+  Fixed64,
+  Uint32,
+  Uint64,
 }
 
 impl From<ProtoMapKeys> for ProtoType {
@@ -15,32 +24,33 @@ impl From<ProtoMapKeys> for ProtoType {
       ProtoMapKeys::String => Self::String,
       ProtoMapKeys::Int32 => Self::Int32,
       ProtoMapKeys::Sint32 => Self::Sint32,
+      ProtoMapKeys::Bool => Self::Bool,
+      ProtoMapKeys::Int64 => Self::Int64,
+      ProtoMapKeys::Sint64 => Self::Sint64,
+      ProtoMapKeys::Sfixed32 => Self::Sfixed32,
+      ProtoMapKeys::Sfixed64 => Self::Sfixed64,
+      ProtoMapKeys::Fixed32 => Self::Fixed32,
+      ProtoMapKeys::Fixed64 => Self::Fixed64,
+      ProtoMapKeys::Uint32 => Self::Uint32,
+      ProtoMapKeys::Uint64 => Self::Uint64,
     }
   }
 }
 
 impl ProtoMapKeys {
   pub fn validator_target_type(&self) -> TokenStream2 {
-    match self {
-      ProtoMapKeys::String => quote! { String },
-      ProtoMapKeys::Int32 => quote! { i32 },
-      ProtoMapKeys::Sint32 => quote! { ::prelude::Sint32 },
-    }
+    let pt: ProtoType = (*self).into();
+    pt.validator_target_type()
   }
 
   pub fn output_proto_type(&self) -> TokenStream2 {
-    match self {
-      ProtoMapKeys::String => quote! { String },
-      ProtoMapKeys::Int32 | ProtoMapKeys::Sint32 => quote! { i32 },
-    }
+    let pt: ProtoType = (*self).into();
+    pt.output_proto_type()
   }
 
-  pub fn as_proto_type_trait_target(&self) -> TokenStream2 {
-    match self {
-      ProtoMapKeys::String => quote! { String },
-      ProtoMapKeys::Int32 => quote! { i32 },
-      ProtoMapKeys::Sint32 => quote! { ::prelude::Sint32 },
-    }
+  pub fn field_proto_type_tokens(&self) -> TokenStream2 {
+    let pt: ProtoType = (*self).into();
+    pt.field_proto_type_tokens()
   }
 }
 
@@ -52,7 +62,16 @@ impl ProtoMapKeys {
     let output = match ident_str.as_str() {
       "String" | "string" => Self::String,
       "int32" | "i32" => Self::Int32,
+      "int64" | "i64" => Self::Int64,
+      "uint32" | "u32" => Self::Uint32,
+      "uint64" | "u64" => Self::Uint64,
+      "bool" => Self::Bool,
+      "sint64" => Self::Sint64,
       "sint32" => Self::Sint32,
+      "sfixed32" => Self::Sfixed32,
+      "sfixed64" => Self::Sfixed64,
+      "fixed32" => Self::Fixed32,
+      "fixed64" => Self::Fixed64,
       _ => bail!(
         ident,
         "Type {ident_str} is not a supported map key primitive"
@@ -65,11 +84,10 @@ impl ProtoMapKeys {
 
 impl Display for ProtoMapKeys {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      ProtoMapKeys::String => write!(f, "string"),
-      ProtoMapKeys::Int32 => write!(f, "int32"),
-      ProtoMapKeys::Sint32 => write!(f, "sint32"),
-    }
+    let pt: ProtoType = (*self).into();
+
+    // Same implementation
+    write!(f, "{}", pt.as_prost_map_value())
   }
 }
 
@@ -80,9 +98,9 @@ pub struct ProtoMap {
 }
 
 impl ProtoMap {
-  pub fn as_proto_type_trait_target(&self) -> TokenStream2 {
-    let keys = self.keys.as_proto_type_trait_target();
-    let values = self.values.as_proto_type_trait_target();
+  pub fn field_proto_type_tokens(&self) -> TokenStream2 {
+    let keys = self.keys.field_proto_type_tokens();
+    let values = self.values.field_proto_type_tokens();
 
     quote! { ::prelude::ProtoMap<#keys, #values> }
   }

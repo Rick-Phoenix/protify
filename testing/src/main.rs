@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use prelude::{
   cel_program, CachedProgram, EnumValidator, FieldValidator, IntValidator, MessageEntry,
-  OptionValue, ProtoEnum, ProtoOption, RepeatedValidator, RepeatedValidatorBuilder, Sint32,
+  OptionValue, ProtoEnum, ProtoOption, RepeatedValidator, RepeatedValidatorBuilder,
   StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
 };
 use proc_macro_impls::{Enum, Message, Oneof};
@@ -216,6 +216,7 @@ mod inner {
 }
 
 use inner::*;
+use protocheck::wrappers::Sint32;
 
 fn main() {
   env_logger::init();

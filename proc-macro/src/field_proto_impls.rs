@@ -82,7 +82,7 @@ pub fn field_proto_impls(ctx: FieldCtx) -> Result<TokenStream2, Error> {
     quote! { None }
   };
 
-  let field_type_tokens = type_ctx.proto_field.as_proto_type_trait_expr();
+  let field_type_tokens = type_ctx.proto_field.field_proto_type_tokens();
   let options_tokens = tokens_or_default!(options, quote! { vec![] });
 
   let output = match field {

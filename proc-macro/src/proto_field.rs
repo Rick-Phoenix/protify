@@ -17,9 +17,9 @@ impl ProtoField {
   pub fn proto_kind_tokens(&self) -> TokenStream2 {
     match self {
       ProtoField::Map(_) => quote! { ::proto_types::field_descriptor_proto::Type::Message },
-      ProtoField::Repeated(inner) => inner.field_type_tokens(),
-      ProtoField::Optional(inner) => inner.field_type_tokens(),
-      ProtoField::Single(inner) => inner.field_type_tokens(),
+      ProtoField::Repeated(inner) => inner.descriptor_type_tokens(),
+      ProtoField::Optional(inner) => inner.descriptor_type_tokens(),
+      ProtoField::Single(inner) => inner.descriptor_type_tokens(),
       ProtoField::Oneof { .. } => {
         quote! { compile_error!("Validator tokens should not be triggered for a oneof field") }
       }
@@ -123,21 +123,21 @@ impl ProtoField {
     }
   }
 
-  pub fn as_proto_type_trait_expr(&self) -> TokenStream2 {
+  pub fn field_proto_type_tokens(&self) -> TokenStream2 {
     let target_type = match self {
-      ProtoField::Map(proto_map) => proto_map.as_proto_type_trait_target(),
+      ProtoField::Map(proto_map) => proto_map.field_proto_type_tokens(),
       ProtoField::Oneof { .. } => quote! {},
       ProtoField::Repeated(proto_type) => {
-        let inner = proto_type.as_proto_type_trait_target();
+        let inner = proto_type.field_proto_type_tokens();
 
         quote! { Vec<#inner> }
       }
       ProtoField::Optional(proto_type) => {
-        let inner = proto_type.as_proto_type_trait_target();
+        let inner = proto_type.field_proto_type_tokens();
 
         quote! { Option<#inner> }
       }
-      ProtoField::Single(proto_type) => proto_type.as_proto_type_trait_target(),
+      ProtoField::Single(proto_type) => proto_type.field_proto_type_tokens(),
     };
 
     quote! { <#target_type as ::prelude::AsProtoField>::as_proto_field() }

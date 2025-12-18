@@ -26,7 +26,7 @@ pub enum ProtoFieldInfo {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ProtoType {
-  Scalar { name: &'static str },
+  Primitive { name: &'static str },
   Message(ProtoPath),
   Enum(ProtoPath),
 }
@@ -76,7 +76,7 @@ impl ProtoFieldInfo {
 impl ProtoType {
   pub(crate) fn render_name(&self, current_package: &'static str) -> Cow<'static, str> {
     match self {
-      ProtoType::Scalar { name } => (*name).into(),
+      ProtoType::Primitive { name } => (*name).into(),
       ProtoType::Message(path) => {
         if path.package != current_package {
           format!("{}.{}", path.package, path.name).into()
@@ -96,15 +96,11 @@ impl ProtoType {
 
   pub(crate) fn register_import(&self, imports: &mut FileImports) {
     match self {
-      ProtoType::Scalar { .. } => {}
+      ProtoType::Primitive { .. } => {}
       ProtoType::Message(path) => imports.insert_path(path),
       ProtoType::Enum(path) => imports.insert_path(path),
     }
   }
-}
-
-pub(crate) fn invalid_type_output(msg: &'static str) -> ProtoType {
-  ProtoType::Scalar { name: msg }
 }
 
 impl ProtoPath {

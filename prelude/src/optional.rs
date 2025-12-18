@@ -23,13 +23,13 @@ where
         }
       }
       ProtoFieldInfo::Map { .. } => {
-        ProtoFieldInfo::Single(invalid_type_output("Optional fields cannot be maps"))
+        panic!("Optional fields cannot be maps")
       }
       ProtoFieldInfo::Repeated(_) => {
-        ProtoFieldInfo::Single(invalid_type_output("Optional fields cannot be repeated"))
+        panic!("Optional fields cannot be repeated")
       }
       ProtoFieldInfo::Optional(_) => {
-        ProtoFieldInfo::Single(invalid_type_output("Optional fields cannot be nested"))
+        panic!("Optional fields cannot be nested")
       }
     }
   }
