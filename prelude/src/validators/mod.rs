@@ -15,7 +15,8 @@ use protocheck_core::{
 
 // Here we use a generic for the target of the validator
 // AND an assoc. type for the actual type being validated
-// so that it can be proxied by wrappers (like with Sint32, Fixed32, enums, etc...)
+// so that it can be proxied by wrappers (like with Sint32, Fixed32, enums, etc...).
+// Same for `ValidatorBuilderFor`.
 pub trait Validator<T>: Into<ProtoOption> {
   type Target: Default;
 
