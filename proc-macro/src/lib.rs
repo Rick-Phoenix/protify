@@ -61,11 +61,17 @@ mod attributes;
 pub fn proto_message(args: TokenStream, input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
 
-  let mut is_direct = false;
+  let mut macro_attrs = MessageMacroAttrs::default();
 
   let parser = syn::meta::parser(|meta| {
-    if meta.path.is_ident("direct") {
-      is_direct = true;
+    if let Some(ident) = meta.path.get_ident() {
+      let ident = ident.to_string();
+
+      match ident.as_str() {
+        "direct" => macro_attrs.is_direct = true,
+        "no_auto_test" => macro_attrs.no_auto_test = true,
+        _ => {}
+      };
     }
 
     Ok(())
@@ -82,7 +88,7 @@ pub fn proto_message(args: TokenStream, input: TokenStream) -> TokenStream {
     .into();
   }
 
-  let extra_tokens = match process_message_derive(&mut item, is_direct) {
+  let extra_tokens = match process_message_derive(&mut item, macro_attrs) {
     Ok(output) => output,
     Err(e) => e.into_compile_error(),
   };

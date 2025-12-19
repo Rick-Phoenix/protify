@@ -2,6 +2,8 @@
 mod macros;
 
 use askama::Template;
+#[cfg(feature = "testing")]
+use owo_colors::OwoColorize;
 #[doc(hidden)]
 pub use paste::paste;
 use proto_types::protovalidate::{FieldPathElement, Violations};

@@ -15,10 +15,13 @@ pub struct MessageAttrs {
   pub shadow_derives: Option<MetaList>,
   pub cel_rules: Option<Vec<Path>>,
   pub backend: Backend,
+  pub is_direct: bool,
+  pub no_auto_test: bool,
 }
 
 pub fn process_derive_message_attrs(
   rust_name: &Ident,
+  macro_attrs: MessageMacroAttrs,
   attrs: &[Attribute],
 ) -> Result<MessageAttrs, Error> {
   let mut reserved_names: Vec<String> = Vec::new();
@@ -136,5 +139,7 @@ pub fn process_derive_message_attrs(
     shadow_derives,
     cel_rules,
     backend,
+    is_direct: macro_attrs.is_direct,
+    no_auto_test: macro_attrs.no_auto_test,
   })
 }

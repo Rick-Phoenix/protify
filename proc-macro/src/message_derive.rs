@@ -2,14 +2,20 @@ use syn_utils::AsNamedField;
 
 use crate::*;
 
+#[derive(Default)]
+pub struct MessageMacroAttrs {
+  pub is_direct: bool,
+  pub no_auto_test: bool,
+}
+
 pub fn process_message_derive(
   item: &mut ItemStruct,
-  is_direct: bool,
+  macro_attrs: MessageMacroAttrs,
 ) -> Result<TokenStream2, Error> {
-  let message_attrs = process_derive_message_attrs(&item.ident, &item.attrs)?;
+  let message_attrs = process_derive_message_attrs(&item.ident, macro_attrs, &item.attrs)?;
 
   match message_attrs.backend {
-    Backend::Prost => process_message_derive_prost(item, message_attrs, is_direct),
+    Backend::Prost => process_message_derive_prost(item, message_attrs),
     Backend::Protobuf => unimplemented!(),
   }
 }
@@ -17,9 +23,8 @@ pub fn process_message_derive(
 pub fn process_message_derive_prost(
   item: &mut ItemStruct,
   message_attrs: MessageAttrs,
-  is_direct: bool,
 ) -> Result<TokenStream2, Error> {
-  if is_direct {
+  if message_attrs.is_direct {
     process_message_derive_direct(item, message_attrs)
   } else {
     process_message_derive_shadow(item, message_attrs)
@@ -90,19 +95,19 @@ pub fn process_message_derive_shadow(
       .collect();
   }
 
-  let (cel_check_impl, top_level_programs_ident) = if let Some(paths) = &message_attrs.cel_rules {
-    let static_ident = format_ident!(
-      "{}_CEL_RULES",
-      ccase!(constant, orig_struct_ident.to_string())
-    );
+  let (cel_check_impl, top_level_programs_ident) =
+    if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
+      let (cel_check_impl, ident) = impl_message_cel_checks(
+        orig_struct_ident,
+        message_attrs.cel_rules.as_ref(),
+        cel_checks_tokens,
+        message_attrs.no_auto_test,
+      );
 
-    let cel_check_impl =
-      impl_message_cel_checks(shadow_struct_ident, &static_ident, paths, cel_checks_tokens);
-
-    (Some(cel_check_impl), Some(static_ident))
-  } else {
-    (None, None)
-  };
+      (Some(cel_check_impl), ident)
+    } else {
+      (None, None)
+    };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
     orig_struct_ident,
@@ -207,16 +212,19 @@ pub fn process_message_derive_direct(
 
   let struct_ident = &item.ident;
 
-  let (cel_check_impl, top_level_programs_ident) = if let Some(paths) = &message_attrs.cel_rules {
-    let static_ident = format_ident!("{}_CEL_RULES", ccase!(constant, struct_ident.to_string()));
+  let (cel_check_impl, top_level_programs_ident) =
+    if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
+      let (cel_check_impl, ident) = impl_message_cel_checks(
+        struct_ident,
+        message_attrs.cel_rules.as_ref(),
+        cel_checks_tokens,
+        message_attrs.no_auto_test,
+      );
 
-    let cel_check_impl =
-      impl_message_cel_checks(struct_ident, &static_ident, paths, cel_checks_tokens);
-
-    (Some(cel_check_impl), Some(static_ident))
-  } else {
-    (None, None)
-  };
+      (Some(cel_check_impl), ident)
+    } else {
+      (None, None)
+    };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
     orig_struct_ident: struct_ident,

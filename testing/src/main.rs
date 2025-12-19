@@ -95,7 +95,7 @@ mod inner {
   #[proto(required)]
   #[derive(Clone, Debug)]
   enum PseudoOneof {
-    #[proto(tag = 200, validate = |v| v.cel(&RULE))]
+    #[proto(tag = 200)]
     A(String),
     #[proto(tag = 201)]
     B(i32),
@@ -125,16 +125,6 @@ mod inner {
       Self::B(0)
     }
   }
-
-  pub fn random_cel_rule() -> CelRule {
-    CelRule::builder()
-      .id("hobbits")
-      .message("they're taking the hobbits to isengard!")
-      .expression("hobbits.location == isengard")
-      .build()
-  }
-
-  static MSG_RULE: CachedProgram = cel_program!(random_cel_rule());
 
   static ABC: CachedRegex = regex!("abc", "abcde");
   static BYTES_REGEX: CachedBytesRegex = bytes_regex!("abc", "abcde");
@@ -231,10 +221,4 @@ use protocheck::wrappers::Sint32;
 
 fn main() {
   env_logger::init();
-
-  let mut package = Package::new("abc");
-
-  package.add_files([proto_file()]);
-
-  package.check_unique_cel_rules().unwrap();
 }

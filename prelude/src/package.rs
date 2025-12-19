@@ -20,7 +20,7 @@ impl Package {
   }
 
   #[cfg(feature = "testing")]
-  pub fn check_unique_cel_rules(&self) -> Result<(), String> {
+  pub fn check_unique_cel_rules(&self) {
     let mut rules: HashMap<&str, &CelRule> = HashMap::new();
     let mut duplicates: HashMap<&str, Vec<&CelRule>> = HashMap::new();
 
@@ -60,23 +60,21 @@ impl Package {
     if !duplicates.is_empty() {
       let mut error = String::new();
 
-      error.push_str("Found one or more CEL rules with same ID but different content:\n");
+      error.push_str("❌ Found one or more CEL rules with same ID but different content:\n");
 
       for (id, rules) in duplicates {
-        writeln!(error, "  Entries for rule ID `{id}`:").unwrap();
+        writeln!(error, "  Entries for rule ID `{}`:", id.bright_yellow()).unwrap();
 
         for (i, rule) in rules.iter().enumerate() {
           let rule_str = format!("{rule:#?}");
 
           let indented_rule = rule_str.replace("\n", "\n  ");
 
-          writeln!(error, "    [{i}]: {indented_rule}").unwrap();
+          writeln!(error, "    [{}]: {indented_rule}", i.red()).unwrap();
         }
       }
 
-      return Err(error);
+      panic!("{error}")
     }
-
-    Ok(())
   }
 }

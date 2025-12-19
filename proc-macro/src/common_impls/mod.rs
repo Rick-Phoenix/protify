@@ -26,6 +26,7 @@ pub fn wrap_with_imports(item_ident: &Ident, tokens: TokenStream2) -> TokenStrea
     pub use #module_ident::*;
 
     #[doc(hidden)]
+    #[allow(clippy::ptr_arg)]
     mod #module_ident {
       use super::*;
       use std::sync::LazyLock;
