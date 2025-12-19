@@ -69,7 +69,7 @@ macro_rules! inline_regex {
       ::regex::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
     });
 
-    &*REGEX
+    &REGEX
   }};
 }
 
@@ -89,7 +89,7 @@ macro_rules! inline_bytes_regex {
       ::regex::bytes::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
     });
 
-    &*REGEX
+    &REGEX
   }};
 }
 
@@ -136,12 +136,12 @@ macro_rules! cel_program {
         expression: $expr.into(),
       };
 
-      CelProgram::new(rule)
+      ::prelude::CelProgram::new(rule)
     })
   };
 
   ($rule:expr) => {
-    std::sync::LazyLock::new(|| CelProgram::new($rule))
+    std::sync::LazyLock::new(|| ::prelude::CelProgram::new($rule))
   };
 }
 

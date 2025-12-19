@@ -1,11 +1,13 @@
 use bon::Builder;
 use proto_types::{Duration, Timestamp};
-use timestamp_validator_builder::{IsUnset, SetIgnore, State};
+use timestamp_validator_builder::State;
 
 use super::*;
 
 impl_validator!(TimestampValidator, Timestamp);
 impl_into_option!(TimestampValidator);
+impl_cel_method!(TimestampValidatorBuilder);
+impl_ignore!(TimestampValidatorBuilder);
 
 impl Validator<Timestamp> for TimestampValidator {
   type Target = Timestamp;
@@ -92,42 +94,42 @@ impl Validator<Timestamp> for TimestampValidator {
 #[derive(Clone, Debug, Builder)]
 #[builder(derive(Clone))]
 pub struct TimestampValidator {
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Timestamp>,
-  /// Specifies that this field's value will be valid only if it is smaller than the specified amount.
-  pub lt: Option<Timestamp>,
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount.
-  pub lte: Option<Timestamp>,
+  #[builder(field)]
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
+  pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   #[builder(default, with = || true)]
   /// Specifies that this field's value will be valid only if it in the past.
   pub lt_now: bool,
-  /// Specifies that this field's value will be valid only if it is greater than the specified amount.
-  pub gt: Option<Timestamp>,
-  /// Specifies that this field's value will be valid only if it is greater than, or equal to, the specified amount.
-  pub gte: Option<Timestamp>,
+
   #[builder(default, with = || true)]
   /// Specifies that this field's value will be valid only if it in the future.
   pub gt_now: bool,
-  /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
-  pub within: Option<Duration>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
-  pub cel: Vec<&'static CelProgram>,
+
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
-}
 
-impl<S: State> TimestampValidatorBuilder<S>
-where
-  S::Ignore: IsUnset,
-{
-  /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> TimestampValidatorBuilder<SetIgnore<S>> {
-    self.ignore(Ignore::Always)
-  }
+  /// Specifies that only this specific value will be considered valid for this field.
+  pub const_: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is smaller than the specified amount.
+  pub lt: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount.
+  pub lte: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is greater than the specified amount.
+  pub gt: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is greater than, or equal to, the specified amount.
+  pub gte: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
+  pub within: Option<Duration>,
 }
 
 impl From<TimestampValidator> for ProtoOption {

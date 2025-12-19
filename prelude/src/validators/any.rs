@@ -59,26 +59,37 @@ impl Validator<Any> for AnyValidator {
 #[derive(Clone, Debug, Builder)]
 #[builder(derive(Clone))]
 pub struct AnyValidator {
-  /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static ItemLookup<&'static str>>,
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static ItemLookup<&'static str>>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
+  #[builder(field)]
   pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   /// Specifies that the field must be set in order to be valid.
   #[builder(default, with = || true)]
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
+
+  /// Specifies that only the values in this list will be considered valid for this field.
+  pub in_: Option<&'static ItemLookup<&'static str>>,
+
+  /// Specifies that the values in this list will be considered NOT valid for this field.
+  pub not_in: Option<&'static ItemLookup<&'static str>>,
 }
 
-impl<S: State> AnyValidatorBuilder<S>
-where
-  S::Ignore: IsUnset,
-{
+impl<S: State> AnyValidatorBuilder<S> {
+  /// Adds a custom CEL rule to this validator.
+  /// Use the [`cel_program`] or [`inline_cel_program`] macros to build a static program.
+  pub fn cel(mut self, program: &'static CelProgram) -> Self {
+    self.cel.push(program);
+    self
+  }
+
   /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> AnyValidatorBuilder<SetIgnore<S>> {
+  pub fn ignore_always(self) -> AnyValidatorBuilder<SetIgnore<S>>
+  where
+    S::Ignore: IsUnset,
+  {
     self.ignore(Ignore::Always)
   }
 }

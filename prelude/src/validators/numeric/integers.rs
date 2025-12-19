@@ -94,43 +94,63 @@ pub struct IntValidator<Num>
 where
   Num: IntWrapper,
 {
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
+  #[builder(field)]
+  pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   #[builder(default)]
   _wrapper: PhantomData<Num>,
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Num::RustType>,
-  /// Specifies that this field's value will be valid only if it is smaller than the specified amount
-  pub lt: Option<Num::RustType>,
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
-  pub lte: Option<Num::RustType>,
-  /// Specifies that this field's value will be valid only if it is greater than the specified amount
-  pub gt: Option<Num::RustType>,
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
-  pub gte: Option<Num::RustType>,
-  /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static ItemLookup<Num::RustType>>,
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static ItemLookup<Num::RustType>>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
-  pub cel: Vec<&'static CelProgram>,
+
   /// Specifies that the field must be set in order to be valid.
   #[builder(default, with = || true)]
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
+
+  /// Specifies that only this specific value will be considered valid for this field.
+  pub const_: Option<Num::RustType>,
+
+  /// Specifies that this field's value will be valid only if it is smaller than the specified amount
+  pub lt: Option<Num::RustType>,
+
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
+  pub lte: Option<Num::RustType>,
+
+  /// Specifies that this field's value will be valid only if it is greater than the specified amount
+  pub gt: Option<Num::RustType>,
+
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
+  pub gte: Option<Num::RustType>,
+
+  /// Specifies that only the values in this list will be considered valid for this field.
+  pub in_: Option<&'static ItemLookup<Num::RustType>>,
+
+  /// Specifies that the values in this list will be considered NOT valid for this field.
+  pub not_in: Option<&'static ItemLookup<Num::RustType>>,
 }
 
-impl<S: State, N: IntWrapper> IntValidatorBuilder<N, S>
-where
-  S::Ignore: IsUnset,
-{
+impl<S: State, N: IntWrapper> IntValidatorBuilder<N, S> {
+  /// Adds a custom CEL rule to this validator.
+  /// Use the [`cel_program`] or [`inline_cel_program`] macros to build a static program.
+  pub fn cel(mut self, program: &'static CelProgram) -> Self {
+    self.cel.push(program);
+    self
+  }
+
   /// Rules defined for this field will be ignored if the field is set to its protobuf zero value.
-  pub fn ignore_if_zero_value(self) -> IntValidatorBuilder<N, SetIgnore<S>> {
+  pub fn ignore_if_zero_value(self) -> IntValidatorBuilder<N, SetIgnore<S>>
+  where
+    S::Ignore: IsUnset,
+  {
     self.ignore(Ignore::IfZeroValue)
   }
 
   /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> IntValidatorBuilder<N, SetIgnore<S>> {
+  pub fn ignore_always(self) -> IntValidatorBuilder<N, SetIgnore<S>>
+  where
+    S::Ignore: IsUnset,
+  {
     self.ignore(Ignore::Always)
   }
 }

@@ -68,24 +68,34 @@ where
 #[derive(Debug, Clone, Builder)]
 #[builder(derive(Clone))]
 pub struct MessageValidator<T: ProtoMessage> {
+  #[builder(field)]
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
+  pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   #[builder(default, setters(vis = ""))]
   _message: PhantomData<T>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
-  pub cel: Vec<&'static CelProgram>,
+
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
 }
 
-impl<T: ProtoMessage, S: State> MessageValidatorBuilder<T, S>
-where
-  S::Ignore: IsUnset,
-{
+impl<T: ProtoMessage, S: State> MessageValidatorBuilder<T, S> {
+  /// Adds a custom CEL rule to this validator.
+  /// Use the [`cel_program`] or [`inline_cel_program`] macros to build a static program.
+  pub fn cel(mut self, program: &'static CelProgram) -> Self {
+    self.cel.push(program);
+    self
+  }
+
   /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> MessageValidatorBuilder<T, SetIgnore<S>> {
+  pub fn ignore_always(self) -> MessageValidatorBuilder<T, SetIgnore<S>>
+  where
+    S::Ignore: IsUnset,
+  {
     self.ignore(Ignore::Always)
   }
 }

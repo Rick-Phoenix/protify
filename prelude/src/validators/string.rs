@@ -13,6 +13,7 @@ impl_proto_type!(String, "string");
 impl_into_option!(StringValidator);
 impl_validator!(StringValidator, String);
 impl_ignore!(StringValidatorBuilder);
+impl_cel_method!(StringValidatorBuilder);
 
 impl Validator<String> for StringValidator {
   type Target = String;
@@ -246,45 +247,62 @@ impl Validator<String> for StringValidator {
 #[builder(derive(Clone))]
 #[builder(on(Arc<str>, into))]
 pub struct StringValidator {
-  /// Specifies that the given string field must be of this exact length.
-  pub len: Option<usize>,
-  /// Specifies that the given string field must have a length that is equal to or higher than the given value.
-  pub min_len: Option<usize>,
-  /// Specifies that the given string field must have a length that is equal to or lower than the given value.
-  pub max_len: Option<usize>,
-  /// Specifies the exact byte length that this field's value must have in order to be considered valid.
-  pub len_bytes: Option<usize>,
-  /// Specifies the minimum byte length for this field's value to be considered valid.
-  pub min_bytes: Option<usize>,
-  /// Specifies the minimum byte length for this field's value to be considered valid.
-  pub max_bytes: Option<usize>,
-  #[cfg(feature = "regex")]
-  /// Specifies a regex pattern that this field's value should match in order to be considered valid.
-  pub pattern: Option<&'static Regex>,
-  /// Specifies the prefix that this field's value should contain in order to be considered valid.
-  pub prefix: Option<Arc<str>>,
-  /// Specifies the suffix that this field's value should contain in order to be considered valid.
-  pub suffix: Option<Arc<str>>,
-  /// Specifies a substring that this field's value should contain in order to be considered valid.
-  pub contains: Option<Arc<str>>,
-  /// Specifies a substring that this field's value must not contain in order to be considered valid.
-  pub not_contains: Option<Arc<str>>,
-  /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static ItemLookup<&'static str>>,
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static ItemLookup<&'static str>>,
+  #[builder(field)]
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
+  pub cel: Vec<&'static CelProgram>,
+
   #[builder(setters(vis = "", name = well_known))]
   pub well_known: Option<WellKnownStrings>,
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Arc<str>>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
-  pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
+
+  /// Specifies that the given string field must be of this exact length.
+  pub len: Option<usize>,
+
+  /// Specifies that the given string field must have a length that is equal to or higher than the given value.
+  pub min_len: Option<usize>,
+
+  /// Specifies that the given string field must have a length that is equal to or lower than the given value.
+  pub max_len: Option<usize>,
+
+  /// Specifies the exact byte length that this field's value must have in order to be considered valid.
+  pub len_bytes: Option<usize>,
+
+  /// Specifies the minimum byte length for this field's value to be considered valid.
+  pub min_bytes: Option<usize>,
+
+  /// Specifies the minimum byte length for this field's value to be considered valid.
+  pub max_bytes: Option<usize>,
+
+  #[cfg(feature = "regex")]
+  /// Specifies a regex pattern that this field's value should match in order to be considered valid.
+  pub pattern: Option<&'static Regex>,
+
+  /// Specifies the prefix that this field's value should contain in order to be considered valid.
+  pub prefix: Option<Arc<str>>,
+
+  /// Specifies the suffix that this field's value should contain in order to be considered valid.
+  pub suffix: Option<Arc<str>>,
+
+  /// Specifies a substring that this field's value should contain in order to be considered valid.
+  pub contains: Option<Arc<str>>,
+
+  /// Specifies a substring that this field's value must not contain in order to be considered valid.
+  pub not_contains: Option<Arc<str>>,
+
+  /// Specifies that only the values in this list will be considered valid for this field.
+  pub in_: Option<&'static ItemLookup<&'static str>>,
+
+  /// Specifies that the values in this list will be considered NOT valid for this field.
+  pub not_in: Option<&'static ItemLookup<&'static str>>,
+
+  /// Specifies that only this specific value will be considered valid for this field.
+  pub const_: Option<Arc<str>>,
 }
 
 impl From<StringValidator> for ProtoOption {

@@ -1,11 +1,13 @@
 use bon::Builder;
-use duration_validator_builder::{IsUnset, SetIgnore, State};
+use duration_validator_builder::State;
 use proto_types::Duration;
 
 use super::*;
 
 impl_validator!(DurationValidator, Duration);
 impl_into_option!(DurationValidator);
+impl_ignore!(DurationValidatorBuilder);
+impl_cel_method!(DurationValidatorBuilder);
 
 impl Validator<Duration> for DurationValidator {
   type Target = Duration;
@@ -78,38 +80,37 @@ impl Validator<Duration> for DurationValidator {
 #[derive(Clone, Debug, Builder)]
 #[builder(derive(Clone))]
 pub struct DurationValidator {
-  /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static ItemLookup<Duration>>,
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static ItemLookup<Duration>>,
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Duration>,
-  /// Specifies that the value must be smaller than the indicated amount in order to pass validation.
-  pub lt: Option<Duration>,
-  /// Specifies that the value must be equal to or smaller than the indicated amount in order to pass validation.
-  pub lte: Option<Duration>,
-  /// Specifies that the value must be greater than the indicated amount in order to pass validation.
-  pub gt: Option<Duration>,
-  /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
-  pub gte: Option<Duration>,
+  #[builder(field)]
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
   pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
-}
 
-impl<S: State> DurationValidatorBuilder<S>
-where
-  S::Ignore: IsUnset,
-{
-  /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> DurationValidatorBuilder<SetIgnore<S>> {
-    self.ignore(Ignore::Always)
-  }
+  /// Specifies that only the values in this list will be considered valid for this field.
+  pub in_: Option<&'static ItemLookup<Duration>>,
+
+  /// Specifies that the values in this list will be considered NOT valid for this field.
+  pub not_in: Option<&'static ItemLookup<Duration>>,
+
+  /// Specifies that only this specific value will be considered valid for this field.
+  pub const_: Option<Duration>,
+
+  /// Specifies that the value must be smaller than the indicated amount in order to pass validation.
+  pub lt: Option<Duration>,
+
+  /// Specifies that the value must be equal to or smaller than the indicated amount in order to pass validation.
+  pub lte: Option<Duration>,
+
+  /// Specifies that the value must be greater than the indicated amount in order to pass validation.
+  pub gt: Option<Duration>,
+
+  /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
+  pub gte: Option<Duration>,
 }
 
 impl From<DurationValidator> for ProtoOption {

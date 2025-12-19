@@ -9,6 +9,7 @@ use super::*;
 impl_validator!(BytesValidator, Bytes);
 impl_into_option!(BytesValidator);
 impl_ignore!(BytesValidatorBuilder);
+impl_cel_method!(BytesValidatorBuilder);
 impl_proto_type!(Bytes, "bytes");
 
 #[cfg(feature = "regex")]
@@ -174,37 +175,50 @@ macro_rules! insert_bytes_option {
 #[derive(Clone, Debug, Builder)]
 #[builder(derive(Clone))]
 pub struct BytesValidator {
-  /// Specifies that the given `bytes` field must be of this exact length.
-  pub len: Option<usize>,
-  /// Specifies that the given `bytes` field must have a length that is equal to or higher than the given value.
-  pub min_len: Option<usize>,
-  /// Specifies that the given `bytes` field must have a length that is equal to or lower than the given value.
-  pub max_len: Option<usize>,
-  #[cfg(feature = "regex")]
-  /// Specifies a regex pattern that must be matches by the value to pass validation.
-  pub pattern: Option<&'static Regex>,
-  /// Specifies a prefix that the value must start with in order to pass validation.
-  pub prefix: Option<Bytes>,
-  /// Specifies a suffix that the value must end with in order to pass validation.
-  pub suffix: Option<Bytes>,
-  /// Specifies a subset of bytes that the value must contain in order to pass validation.
-  pub contains: Option<Bytes>,
-  /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static ItemLookup<&'static [u8]>>,
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static ItemLookup<&'static [u8]>>,
+  #[builder(field)]
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
+  pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   #[builder(setters(vis = "", name = well_known))]
   pub well_known: Option<WellKnownBytes>,
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Bytes>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
-  pub cel: Vec<&'static CelProgram>,
+
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
+
+  /// Specifies that the given `bytes` field must be of this exact length.
+  pub len: Option<usize>,
+
+  /// Specifies that the given `bytes` field must have a length that is equal to or higher than the given value.
+  pub min_len: Option<usize>,
+
+  /// Specifies that the given `bytes` field must have a length that is equal to or lower than the given value.
+  pub max_len: Option<usize>,
+
+  #[cfg(feature = "regex")]
+  /// Specifies a regex pattern that must be matches by the value to pass validation.
+  pub pattern: Option<&'static Regex>,
+
+  /// Specifies a prefix that the value must start with in order to pass validation.
+  pub prefix: Option<Bytes>,
+
+  /// Specifies a suffix that the value must end with in order to pass validation.
+  pub suffix: Option<Bytes>,
+
+  /// Specifies a subset of bytes that the value must contain in order to pass validation.
+  pub contains: Option<Bytes>,
+
+  /// Specifies that only the values in this list will be considered valid for this field.
+  pub in_: Option<&'static ItemLookup<&'static [u8]>>,
+
+  /// Specifies that the values in this list will be considered NOT valid for this field.
+  pub not_in: Option<&'static ItemLookup<&'static [u8]>>,
+
+  /// Specifies that only this specific value will be considered valid for this field.
+  pub const_: Option<Bytes>,
 }
 
 impl From<BytesValidator> for ProtoOption {

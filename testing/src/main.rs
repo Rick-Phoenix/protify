@@ -93,7 +93,7 @@ mod inner {
   #[proto(required)]
   #[derive(Clone, Debug)]
   enum PseudoOneof {
-    #[proto(tag = 200, validate = |v| v.cel([ &RULE ]))]
+    #[proto(tag = 200, validate = |v| v.cel(&RULE))]
     A(String),
     #[proto(tag = 201)]
     B(i32),
@@ -104,7 +104,7 @@ mod inner {
   #[proto_oneof(direct)]
   #[proto(required)]
   enum DirectOneof {
-    #[proto(tag = 200, validate = |v| v.cel([ &RULE ]))]
+    #[proto(tag = 200, validate = |v| v.cel(&RULE))]
     A(String),
     #[proto(tag = 201)]
     B(i32),
@@ -242,7 +242,7 @@ mod test {
   use std::collections::HashMap;
 
   use bytes::Bytes;
-  use prelude::{Package, ProtoFile, ProtoMessage};
+  use prelude::{cel_program, CachedProgram, Package, ProtoFile, ProtoMessage};
   use proc_macro_impls::proto_message;
 
   use crate::inner::{proto_file, PseudoEnum};
@@ -250,7 +250,7 @@ mod test {
   #[proto_message(direct)]
   #[proto(package = "", file = "")]
   struct DuplicateRules {
-    #[proto(tag = 1, validate = |v| v.cel([ inline_cel_program!(id = "abc", msg = "hi", expr = "hi"), inline_cel_program!(id = "abc", msg = "not hi", expr = "not hi") ]))]
+    #[proto(tag = 1, validate = |v| v.cel(inline_cel_program!(id = "abc", msg = "hi", expr = "hi")).cel(inline_cel_program!(id = "abc", msg = "not hi", expr = "not hi")))]
     pub id: i32,
   }
 

@@ -11,16 +11,6 @@ use crate::validators::field_context::ViolationsExt;
 
 pub type CachedProgram = LazyLock<CelProgram>;
 
-pub(crate) fn collect_programs<I>(programs: I) -> Vec<&'static CelProgram>
-where
-  I: IntoIterator<Item = &'static LazyLock<CelProgram>>,
-{
-  programs
-    .into_iter()
-    .map(|lazy_lock| &**lazy_lock)
-    .collect()
-}
-
 #[derive(Debug)]
 pub struct CelProgram {
   pub rule: CelRule,

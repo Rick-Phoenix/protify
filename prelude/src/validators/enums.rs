@@ -77,29 +77,43 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
 #[derive(Clone, Debug, Builder)]
 #[builder(derive(Clone))]
 pub struct EnumValidator<T: ProtoEnum> {
+  #[builder(field)]
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
+  pub cel: Vec<&'static CelProgram>,
+
+  #[builder(setters(vis = "", name = ignore))]
+  pub ignore: Option<Ignore>,
+
   #[builder(default, setters(vis = ""))]
   _enum: PhantomData<T>,
-  /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static ItemLookup<i32>>,
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static ItemLookup<i32>>,
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<i32>,
+
   #[builder(default, with = || true)]
   /// Marks that this field will only accept values that are defined in the enum that it's referring to.
   pub defined_only: bool,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(default, with = |programs: impl IntoIterator<Item = &'static LazyLock<CelProgram>>| collect_programs(programs))]
-  pub cel: Vec<&'static CelProgram>,
+
   #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
-  #[builder(setters(vis = "", name = ignore))]
-  pub ignore: Option<Ignore>,
+
+  /// Specifies that only the values in this list will be considered valid for this field.
+  pub in_: Option<&'static ItemLookup<i32>>,
+
+  /// Specifies that the values in this list will be considered NOT valid for this field.
+  pub not_in: Option<&'static ItemLookup<i32>>,
+
+  /// Specifies that only this specific value will be considered valid for this field.
+  pub const_: Option<i32>,
 }
 
 impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
-  #[doc = r" Rules defined for this field will be ignored if the field is set to its protobuf zero value."]
+  /// Adds a custom CEL rule to this validator.
+  /// Use the [`cel_program`] or [`inline_cel_program`] macros to build a static program.
+  pub fn cel(mut self, program: &'static CelProgram) -> Self {
+    self.cel.push(program);
+    self
+  }
+
+  /// Rules defined for this field will be ignored if the field is set to its protobuf zero value.
   pub fn ignore_if_zero_value(self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -107,7 +121,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     self.ignore(Ignore::IfZeroValue)
   }
 
-  #[doc = r" Rules set for this field will always be ignored."]
+  /// Rules set for this field will always be ignored.
   pub fn ignore_always(self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
