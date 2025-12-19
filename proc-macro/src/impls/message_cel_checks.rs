@@ -1,12 +1,22 @@
 use crate::*;
 
-pub fn impl_message_cel_checks(
-  item_ident: &Ident,
-  programs_paths: Option<&Vec<Path>>,
-  field_cel_checks: Vec<TokenStream2>,
-  no_auto_test: bool,
-  message_name: &str,
-) -> (TokenStream2, Option<Ident>) {
+pub struct MessageCelChecksCtx<'a> {
+  pub item_ident: &'a Ident,
+  pub programs_paths: Option<&'a Vec<Path>>,
+  pub field_cel_checks: Vec<TokenStream2>,
+  pub no_auto_test: bool,
+  pub message_name: &'a str,
+}
+
+pub fn impl_message_cel_checks(ctx: MessageCelChecksCtx) -> (TokenStream2, Option<Ident>) {
+  let MessageCelChecksCtx {
+    item_ident,
+    programs_paths,
+    field_cel_checks,
+    no_auto_test,
+    message_name,
+  } = ctx;
+
   let (static_ident, top_level_programs) = if let Some(paths) = programs_paths {
     let static_ident = format_ident!("{}_CEL_RULES", ccase!(constant, item_ident.to_string()));
 

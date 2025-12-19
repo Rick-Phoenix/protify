@@ -97,13 +97,13 @@ pub fn process_message_derive_shadow(
 
   let (cel_check_impl, top_level_programs_ident) =
     if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
-      let (cel_check_impl, ident) = impl_message_cel_checks(
-        orig_struct_ident,
-        message_attrs.cel_rules.as_ref(),
-        cel_checks_tokens,
-        message_attrs.no_auto_test,
-        &message_attrs.name,
-      );
+      let (cel_check_impl, ident) = impl_message_cel_checks(MessageCelChecksCtx {
+        item_ident: orig_struct_ident,
+        programs_paths: message_attrs.cel_rules.as_ref(),
+        field_cel_checks: cel_checks_tokens,
+        no_auto_test: message_attrs.no_auto_test,
+        message_name: &message_attrs.name,
+      });
 
       (Some(cel_check_impl), ident)
     } else {
@@ -215,13 +215,13 @@ pub fn process_message_derive_direct(
 
   let (cel_check_impl, top_level_programs_ident) =
     if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
-      let (cel_check_impl, ident) = impl_message_cel_checks(
-        struct_ident,
-        message_attrs.cel_rules.as_ref(),
-        cel_checks_tokens,
-        message_attrs.no_auto_test,
-        &message_attrs.name,
-      );
+      let (cel_check_impl, ident) = impl_message_cel_checks(MessageCelChecksCtx {
+        item_ident: struct_ident,
+        programs_paths: message_attrs.cel_rules.as_ref(),
+        field_cel_checks: cel_checks_tokens,
+        no_auto_test: message_attrs.no_auto_test,
+        message_name: &message_attrs.name,
+      });
 
       (Some(cel_check_impl), ident)
     } else {
