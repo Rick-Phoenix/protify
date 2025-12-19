@@ -17,7 +17,7 @@ impl<'a> TypeContext<'a> {
     let validator_expr = validator.build_expr();
 
     let argument = if is_variant {
-      quote! { v }
+      quote! { Some(v) }
     } else {
       match self.rust_type.type_.as_ref() {
         RustType::Option(inner) => {
@@ -34,8 +34,14 @@ impl<'a> TypeContext<'a> {
       }
     };
 
-    quote! {
-      #validator_expr.validate(&#field_context_tokens, parent_elements, #argument).ok_or_push_violations(&mut violations);
+    let expr = quote! {
+      #validator_expr.validate(&#field_context_tokens, parent_elements, #argument).ok_or_push_violations(&mut violations)
+    };
+
+    if is_variant {
+      quote! { Self::#field_ident(v) => #expr }
+    } else {
+      expr
     }
   }
 

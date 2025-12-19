@@ -20,15 +20,7 @@ impl Package {
           message
             .entries
             .iter()
-            .filter_map(|e| {
-              if let MessageEntry::Field(field) = e {
-                Some(field)
-              } else {
-                None
-              }
-            })
-            .filter_map(|f| f.validator.as_ref())
-            .flat_map(|v| v.cel_rules.iter().copied()),
+            .flat_map(|entry| entry.cel_rules()),
         )
       })
     {

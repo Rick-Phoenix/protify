@@ -15,7 +15,7 @@ pub enum ImplKind<'a, 'b> {
 
 pub struct InputItem<'a, 'b> {
   pub impl_kind: ImplKind<'a, 'b>,
-  pub validators_tokens: &'b mut TokenStream2,
+  pub validators_tokens: &'b mut Vec<TokenStream2>,
   pub cel_checks_tokens: &'b mut Vec<TokenStream2>,
 }
 

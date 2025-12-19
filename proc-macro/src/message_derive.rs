@@ -41,7 +41,7 @@ pub fn process_message_derive_shadow(
   let shadow_struct_fields = shadow_struct.fields.iter_mut();
   let mut ignored_fields: Vec<Ident> = Vec::new();
 
-  let mut validators_tokens = TokenStream2::new();
+  let mut validators_tokens: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut proto_conversion_data = ProtoConversionImpl {
@@ -98,7 +98,7 @@ pub fn process_message_derive_shadow(
     );
 
     let cel_check_impl =
-      impl_cel_checks(shadow_struct_ident, &static_ident, paths, cel_checks_tokens);
+      impl_message_cel_checks(shadow_struct_ident, &static_ident, paths, cel_checks_tokens);
 
     (Some(cel_check_impl), Some(static_ident))
   } else {
@@ -150,7 +150,7 @@ pub fn process_message_derive_direct(
 
   let mut fields_tokens: Vec<TokenStream2> = Vec::new();
 
-  let mut validators_tokens = TokenStream2::new();
+  let mut validators_tokens: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut input_item = InputItem {
@@ -212,7 +212,8 @@ pub fn process_message_derive_direct(
   let (cel_check_impl, top_level_programs_ident) = if let Some(paths) = &message_attrs.cel_rules {
     let static_ident = format_ident!("{}_CEL_RULES", ccase!(constant, struct_ident.to_string()));
 
-    let cel_check_impl = impl_cel_checks(struct_ident, &static_ident, paths, cel_checks_tokens);
+    let cel_check_impl =
+      impl_message_cel_checks(struct_ident, &static_ident, paths, cel_checks_tokens);
 
     (Some(cel_check_impl), Some(static_ident))
   } else {

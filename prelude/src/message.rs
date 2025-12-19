@@ -53,6 +53,18 @@ pub enum MessageEntry {
 }
 
 impl MessageEntry {
+  pub(crate) fn cel_rules(&self) -> impl Iterator<Item = &'static CelRule> {
+    let fields_slice = match self {
+      MessageEntry::Field(f) => std::slice::from_ref(f),
+      MessageEntry::Oneof(o) => o.fields.as_slice(),
+    };
+
+    fields_slice
+      .iter()
+      .flat_map(|f| f.validator.iter())
+      .flat_map(|v| v.cel_rules.iter().copied())
+  }
+
   pub(crate) fn render(&self, current_package: &'static str) -> String {
     match self {
       MessageEntry::Field(proto_field) => proto_field.render(current_package),

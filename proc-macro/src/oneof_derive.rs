@@ -39,7 +39,7 @@ pub(crate) fn process_oneof_derive_shadow(
   let shadow_enum_variants = shadow_enum.variants.iter_mut();
   let mut ignored_variants: Vec<Ident> = Vec::new();
 
-  let mut validators_tokens = TokenStream2::new();
+  let mut validators_tokens: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut proto_conversion_data = ProtoConversionImpl {
@@ -93,6 +93,13 @@ pub(crate) fn process_oneof_derive_shadow(
     .shadow_derives
     .map(|list| quote! { #[#list] });
 
+  let cel_checks_impl = impl_oneof_cel_checks(shadow_enum_ident, cel_checks_tokens);
+
+  let validator_impl = impl_oneof_validator(OneofValidatorImplCtx {
+    oneof_ident: shadow_enum_ident,
+    validators_tokens,
+  });
+
   // prost::Oneof already implements Debug
   output_tokens.extend(quote! {
     #oneof_schema_impl
@@ -102,6 +109,8 @@ pub(crate) fn process_oneof_derive_shadow(
     #shadow_enum
 
     #proto_conversion_impls
+    #cel_checks_impl
+    #validator_impl
 
     impl ::prelude::ProtoOneof for #shadow_enum_ident {
       fn proto_schema() -> ::prelude::Oneof {
@@ -127,7 +136,7 @@ pub(crate) fn process_oneof_derive_direct(
 
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
-  let mut validators_tokens = TokenStream2::new();
+  let mut validators_tokens: Vec<TokenStream2> = Vec::new();
   let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut input_item = InputItem {

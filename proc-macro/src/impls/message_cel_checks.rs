@@ -1,6 +1,6 @@
 use crate::*;
 
-pub fn impl_cel_checks(
+pub fn impl_message_cel_checks(
   item_ident: &Ident,
   static_ident: &Ident,
   programs_paths: &[Path],

@@ -2,11 +2,11 @@ use crate::*;
 
 pub struct ValidatorImplCtx<'a> {
   pub target_ident: &'a Ident,
-  pub validators_tokens: TokenStream2,
+  pub validators_tokens: Vec<TokenStream2>,
   pub top_level_programs_ident: Option<&'a Ident>,
 }
 
-pub fn impl_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
+pub fn impl_message_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
   let ValidatorImplCtx {
     target_ident,
     validators_tokens,
@@ -66,7 +66,7 @@ pub fn impl_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
           ctx.execute_programs();
         }
 
-        #validators_tokens
+        #(#validators_tokens;)*
 
         if field_context.is_some() {
           parent_elements.pop();

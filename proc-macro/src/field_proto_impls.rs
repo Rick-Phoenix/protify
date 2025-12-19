@@ -4,7 +4,7 @@ pub struct FieldCtx<'a, 'field> {
   pub field: &'a mut FieldOrVariant<'field>,
   pub field_attrs: &'a FieldAttrs,
   pub type_ctx: &'a TypeContext<'a>,
-  pub validators_tokens: &'a mut TokenStream2,
+  pub validators_tokens: &'a mut Vec<TokenStream2>,
   pub cel_checks: &'a mut Vec<TokenStream2>,
 }
 
@@ -40,6 +40,16 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
       path: oneof_path, ..
     } = &type_ctx.proto_field
     {
+      cel_checks.push(quote! {
+        #oneof_path::check_cel_programs()
+      });
+
+      validators_tokens.push(quote! {
+        if let Some(oneof) = self.#field_ident.as_ref() {
+          oneof.validate(parent_elements).ok_or_push_violations(&mut violations)
+        }
+      });
+
       // Early return
       return Ok(quote! {
         ::prelude::MessageEntry::Oneof(<#oneof_path as ::prelude::ProtoOneof>::proto_schema())
@@ -72,7 +82,7 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
         &field_validator,
       );
 
-      validators_tokens.extend(field_validator_tokens);
+      validators_tokens.push(field_validator_tokens);
 
       let cel_check = field_validator.cel_check_expr();
       cel_checks.push(cel_check);

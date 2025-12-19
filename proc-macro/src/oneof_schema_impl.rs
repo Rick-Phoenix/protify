@@ -21,6 +21,10 @@ pub fn oneof_schema_impl(
       fn proto_schema() -> ::prelude::Oneof {
         Self::proto_schema()
       }
+
+      fn validate(&self, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
+        self.validate(parent_elements)
+      }
     }
 
     impl #enum_ident {
