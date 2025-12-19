@@ -78,6 +78,7 @@ pub fn process_message_derive_shadow(
   }
 
   let proto_conversion_impls = proto_conversion_data.generate_conversion_impls();
+  let validated_conversion_impls = proto_conversion_data.create_validated_conversion_helpers();
 
   // We strip away the ignored fields from the shadow struct
   if let Fields::Named(fields) = &mut shadow_struct.fields {
@@ -130,6 +131,7 @@ pub fn process_message_derive_shadow(
     #shadow_struct
 
     #proto_conversion_impls
+    #validated_conversion_impls
 
     #validator_impl
     #cel_check_impl

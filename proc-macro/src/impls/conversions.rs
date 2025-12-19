@@ -106,6 +106,35 @@ impl<'a> ProtoConversionImpl<'a> {
     })
   }
 
+  // This one only really makes sense for messages, not for oneofs
+  pub fn create_validated_conversion_helpers(&self) -> TokenStream2 {
+    let Self {
+      source_ident,
+      target_ident,
+      ..
+    } = self;
+
+    quote! {
+      impl #source_ident {
+        pub fn from_validated_proto(value: #target_ident) -> Result<Self, Violations> {
+          match value.validate() {
+            Ok(_) => Ok(value.into()),
+            Err(vi) => Err(vi)
+          }
+        }
+
+        pub fn into_validated_proto(self) -> Result<#target_ident, Violations> {
+          let output: #target_ident = self.into();
+
+          match output.validate() {
+            Ok(_) => Ok(output),
+            Err(vi) => Err(vi)
+          }
+        }
+      }
+    }
+  }
+
   pub fn create_conversion_helpers(&self) -> TokenStream2 {
     let Self {
       source_ident,
