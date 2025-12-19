@@ -20,16 +20,10 @@ pub fn process_enum_derive_prost(
   enum_attrs: EnumAttrs,
 ) -> Result<TokenStream2, Error> {
   let ItemEnum {
-    attrs,
     ident: enum_name,
     variants,
     ..
   } = item;
-
-  let repr_attr: Attribute = parse_quote!(#[repr(i32)]);
-  let prost_attr: Attribute = parse_quote!(#[derive(::prost::Enumeration)]);
-  attrs.push(repr_attr);
-  attrs.push(prost_attr);
 
   let EnumAttrs {
     reserved_names,
