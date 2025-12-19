@@ -102,6 +102,7 @@ pub fn process_message_derive_shadow(
         message_attrs.cel_rules.as_ref(),
         cel_checks_tokens,
         message_attrs.no_auto_test,
+        &message_attrs.name,
       );
 
       (Some(cel_check_impl), ident)
@@ -219,6 +220,7 @@ pub fn process_message_derive_direct(
         message_attrs.cel_rules.as_ref(),
         cel_checks_tokens,
         message_attrs.no_auto_test,
+        &message_attrs.name,
       );
 
       (Some(cel_check_impl), ident)

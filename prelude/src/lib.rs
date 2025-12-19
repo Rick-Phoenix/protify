@@ -26,6 +26,8 @@ mod proto_enum;
 mod proto_type;
 mod rendering_utils;
 mod service;
+#[cfg(feature = "testing")]
+pub mod test_utils;
 mod well_known_types;
 use bon::Builder;
 pub use field::*;

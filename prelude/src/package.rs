@@ -20,6 +20,7 @@ impl Package {
   }
 
   #[cfg(feature = "testing")]
+  #[track_caller]
   pub fn check_unique_cel_rules(&self) {
     let mut rules: HashMap<&str, &CelRule> = HashMap::new();
     let mut duplicates: HashMap<&str, Vec<&CelRule>> = HashMap::new();

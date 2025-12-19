@@ -23,6 +23,8 @@ fn unique_rules() {
   package.check_unique_cel_rules();
 }
 
+// TODO: Check on fields and oneofs and top level
+
 #[proto_message(direct, no_auto_test)]
 #[proto(package = "", file = "")]
 struct BadRules {
