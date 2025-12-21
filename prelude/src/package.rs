@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, fs::File, path::Path};
 
 use crate::*;
 
@@ -8,6 +8,25 @@ pub struct Package {
 }
 
 impl Package {
+  pub fn render_files<P>(&self, output_root: P) -> std::io::Result<()>
+  where
+    P: AsRef<Path>,
+  {
+    let output_root = output_root.as_ref();
+
+    std::fs::create_dir_all(output_root)?;
+
+    for file in &self.files {
+      let file_path = output_root.join(file.name);
+
+      let mut file_buf = File::create(file_path)?;
+
+      file.write_into(&mut file_buf)?;
+    }
+
+    Ok(())
+  }
+
   #[must_use]
   pub const fn new(name: &'static str) -> Self {
     Self {

@@ -306,8 +306,8 @@ macro_rules! impl_int_wrapper {
 macro_rules! impl_int {
   ($rust_type:ty, $proto_type:ident, primitive) => {
     paste::paste! {
-      impl_int_wrapper!($rust_type, $rust_type, [< $proto_type:upper >]);
-      impl_proto_type!($rust_type, stringify!($proto_type));
+      impl_int_wrapper!($rust_type, $rust_type, $proto_type);
+      impl_proto_type!($rust_type, stringify!([ < $proto_type:lower > ]));
       impl_int_validator!($rust_type, $rust_type);
     }
   };

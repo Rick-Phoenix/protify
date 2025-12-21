@@ -6,9 +6,9 @@ mod tests;
 use std::collections::HashMap;
 
 use prelude::{
-  cel_program, CachedProgram, EnumValidator, FieldValidator, IntValidator, MessageEntry,
-  OptionValue, Package, ProtoEnum, ProtoOption, RepeatedValidator, RepeatedValidatorBuilder,
-  StringValidator, StringValidatorBuilder, ValidatorBuilderFor,
+  CachedProgram, EnumValidator, FieldValidator, IntValidator, MessageEntry, OptionValue, Package,
+  ProtoEnum, ProtoOption, RepeatedValidator, RepeatedValidatorBuilder, StringValidator,
+  StringValidatorBuilder, ValidatorBuilderFor, cel_program,
 };
 use proc_macro_impls::{Enum, Message, Oneof};
 use proto_types::{Duration, Timestamp};
@@ -50,9 +50,9 @@ mod inner {
   };
 
   use bytes::Bytes;
-  use prelude::{bytes_regex, cached_set, CachedBytesRegex, *};
+  use prelude::{CachedBytesRegex, bytes_regex, cached_set, *};
   use proc_macro_impls::{
-    proto_enum, proto_extension, proto_message, proto_oneof, proto_service, Extension, Service,
+    Extension, Service, proto_enum, proto_extension, proto_message, proto_oneof, proto_service,
   };
   use proto_types::{field_descriptor_proto::Type, protovalidate::FieldPathElement};
   use regex::Regex;
@@ -221,4 +221,11 @@ use protocheck::wrappers::Sint32;
 
 fn main() {
   env_logger::init();
+
+  let package = Package {
+    name: "mypkg",
+    files: vec![proto_file()],
+  };
+
+  package.render_files("proto_test").unwrap();
 }
