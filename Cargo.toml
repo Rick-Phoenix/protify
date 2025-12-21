@@ -1,5 +1,5 @@
 [workspace]
-members = ["prelude", "proc-macro", "testing"]
+members = ["prelude", "proc-macro", "test-server", "testing"]
 resolver = "3"
 
 [workspace.package]
@@ -8,6 +8,31 @@ license = "MPL-2.0"
 authors = ["Rick-Phoenix <https://github.com/Rick-Phoenix>"]
 repository = "https://github.com/Rick-Phoenix/protoschema"
 keywords = ["protobuf", "validation", "schema"]
+
+[workspace.dependencies]
+cel = { version = "0", path = "../cel-rust/cel" }
+paste = "1"
+askama = { version = "0.14.0", default-features = false, features = [
+  "config",
+  "derive",
+  "std",
+] }
+bon = "3.7"
+maplit = "1"
+regex = "1"
+thiserror = "2"
+convert_case = "0.8"
+proto-types = { version = "0.1.11", path = "../protocheck/proto_types/", features = [
+  "protovalidate",
+] }
+tonic = "0.14"
+tonic-prost = "0.14"
+prost = "0.14"
+tonic-prost-build = "0.14.2"
+serde = { version = "1", features = ["derive"] }
+chrono = "0.4"
+protocheck-core = { path = "../protocheck/core" }
+itertools = "0.14"
 
 [workspace.lints.clippy]
 # Until rustfmt supports it and there is a quick fix
@@ -104,24 +129,3 @@ unnested_or_patterns = "warn"
 unreadable_literal = "warn"
 unused_async = "warn"
 unused_self = "warn"
-
-[workspace.dependencies]
-cel = { version = "0", path = "../cel-rust/cel" }
-paste = "1"
-askama = { version = "0.14.0", default-features = false, features = [
-  "config",
-  "derive",
-  "std",
-] }
-bon = "3.7"
-maplit = "1"
-regex = "1"
-thiserror = "2"
-convert_case = "0.8"
-proto-types = { version = "0.1.11", path = "../protocheck/proto_types/", features = [
-  "protovalidate",
-] }
-serde = { version = "1", features = ["derive"] }
-chrono = "0.4"
-protocheck-core = { path = "../protocheck/core" }
-itertools = "0.14"

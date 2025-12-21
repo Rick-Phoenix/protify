@@ -1,3 +1,10 @@
+[working-directory("testing")]
+build-protos:
+    cargo run -p testing
+
+build-server:
+    cargo build -p test-server
+
 test:
     cargo test --all-features -- -q --nocapture
 

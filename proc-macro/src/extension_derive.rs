@@ -35,14 +35,14 @@ impl ExtendTarget {
 impl ToTokens for ExtendTarget {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
     let output = match self {
-      ExtendTarget::FileOptions => "FileOptions",
-      ExtendTarget::MessageOptions => "MessageOptions",
-      ExtendTarget::FieldOptions => "FieldOptions",
-      ExtendTarget::OneofOptions => "OneofOptions",
-      ExtendTarget::EnumOptions => "EnumOptions",
-      ExtendTarget::EnumValueOptions => "EnumValueOptions",
-      ExtendTarget::ServiceOptions => "ServiceOptions",
-      ExtendTarget::MethodOptions => "MethodOptions",
+      ExtendTarget::FileOptions => "google.protobuf.FileOptions",
+      ExtendTarget::MessageOptions => "google.protobuf.MessageOptions",
+      ExtendTarget::FieldOptions => "google.protobuf.FieldOptions",
+      ExtendTarget::OneofOptions => "google.protobuf.OneofOptions",
+      ExtendTarget::EnumOptions => "google.protobuf.EnumOptions",
+      ExtendTarget::EnumValueOptions => "google.protobuf.EnumValueOptions",
+      ExtendTarget::ServiceOptions => "google.protobuf.ServiceOptions",
+      ExtendTarget::MethodOptions => "google.protobuf.MethodOptions",
     };
 
     tokens.extend(output.to_token_stream());
