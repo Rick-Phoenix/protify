@@ -69,6 +69,7 @@ pub(crate) fn process_oneof_derive_shadow(
       field_or_variant: FieldOrVariant::Variant(dst_variant),
       input_item: &mut input_item,
       field_attrs,
+      tag_allocator_ctx: None,
     })?;
 
     if !field_tokens.is_empty() {
@@ -168,7 +169,10 @@ pub(crate) fn process_oneof_derive_direct(
 
         _ => {
           if !type_info.type_.is_primitive() && !type_info.type_.is_bytes() {
-            bail!(variant_type, "Unsupported Oneof variant type. If you want to use a custom type, you must use a proxied oneof with custom conversions")
+            bail!(
+              variant_type,
+              "Unsupported Oneof variant type. If you want to use a custom type, you must use a proxied oneof with custom conversions"
+            )
           }
         }
       };
@@ -178,6 +182,7 @@ pub(crate) fn process_oneof_derive_direct(
       field_or_variant: FieldOrVariant::Variant(variant),
       input_item: &mut input_item,
       field_attrs,
+      tag_allocator_ctx: None,
     })?;
 
     if !field_tokens.is_empty() {

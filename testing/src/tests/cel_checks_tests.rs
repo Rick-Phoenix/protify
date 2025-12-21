@@ -1,6 +1,10 @@
+use prelude::proto_file;
+
 use super::*;
 
 // TODO: Check other cases for deep duplication search like in oneofs and top level messages mixed with fields
+
+proto_file!("testing", "testing");
 
 #[proto_message(direct)]
 #[proto(package = "", file = "")]
@@ -14,7 +18,7 @@ struct DuplicateRules {
 fn unique_rules() {
   let mut package = Package::new("abc");
 
-  let mut file = ProtoFile::new("abc", "abc");
+  let mut file = ProtoFile::new("abc", "abc", "abc");
 
   file.add_messages([DuplicateRules::proto_schema()]);
 

@@ -12,17 +12,17 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
   let mut handlers_tokens: Vec<TokenStream2> = Vec::new();
 
   let ServiceOrHandlerAttrs {
-    name: service_name,
     options: service_options,
-    package,
-  } = process_service_or_handler_attrs(&ident, &attrs)?;
+  } = process_service_or_handler_attrs(&attrs)?;
+
+  let service_name = ccase!(pascal, ident.to_string());
 
   for variant in variants {
     let ServiceOrHandlerAttrs {
-      name: handler_name,
       options: handler_options,
-      ..
-    } = process_service_or_handler_attrs(&variant.ident, &variant.attrs)?;
+    } = process_service_or_handler_attrs(&variant.attrs)?;
+
+    let handler_name = variant.ident.to_string();
 
     let mut request: Option<&Path> = None;
     let mut response: Option<&Path> = None;
@@ -73,11 +73,10 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
     });
   }
 
-  let package = package.ok_or(error!(&ident, "Missing package attribute"))?;
   let service_options = tokens_or_default!(service_options, quote! { vec![] });
 
   Ok(quote! {
-    #[derive(Service)]
+    #[derive(::proc_macro_impls::Service)]
     #vis struct #ident;
 
     impl ::prelude::ProtoService for #ident {
@@ -90,7 +89,7 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
       pub fn proto_schema() -> ::prelude::Service {
         ::prelude::Service {
           name: #service_name,
-          package: #package,
+          package: __PROTO_FILE.package,
           handlers: vec![ #(#handlers_tokens),* ],
           options: #service_options
         }

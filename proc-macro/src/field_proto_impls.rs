@@ -1,14 +1,23 @@
+use syn_utils::bail_call_site;
+
 use crate::*;
 
-pub struct FieldCtx<'a, 'field> {
+pub struct TagAllocatorCtx<'a, 'field> {
+  pub reserved_numbers: &'a ReservedNumbers,
+  pub tag_allocator: &'a mut TagAllocator<'field>,
+}
+
+pub struct FieldCtx<'a, 'b, 'field> {
   pub field: FieldOrVariant<'field>,
   pub field_attrs: FieldAttrs,
   pub type_info: TypeInfo,
   pub validators_tokens: &'a mut Vec<TokenStream2>,
   pub cel_checks: &'a mut Vec<TokenStream2>,
+  pub tag_allocator_ctx: Option<&'a mut TagAllocatorCtx<'b, 'field>>,
 }
 
-impl<'a, 'field> FieldCtx<'a, 'field> {
+// TODO: Pass field span for errors
+impl<'a, 'b, 'field> FieldCtx<'a, 'b, 'field> {
   pub fn generate_proto_impls(self) -> syn::Result<TokenStream2> {
     let FieldCtx {
       mut field,
@@ -24,12 +33,27 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
       type_info,
       validators_tokens,
       cel_checks,
+      tag_allocator_ctx,
     } = self;
 
     let proto_output_type = proto_field.output_proto_type();
     let proto_output_type_outer: Type = parse_quote! { #proto_output_type };
 
     field.change_type(proto_output_type_outer)?;
+
+    let tag = if let Some(tag) = tag {
+      if tag_allocator_ctx.is_some_and(|ctx| ctx.reserved_numbers.contains(tag)) {
+        bail_call_site!("Tag {tag} is a reserved number");
+      }
+
+      tag
+    } else if let Some(tag_allocator) = tag_allocator_ctx.map(|ctx| &mut ctx.tag_allocator) {
+      tag_allocator
+        .next_tag()
+        .map_err(|e| error_call_site!("{e}"))?
+    } else {
+      bail_call_site!("Missing tag");
+    };
 
     let prost_attr = proto_field.as_prost_attr(tag);
     let field_prost_attr: Attribute = parse_quote!(#prost_attr);

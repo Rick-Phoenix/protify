@@ -4,6 +4,7 @@ pub struct ProcessFieldInput<'item, 'a, 'field> {
   pub field_or_variant: FieldOrVariant<'field>,
   pub input_item: &'a mut InputItem<'item, 'field>,
   pub field_attrs: FieldAttrData,
+  pub tag_allocator_ctx: Option<&'a mut TagAllocatorCtx<'item, 'field>>,
 }
 
 pub fn process_field(input: ProcessFieldInput) -> syn::Result<TokenStream2> {
@@ -17,6 +18,8 @@ pub fn process_field(input: ProcessFieldInput) -> syn::Result<TokenStream2> {
         ..
       },
     field_attrs,
+    tag_allocator_ctx,
+    ..
   } = input;
 
   let field_ident = field_or_variant.ident()?;
@@ -78,6 +81,7 @@ pub fn process_field(input: ProcessFieldInput) -> syn::Result<TokenStream2> {
     type_info,
     validators_tokens,
     cel_checks: cel_checks_tokens,
+    tag_allocator_ctx,
   };
 
   field_ctx.generate_proto_impls()

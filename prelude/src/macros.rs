@@ -1,4 +1,16 @@
 #[macro_export]
+macro_rules! proto_file {
+  ($path:literal, $package:literal) => {
+    #[doc(hidden)]
+    #[allow(unused)]
+    const __PROTO_FILE: $crate::RegistryPath = $crate::RegistryPath {
+      file: $path,
+      package: $package,
+    };
+  };
+}
+
+#[macro_export]
 macro_rules! cached_slice {
   ($items:expr) => {{
     use std::sync::LazyLock;

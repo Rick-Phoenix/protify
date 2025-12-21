@@ -30,10 +30,8 @@ pub fn process_enum_derive_prost(
     reserved_numbers,
     options,
     name: proto_name,
-    file,
-    package,
-    full_name,
     no_prefix,
+    parent_message,
     ..
   } = enum_attrs;
 
@@ -116,7 +114,25 @@ pub fn process_enum_derive_prost(
 
   let options_tokens = tokens_or_default!(options, quote! { vec![] });
 
+  let full_name_method = if let Some(parent) = parent_message {
+    quote! {
+      static __FULL_NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+        format!("{}.{}", #parent::full_name(), #proto_name).into()
+      });
+
+      &*__FULL_NAME
+    }
+  } else {
+    quote! { #proto_name }
+  };
+
   let output_tokens = quote! {
+    ::prelude::inventory::submit! {
+      ::prelude::RegistryEnum {
+        enum_: || #enum_name::proto_schema()
+      }
+    }
+
     impl #enum_name {
       pub fn from_int_or_default(int: i32) -> Self {
         int.try_into().unwrap_or_default()
@@ -142,11 +158,15 @@ pub fn process_enum_derive_prost(
     }
 
     impl ::prelude::ProtoEnum for #enum_name {
+      fn full_name() -> &'static str {
+        #full_name_method
+      }
+
       fn proto_path() -> ::prelude::ProtoPath {
         ::prelude::ProtoPath {
-          name: #full_name,
-          file: #file,
-          package: #package,
+          name: Self::full_name(),
+          file: __PROTO_FILE.file,
+          package: __PROTO_FILE.package,
         }
       }
 
@@ -172,9 +192,9 @@ pub fn process_enum_derive_prost(
       pub fn proto_schema() -> ::prelude::Enum {
         ::prelude::Enum {
           name: #proto_name,
-          full_name: #full_name,
-          package: #package,
-          file: #file,
+          full_name: Self::full_name(),
+          file: __PROTO_FILE.file,
+          package: __PROTO_FILE.package,
           variants: vec! [ #(#variants_tokens,)* ],
           reserved_names: vec![ #(#reserved_names),* ],
           reserved_numbers: vec![ #reserved_numbers ],

@@ -8,6 +8,8 @@ pub trait ProtoMessage {
     Ok(())
   }
 
+  fn full_name() -> &'static str;
+
   fn nested_validate(
     &self,
     _field_context: &FieldContext,
@@ -21,6 +23,10 @@ impl<T> ProtoMessage for Box<T>
 where
   T: ProtoMessage,
 {
+  fn full_name() -> &'static str {
+    T::full_name()
+  }
+
   fn proto_path() -> ProtoPath {
     T::proto_path()
   }

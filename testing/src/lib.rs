@@ -3,27 +3,19 @@ mod tests;
 
 use std::collections::HashMap;
 
-use prelude::Package;
 use proc_macro_impls::Oneof;
 use proto_types::{Duration, Timestamp};
 
-pub fn proto_package() -> Package {
-  Package {
-    name: "mypkg",
-    files: vec![proto_file()],
-  }
-}
-
-#[proc_macro_impls::proto_module(file = "abc.proto", package = "myapp.v1", module_path = "testing")]
 mod inner {
-
   use bytes::Bytes;
-  use prelude::*;
+  use prelude::{proto_file, *};
   use proc_macro_impls::{
-    Extension, Service, proto_enum, proto_extension, proto_message, proto_oneof, proto_service,
+    Extension, proto_enum, proto_extension, proto_message, proto_oneof, proto_service,
   };
 
   use super::*;
+
+  proto_file!("abc.proto", "myapp.v1");
 
   #[proto_extension(target = MessageOptions)]
   pub struct SomeExt {
@@ -129,7 +121,7 @@ mod inner {
     #[proto(repeated(message(proxied)), validate = |v| v.min_items(1))]
     repeated_message: Vec<Nested>,
 
-    #[proto(oneof(default, proxied))]
+    #[proto(oneof(default, proxied, tags(200, 201, 202)))]
     oneof: PseudoOneof,
 
     #[proto(sint32)]
@@ -146,18 +138,20 @@ mod inner {
   }
 
   #[proto_message]
+  #[proto(parent_message = Abc)]
   #[derive(Clone, Debug)]
   pub struct Nested {
     name: String,
   }
 
   #[proto_message(direct)]
+  #[proto(parent_message = Nested)]
   pub struct Nested2 {
     name: String,
 
     num: i32,
 
-    #[proto(oneof(proxied))]
+    #[proto(oneof(proxied, tags(200, 201, 202)))]
     reused_oneof: Option<PseudoOneof>,
   }
 }

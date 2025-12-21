@@ -4,7 +4,7 @@ use crate::*;
 
 #[derive(Clone)]
 pub struct FieldAttrs {
-  pub tag: i32,
+  pub tag: Option<i32>,
   pub validator: Option<CallOrClosure>,
   pub options: Option<Expr>,
   pub name: String,
@@ -258,14 +258,6 @@ pub fn process_derive_field_attrs(
         ProtoField::Single(ProtoType::from_primitive(&path)?)
       }
     }
-  };
-
-  let tag = if let Some(tag) = tag {
-    tag
-  } else if proto_field.is_oneof() {
-    0
-  } else {
-    return Err(error!(field_ident, "Field tag is missing"));
   };
 
   let name = name.unwrap_or_else(|| ccase!(snake, field_ident.to_string()));

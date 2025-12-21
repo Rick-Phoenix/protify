@@ -2,6 +2,8 @@
 mod macros;
 
 use askama::Template;
+#[doc(hidden)]
+pub use inventory;
 #[cfg(feature = "testing")]
 use owo_colors::OwoColorize;
 #[doc(hidden)]
@@ -11,6 +13,7 @@ mod oneof;
 mod options;
 mod validators;
 use std::{
+  borrow::Cow,
   collections::{HashMap, HashSet},
   fmt::Write,
   marker::PhantomData,
@@ -43,6 +46,8 @@ pub use protocheck_core::{field_data::FieldContext, validators::containing::Item
 use rendering_utils::*;
 pub use service::*;
 pub use validators::*;
+mod registry;
+pub use registry::*;
 
 #[doc(hidden)]
 pub fn apply<I, O, F>(input: I, f: F) -> O

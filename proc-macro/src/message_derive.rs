@@ -41,6 +41,7 @@ pub fn process_message_derive_shadow(
   let shadow_struct_ident = &shadow_struct.ident;
 
   let mut fields_tokens: Vec<TokenStream2> = Vec::new();
+  let mut used_tags: Vec<i32> = Vec::new();
 
   let orig_struct_fields = item.fields.iter_mut();
   let shadow_struct_fields = shadow_struct.fields.iter_mut();
@@ -66,15 +67,46 @@ pub fn process_message_derive_shadow(
     cel_checks_tokens: &mut cel_checks_tokens,
   };
 
-  for (src_field, dst_field) in orig_struct_fields.zip(shadow_struct_fields) {
+  let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
+
+  for src_field in orig_struct_fields {
     let src_field_ident = src_field.require_ident()?;
     let type_info = TypeInfo::from_type(&src_field.ty)?;
     let field_attrs = process_derive_field_attrs(src_field_ident, &type_info, &src_field.attrs)?;
 
+    if let FieldAttrData::Normal(data) = &field_attrs {
+      if let Some(tag) = data.tag {
+        used_tags.push(tag);
+      } else if let ProtoField::Oneof { tags, .. } = &data.proto_field {
+        if tags.is_empty() {
+          bail!(src_field, "Tags for oneofs must be set manually");
+        }
+
+        used_tags.extend(tags.iter().copied());
+      }
+    }
+
+    fields_attrs.push(field_attrs);
+  }
+
+  let used_ranges = message_attrs
+    .reserved_numbers
+    .clone()
+    .build_unavailable_ranges(&used_tags);
+
+  let mut tag_allocator = TagAllocator::new(&used_ranges);
+
+  let mut tag_allocator_ctx = TagAllocatorCtx {
+    reserved_numbers: &message_attrs.reserved_numbers,
+    tag_allocator: &mut tag_allocator,
+  };
+
+  for (dst_field, field_attrs) in shadow_struct_fields.zip(fields_attrs) {
     let field_tokens = process_field(ProcessFieldInput {
       field_or_variant: FieldOrVariant::Field(dst_field),
       input_item: &mut input_item,
       field_attrs,
+      tag_allocator_ctx: Some(&mut tag_allocator_ctx),
     })?;
 
     if !field_tokens.is_empty() {
@@ -165,7 +197,10 @@ pub fn process_message_derive_direct(
     cel_checks_tokens: &mut cel_checks_tokens,
   };
 
-  for src_field in item.fields.iter_mut() {
+  let mut used_tags: Vec<i32> = Vec::new();
+  let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
+
+  for src_field in &item.fields {
     let src_field_ident = src_field.require_ident()?;
     let type_info = TypeInfo::from_type(&src_field.ty)?;
     let field_attrs = process_derive_field_attrs(src_field_ident, &type_info, &src_field.attrs)?;
@@ -182,7 +217,10 @@ pub fn process_message_derive_direct(
               ProtoField::Single(ProtoType::Message { is_boxed: true, .. })
             )
           {
-            bail!(inner, "Detected usage of `Option<Box<..>>`, but the field was not marked as a boxed message. Please use `#[proto(message(boxed))]` to mark it as a boxed message.");
+            bail!(
+              inner,
+              "Detected usage of `Option<Box<..>>`, but the field was not marked as a boxed message. Please use `#[proto(message(boxed))]` to mark it as a boxed message."
+            );
           }
         }
         RustType::Other(inner) => {
@@ -198,12 +236,39 @@ pub fn process_message_derive_direct(
         }
         _ => {}
       };
+
+      if let Some(tag) = data.tag {
+        used_tags.push(tag);
+      } else if let ProtoField::Oneof { tags, .. } = &data.proto_field {
+        if tags.is_empty() {
+          bail!(src_field, "Tags for oneofs must be set manually");
+        }
+
+        used_tags.extend(tags.iter().copied());
+      }
     }
 
+    fields_attrs.push(field_attrs);
+  }
+
+  let used_ranges = message_attrs
+    .reserved_numbers
+    .clone()
+    .build_unavailable_ranges(&used_tags);
+
+  let mut tag_allocator = TagAllocator::new(&used_ranges);
+
+  let mut tag_allocator_ctx = TagAllocatorCtx {
+    reserved_numbers: &message_attrs.reserved_numbers,
+    tag_allocator: &mut tag_allocator,
+  };
+
+  for (src_field, field_attrs) in item.fields.iter_mut().zip(fields_attrs) {
     let field_tokens = process_field(ProcessFieldInput {
       field_or_variant: FieldOrVariant::Field(src_field),
       input_item: &mut input_item,
       field_attrs,
+      tag_allocator_ctx: Some(&mut tag_allocator_ctx),
     })?;
 
     if !field_tokens.is_empty() {

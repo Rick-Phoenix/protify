@@ -18,11 +18,9 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
         reserved_numbers,
         options,
         name: proto_name,
-        full_name,
-        file,
-        package,
         nested_messages,
         nested_enums,
+        parent_message,
         ..
       },
     entries_tokens,
@@ -56,7 +54,25 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
   let rust_ident_str =
     shadow_struct_ident.map_or_else(|| orig_struct_ident.to_string(), |id| id.to_string());
 
+  let full_name_method = if let Some(parent) = parent_message {
+    quote! {
+      static __FULL_NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+        format!("{}.{}", #parent::full_name(), #proto_name).into()
+      });
+
+      &*__FULL_NAME
+    }
+  } else {
+    quote! { #proto_name }
+  };
+
   output.extend(quote! {
+    ::prelude::inventory::submit! {
+      ::prelude::RegistryMessage {
+        message: || #orig_struct_ident::proto_schema()
+      }
+    }
+
     impl ::prelude::AsProtoType for #orig_struct_ident {
       fn proto_type() -> ::prelude::ProtoType {
         ::prelude::ProtoType::Message(
@@ -68,19 +84,23 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
     impl ::prelude::ProtoMessage for #orig_struct_ident {
       fn proto_path() -> ::prelude::ProtoPath {
         ::prelude::ProtoPath {
-          name: #full_name,
-          file: #file,
-          package: #package,
+          name: Self::full_name(),
+          file: __PROTO_FILE.file,
+          package: __PROTO_FILE.package,
         }
+      }
+
+      fn full_name() -> &'static str {
+        #full_name_method
       }
 
       fn proto_schema() -> ::prelude::Message {
         let mut new_msg = ::prelude::Message {
           name: #proto_name,
-          full_name: #full_name,
+          full_name: Self::full_name(),
           rust_ident: #rust_ident_str,
-          package: #package,
-          file: #file,
+          file: __PROTO_FILE.file,
+          package: __PROTO_FILE.package,
           reserved_names: vec![ #(#reserved_names),* ],
           reserved_numbers: vec![ #reserved_numbers ],
           options: #options_tokens,
@@ -100,6 +120,10 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
       impl ::prelude::ProtoMessage for #shadow_struct_ident {
         fn proto_path() -> ::prelude::ProtoPath {
           <#orig_struct_ident as ::prelude::ProtoMessage>::proto_path()
+        }
+
+        fn full_name() -> &'static str {
+          #orig_struct_ident::full_name()
         }
 
         fn proto_schema() -> ::prelude::Message {
