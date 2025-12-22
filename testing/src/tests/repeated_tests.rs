@@ -1,14 +1,15 @@
 use super::*;
+use prelude::ProtoEnum;
+
+prelude::proto_file!("testing", "testing");
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct DummyMsg {
   #[proto(tag = 1)]
   pub id: i32,
 }
 
 #[proto_enum]
-#[proto(package = "", file = "")]
 enum DummyEnum {
   A,
   B,
@@ -16,7 +17,6 @@ enum DummyEnum {
 }
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct UniqueEnums {
   #[proto(repeated(enum_), tag = 1, validate = |v| v.unique())]
   pub unique_enums: Vec<DummyEnum>,
@@ -24,7 +24,7 @@ struct UniqueEnums {
 
 #[test]
 fn unique_enums() {
-  let mut msg = UniqueEnums {
+  let msg = UniqueEnums {
     unique_enums: vec![DummyEnum::A as i32, DummyEnum::A as i32],
   };
 
@@ -34,7 +34,6 @@ fn unique_enums() {
 }
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct UniqueFloats {
   #[proto(tag = 1, validate = |v| v.unique())]
   pub unique_floats: Vec<f32>,
@@ -42,7 +41,7 @@ struct UniqueFloats {
 
 #[test]
 fn unique_floats() {
-  let mut msg = UniqueFloats {
+  let msg = UniqueFloats {
     unique_floats: vec![1.1, 1.1],
   };
 
@@ -52,7 +51,6 @@ fn unique_floats() {
 }
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct UniqueMessages {
   #[proto(repeated(message), tag = 1, validate = |v| v.unique())]
   pub unique_messages: Vec<DummyMsg>,
@@ -60,7 +58,7 @@ struct UniqueMessages {
 
 #[test]
 fn unique_messages() {
-  let mut msg = UniqueMessages {
+  let msg = UniqueMessages {
     unique_messages: vec![DummyMsg { id: 1 }, DummyMsg { id: 1 }],
   };
 
@@ -70,7 +68,6 @@ fn unique_messages() {
 }
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct UniqueBytes {
   #[proto(repeated(message), tag = 1, validate = |v| v.unique())]
   pub unique_bytes: Vec<Bytes>,
@@ -78,7 +75,7 @@ struct UniqueBytes {
 
 #[test]
 fn unique_bytes() {
-  let mut msg = UniqueBytes {
+  let msg = UniqueBytes {
     unique_bytes: vec![Bytes::default(), Bytes::default()],
   };
 
@@ -88,7 +85,6 @@ fn unique_bytes() {
 }
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct MinItems {
   #[proto(repeated(int32), tag = 1, validate = |v| v.min_items(3))]
   pub items: Vec<i32>,
@@ -96,7 +92,7 @@ struct MinItems {
 
 #[test]
 fn min_items() {
-  let mut msg = MinItems { items: vec![] };
+  let msg = MinItems { items: vec![] };
 
   let err = msg.validate().unwrap_err();
 
@@ -104,7 +100,6 @@ fn min_items() {
 }
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct MaxItems {
   #[proto(repeated(int32), tag = 1, validate = |v| v.max_items(1))]
   pub items: Vec<i32>,
@@ -112,7 +107,7 @@ struct MaxItems {
 
 #[test]
 fn max_items() {
-  let mut msg = MaxItems { items: vec![1, 2] };
+  let msg = MaxItems { items: vec![1, 2] };
 
   let err = msg.validate().unwrap_err();
 

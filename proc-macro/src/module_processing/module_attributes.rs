@@ -7,42 +7,6 @@ pub struct ModuleAttrs {
   pub module_path: Option<String>,
 }
 
-#[derive(Default, PartialEq, Copy, Clone)]
-pub enum Backend {
-  #[default]
-  Prost,
-  Protobuf,
-}
-
-impl Display for Backend {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Backend::Prost => write!(f, "prost"),
-      Backend::Protobuf => write!(f, "protobuf"),
-    }
-  }
-}
-
-impl Backend {
-  pub fn from_expr(expr: &Expr) -> Result<Self, Error> {
-    let expr_str = expr.as_string()?;
-
-    let output = match expr_str.as_str() {
-      "prost" => Self::Prost,
-      "protobuf" => Self::Protobuf,
-      _ => bail!(expr, "Unknown backend value"),
-    };
-
-    Ok(output)
-  }
-}
-
-impl ToTokens for Backend {
-  fn to_tokens(&self, tokens: &mut TokenStream2) {
-    tokens.extend(self.to_string().to_token_stream());
-  }
-}
-
 impl ModuleAttrs {
   pub fn as_attribute(&self) -> Attribute {
     let Self {

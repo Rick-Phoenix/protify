@@ -7,7 +7,7 @@
 #[macro_use]
 mod macros;
 
-use std::{borrow::Cow, collections::HashMap, fmt::Display, ops::Range};
+use std::{borrow::Cow, fmt::Display, ops::Range};
 
 use attributes::*;
 use convert_case::ccase;
@@ -15,27 +15,24 @@ use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, format_ident, quote};
 use syn::{
-  Attribute, Error, Expr, Field, Fields, Generics, Ident, Item, ItemEnum, ItemFn, ItemMod,
-  ItemStruct, Lit, Meta, MetaList, MetaNameValue, Path, RangeLimits, Token, Type, Variant,
-  Visibility,
+  Attribute, Error, Expr, Field, Fields, Ident, ItemEnum, ItemStruct, Lit, Meta, MetaList,
+  MetaNameValue, Path, RangeLimits, Token, Type, Variant, Visibility,
   parse::{Parse, ParseStream, Parser},
   parse_macro_input, parse_quote,
   punctuated::Punctuated,
   spanned::Spanned,
   token,
-  token::{Brace, Struct},
 };
 use syn_utils::{
   AsNamedField, CallOrClosure, ExprExt, IdentList, NumList, PathList, PathOrClosure, RustType,
-  StringList, TypeInfo, bail, bail_with_span, error, error_call_site, error_with_span,
-  filter_attributes,
+  StringList, TypeInfo, bail, bail_with_span, error, error_with_span, filter_attributes,
 };
 
 use crate::{
   common_impls::*, enum_derive::*, extension_derive::*, field_proto_impls::*, impls::*,
-  item_cloners::*, message_derive::*, message_schema_impl::*, module_processing::*,
-  oneof_derive::*, oneof_schema_impl::*, path_utils::*, proto_field::*, proto_map::*,
-  proto_types::*, service_derive::*, type_extraction::*,
+  item_cloners::*, message_derive::*, message_schema_impl::*, oneof_derive::*,
+  oneof_schema_impl::*, path_utils::*, proto_field::*, proto_map::*, proto_types::*,
+  service_derive::*, type_extraction::*,
 };
 
 mod common_impls;
@@ -46,7 +43,6 @@ mod impls;
 mod item_cloners;
 mod message_derive;
 mod message_schema_impl;
-mod module_processing;
 mod oneof_derive;
 mod oneof_schema_impl;
 mod path_utils;
@@ -207,14 +203,16 @@ pub fn oneof_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
-#[proc_macro_attribute]
-pub fn proto_module(attrs: TokenStream, input: TokenStream) -> TokenStream {
-  let module = parse_macro_input!(input as ItemMod);
-
-  let module_attrs = parse_macro_input!(attrs as ModuleAttrs);
-
-  match process_module_items(module_attrs, module) {
-    Ok(processed_module) => processed_module.into_token_stream().into(),
-    Err(e) => e.to_compile_error().into(),
-  }
-}
+// Deprecated, leaving it here in case I change my mind
+// mod module_processing;
+// #[proc_macro_attribute]
+// pub fn proto_module(attrs: TokenStream, input: TokenStream) -> TokenStream {
+//   let module = parse_macro_input!(input as ItemMod);
+//
+//   let module_attrs = parse_macro_input!(attrs as ModuleAttrs);
+//
+//   match process_module_items(module_attrs, module) {
+//     Ok(processed_module) => processed_module.into_token_stream().into(),
+//     Err(e) => e.to_compile_error().into(),
+//   }
+// }

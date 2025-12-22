@@ -7,7 +7,6 @@ use super::*;
 proto_file!("testing", "testing");
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct DuplicateRules {
   #[proto(tag = 1, validate = |v| v.cel(inline_cel_program!(id = "abc", msg = "hi", expr = "this == 0")).cel(inline_cel_program!(id = "abc", msg = "not hi", expr = "this == 0")))]
   pub id: i32,
@@ -30,7 +29,6 @@ fn unique_rules() {
 // TODO: Check on fields and oneofs and top level
 
 #[proto_message(direct, no_auto_test)]
-#[proto(package = "", file = "")]
 struct BadRules {
   #[proto(tag = 1, validate = |v| v.cel(inline_cel_program!(id = "abc", msg = "hi", expr = "hi")))]
   pub id: i32,

@@ -1,7 +1,8 @@
 use super::*;
 
+prelude::proto_file!("testing", "testing");
+
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct MinPairs {
   #[proto(map(int32, int32), tag = 1, validate = |v| v.min_pairs(1))]
   pub items: HashMap<i32, i32>,
@@ -9,7 +10,7 @@ struct MinPairs {
 
 #[test]
 fn min_pairs() {
-  let mut msg = MinPairs {
+  let msg = MinPairs {
     items: HashMap::default(),
   };
 
@@ -19,7 +20,6 @@ fn min_pairs() {
 }
 
 #[proto_message(direct)]
-#[proto(package = "", file = "")]
 struct MaxPairs {
   #[proto(map(int32, int32), tag = 1, validate = |v| v.max_pairs(1))]
   pub items: HashMap<i32, i32>,
@@ -31,7 +31,7 @@ fn max_pairs() {
   map.insert(1, 1);
   map.insert(2, 2);
 
-  let mut msg = MaxPairs { items: map };
+  let msg = MaxPairs { items: map };
 
   let err = msg.validate().unwrap_err();
 

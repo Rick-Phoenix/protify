@@ -186,12 +186,4 @@ impl ProtoField {
       ProtoField::Single(inner) => inner.output_proto_type(),
     }
   }
-
-  /// Returns `true` if the proto field is [`Oneof`].
-  ///
-  /// [`Oneof`]: ProtoField::Oneof
-  #[must_use]
-  pub fn is_oneof(&self) -> bool {
-    matches!(self, Self::Oneof { .. })
-  }
 }

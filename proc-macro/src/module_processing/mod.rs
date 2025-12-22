@@ -1,3 +1,5 @@
+// Currently deprecated, leaving it here in case I change my mind
+
 mod enum_parsing;
 mod message_module;
 mod message_parsing;
