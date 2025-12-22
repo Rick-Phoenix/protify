@@ -15,7 +15,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, format_ident, quote};
 use syn::{
-  Attribute, Error, Expr, Field, Fields, Ident, ItemEnum, ItemStruct, Lit, Meta, MetaList,
+  Attribute, Error, Expr, Field, Fields, Ident, ItemEnum, ItemStruct, Lit, LitStr, Meta, MetaList,
   MetaNameValue, Path, RangeLimits, Token, Type, Variant, Visibility,
   parse::{Parse, ParseStream, Parser},
   parse_macro_input, parse_quote,
@@ -67,6 +67,7 @@ pub fn proto_message(args: TokenStream, input: TokenStream) -> TokenStream {
       match ident.as_str() {
         "direct" => macro_attrs.is_direct = true,
         "no_auto_test" => macro_attrs.no_auto_test = true,
+        "extern_path" => macro_attrs.extern_path = Some(meta.value()?.parse::<LitStr>()?.value()),
         _ => {}
       };
     }

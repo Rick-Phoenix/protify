@@ -6,8 +6,10 @@ pub struct MessageAttrs {
   pub options: Option<Expr>,
   pub name: String,
   pub parent_message: Option<Ident>,
+  // These two can be removed
   pub nested_messages: Vec<Ident>,
   pub nested_enums: Vec<Ident>,
+
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
@@ -15,6 +17,7 @@ pub struct MessageAttrs {
   pub backend: Backend,
   pub is_direct: bool,
   pub no_auto_test: bool,
+  pub extern_path: Option<String>,
 }
 
 pub fn process_derive_message_attrs(
@@ -123,6 +126,7 @@ pub fn process_derive_message_attrs(
     backend,
     is_direct: macro_attrs.is_direct,
     no_auto_test: macro_attrs.no_auto_test,
+    extern_path: macro_attrs.extern_path,
     parent_message,
   })
 }

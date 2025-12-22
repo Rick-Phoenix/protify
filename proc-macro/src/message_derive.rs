@@ -6,6 +6,7 @@ use crate::*;
 pub struct MessageMacroAttrs {
   pub is_direct: bool,
   pub no_auto_test: bool,
+  pub extern_path: Option<String>,
 }
 
 pub fn process_message_derive(

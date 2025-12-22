@@ -21,6 +21,7 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
         nested_messages,
         nested_enums,
         parent_message,
+        extern_path,
         ..
       },
     entries_tokens,
@@ -69,10 +70,14 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
     quote! { None }
   };
 
-  let rust_ident_str =
-    shadow_struct_ident.map_or_else(|| orig_struct_ident.to_string(), |id| id.to_string());
+  let rust_path_field = if let Some(path) = extern_path {
+    quote! { #path.to_string() }
+  } else {
+    let rust_ident_str =
+      shadow_struct_ident.map_or_else(|| orig_struct_ident.to_string(), |id| id.to_string());
 
-  let rust_path_field = quote! { format!("::{}::{}", std::module_path!(), #rust_ident_str) };
+    quote! { format!("::{}::{}", std::module_path!(), #rust_ident_str) }
+  };
 
   output.extend(quote! {
     ::prelude::inventory::submit! {
