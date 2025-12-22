@@ -7,13 +7,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let mut config = Config::new();
 
-  let mut config_ref = config
+  config
     .extern_path(".google.protobuf", "::proto_types")
+    .extern_path(".buf.validate", "::proto_types::protovalidate")
     .compile_well_known_types()
     .bytes(["."]);
 
   for (item, path) in package.extern_paths() {
-    config_ref = config_ref.extern_path(&item, &path);
+    config.extern_path(&item, &path);
   }
 
   let proto_include_paths = &["../testing/proto_test/", "proto_deps"];
