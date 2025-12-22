@@ -51,9 +51,6 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
     },
   );
 
-  let rust_ident_str =
-    shadow_struct_ident.map_or_else(|| orig_struct_ident.to_string(), |id| id.to_string());
-
   let full_name_method = if let Some(parent) = parent_message {
     quote! {
       static __FULL_NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
@@ -71,6 +68,11 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
   } else {
     quote! { None }
   };
+
+  let rust_ident_str =
+    shadow_struct_ident.map_or_else(|| orig_struct_ident.to_string(), |id| id.to_string());
+
+  let rust_path_field = quote! { format!("::{}::{}", std::module_path!(), #rust_ident_str) };
 
   output.extend(quote! {
     ::prelude::inventory::submit! {
@@ -106,7 +108,6 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
         let mut new_msg = ::prelude::Message {
           name: #proto_name,
           full_name: Self::full_name(),
-          rust_ident: #rust_ident_str,
           file: __PROTO_FILE.file,
           package: __PROTO_FILE.package,
           reserved_names: vec![ #(#reserved_names),* ],
@@ -116,6 +117,7 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
           enums: vec![ #nested_enums_tokens ],
           entries: vec![ #(#entries_tokens,)* ],
           cel_rules: #cel_rules_field,
+          rust_path: #rust_path_field
         };
 
         new_msg

@@ -5,7 +5,6 @@ use crate::*;
 #[derive(Debug, PartialEq, Template)]
 #[template(path = "file.proto.j2")]
 pub struct ProtoFile {
-  pub extern_path: &'static str,
   pub name: &'static str,
   pub package: &'static str,
   pub imports: FileImports,
@@ -75,8 +74,6 @@ impl ProtoFile {
   pub fn extern_paths(&self) -> Vec<(String, String)> {
     let mut entries = Vec::new();
 
-    let extern_path = &self.extern_path;
-
     for msg in self.messages.iter().chain(
       self
         .messages
@@ -86,25 +83,23 @@ impl ProtoFile {
       let Message {
         full_name,
         package,
-        rust_ident,
+        rust_path,
         ..
       } = msg;
 
       let msg_entry = format!(".{package}.{full_name}");
-      let rust_path = format!("::{extern_path}::{rust_ident}");
 
-      entries.push((msg_entry, rust_path));
+      entries.push((msg_entry, rust_path.clone()));
     }
 
     entries
   }
 
   #[must_use]
-  pub fn new(name: &'static str, package: &'static str, extern_path: &'static str) -> Self {
+  pub fn new(name: &'static str, package: &'static str) -> Self {
     Self {
       name,
       package,
-      extern_path,
       imports: FileImports::new(name),
       messages: Default::default(),
       enums: Default::default(),

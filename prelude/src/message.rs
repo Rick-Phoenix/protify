@@ -39,7 +39,6 @@ where
 #[derive(Debug, Default, Clone, PartialEq, Template)]
 #[template(path = "message.proto.j2")]
 pub struct Message {
-  pub rust_ident: &'static str,
   pub name: &'static str,
   pub full_name: &'static str,
   pub package: &'static str,
@@ -51,6 +50,7 @@ pub struct Message {
   pub reserved_names: Vec<&'static str>,
   pub reserved_numbers: Vec<Range<i32>>,
   pub cel_rules: Vec<&'static CelRule>,
+  pub rust_path: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]

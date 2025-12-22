@@ -89,7 +89,7 @@ pub fn collect_package(package: &'static str) -> Package {
     } else {
       files
         .entry(enum_.file)
-        .or_insert_with(|| ProtoFile::new(enum_.file, enum_.package, ""))
+        .or_insert_with(|| ProtoFile::new(enum_.file, package))
         .enums
         .push(enum_);
     }
@@ -105,7 +105,7 @@ pub fn collect_package(package: &'static str) -> Package {
 
     files
       .entry(msg.file)
-      .or_insert_with(|| ProtoFile::new(msg.file, msg.package, ""))
+      .or_insert_with(|| ProtoFile::new(msg.file, package))
       .add_messages([msg]);
   }
 
@@ -114,7 +114,7 @@ pub fn collect_package(package: &'static str) -> Package {
 
     files
       .entry(service.file)
-      .or_insert_with(|| ProtoFile::new(service.file, package, ""))
+      .or_insert_with(|| ProtoFile::new(service.file, package))
       .add_services([service_data]);
   }
 
@@ -123,7 +123,7 @@ pub fn collect_package(package: &'static str) -> Package {
 
     files
       .entry(extension.file)
-      .or_insert_with(|| ProtoFile::new(extension.file, package, ""))
+      .or_insert_with(|| ProtoFile::new(extension.file, package))
       .add_extensions([ext_data]);
   }
 

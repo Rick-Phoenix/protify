@@ -17,7 +17,7 @@ struct DuplicateRules {
 fn unique_rules() {
   let mut package = Package::new("abc");
 
-  let mut file = ProtoFile::new("abc", "abc", "abc");
+  let mut file = ProtoFile::new("abc", "abc");
 
   file.add_messages([DuplicateRules::proto_schema()]);
 
