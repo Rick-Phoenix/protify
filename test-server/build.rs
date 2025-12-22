@@ -5,6 +5,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let package = testing::collect_package();
 
+  package.render_files("../testing/proto_test/")?;
+
   let mut config = Config::new();
 
   config

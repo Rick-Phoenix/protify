@@ -128,6 +128,16 @@ pub fn collect_package(package: &'static str) -> Package {
       .add_extensions([ext_data]);
   }
 
+  for option in inventory::iter::<RegistryFileOptions>().filter(|rfo| rfo.package == package) {
+    let options = (option.options)();
+
+    files
+      .entry(option.file)
+      .or_insert_with(|| ProtoFile::new(option.file, package))
+      .options
+      .extend(options);
+  }
+
   Package {
     name: package,
     files: files.into_values().collect(),
@@ -158,7 +168,14 @@ pub struct RegistryExtension {
   pub extension: fn() -> Extension,
 }
 
+pub struct RegistryFileOptions {
+  pub file: &'static str,
+  pub package: &'static str,
+  pub options: fn() -> Vec<ProtoOption>,
+}
+
+inventory::collect!(RegistryMessage);
 inventory::collect!(RegistryEnum);
 inventory::collect!(RegistryService);
-inventory::collect!(RegistryMessage);
 inventory::collect!(RegistryExtension);
+inventory::collect!(RegistryFileOptions);

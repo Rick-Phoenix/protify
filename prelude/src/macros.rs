@@ -1,4 +1,17 @@
 #[macro_export]
+macro_rules! file_options {
+  ($options:expr) => {
+    $crate::inventory::submit! {
+      $crate::RegistryFileOptions {
+        file: __PROTO_FILE.file,
+        package: __PROTO_FILE.package,
+        options: || $options
+      }
+    }
+  };
+}
+
+#[macro_export]
 macro_rules! proto_file {
   ($path:literal, package = $package:expr, rust_path = $extern_path:literal) => {
     #[doc(hidden)]

@@ -3,11 +3,19 @@ mod tests;
 
 use std::collections::HashMap;
 
-use prelude::Package;
+use prelude::*;
 use proc_macro_impls::Oneof;
 use proto_types::{Duration, Timestamp};
 
-prelude::proto_file!("abc.proto", package = "myapp.v1", rust_path = "testing");
+proto_file!("abc.proto", package = "myapp.v1", rust_path = "testing");
+file_options!(vec![random_option()]);
+
+fn random_option() -> ProtoOption {
+  ProtoOption {
+    name: "(hobbits.location)".into(),
+    value: OptionValue::String("isengard".into()),
+  }
+}
 
 pub fn collect_package() -> Package {
   prelude::collect_package("myapp.v1")
@@ -15,7 +23,6 @@ pub fn collect_package() -> Package {
 
 mod inner {
   use bytes::Bytes;
-  use prelude::*;
   use proc_macro_impls::{
     Extension, proto_enum, proto_extension, proto_message, proto_oneof, proto_service,
   };
