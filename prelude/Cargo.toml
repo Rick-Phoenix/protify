@@ -25,6 +25,8 @@ log = "0.4"
 protocheck-core = { workspace = true }
 owo-colors = { version = "4.2", optional = true }
 inventory = "0.3.21"
+ordermap = "1.0.0"
+fxhash = "0.2.1"
 
 [features]
 default = ["regex"]

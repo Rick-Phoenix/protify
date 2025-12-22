@@ -79,6 +79,14 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
     #[derive(::proc_macro_impls::Service)]
     #vis struct #ident;
 
+    ::prelude::inventory::submit! {
+      ::prelude::RegistryService {
+        file: __PROTO_FILE.file,
+        package: __PROTO_FILE.package,
+        service: || #ident::proto_schema()
+      }
+    }
+
     impl ::prelude::ProtoService for #ident {
       fn proto_schema() -> ::prelude::Service {
         Self::proto_schema()

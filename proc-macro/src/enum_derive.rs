@@ -114,7 +114,7 @@ pub fn process_enum_derive_prost(
 
   let options_tokens = tokens_or_default!(options, quote! { vec![] });
 
-  let full_name_method = if let Some(parent) = parent_message {
+  let full_name_method = if let Some(parent) = &parent_message {
     quote! {
       static __FULL_NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
         format!("{}.{}", #parent::full_name(), #proto_name).into()
@@ -126,9 +126,17 @@ pub fn process_enum_derive_prost(
     quote! { #proto_name }
   };
 
+  let parent_message_registry = if let Some(parent) = &parent_message {
+    quote! { Some(|| #parent::full_name()) }
+  } else {
+    quote! { None }
+  };
+
   let output_tokens = quote! {
     ::prelude::inventory::submit! {
       ::prelude::RegistryEnum {
+        parent_message: #parent_message_registry,
+        package: __PROTO_FILE.package,
         enum_: || #enum_name::proto_schema()
       }
     }

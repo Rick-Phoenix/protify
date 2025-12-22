@@ -1,3 +1,7 @@
+use testing::collect_package;
+
 fn main() {
-  env_logger::init();
+  let pkg = collect_package();
+
+  eprintln!("{pkg:#?}");
 }

@@ -66,9 +66,17 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
     quote! { #proto_name }
   };
 
+  let registry_parent_message = if let Some(parent) = parent_message {
+    quote! { Some(|| #parent::full_name()) }
+  } else {
+    quote! { None }
+  };
+
   output.extend(quote! {
     ::prelude::inventory::submit! {
       ::prelude::RegistryMessage {
+        package: __PROTO_FILE.package,
+        parent_message: #registry_parent_message,
         message: || #orig_struct_ident::proto_schema()
       }
     }

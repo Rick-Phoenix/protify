@@ -2,6 +2,7 @@ use std::{collections::hash_map::Entry, fs::File, path::Path};
 
 use crate::*;
 
+#[derive(Debug)]
 pub struct Package {
   pub name: &'static str,
   pub files: Vec<ProtoFile>,

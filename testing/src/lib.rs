@@ -3,8 +3,15 @@ mod tests;
 
 use std::collections::HashMap;
 
+use prelude::Package;
 use proc_macro_impls::Oneof;
 use proto_types::{Duration, Timestamp};
+
+prelude::proto_file!("abc.proto", "myapp.v1");
+
+pub fn collect_package() -> Package {
+  prelude::collect_package("myapp.v1")
+}
 
 mod inner {
   use bytes::Bytes;
