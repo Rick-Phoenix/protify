@@ -10,24 +10,24 @@ pub struct RegistryPath {
 
 type Map<K, V> = OrderMap<K, V, FxBuildHasher>;
 
-fn process_parent(
-  parent: &str,
+fn process_msg(
+  msg_name: &str,
   messages: &mut Map<&'static str, Message>,
   enums: &mut Map<&'static str, Enum>,
   parent_messages_map: &mut Map<&'static str, NestedItems>,
 ) -> Message {
-  let mut parent_msg = messages
-    .swap_remove(parent)
-    .unwrap_or_else(|| panic!("Could not find message {parent}"));
+  let mut msg = messages
+    .swap_remove(msg_name)
+    .unwrap_or_else(|| panic!("Could not find message {msg_name}"));
 
-  let Some(children) = parent_messages_map.swap_remove(parent) else {
-    return parent_msg;
+  let Some(children) = parent_messages_map.swap_remove(msg_name) else {
+    return msg;
   };
 
   for child in children.messages {
-    let child_data = process_parent(child, messages, enums, parent_messages_map);
+    let child_data = process_msg(child, messages, enums, parent_messages_map);
 
-    parent_msg.messages.push(child_data);
+    msg.messages.push(child_data);
   }
 
   for enum_ in children.enums {
@@ -35,13 +35,13 @@ fn process_parent(
       .swap_remove(enum_)
       .unwrap_or_else(|| panic!("Could not find enum {enum_}"));
 
-    parent_msg.enums.push(enum_data);
+    msg.enums.push(enum_data);
   }
 
-  parent_msg
+  msg
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct NestedItems {
   pub enums: Vec<&'static str>,
   pub messages: Vec<&'static str>,
@@ -96,7 +96,7 @@ pub fn collect_package(package: &'static str) -> Package {
   }
 
   for root_message_name in root_messages {
-    let msg = process_parent(
+    let msg = process_msg(
       root_message_name,
       &mut messages,
       &mut enums,

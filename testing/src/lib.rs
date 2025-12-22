@@ -83,8 +83,6 @@ mod inner {
   #[proto_message]
   #[proto(reserved_numbers(1, 2, 3..9))]
   #[proto(reserved_names("abc", "bcd"))]
-  #[proto(nested_enums(PseudoEnum))]
-  #[proto(nested_messages(Nested))]
   #[derive(Clone, Debug, Default)]
   pub struct Abc {
     #[proto(repeated(float), validate = |v| v.unique())]

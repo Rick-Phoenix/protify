@@ -18,8 +18,6 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
         reserved_numbers,
         options,
         name: proto_name,
-        nested_messages,
-        nested_enums,
         parent_message,
         extern_path,
         ..
@@ -29,17 +27,6 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
   } = ctx;
 
   let mut output = TokenStream2::new();
-
-  let mut nested_messages_tokens = TokenStream2::new();
-  let mut nested_enums_tokens = TokenStream2::new();
-
-  for ident in nested_messages {
-    nested_messages_tokens.extend(quote! { #ident::proto_schema(), });
-  }
-
-  for ident in nested_enums {
-    nested_enums_tokens.extend(quote! { #ident::proto_schema(), });
-  }
 
   let options_tokens = tokens_or_default!(options, quote! { vec![] });
 
@@ -118,8 +105,8 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
           reserved_names: vec![ #(#reserved_names),* ],
           reserved_numbers: vec![ #reserved_numbers ],
           options: #options_tokens,
-          messages: vec![ #nested_messages_tokens ],
-          enums: vec![ #nested_enums_tokens ],
+          messages: vec![],
+          enums: vec![],
           entries: vec![ #(#entries_tokens,)* ],
           cel_rules: #cel_rules_field,
           rust_path: #rust_path_field

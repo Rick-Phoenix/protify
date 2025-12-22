@@ -6,10 +6,6 @@ pub struct MessageAttrs {
   pub options: Option<Expr>,
   pub name: String,
   pub parent_message: Option<Ident>,
-  // These two can be removed
-  pub nested_messages: Vec<Ident>,
-  pub nested_enums: Vec<Ident>,
-
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
@@ -29,8 +25,6 @@ pub fn process_derive_message_attrs(
   let mut reserved_numbers = ReservedNumbers::default();
   let mut options: Option<Expr> = None;
   let mut proto_name: Option<String> = None;
-  let mut nested_messages: Vec<Ident> = Vec::new();
-  let mut nested_enums: Vec<Ident> = Vec::new();
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Option<MetaList> = None;
@@ -56,16 +50,6 @@ pub fn process_derive_message_attrs(
             let numbers = list.parse_args::<ReservedNumbers>()?;
 
             reserved_numbers = numbers;
-          }
-          "nested_messages" => {
-            let idents = list.parse_args::<IdentList>()?.list;
-
-            nested_messages.extend(idents.into_iter());
-          }
-          "nested_enums" => {
-            let idents = list.parse_args::<IdentList>()?.list;
-
-            nested_enums.extend(idents.into_iter());
           }
           "derive" => shadow_derives = Some(list),
           _ => bail!(list, "Unknown attribute `{ident}`"),
@@ -117,8 +101,6 @@ pub fn process_derive_message_attrs(
     reserved_numbers,
     options,
     name,
-    nested_messages,
-    nested_enums,
     from_proto,
     into_proto,
     shadow_derives,

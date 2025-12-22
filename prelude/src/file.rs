@@ -71,31 +71,6 @@ impl FileImports {
 
 impl ProtoFile {
   #[must_use]
-  pub fn extern_paths(&self) -> Vec<(String, String)> {
-    let mut entries = Vec::new();
-
-    for msg in self.messages.iter().chain(
-      self
-        .messages
-        .iter()
-        .flat_map(|m| m.messages.iter()),
-    ) {
-      let Message {
-        full_name,
-        package,
-        rust_path,
-        ..
-      } = msg;
-
-      let msg_entry = format!(".{package}.{full_name}");
-
-      entries.push((msg_entry, rust_path.clone()));
-    }
-
-    entries
-  }
-
-  #[must_use]
   pub fn new(name: &'static str, package: &'static str) -> Self {
     Self {
       name,

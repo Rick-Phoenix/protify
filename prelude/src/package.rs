@@ -8,13 +8,31 @@ pub struct Package {
   pub files: Vec<ProtoFile>,
 }
 
+fn insert_message_extern_path(message: &Message, entries: &mut Vec<(String, String)>) {
+  let Message {
+    full_name,
+    package,
+    rust_path,
+    messages,
+    ..
+  } = message;
+
+  let msg_entry = format!(".{package}.{full_name}");
+
+  entries.push((msg_entry, rust_path.clone()));
+
+  for nested_msg in messages {
+    insert_message_extern_path(nested_msg, entries);
+  }
+}
+
 impl Package {
   #[must_use]
   pub fn extern_paths(&self) -> Vec<(String, String)> {
     let mut entries = Vec::new();
 
-    for file in &self.files {
-      entries.extend(file.extern_paths());
+    for msg in self.files.iter().flat_map(|f| f.messages.iter()) {
+      insert_message_extern_path(msg, &mut entries);
     }
 
     entries
