@@ -13,7 +13,6 @@ mod oneof;
 mod options;
 mod validators;
 use std::{
-  borrow::Cow,
   collections::{HashMap, HashSet},
   fmt::Write,
   marker::PhantomData,

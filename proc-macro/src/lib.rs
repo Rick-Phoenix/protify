@@ -13,21 +13,22 @@ use attributes::*;
 use convert_case::ccase;
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::{
+  Attribute, Error, Expr, Field, Fields, Generics, Ident, Item, ItemEnum, ItemFn, ItemMod,
+  ItemStruct, Lit, Meta, MetaList, MetaNameValue, Path, RangeLimits, Token, Type, Variant,
+  Visibility,
   parse::{Parse, ParseStream, Parser},
   parse_macro_input, parse_quote,
   punctuated::Punctuated,
   spanned::Spanned,
   token,
   token::{Brace, Struct},
-  Attribute, Error, Expr, Field, Fields, Generics, Ident, Item, ItemEnum, ItemFn, ItemMod,
-  ItemStruct, Lit, Meta, MetaList, MetaNameValue, Path, RangeLimits, Token, Type, Variant,
-  Visibility,
 };
 use syn_utils::{
-  bail, error, error_call_site, error_with_span, filter_attributes, AsNamedField, CallOrClosure,
-  ExprExt, IdentList, NumList, PathList, PathOrClosure, RustType, StringList, TypeInfo,
+  AsNamedField, CallOrClosure, ExprExt, IdentList, NumList, PathList, PathOrClosure, RustType,
+  StringList, TypeInfo, bail, bail_with_span, error, error_call_site, error_with_span,
+  filter_attributes,
 };
 
 use crate::{

@@ -59,17 +59,35 @@ pub(crate) fn process_oneof_derive_shadow(
     cel_checks_tokens: &mut cel_checks_tokens,
   };
 
-  for (src_variant, dst_variant) in orig_enum_variants.zip(shadow_enum_variants) {
+  let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
+  let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
+
+  for src_variant in orig_enum_variants {
     let src_variant_ident = &src_variant.ident;
     let type_info = TypeInfo::from_type(src_variant.type_()?)?;
     let field_attrs =
       process_derive_field_attrs(src_variant_ident, &type_info, &src_variant.attrs)?;
 
+    if let FieldAttrData::Normal(data) = &field_attrs
+      && let Some(tag) = data.tag
+    {
+      manually_set_tags.push(ManuallySetTag {
+        tag,
+        field_span: src_variant.span(),
+      });
+    }
+
+    fields_attrs.push(field_attrs);
+  }
+
+  check_duplicate_tags(&mut manually_set_tags)?;
+
+  for (dst_variant, field_attrs) in shadow_enum_variants.zip(fields_attrs) {
     let field_tokens = process_field(ProcessFieldInput {
       field_or_variant: FieldOrVariant::Variant(dst_variant),
       input_item: &mut input_item,
       field_attrs,
-      tag_allocator_ctx: None,
+      tag_allocator: None,
     })?;
 
     if !field_tokens.is_empty() {
@@ -144,13 +162,23 @@ pub(crate) fn process_oneof_derive_direct(
     cel_checks_tokens: &mut cel_checks_tokens,
   };
 
-  for variant in variants {
+  let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
+  let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
+
+  for variant in variants.iter() {
     let variant_ident = &variant.ident;
     let variant_type = variant.type_()?;
     let type_info = TypeInfo::from_type(variant_type)?;
     let field_attrs = process_derive_field_attrs(variant_ident, &type_info, &variant.attrs)?;
 
     if let FieldAttrData::Normal(data) = &field_attrs {
+      if let Some(tag) = data.tag {
+        manually_set_tags.push(ManuallySetTag {
+          tag,
+          field_span: variant.span(),
+        });
+      }
+
       match type_info.type_.as_ref() {
         RustType::Box(_) => {
           if !matches!(
@@ -178,11 +206,17 @@ pub(crate) fn process_oneof_derive_direct(
       };
     }
 
+    fields_attrs.push(field_attrs);
+  }
+
+  check_duplicate_tags(&mut manually_set_tags)?;
+
+  for (variant, field_attrs) in variants.iter_mut().zip(fields_attrs) {
     let field_tokens = process_field(ProcessFieldInput {
       field_or_variant: FieldOrVariant::Variant(variant),
       input_item: &mut input_item,
       field_attrs,
-      tag_allocator_ctx: None,
+      tag_allocator: None,
     })?;
 
     if !field_tokens.is_empty() {

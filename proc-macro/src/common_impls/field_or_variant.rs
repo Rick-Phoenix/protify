@@ -8,6 +8,13 @@ pub enum FieldOrVariant<'a> {
 }
 
 impl<'a> FieldOrVariant<'a> {
+  pub fn span(&self) -> Span {
+    match self {
+      FieldOrVariant::Field(field) => field.span(),
+      FieldOrVariant::Variant(variant) => variant.span(),
+    }
+  }
+
   pub fn ident(&self) -> syn::Result<&Ident> {
     match self {
       FieldOrVariant::Field(field) => field.require_ident(),

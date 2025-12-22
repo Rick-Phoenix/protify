@@ -41,7 +41,6 @@ pub fn process_message_derive_shadow(
   let shadow_struct_ident = &shadow_struct.ident;
 
   let mut fields_tokens: Vec<TokenStream2> = Vec::new();
-  let mut used_tags: Vec<i32> = Vec::new();
 
   let orig_struct_fields = item.fields.iter_mut();
   let shadow_struct_fields = shadow_struct.fields.iter_mut();
@@ -68,6 +67,7 @@ pub fn process_message_derive_shadow(
   };
 
   let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
+  let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
 
   for src_field in orig_struct_fields {
     let src_field_ident = src_field.require_ident()?;
@@ -76,37 +76,38 @@ pub fn process_message_derive_shadow(
 
     if let FieldAttrData::Normal(data) = &field_attrs {
       if let Some(tag) = data.tag {
-        used_tags.push(tag);
+        manually_set_tags.push(ManuallySetTag {
+          tag,
+          field_span: src_field.span(),
+        });
       } else if let ProtoField::Oneof { tags, .. } = &data.proto_field {
         if tags.is_empty() {
           bail!(src_field, "Tags for oneofs must be set manually");
         }
 
-        used_tags.extend(tags.iter().copied());
+        for tag in tags.iter().copied() {
+          manually_set_tags.push(ManuallySetTag {
+            tag,
+            field_span: src_field.span(),
+          });
+        }
       }
     }
 
     fields_attrs.push(field_attrs);
   }
 
-  let used_ranges = message_attrs
-    .reserved_numbers
-    .clone()
-    .build_unavailable_ranges(&used_tags);
+  let used_ranges =
+    build_unavailable_ranges2(&message_attrs.reserved_numbers, &mut manually_set_tags)?;
 
   let mut tag_allocator = TagAllocator::new(&used_ranges);
-
-  let mut tag_allocator_ctx = TagAllocatorCtx {
-    reserved_numbers: &message_attrs.reserved_numbers,
-    tag_allocator: &mut tag_allocator,
-  };
 
   for (dst_field, field_attrs) in shadow_struct_fields.zip(fields_attrs) {
     let field_tokens = process_field(ProcessFieldInput {
       field_or_variant: FieldOrVariant::Field(dst_field),
       input_item: &mut input_item,
       field_attrs,
-      tag_allocator_ctx: Some(&mut tag_allocator_ctx),
+      tag_allocator: Some(&mut tag_allocator),
     })?;
 
     if !field_tokens.is_empty() {
@@ -197,8 +198,8 @@ pub fn process_message_derive_direct(
     cel_checks_tokens: &mut cel_checks_tokens,
   };
 
-  let mut used_tags: Vec<i32> = Vec::new();
   let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
+  let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
 
   for src_field in &item.fields {
     let src_field_ident = src_field.require_ident()?;
@@ -238,37 +239,38 @@ pub fn process_message_derive_direct(
       };
 
       if let Some(tag) = data.tag {
-        used_tags.push(tag);
+        manually_set_tags.push(ManuallySetTag {
+          tag,
+          field_span: src_field.span(),
+        });
       } else if let ProtoField::Oneof { tags, .. } = &data.proto_field {
         if tags.is_empty() {
           bail!(src_field, "Tags for oneofs must be set manually");
         }
 
-        used_tags.extend(tags.iter().copied());
+        for tag in tags.iter().copied() {
+          manually_set_tags.push(ManuallySetTag {
+            tag,
+            field_span: src_field.span(),
+          });
+        }
       }
     }
 
     fields_attrs.push(field_attrs);
   }
 
-  let used_ranges = message_attrs
-    .reserved_numbers
-    .clone()
-    .build_unavailable_ranges(&used_tags);
+  let used_ranges =
+    build_unavailable_ranges2(&message_attrs.reserved_numbers, &mut manually_set_tags)?;
 
   let mut tag_allocator = TagAllocator::new(&used_ranges);
-
-  let mut tag_allocator_ctx = TagAllocatorCtx {
-    reserved_numbers: &message_attrs.reserved_numbers,
-    tag_allocator: &mut tag_allocator,
-  };
 
   for (src_field, field_attrs) in item.fields.iter_mut().zip(fields_attrs) {
     let field_tokens = process_field(ProcessFieldInput {
       field_or_variant: FieldOrVariant::Field(src_field),
       input_item: &mut input_item,
       field_attrs,
-      tag_allocator_ctx: Some(&mut tag_allocator_ctx),
+      tag_allocator: Some(&mut tag_allocator),
     })?;
 
     if !field_tokens.is_empty() {
