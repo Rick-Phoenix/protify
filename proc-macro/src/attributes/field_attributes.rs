@@ -1,5 +1,3 @@
-use syn_utils::bail_with_span;
-
 use crate::*;
 
 #[derive(Clone)]
@@ -32,8 +30,6 @@ pub fn process_derive_field_attrs(
   let mut is_ignored = false;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
-
-  let mut oneof_attrs: Vec<MetaList> = Vec::new();
 
   for arg in filter_attributes(attrs, &["proto"])? {
     match arg {
@@ -68,7 +64,31 @@ pub fn process_derive_field_attrs(
 
         match ident.as_str() {
           "oneof" => {
-            oneof_attrs.push(list);
+            let OneofInfo {
+              path,
+              tags,
+              default,
+            } = list.parse_args::<OneofInfo>()?;
+
+            if tags.is_empty() {
+              bail!(
+                list,
+                "Tags for oneofs must be set manually. You can set them with `#[proto(oneof(tags(1, 2, 3)))]`"
+              );
+            }
+
+            let oneof_path = path
+              .get_path_or_fallback(type_info.inner().as_path().as_ref())
+              .ok_or(error!(
+                list,
+                "Failed to infer the path to the oneof. If this is a proxied oneof, use `oneof(proxied)`, otherwise set the path manually with `oneof(MyOneofPath)`"
+              ))?;
+
+            proto_field = Some(ProtoField::Oneof {
+              path: oneof_path,
+              tags,
+              default,
+            })
           }
 
           "repeated" => {
@@ -134,7 +154,6 @@ pub fn process_derive_field_attrs(
               return Ok(FieldAttrData::Ignored { from_proto });
             }
           }
-          "oneof" => {}
 
           _ => {
             let fallback = type_info.inner().as_path();
@@ -153,62 +172,6 @@ pub fn process_derive_field_attrs(
 
   if is_ignored {
     return Ok(FieldAttrData::Ignored { from_proto });
-  }
-
-  if !oneof_attrs.is_empty() {
-    let mut oneof_path = ItemPathEntry::None;
-    let mut oneof_tags: Vec<i32> = Vec::new();
-    let mut use_default = false;
-    let mut attr_span: Option<Span> = None;
-
-    let fallback = type_info.inner().as_path();
-
-    for attr in oneof_attrs {
-      let OneofInfo {
-        path,
-        tags,
-        default,
-      } = attr.parse_args::<OneofInfo>()?;
-
-      if attr_span.is_none() {
-        attr_span = Some(attr.span());
-      }
-
-      if !path.is_none() {
-        oneof_path = path;
-      }
-
-      if !tags.is_empty() {
-        oneof_tags = tags;
-      }
-
-      if default {
-        use_default = true;
-      }
-    }
-
-    // Just an overly cautious fallback here, the span cannot be empty
-    let attr_span = attr_span.unwrap_or_else(Span::call_site);
-
-    let oneof_path = oneof_path
-      .get_path_or_fallback(fallback.as_ref())
-      .ok_or(error_with_span!(
-        attr_span,
-        "Failed to infer the path to the oneof. Please set it manually"
-      ))?;
-
-    if oneof_tags.is_empty() {
-      bail_with_span!(
-        attr_span,
-        "Oneof tags are missing. Use the `proto_module` macro or set them manually."
-      );
-    }
-
-    proto_field = Some(ProtoField::Oneof {
-      path: oneof_path,
-      tags: oneof_tags,
-      default: use_default,
-    })
   }
 
   let proto_field = if let Some(mut field) = proto_field {

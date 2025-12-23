@@ -21,7 +21,6 @@ pub fn tags_to_str(tags: &[i32]) -> String {
   tags_str
 }
 
-#[allow(clippy::single_match)]
 impl Parse for OneofInfo {
   fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
     let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;

@@ -4,6 +4,7 @@ mod macros;
 pub use prost;
 
 use askama::Template;
+use fxhash::FxHashMap;
 #[doc(hidden)]
 pub use inventory;
 #[cfg(feature = "testing")]

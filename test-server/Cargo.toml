@@ -10,7 +10,7 @@ keywords.workspace = true
 [dependencies]
 tonic = { workspace = true }
 tonic-prost = { workspace = true }
-prost = { workspace = true }
+prelude = { path = "../prelude/" }
 testing = { path = "../testing/" }
 proto-types = { workspace = true }
 

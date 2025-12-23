@@ -28,10 +28,6 @@ impl ItemPathEntry {
 
     Some(output)
   }
-
-  pub fn is_none(&self) -> bool {
-    matches!(self, Self::None)
-  }
 }
 
 impl ToTokens for ItemPathEntry {

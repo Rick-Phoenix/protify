@@ -96,8 +96,8 @@ impl Package {
   #[cfg(feature = "testing")]
   #[track_caller]
   pub fn check_unique_cel_rules(&self) {
-    let mut rules: HashMap<&str, &CelRule> = HashMap::new();
-    let mut duplicates: HashMap<&str, Vec<&CelRule>> = HashMap::new();
+    let mut rules: FxHashMap<&str, &CelRule> = FxHashMap::default();
+    let mut duplicates: FxHashMap<&str, Vec<&CelRule>> = FxHashMap::default();
 
     for rule in self
       .files

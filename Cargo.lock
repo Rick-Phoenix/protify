@@ -1483,7 +1483,7 @@ dependencies = [
 name = "test-server"
 version = "0.1.0"
 dependencies = [
- "prost",
+ "prelude",
  "proto-types",
  "testing",
  "tonic",

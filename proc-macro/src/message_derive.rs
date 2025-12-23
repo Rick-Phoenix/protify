@@ -73,10 +73,6 @@ pub fn process_message_derive_shadow(
           field_span: src_field.span(),
         });
       } else if let ProtoField::Oneof { tags, path, .. } = &data.proto_field {
-        if tags.is_empty() {
-          bail!(src_field, "Tags for oneofs must be set manually");
-        }
-
         for tag in tags.iter().copied() {
           manually_set_tags.push(ManuallySetTag {
             tag,
@@ -253,10 +249,6 @@ pub fn process_message_derive_direct(
           field_span: src_field.span(),
         });
       } else if let ProtoField::Oneof { tags, path, .. } = &data.proto_field {
-        if tags.is_empty() {
-          bail!(src_field, "Tags for oneofs must be set manually");
-        }
-
         for tag in tags.iter().copied() {
           manually_set_tags.push(ManuallySetTag {
             tag,
