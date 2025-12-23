@@ -13,11 +13,6 @@ use protocheck_core::{
   },
 };
 
-pub(crate) struct CelProgramsInternal<T: Default> {
-  pub programs: Vec<&'static CelProgram>,
-  pub _default_val: PhantomData<T>,
-}
-
 // Here we use a generic for the target of the validator
 // AND an assoc. type for the actual type being validated
 // so that it can be proxied by wrappers (like with Sint32, Fixed32, enums, etc...).

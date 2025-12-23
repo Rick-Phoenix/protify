@@ -83,6 +83,15 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
 
     impl ::prelude::ProtoMessage for #orig_struct_ident {
       const PACKAGE: &str = __PROTO_FILE.package;
+      const SHORT_NAME: &str = #proto_name;
+
+      fn type_url() -> &'static str {
+        static URL: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+          format!("/{}.{}", #orig_struct_ident::PACKAGE, #orig_struct_ident::name())
+        });
+
+        &*URL
+      }
 
       fn full_name() -> &'static str {
         static NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
@@ -138,6 +147,11 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
       #[allow(clippy::ptr_arg)]
       impl ::prelude::ProtoMessage for #shadow_struct_ident {
         const PACKAGE: &str = __PROTO_FILE.package;
+        const SHORT_NAME: &str = #proto_name;
+
+        fn type_url() -> &'static str {
+          <#orig_struct_ident as ::prelude::ProtoMessage>::type_url()
+        }
 
         fn full_name() -> &'static str {
           <#orig_struct_ident as ::prelude::ProtoMessage>::full_name()

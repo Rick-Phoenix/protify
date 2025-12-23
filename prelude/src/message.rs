@@ -2,10 +2,12 @@ use crate::{validators::CelRule, *};
 
 pub trait ProtoMessage {
   const PACKAGE: &str;
+  const SHORT_NAME: &str;
 
   fn proto_path() -> ProtoPath;
   fn proto_schema() -> Message;
 
+  // Not for testing only
   #[must_use]
   fn cel_rules() -> &'static [&'static CelProgram] {
     &[]
@@ -16,8 +18,8 @@ pub trait ProtoMessage {
   }
 
   fn name() -> &'static str;
-
   fn full_name() -> &'static str;
+  fn type_url() -> &'static str;
 
   fn nested_validate(
     &self,
@@ -33,9 +35,14 @@ where
   T: ProtoMessage,
 {
   const PACKAGE: &str = T::PACKAGE;
+  const SHORT_NAME: &str = T::SHORT_NAME;
 
   fn full_name() -> &'static str {
     T::full_name()
+  }
+
+  fn type_url() -> &'static str {
+    T::type_url()
   }
 
   fn name() -> &'static str {
