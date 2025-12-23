@@ -41,7 +41,7 @@ pub fn impl_message_consistency_checks(ctx: MessageConsistencyChecksCtx) -> Toke
       #auto_test_fn
 
       impl #item_ident {
-        pub(crate) fn check_validators_consistency() -> Result<(), String> {
+        pub(crate) fn check_validators_consistency() -> Result<(), ::prelude::test_utils::MessageTestError> {
           let mut field_errors: Vec<(&'static str, Vec<String>)> = Vec::new();
           let mut cel_errors: Vec<::prelude::CelError> = Vec::new();
 
@@ -62,15 +62,12 @@ pub fn impl_message_consistency_checks(ctx: MessageConsistencyChecksCtx) -> Toke
           }
 
           if !field_errors.is_empty() || !cel_errors.is_empty() {
-            let err = ::prelude::test_utils::format_message_errors(
-              ::prelude::test_utils::MessageErrors {
+            return Err(::prelude::test_utils::MessageTestError {
                 message_name: #message_name,
                 field_errors,
                 cel_errors
               }
             );
-
-            return Err(err);
           }
 
           Ok(())

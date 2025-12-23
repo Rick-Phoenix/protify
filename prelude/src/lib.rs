@@ -2,6 +2,7 @@
 mod macros;
 
 pub use prost;
+use std::fmt::Display;
 
 use askama::Template;
 use fxhash::FxHashMap;

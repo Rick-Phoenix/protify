@@ -9,6 +9,7 @@ keywords.workspace = true
 
 [dev-dependencies]
 prelude = { path = "../prelude", features = ["testing"] }
+similar-asserts = "1.7"
 
 [lints]
 workspace = true

@@ -7,7 +7,6 @@ pub fn impl_oneof_consistency_checks(
   quote! {
     #[cfg(test)]
     impl #oneof_ident {
-      #[track_caller]
       pub fn check_validators_consistency() -> Result<(), Vec<String>> {
         let mut errors: Vec<(&'static str, Vec<String>)> = Vec::new();
 
