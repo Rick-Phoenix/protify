@@ -3,17 +3,13 @@ use crate::*;
 pub struct ValidatorImplCtx<'a> {
   pub target_ident: &'a Ident,
   pub validators_tokens: Vec<TokenStream2>,
-  pub top_level_programs_ident: Option<&'a Ident>,
 }
 
 pub fn impl_message_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
   let ValidatorImplCtx {
     target_ident,
     validators_tokens,
-    top_level_programs_ident,
   } = ctx;
-
-  let top_level_programs_expr = tokens_or_default!(top_level_programs_ident, quote! { vec![] });
 
   quote! {
     use protocheck::validators::repeated::{UniqueItem, UniqueLookup};
@@ -53,7 +49,7 @@ pub fn impl_message_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
           parent_elements.push(field_context.as_path_element());
         }
 
-        let top_level_programs: &Vec<&CelProgram> = &#top_level_programs_expr;
+        let top_level_programs = <Self as ::prelude::ProtoMessage>::cel_rules();
 
         if !top_level_programs.is_empty() {
           let ctx = ProgramsExecutionCtx {

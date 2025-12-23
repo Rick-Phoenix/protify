@@ -24,6 +24,11 @@ impl Validator<String> for StringValidator {
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
 
+    if let Some(regex) = self.pattern {
+      // This checks if a cached regex panics at formation or not
+      let _ = regex.is_match("abc");
+    }
+
     if self.contains == self.not_contains {
       errors.push("`contains` and `not_contains` have the same value".to_string());
     }

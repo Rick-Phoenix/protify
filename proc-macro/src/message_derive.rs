@@ -121,27 +121,22 @@ pub fn process_message_derive_shadow(
       .collect();
   }
 
-  let (cel_check_impl, top_level_programs_ident) =
-    if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
-      let (cel_check_impl, ident) = impl_message_cel_checks(MessageCelChecksCtx {
-        item_ident: orig_struct_ident,
-        programs_paths: message_attrs.cel_rules.as_ref(),
-        field_cel_checks: cel_checks_tokens,
-        no_auto_test: message_attrs.no_auto_test,
-        message_name: &message_attrs.name,
-      });
-
-      (Some(cel_check_impl), ident)
-    } else {
-      (None, None)
-    };
+  let cel_check_impl = if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
+    Some(impl_message_cel_checks(MessageCelChecksCtx {
+      item_ident: shadow_struct_ident,
+      field_cel_checks: cel_checks_tokens,
+      no_auto_test: message_attrs.no_auto_test,
+      message_name: &message_attrs.name,
+    }))
+  } else {
+    None
+  };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
     orig_struct_ident,
     shadow_struct_ident: Some(shadow_struct_ident),
     message_attrs: &message_attrs,
     entries_tokens: fields_tokens,
-    top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
 
   let shadow_struct_derives = message_attrs
@@ -151,7 +146,6 @@ pub fn process_message_derive_shadow(
   let validator_impl = impl_message_validator(ValidatorImplCtx {
     target_ident: shadow_struct_ident,
     validators_tokens,
-    top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
 
   let wrapped_items = wrap_with_imports(vec![
@@ -286,33 +280,27 @@ pub fn process_message_derive_direct(
 
   let struct_ident = &item.ident;
 
-  let (cel_check_impl, top_level_programs_ident) =
-    if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
-      let (cel_check_impl, ident) = impl_message_cel_checks(MessageCelChecksCtx {
-        item_ident: struct_ident,
-        programs_paths: message_attrs.cel_rules.as_ref(),
-        field_cel_checks: cel_checks_tokens,
-        no_auto_test: message_attrs.no_auto_test,
-        message_name: &message_attrs.name,
-      });
-
-      (Some(cel_check_impl), ident)
-    } else {
-      (None, None)
-    };
+  let cel_check_impl = if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
+    Some(impl_message_cel_checks(MessageCelChecksCtx {
+      item_ident: struct_ident,
+      field_cel_checks: cel_checks_tokens,
+      no_auto_test: message_attrs.no_auto_test,
+      message_name: &message_attrs.name,
+    }))
+  } else {
+    None
+  };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
     orig_struct_ident: struct_ident,
     shadow_struct_ident: None,
     message_attrs: &message_attrs,
     entries_tokens: fields_tokens,
-    top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
 
   let validator_impl = impl_message_validator(ValidatorImplCtx {
     target_ident: struct_ident,
     validators_tokens,
-    top_level_programs_ident: top_level_programs_ident.as_ref(),
   });
 
   let oneof_tags_check =

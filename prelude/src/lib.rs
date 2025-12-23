@@ -11,20 +11,11 @@ pub use inventory;
 use owo_colors::OwoColorize;
 #[doc(hidden)]
 pub use paste::paste;
-#[cfg(feature = "testing")]
-use pretty_assertions::*;
 use proto_types::protovalidate::{FieldPathElement, Violations};
-use std::fmt::Display;
 mod oneof;
 mod options;
 mod validators;
-use std::{
-  collections::{HashMap, HashSet},
-  fmt::Write,
-  marker::PhantomData,
-  ops::Range,
-  sync::LazyLock,
-};
+use std::{collections::HashSet, fmt::Write, marker::PhantomData, ops::Range, sync::LazyLock};
 mod field;
 mod file;
 mod message;

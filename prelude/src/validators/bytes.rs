@@ -69,6 +69,11 @@ impl Validator<Bytes> for BytesValidator {
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
 
+    if let Some(regex) = self.pattern {
+      // This checks if a cached regex panics at formation or not
+      let _ = regex.is_match(b"abc");
+    }
+
     if let Err(e) = check_list_rules(self.in_, self.not_in) {
       errors.push(e);
     }

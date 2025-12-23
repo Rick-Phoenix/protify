@@ -5,7 +5,6 @@ pub struct MessageSchemaImplsCtx<'a> {
   pub shadow_struct_ident: Option<&'a Ident>,
   pub message_attrs: &'a MessageAttrs,
   pub entries_tokens: Vec<TokenStream2>,
-  pub top_level_programs_ident: Option<&'a Ident>,
 }
 
 pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
@@ -20,24 +19,15 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
         name: proto_name,
         parent_message,
         extern_path,
+        cel_rules: top_level_cel_rules,
         ..
       },
     entries_tokens,
-    top_level_programs_ident,
   } = ctx;
 
   let mut output = TokenStream2::new();
 
   let options_tokens = tokens_or_default!(options, quote! { vec![] });
-
-  let cel_rules_field = top_level_programs_ident.map_or_else(
-    || quote! { vec![] },
-    |ident| {
-      quote! {
-        #ident.iter().map(|prog| &prog.rule).collect()
-      }
-    },
-  );
 
   let full_name_method = if let Some(parent) = parent_message {
     quote! {
@@ -66,6 +56,14 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
     quote! { format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str) }
   };
 
+  let top_level_cel_rules_tokens = if let Some(programs) = top_level_cel_rules {
+    quote! {
+      vec![ #(&*#programs),* ]
+    }
+  } else {
+    quote! { vec![] }
+  };
+
   output.extend(quote! {
     ::prelude::inventory::submit! {
       ::prelude::RegistryMessage {
@@ -84,6 +82,14 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
     }
 
     impl ::prelude::ProtoMessage for #orig_struct_ident {
+      fn cel_rules() -> &'static [&'static CelProgram] {
+        static PROGRAMS: std::sync::LazyLock<Vec<&'static ::prelude::CelProgram>> = std::sync::LazyLock::new(|| {
+          #top_level_cel_rules_tokens
+        });
+
+        &*PROGRAMS
+      }
+
       fn proto_path() -> ::prelude::ProtoPath {
         ::prelude::ProtoPath {
           name: Self::full_name(),
@@ -108,7 +114,7 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
           messages: vec![],
           enums: vec![],
           entries: vec![ #(#entries_tokens,)* ],
-          cel_rules: #cel_rules_field,
+          cel_rules: Self::cel_rules().iter().map(|prog| &prog.rule).collect(),
           rust_path: #rust_path_field
         };
 
@@ -121,6 +127,10 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
     output.extend(quote! {
       #[allow(clippy::ptr_arg)]
       impl ::prelude::ProtoMessage for #shadow_struct_ident {
+        fn cel_rules() -> &'static [&'static CelProgram] {
+          <#orig_struct_ident as ::prelude::ProtoMessage>::cel_rules()
+        }
+
         fn proto_path() -> ::prelude::ProtoPath {
           <#orig_struct_ident as ::prelude::ProtoMessage>::proto_path()
         }

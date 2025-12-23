@@ -4,6 +4,11 @@ pub trait ProtoMessage {
   fn proto_path() -> ProtoPath;
   fn proto_schema() -> Message;
 
+  #[must_use]
+  fn cel_rules() -> &'static [&'static CelProgram] {
+    &[]
+  }
+
   fn validate(&self) -> Result<(), Violations> {
     Ok(())
   }
