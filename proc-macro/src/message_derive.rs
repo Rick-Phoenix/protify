@@ -38,7 +38,7 @@ pub fn process_message_derive_shadow(
   let mut ignored_fields: Vec<Ident> = Vec::new();
 
   let mut validators_tokens: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
+  let mut consistency_checks: Vec<TokenStream2> = Vec::new();
 
   let mut proto_conversion_data = ProtoConversionImpl {
     source_ident: orig_struct_ident,
@@ -54,7 +54,7 @@ pub fn process_message_derive_shadow(
       proto_conversion_data: &mut proto_conversion_data,
     },
     validators_tokens: &mut validators_tokens,
-    cel_checks_tokens: &mut cel_checks_tokens,
+    consistency_checks: &mut consistency_checks,
   };
 
   let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
@@ -121,16 +121,19 @@ pub fn process_message_derive_shadow(
       .collect();
   }
 
-  let cel_check_impl = if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
-    Some(impl_message_cel_checks(MessageCelChecksCtx {
-      item_ident: shadow_struct_ident,
-      field_cel_checks: cel_checks_tokens,
-      no_auto_test: message_attrs.no_auto_test,
-      message_name: &message_attrs.name,
-    }))
-  } else {
-    None
-  };
+  let consistency_checks_impl =
+    if message_attrs.cel_rules.is_some() || !consistency_checks.is_empty() {
+      Some(impl_message_consistency_checks(
+        MessageConsistencyChecksCtx {
+          item_ident: shadow_struct_ident,
+          consistency_checks,
+          no_auto_test: message_attrs.no_auto_test,
+          message_name: &message_attrs.name,
+        },
+      ))
+    } else {
+      None
+    };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
     orig_struct_ident,
@@ -167,7 +170,7 @@ pub fn process_message_derive_shadow(
 
     #wrapped_items
     #oneof_tags_check
-    #cel_check_impl
+    #consistency_checks_impl
   };
 
   Ok(output_tokens)
@@ -188,12 +191,12 @@ pub fn process_message_derive_direct(
   let mut fields_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut validators_tokens: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
+  let mut consistency_checks: Vec<TokenStream2> = Vec::new();
 
   let mut input_item = InputItem {
     impl_kind: ImplKind::Direct,
     validators_tokens: &mut validators_tokens,
-    cel_checks_tokens: &mut cel_checks_tokens,
+    consistency_checks: &mut consistency_checks,
   };
 
   let mut fields_attrs: Vec<FieldAttrData> = Vec::new();
@@ -280,16 +283,19 @@ pub fn process_message_derive_direct(
 
   let struct_ident = &item.ident;
 
-  let cel_check_impl = if message_attrs.cel_rules.is_some() || !cel_checks_tokens.is_empty() {
-    Some(impl_message_cel_checks(MessageCelChecksCtx {
-      item_ident: struct_ident,
-      field_cel_checks: cel_checks_tokens,
-      no_auto_test: message_attrs.no_auto_test,
-      message_name: &message_attrs.name,
-    }))
-  } else {
-    None
-  };
+  let consistency_checks_impl =
+    if message_attrs.cel_rules.is_some() || !consistency_checks.is_empty() {
+      Some(impl_message_consistency_checks(
+        MessageConsistencyChecksCtx {
+          item_ident: struct_ident,
+          consistency_checks,
+          no_auto_test: message_attrs.no_auto_test,
+          message_name: &message_attrs.name,
+        },
+      ))
+    } else {
+      None
+    };
 
   let schema_impls = message_schema_impls(MessageSchemaImplsCtx {
     orig_struct_ident: struct_ident,
@@ -311,7 +317,7 @@ pub fn process_message_derive_direct(
   let output_tokens = quote! {
     #wrapped_items
     #oneof_tags_check
-    #cel_check_impl
+    #consistency_checks_impl
   };
 
   Ok(output_tokens)

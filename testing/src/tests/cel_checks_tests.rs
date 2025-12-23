@@ -9,7 +9,6 @@ struct DuplicateRules {
 }
 
 #[test]
-#[should_panic]
 fn unique_rules() {
   let mut package = Package::new("abc");
 
@@ -19,7 +18,7 @@ fn unique_rules() {
 
   package.add_files([file]);
 
-  package.check_unique_cel_rules();
+  assert!(package.check_unique_cel_rules().is_err());
 }
 
 // TODO: Check on fields and oneofs and top level
@@ -31,7 +30,6 @@ struct BadRules {
 }
 
 #[test]
-#[should_panic]
 fn bad_rules() {
-  BadRules::check_cel_programs();
+  assert!(BadRules::check_validators_consistency().is_err());
 }

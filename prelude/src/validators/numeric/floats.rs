@@ -83,29 +83,29 @@ where
 
   if let Some(lt) = lt {
     if let Some(gt) = gt
-      && lt >= gt
+      && lt <= gt
     {
-      return Err("Lt cannot be greater than or equal to Gt");
+      return Err("Lt cannot be smaller than or equal to Gt");
     }
 
     if let Some(gte) = gte
-      && lt >= gte
+      && lt <= gte
     {
-      return Err("Lte cannot be greater than or equal to Gte");
+      return Err("Lte cannot be smaller than or equal to Gte");
     }
   }
 
   if let Some(lte) = lte {
     if let Some(gt) = gt
-      && lte >= gt
+      && lte <= gt
     {
-      return Err("Lte cannot be greater than or equal to Gt");
+      return Err("Lte cannot be smaller than or equal to Gt");
     }
 
     if let Some(gte) = gte
-      && lte > gte
+      && lte < gte
     {
-      return Err("Lte cannot be greater than Gte");
+      return Err("Lte cannot be smaller than Gte");
     }
   }
 

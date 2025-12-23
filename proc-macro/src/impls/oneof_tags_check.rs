@@ -22,16 +22,17 @@ pub fn generate_oneof_tags_check(
     let OneofCheckCtx { path, tags } = oneof;
 
     test_body.extend(quote! {
-      #path::check_tags(#ident_str, &mut [ #(#tags),* ]);
+      #path::check_tags(#ident_str, &mut [ #(#tags),* ])?;
     });
   }
 
   let test_impl = quote! {
     #[cfg(test)]
     impl #struct_ident {
-      #[track_caller]
-      pub fn check_oneofs_tags() {
+      pub fn check_oneofs_tags() -> Result<(), String> {
         #test_body
+
+        Ok(())
       }
     }
   };
@@ -43,7 +44,9 @@ pub fn generate_oneof_tags_check(
       #[cfg(test)]
       #[test]
       fn #test_fn_name() {
-        #test_body
+        if let Err(e) = #struct_ident::check_oneofs_tags() {
+          panic!("{e}");
+        }
       }
     }
   });

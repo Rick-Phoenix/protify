@@ -16,7 +16,7 @@ pub enum ImplKind<'a, 'b> {
 pub struct InputItem<'a, 'b> {
   pub impl_kind: ImplKind<'a, 'b>,
   pub validators_tokens: &'b mut Vec<TokenStream2>,
-  pub cel_checks_tokens: &'b mut Vec<TokenStream2>,
+  pub consistency_checks: &'b mut Vec<TokenStream2>,
 }
 
 pub fn wrap_with_imports(tokens: Vec<TokenStream2>) -> TokenStream2 {

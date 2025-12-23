@@ -9,24 +9,23 @@ pub enum TestOneof {
 }
 
 #[proto_message(direct, no_auto_test)]
-pub struct ShouldPanicTest {
+pub struct WrongTagsTest {
   #[proto(oneof(tags(1, 2)))]
   pub oneof: Option<TestOneof>,
 }
 
 #[test]
-#[should_panic]
-fn should_panic_oneof_tags_check() {
-  ShouldPanicTest::check_oneofs_tags();
+fn wrong_oneof_tags_check() {
+  assert!(WrongTagsTest::check_oneofs_tags().is_err());
 }
 
 #[proto_message(direct, no_auto_test)]
-pub struct ShouldNotPanicTest {
+pub struct CorrectTagsTest {
   #[proto(oneof(tags(100, 200)))]
   pub oneof: Option<TestOneof>,
 }
 
 #[test]
-fn should_not_panic_oneof_tags_check() {
-  ShouldNotPanicTest::check_oneofs_tags();
+fn correct_oneof_tags_check() {
+  assert!(CorrectTagsTest::check_oneofs_tags().is_ok());
 }

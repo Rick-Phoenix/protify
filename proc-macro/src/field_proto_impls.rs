@@ -5,7 +5,7 @@ pub struct FieldCtx<'a, 'field> {
   pub field_attrs: FieldAttrs,
   pub type_info: TypeInfo,
   pub validators_tokens: &'a mut Vec<TokenStream2>,
-  pub cel_checks: &'a mut Vec<TokenStream2>,
+  pub consistency_checks: &'a mut Vec<TokenStream2>,
   pub tag_allocator: Option<&'a mut TagAllocator<'field>>,
 }
 
@@ -24,7 +24,7 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
         },
       type_info,
       validators_tokens,
-      cel_checks,
+      consistency_checks,
       tag_allocator,
     } = self;
 
@@ -50,13 +50,14 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
     field.inject_attr(field_prost_attr);
 
     let field_ident = field.ident()?;
+    let field_ident_str = field_ident.to_string();
 
     if let ProtoField::Oneof {
       path: oneof_path, ..
     } = &proto_field
     {
-      cel_checks.push(quote! {
-        #oneof_path::check_cel_programs()
+      consistency_checks.push(quote! {
+        (#field_ident_str, #oneof_path::check_validators_consistency())
       });
 
       validators_tokens.push(quote! {
@@ -109,8 +110,8 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
 
       validators_tokens.push(field_validator_tokens);
 
-      cel_checks.push(quote! {
-        #validator_expr.check_cel_programs()
+      consistency_checks.push(quote! {
+        (#field_ident_str, #validator_expr.check_consistency())
       });
 
       quote! { Some(#validator_expr.into_schema()) }

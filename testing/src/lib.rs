@@ -82,7 +82,7 @@ pub mod inner {
     }
   }
 
-  #[proto_message]
+  #[proto_message(no_auto_test)]
   #[proto(reserved_numbers(1, 2, 3..9))]
   #[proto(reserved_names("abc", "bcd"))]
   #[derive(Clone, Debug, Default)]

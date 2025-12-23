@@ -29,7 +29,7 @@ pub(crate) fn process_oneof_derive_shadow(
   let mut ignored_variants: Vec<Ident> = Vec::new();
 
   let mut validators_tokens: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
+  let mut consistency_checks: Vec<TokenStream2> = Vec::new();
 
   let mut proto_conversion_data = ProtoConversionImpl {
     source_ident: orig_enum_ident,
@@ -45,7 +45,7 @@ pub(crate) fn process_oneof_derive_shadow(
       proto_conversion_data: &mut proto_conversion_data,
     },
     validators_tokens: &mut validators_tokens,
-    cel_checks_tokens: &mut cel_checks_tokens,
+    consistency_checks: &mut consistency_checks,
   };
 
   let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
@@ -104,7 +104,8 @@ pub(crate) fn process_oneof_derive_shadow(
     .shadow_derives
     .map(|list| quote! { #[#list] });
 
-  let cel_checks_impl = impl_oneof_cel_checks(shadow_enum_ident, cel_checks_tokens);
+  let consistency_checks_impl =
+    impl_oneof_consistency_checks(shadow_enum_ident, consistency_checks);
 
   let validator_impl = impl_oneof_validator(OneofValidatorImplCtx {
     oneof_ident: shadow_enum_ident,
@@ -125,7 +126,7 @@ pub(crate) fn process_oneof_derive_shadow(
     #shadow_enum
 
     #wrapped_items
-    #cel_checks_impl
+    #consistency_checks_impl
 
     impl ::prelude::ProtoOneof for #shadow_enum_ident {
       fn name() -> &'static str {
@@ -162,12 +163,12 @@ pub(crate) fn process_oneof_derive_direct(
   let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
   let mut validators_tokens: Vec<TokenStream2> = Vec::new();
-  let mut cel_checks_tokens: Vec<TokenStream2> = Vec::new();
+  let mut consistency_checks: Vec<TokenStream2> = Vec::new();
 
   let mut input_item = InputItem {
     impl_kind: ImplKind::Direct,
     validators_tokens: &mut validators_tokens,
-    cel_checks_tokens: &mut cel_checks_tokens,
+    consistency_checks: &mut consistency_checks,
   };
 
   let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
@@ -241,7 +242,7 @@ pub(crate) fn process_oneof_derive_direct(
     &manually_set_tags,
   );
 
-  let cel_checks_impl = impl_oneof_cel_checks(oneof_ident, cel_checks_tokens);
+  let consistency_checks_impl = impl_oneof_consistency_checks(oneof_ident, consistency_checks);
 
   let validator_impl = impl_oneof_validator(OneofValidatorImplCtx {
     oneof_ident,
@@ -252,7 +253,7 @@ pub(crate) fn process_oneof_derive_direct(
 
   let output = quote! {
     #wrapped_items
-    #cel_checks_impl
+    #consistency_checks_impl
   };
 
   Ok(output)

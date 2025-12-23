@@ -24,7 +24,9 @@ pub(crate) fn check_length_rules(
   min: &LengthRuleValue,
   max: &LengthRuleValue,
 ) -> Result<(), String> {
-  if let Some(exact) = exact {
+  if let Some(exact) = exact
+    && exact.value.is_some()
+  {
     if min.value.is_some() {
       return Err(format!("{} cannot be used with {}", exact.name, min.name));
     }

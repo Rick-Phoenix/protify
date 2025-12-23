@@ -94,8 +94,7 @@ impl Package {
   }
 
   #[cfg(feature = "testing")]
-  #[track_caller]
-  pub fn check_unique_cel_rules(&self) {
+  pub fn check_unique_cel_rules(&self) -> Result<(), String> {
     let mut rules: FxHashMap<&str, &CelRule> = FxHashMap::default();
     let mut duplicates: FxHashMap<&str, Vec<&CelRule>> = FxHashMap::default();
 
@@ -112,7 +111,7 @@ impl Package {
         )
       })
     {
-      let entry = rules.entry(&rule.id);
+      let entry = rules.entry(rule.id);
 
       match entry {
         Entry::Occupied(present) => {
@@ -120,7 +119,7 @@ impl Package {
 
           if *present_rule != rule {
             duplicates
-              .entry(&rule.id)
+              .entry(rule.id)
               .or_insert_with(|| vec![present_rule])
               .push(rule);
           }
@@ -149,7 +148,9 @@ impl Package {
         }
       }
 
-      panic!("{error}")
+      return Err(error);
     }
+
+    Ok(())
   }
 }

@@ -29,7 +29,10 @@ impl Validator<String> for StringValidator {
       let _ = regex.is_match("abc");
     }
 
-    if self.contains == self.not_contains {
+    if let Some(contains) = self.contains.as_ref()
+      && let Some(not_contains) = self.not_contains.as_ref()
+      && contains == not_contains
+    {
       errors.push("`contains` and `not_contains` have the same value".to_string());
     }
 
