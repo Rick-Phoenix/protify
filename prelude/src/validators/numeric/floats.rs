@@ -8,21 +8,6 @@ use protocheck_core::ordered_float::{self, FloatCore};
 
 use super::*;
 
-pub(crate) fn format_list<T: Display, I: IntoIterator<Item = T>>(list: I) -> String {
-  let mut string = String::new();
-  let mut iter = list.into_iter().peekable();
-
-  while let Some(item) = iter.next() {
-    write!(string, "{item}").unwrap();
-
-    if iter.peek().is_some() {
-      string.push_str(", ");
-    }
-  }
-
-  string
-}
-
 pub(crate) fn float_in_list<T>(target: T, list: &[OrderedFloat<T>], abs_tol: T, r2nd_tol: T) -> bool
 where
   T: FloatCore + FloatEq<Tol = T>,
@@ -30,7 +15,6 @@ where
   let wrapped_target: OrderedFloat<T> = target.into();
 
   // 1. Perform Binary Search
-  // This is O(log n)
   match list.binary_search(&wrapped_target) {
     // Exact bit-for-bit match found
     Ok(_) => true,
@@ -89,107 +73,22 @@ where
   Ok(())
 }
 
-#[cfg(feature = "testing")]
-pub(crate) fn check_list_rules<T>(
-  in_list: Option<&'static [T]>,
-  not_in_list: Option<&'static [T]>,
-) -> Result<(), OverlappingListsError<T>>
-where
-  T: Debug + PartialEq + Eq + Hash + Ord + Clone,
-{
-  if let Some(in_list) = in_list
-    && let Some(not_in_list) = not_in_list
-  {
-    let mut overlapping: Vec<T> = Vec::with_capacity(in_list.len());
-
-    for item in in_list {
-      let is_overlapping = not_in_list.binary_search(item).is_ok();
-
-      if is_overlapping {
-        overlapping.push(item.clone());
-      }
-    }
-
-    if overlapping.is_empty() {
-      return Ok(());
-    } else {
-      return Err(OverlappingListsError { overlapping });
-    }
-  }
-
-  Ok(())
-}
-
-pub(crate) struct OverlappingListsError<T: Debug> {
-  pub overlapping: Vec<T>,
-}
-
-impl<T: Debug> Display for OverlappingListsError<T> {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    writeln!(f, "The following values are both allowed and forbidden:")?;
-
-    for item in &self.overlapping {
-      let _ = writeln!(f, "  - {item:#?}");
-    }
-
-    Ok(())
-  }
-}
-
-#[cfg(feature = "testing")]
-pub(crate) fn check_comparable_rules<T>(
-  lt: Option<T>,
-  lte: Option<T>,
-  gt: Option<T>,
-  gte: Option<T>,
-) -> Result<(), &'static str>
-where
-  T: Display + PartialEq + PartialOrd + Copy,
-{
-  if lt.is_some() && lte.is_some() {
-    return Err("Lt and Lte cannot be used together.");
-  }
-
-  if gt.is_some() && gte.is_some() {
-    return Err("Gt and Gte cannot be used together.");
-  }
-
-  if let Some(lt) = lt {
-    if let Some(gt) = gt
-      && lt <= gt
-    {
-      return Err("Lt cannot be smaller than or equal to Gt");
-    }
-
-    if let Some(gte) = gte
-      && lt <= gte
-    {
-      return Err("Lte cannot be smaller than or equal to Gte");
-    }
-  }
-
-  if let Some(lte) = lte {
-    if let Some(gt) = gt
-      && lte <= gt
-    {
-      return Err("Lte cannot be smaller than or equal to Gt");
-    }
-
-    if let Some(gte) = gte
-      && lte < gte
-    {
-      return Err("Lte cannot be smaller than Gte");
-    }
-  }
-
-  Ok(())
-}
-
 impl<Num> Validator<Num> for FloatValidator<Num>
 where
   Num: FloatWrapper,
 {
   type Target = Num::RustType;
+  type UniqueStore<'a>
+    = FloatEpsilonStore<Num::RustType>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, size: usize) -> Self::UniqueStore<'a>
+  where
+    Num: 'a,
+  {
+    FloatEpsilonStore::new(size, self.abs_tolerance, self.rel_tolerance)
+  }
 
   impl_testing_methods!();
 

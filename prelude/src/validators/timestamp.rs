@@ -11,8 +11,16 @@ impl_ignore!(TimestampValidatorBuilder);
 
 impl Validator<Timestamp> for TimestampValidator {
   type Target = Timestamp;
+  type UniqueStore<'a>
+    = CopyHybridStore<Timestamp>
+  where
+    Self: 'a;
 
   impl_testing_methods!();
+
+  fn make_unique_store<'a>(&self, size: usize) -> Self::UniqueStore<'a> {
+    CopyHybridStore::default_with_capacity(size)
+  }
 
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {

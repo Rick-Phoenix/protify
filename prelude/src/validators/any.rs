@@ -9,6 +9,14 @@ impl_into_option!(AnyValidator);
 
 impl Validator<Any> for AnyValidator {
   type Target = Any;
+  type UniqueStore<'a>
+    = LinearRefStore<'a, Any>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
+    LinearRefStore::default_with_capacity(cap)
+  }
 
   impl_testing_methods!();
 

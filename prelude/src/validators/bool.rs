@@ -8,6 +8,16 @@ impl_into_option!(BoolValidator);
 
 impl Validator<bool> for BoolValidator {
   type Target = bool;
+  type UniqueStore<'a>
+    = CopyHybridStore<bool>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, _: usize) -> Self::UniqueStore<'a> {
+    // This is likely to never be used in the first place, but
+    // uniqueness checks would fail after more than 2 elements anyway
+    CopyHybridStore::default_with_capacity(2)
+  }
 
   #[cfg(feature = "testing")]
   fn check_cel_programs_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>> {

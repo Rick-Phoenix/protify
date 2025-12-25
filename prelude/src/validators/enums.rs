@@ -14,8 +14,19 @@ impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, 
 
 impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
   type Target = i32;
+  type UniqueStore<'a>
+    = CopyHybridStore<i32>
+  where
+    Self: 'a;
 
   impl_testing_methods!();
+
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a>
+  where
+    T: 'a,
+  {
+    CopyHybridStore::default_with_capacity(cap)
+  }
 
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {

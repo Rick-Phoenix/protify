@@ -121,6 +121,17 @@ where
   V::Target: Default,
 {
   type Target = HashMap<K::Target, V::Target>;
+  type UniqueStore<'a>
+    = UnsupportedStore<Self::Target>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, _: usize) -> Self::UniqueStore<'a>
+  where
+    Self: 'a,
+  {
+    UnsupportedStore::default()
+  }
 
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {

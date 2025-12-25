@@ -66,6 +66,14 @@ pub(crate) fn format_bytes_list<'a, I: IntoIterator<Item = &'a [u8]>>(list: I) -
 
 impl Validator<Bytes> for BytesValidator {
   type Target = Bytes;
+  type UniqueStore<'a>
+    = RefHybridStore<'a, Bytes>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
+    RefHybridStore::default_with_capacity(cap)
+  }
 
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {

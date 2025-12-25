@@ -17,6 +17,14 @@ impl_cel_method!(StringValidatorBuilder);
 
 impl Validator<String> for StringValidator {
   type Target = String;
+  type UniqueStore<'a>
+    = RefHybridStore<'a, String>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
+    RefHybridStore::default_with_capacity(cap)
+  }
 
   impl_testing_methods!();
 

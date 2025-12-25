@@ -7,7 +7,7 @@ use crate::field_context::ViolationsExt;
 
 impl<T, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
 where
-  T: ProtoMessage + Clone + Default + TryInto<::cel::Value, Error = CelConversionError>,
+  T: ProtoMessage + PartialEq + Clone + Default + TryInto<::cel::Value, Error = CelConversionError>,
 {
   type Target = T;
   type Validator = MessageValidator<T>;
@@ -19,11 +19,19 @@ where
 
 impl<T> Validator<T> for MessageValidator<T>
 where
-  T: ProtoMessage + Clone + Default + TryInto<::cel::Value, Error = CelConversionError>,
+  T: ProtoMessage + PartialEq + Clone + Default + TryInto<::cel::Value, Error = CelConversionError>,
 {
   type Target = T;
+  type UniqueStore<'a>
+    = LinearRefStore<'a, T>
+  where
+    Self: 'a;
 
   impl_testing_methods!();
+
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
+    LinearRefStore::default_with_capacity(cap)
+  }
 
   fn validate(
     &self,

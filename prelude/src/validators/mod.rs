@@ -6,7 +6,7 @@ use common_strings::*;
 use proto_types::protovalidate::*;
 use protocheck_core::{
   ordered_float::OrderedFloat,
-  validators::{containing::ListRules, repeated::UniqueItem, well_known_strings::*},
+  validators::{containing::ListRules, well_known_strings::*},
 };
 
 // Here we use a generic for the target of the validator
@@ -15,6 +15,11 @@ use protocheck_core::{
 // Same for `ValidatorBuilderFor`.
 pub trait Validator<T>: Into<ProtoOption> {
   type Target: Default;
+  type UniqueStore<'a>: UniqueStore<'a, Item = Self::Target>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a>;
 
   // This one cannot be testing only because it is used in the schema impl below
   fn cel_rules(&self) -> Vec<&'static CelRule> {
@@ -218,3 +223,114 @@ pub use oneof::*;
 pub use repeated::*;
 pub use string::*;
 pub use timestamp::*;
+
+pub(crate) fn format_list<T: Display, I: IntoIterator<Item = T>>(list: I) -> String {
+  let mut string = String::new();
+  let mut iter = list.into_iter().peekable();
+
+  while let Some(item) = iter.next() {
+    write!(string, "{item}").unwrap();
+
+    if iter.peek().is_some() {
+      string.push_str(", ");
+    }
+  }
+
+  string
+}
+
+#[cfg(feature = "testing")]
+pub(crate) fn check_list_rules<T>(
+  in_list: Option<&'static [T]>,
+  not_in_list: Option<&'static [T]>,
+) -> Result<(), OverlappingListsError<T>>
+where
+  T: Debug + PartialEq + Eq + Hash + Ord + Clone,
+{
+  if let Some(in_list) = in_list
+    && let Some(not_in_list) = not_in_list
+  {
+    let mut overlapping: Vec<T> = Vec::with_capacity(in_list.len());
+
+    for item in in_list {
+      let is_overlapping = not_in_list.binary_search(item).is_ok();
+
+      if is_overlapping {
+        overlapping.push(item.clone());
+      }
+    }
+
+    if overlapping.is_empty() {
+      return Ok(());
+    } else {
+      return Err(OverlappingListsError { overlapping });
+    }
+  }
+
+  Ok(())
+}
+
+pub(crate) struct OverlappingListsError<T: Debug> {
+  pub overlapping: Vec<T>,
+}
+
+impl<T: Debug> Display for OverlappingListsError<T> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    writeln!(f, "The following values are both allowed and forbidden:")?;
+
+    for item in &self.overlapping {
+      let _ = writeln!(f, "  - {item:#?}");
+    }
+
+    Ok(())
+  }
+}
+
+#[cfg(feature = "testing")]
+pub(crate) fn check_comparable_rules<T>(
+  lt: Option<T>,
+  lte: Option<T>,
+  gt: Option<T>,
+  gte: Option<T>,
+) -> Result<(), &'static str>
+where
+  T: Display + PartialEq + PartialOrd + Copy,
+{
+  if lt.is_some() && lte.is_some() {
+    return Err("Lt and Lte cannot be used together.");
+  }
+
+  if gt.is_some() && gte.is_some() {
+    return Err("Gt and Gte cannot be used together.");
+  }
+
+  if let Some(lt) = lt {
+    if let Some(gt) = gt
+      && lt <= gt
+    {
+      return Err("Lt cannot be smaller than or equal to Gt");
+    }
+
+    if let Some(gte) = gte
+      && lt <= gte
+    {
+      return Err("Lte cannot be smaller than or equal to Gte");
+    }
+  }
+
+  if let Some(lte) = lte {
+    if let Some(gt) = gt
+      && lte <= gt
+    {
+      return Err("Lte cannot be smaller than or equal to Gt");
+    }
+
+    if let Some(gte) = gte
+      && lte < gte
+    {
+      return Err("Lte cannot be smaller than Gte");
+    }
+  }
+
+  Ok(())
+}

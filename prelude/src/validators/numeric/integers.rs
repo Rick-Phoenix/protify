@@ -22,6 +22,17 @@ where
   Num: IntWrapper,
 {
   type Target = Num::RustType;
+  type UniqueStore<'a>
+    = CopyHybridStore<Num::RustType>
+  where
+    Self: 'a;
+
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a>
+  where
+    Num: 'a,
+  {
+    CopyHybridStore::default_with_capacity(cap)
+  }
 
   impl_testing_methods!();
 
