@@ -192,9 +192,7 @@ macro_rules! impl_into_option {
     $crate::paste! {
       impl<S: [< $validator:snake _builder >]::IsComplete> From<[< $validator Builder >]<S>> for ProtoOption {
         fn from(value: [< $validator Builder >]<S>) -> ProtoOption {
-          let validator = value.build();
-
-          validator.into()
+          value.build().into()
         }
       }
     }

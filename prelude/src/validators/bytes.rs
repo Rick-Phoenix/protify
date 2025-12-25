@@ -1,15 +1,14 @@
+pub mod builder;
+pub use builder::BytesValidatorBuilder;
+use builder::state::State;
+
 use ::bytes::Bytes;
-use bon::Builder;
-use bytes_validator_builder::{IsUnset, SetWellKnown, State};
 #[cfg(feature = "regex")]
 use regex::bytes::Regex;
 
 use super::*;
 
 impl_validator!(BytesValidator, Bytes);
-impl_into_option!(BytesValidator);
-impl_ignore!(BytesValidatorBuilder);
-impl_cel_method!(BytesValidatorBuilder);
 impl_proto_type!(Bytes, "bytes");
 
 #[cfg(feature = "testing")]
@@ -324,20 +323,15 @@ macro_rules! insert_bytes_option {
   };
 }
 
-#[derive(Clone, Debug, Builder)]
-#[builder(derive(Clone))]
+#[derive(Clone, Debug)]
 pub struct BytesValidator {
-  #[builder(field)]
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<&'static CelProgram>,
 
-  #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 
-  #[builder(setters(vis = "", name = well_known))]
   pub well_known: Option<WellKnownBytes>,
 
-  #[builder(default, with = || true)]
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
 
@@ -450,35 +444,6 @@ pub enum WellKnownBytes {
   Ip,
   Ipv4,
   Ipv6,
-}
-
-macro_rules! well_known_impl {
-  ($name:ident, $doc:literal) => {
-    paste::paste! {
-      #[doc = $doc]
-      pub fn [< $name:snake >](self) -> BytesValidatorBuilder<SetWellKnown<S>>
-        where
-          S::WellKnown: IsUnset,
-        {
-          self.well_known(WellKnownBytes::$name)
-        }
-    }
-  };
-}
-
-impl<S: State> BytesValidatorBuilder<S> {
-  well_known_impl!(
-    Ip,
-    "Specifies that the value must be a valid IP address (v4 or v6) in byte format."
-  );
-  well_known_impl!(
-    Ipv4,
-    "Specifies that the value must be a valid IPv4 address in byte format."
-  );
-  well_known_impl!(
-    Ipv6,
-    "Specifies that the value must be a valid IPv6 address in byte format."
-  );
 }
 
 impl WellKnownBytes {
