@@ -10,7 +10,6 @@ use crate::validators::builder_internals::*;
 
 pub trait State: Sized {
   type Ignore;
-  type Wrapper;
   type Required;
   type Const;
   type Lt;
@@ -27,7 +26,6 @@ pub trait State: Sized {
 #[allow(non_camel_case_types)]
 mod members {
   pub struct ignore;
-  pub struct wrapper;
   pub struct required;
   pub struct const_;
   pub struct lt;
@@ -38,7 +36,6 @@ mod members {
   pub struct not_in;
 }
 pub struct SetIgnore<S: State = Empty>(PhantomData<fn() -> S>);
-pub struct SetWrapper<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetRequired<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetConst<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetLt<S: State = Empty>(PhantomData<fn() -> S>);
@@ -51,7 +48,6 @@ pub struct SetNotIn<S: State = Empty>(PhantomData<fn() -> S>);
 #[doc(hidden)]
 impl State for Empty {
   type Ignore = Unset<members::ignore>;
-  type Wrapper = Unset<members::wrapper>;
   type Required = Unset<members::required>;
   type Const = Unset<members::const_>;
   type Lt = Unset<members::lt>;
@@ -65,7 +61,6 @@ impl State for Empty {
 #[doc(hidden)]
 impl<S: State> State for SetIgnore<S> {
   type Ignore = Set<members::ignore>;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = S::Const;
   type Lt = S::Lt;
@@ -76,24 +71,10 @@ impl<S: State> State for SetIgnore<S> {
   type NotIn = S::NotIn;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
-#[doc(hidden)]
-impl<S: State> State for SetWrapper<S> {
-  type Ignore = S::Ignore;
-  type Wrapper = Set<members::wrapper>;
-  type Required = S::Required;
-  type Const = S::Const;
-  type Lt = S::Lt;
-  type Lte = S::Lte;
-  type Gt = S::Gt;
-  type Gte = S::Gte;
-  type In = S::In;
-  type NotIn = S::NotIn;
-  const SEALED: sealed::Sealed = sealed::Sealed;
-}
+
 #[doc(hidden)]
 impl<S: State> State for SetRequired<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = Set<members::required>;
   type Const = S::Const;
   type Lt = S::Lt;
@@ -107,7 +88,6 @@ impl<S: State> State for SetRequired<S> {
 #[doc(hidden)]
 impl<S: State> State for SetConst<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = Set<members::const_>;
   type Lt = S::Lt;
@@ -121,7 +101,6 @@ impl<S: State> State for SetConst<S> {
 #[doc(hidden)]
 impl<S: State> State for SetLt<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = S::Const;
   type Lt = Set<members::lt>;
@@ -135,7 +114,6 @@ impl<S: State> State for SetLt<S> {
 #[doc(hidden)]
 impl<S: State> State for SetLte<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = S::Const;
   type Lt = S::Lt;
@@ -149,7 +127,6 @@ impl<S: State> State for SetLte<S> {
 #[doc(hidden)]
 impl<S: State> State for SetGt<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = S::Const;
   type Lt = S::Lt;
@@ -163,7 +140,6 @@ impl<S: State> State for SetGt<S> {
 #[doc(hidden)]
 impl<S: State> State for SetGte<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = S::Const;
   type Lt = S::Lt;
@@ -177,7 +153,6 @@ impl<S: State> State for SetGte<S> {
 #[doc(hidden)]
 impl<S: State> State for SetIn<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = S::Const;
   type Lt = S::Lt;
@@ -191,7 +166,6 @@ impl<S: State> State for SetIn<S> {
 #[doc(hidden)]
 impl<S: State> State for SetNotIn<S> {
   type Ignore = S::Ignore;
-  type Wrapper = S::Wrapper;
   type Required = S::Required;
   type Const = S::Const;
   type Lt = S::Lt;
