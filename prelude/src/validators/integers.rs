@@ -1,7 +1,9 @@
+pub mod builder;
+pub use builder::IntValidatorBuilder;
+use builder::state::State;
+
 use std::{fmt::Display, marker::PhantomData};
 
-use bon::Builder;
-use int_validator_builder::{IsComplete, IsUnset, SetIgnore, State};
 use proto_types::protovalidate::violations_data::*;
 pub use protocheck_core::wrappers::{Fixed32, Fixed64, Sfixed32, Sfixed64, Sint32, Sint64};
 
@@ -178,23 +180,19 @@ where
   }
 }
 
-#[derive(Clone, Debug, Builder)]
+#[derive(Clone, Debug)]
 pub struct IntValidator<Num>
 where
   Num: IntWrapper,
 {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  #[builder(field)]
   pub cel: Vec<&'static CelProgram>,
 
-  #[builder(setters(vis = "", name = ignore))]
   pub ignore: Option<Ignore>,
 
-  #[builder(default)]
   _wrapper: PhantomData<Num>,
 
   /// Specifies that the field must be set in order to be valid.
-  #[builder(default, with = || true)]
   pub required: bool,
 
   /// Specifies that only this specific value will be considered valid for this field.
@@ -219,38 +217,13 @@ where
   pub not_in: Option<&'static SortedList<Num::RustType>>,
 }
 
-impl<S: State, N: IntWrapper> IntValidatorBuilder<N, S> {
-  /// Adds a custom CEL rule to this validator.
-  /// Use the [`cel_program`] or [`inline_cel_program`] macros to build a static program.
-  pub fn cel(mut self, program: &'static CelProgram) -> Self {
-    self.cel.push(program);
-    self
-  }
-
-  /// Rules defined for this field will be ignored if the field is set to its protobuf zero value.
-  pub fn ignore_if_zero_value(self) -> IntValidatorBuilder<N, SetIgnore<S>>
-  where
-    S::Ignore: IsUnset,
-  {
-    self.ignore(Ignore::IfZeroValue)
-  }
-
-  /// Rules set for this field will always be ignored.
-  pub fn ignore_always(self) -> IntValidatorBuilder<N, SetIgnore<S>>
-  where
-    S::Ignore: IsUnset,
-  {
-    self.ignore(Ignore::Always)
-  }
-}
-
-impl<S, N> From<IntValidatorBuilder<N, S>> for ProtoOption
+impl<Num> IntValidator<Num>
 where
-  S: State + IsComplete,
-  N: IntWrapper,
+  Num: IntWrapper,
 {
-  fn from(value: IntValidatorBuilder<N, S>) -> Self {
-    value.build().into()
+  #[must_use]
+  pub fn builder() -> IntValidatorBuilder<Num> {
+    IntValidatorBuilder::default()
   }
 }
 
@@ -292,7 +265,7 @@ where
   }
 }
 
-pub trait IntWrapper: AsProtoType {
+pub trait IntWrapper: AsProtoType + Default {
   type RustType: PartialOrd
     + PartialEq
     + Copy
