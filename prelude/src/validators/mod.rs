@@ -42,9 +42,7 @@ pub trait Validator<T>: Into<ProtoOption> {
   }
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
-    Ok(())
-  }
+  fn check_consistency(&self) -> Result<(), Vec<String>>;
 
   #[cfg(all(feature = "testing", feature = "cel"))]
   fn check_cel_programs_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>>;

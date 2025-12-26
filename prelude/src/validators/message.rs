@@ -42,6 +42,22 @@ where
 
   impl_testing_methods!();
 
+  #[cfg(feature = "testing")]
+  fn check_consistency(&self) -> Result<(), Vec<String>> {
+    let mut errors = Vec::new();
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(|e| e.to_string()));
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
     LinearRefStore::default_with_capacity(cap)
   }
