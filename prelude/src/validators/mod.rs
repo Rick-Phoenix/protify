@@ -103,43 +103,6 @@ impl From<Ignore> for OptionValue {
   }
 }
 
-macro_rules! impl_cel_method {
-  ($builder:ident) => {
-    paste::paste! {
-      impl < S: [< $builder:snake >]::State> $builder< S>
-      {
-        /// Adds a custom CEL rule to this validator.
-        /// Use the [`cel_program`] or [`inline_cel_program`] macros to build a static program.
-        pub fn cel(mut self, program: &'static CelProgram) -> Self {
-          self.cel.push(program);
-          self
-        }
-      }
-    }
-  };
-}
-
-macro_rules! impl_ignore {
-  ($builder:ident) => {
-    paste::paste! {
-      impl < S: [< $builder:snake >]::State> $builder< S>
-      where
-        S::Ignore: [< $builder:snake >]::IsUnset,
-      {
-        /// Rules defined for this field will be ignored if the field is set to its protobuf zero value.
-        pub fn ignore_if_zero_value(self) -> $builder< [< $builder:snake >]::SetIgnore<S>> {
-          self.ignore(Ignore::IfZeroValue)
-        }
-
-        /// Rules set for this field will always be ignored.
-        pub fn ignore_always(self) -> $builder< [< $builder:snake >]::SetIgnore<S>> {
-          self.ignore(Ignore::Always)
-        }
-      }
-    }
-  };
-}
-
 #[macro_use]
 mod macros {
   macro_rules! insert_cel_rules {

@@ -4,7 +4,6 @@ use ::cel::{Context, ExecutionError, Program, Value, objects::ValueType};
 use cel_rule_builder::{IsComplete, State};
 use chrono::Utc;
 use proto_types::cel::CelConversionError;
-use thiserror::Error;
 
 use super::*;
 use crate::validators::field_context::ViolationsExt;

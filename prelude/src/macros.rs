@@ -187,18 +187,6 @@ macro_rules! reusable_string {
   };
 }
 
-macro_rules! impl_into_option {
-  ($validator:ident) => {
-    $crate::paste! {
-      impl<S: [< $validator:snake _builder >]::IsComplete> From<[< $validator Builder >]<S>> for ProtoOption {
-        fn from(value: [< $validator Builder >]<S>) -> ProtoOption {
-          value.build().into()
-        }
-      }
-    }
-  };
-}
-
 macro_rules! impl_validator {
   ($validator:ident, $rust_type:ty) => {
     $crate::paste! {
