@@ -1,3 +1,5 @@
+reusable_string!(PATHS);
+reusable_string!(FIELD_MASK);
 reusable_string!(ULID);
 reusable_string!(TIMESTAMP);
 reusable_string!(INT64);

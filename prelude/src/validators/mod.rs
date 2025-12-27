@@ -172,6 +172,8 @@ mod floats;
 pub use floats::*;
 mod integers;
 pub use integers::*;
+mod field_mask;
+pub use field_mask::*;
 
 pub use any::*;
 pub use bool::*;
