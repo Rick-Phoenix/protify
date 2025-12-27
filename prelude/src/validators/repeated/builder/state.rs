@@ -47,11 +47,11 @@ impl State for Empty {
 
 #[doc(hidden)]
 impl<S: State> State for SetCel<S> {
-  type Items = Unset<members::Items>;
-  type MinItems = Unset<members::MinItems>;
-  type MaxItems = Unset<members::MaxItems>;
-  type Unique = Unset<members::Unique>;
-  type Ignore = Unset<members::Ignore>;
+  type Items = S::Items;
+  type MinItems = S::MinItems;
+  type MaxItems = S::MaxItems;
+  type Unique = S::Unique;
+  type Ignore = S::Ignore;
   type Cel = Set<members::Cel>;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }

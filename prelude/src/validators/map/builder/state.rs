@@ -14,6 +14,7 @@ mod members {
   pub struct MinPairs;
   pub struct MaxPairs;
   pub struct Ignore;
+  pub struct Cel;
 }
 
 pub trait State<S = Empty> {
@@ -22,6 +23,7 @@ pub trait State<S = Empty> {
   type MinPairs;
   type MaxPairs;
   type Ignore;
+  type Cel;
   const SEALED: sealed::Sealed;
 }
 
@@ -30,6 +32,7 @@ pub struct SetValues<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetMinPairs<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetMaxPairs<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetIgnore<S: State = Empty>(PhantomData<fn() -> S>);
+pub struct SetCel<S: State = Empty>(PhantomData<fn() -> S>);
 
 #[doc(hidden)]
 impl State for Empty {
@@ -38,6 +41,18 @@ impl State for Empty {
   type MinPairs = Unset<members::MinPairs>;
   type MaxPairs = Unset<members::MaxPairs>;
   type Ignore = Unset<members::Ignore>;
+  type Cel = Unset<members::Cel>;
+  const SEALED: sealed::Sealed = sealed::Sealed;
+}
+
+#[doc(hidden)]
+impl<S: State> State for SetCel<S> {
+  type Keys = S::Keys;
+  type Values = S::Values;
+  type MinPairs = S::MinPairs;
+  type MaxPairs = S::MaxPairs;
+  type Ignore = S::Ignore;
+  type Cel = Set<members::Cel>;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 
@@ -48,6 +63,7 @@ impl<S: State> State for SetKeys<S> {
   type MinPairs = S::MinPairs;
   type MaxPairs = S::MaxPairs;
   type Ignore = S::Ignore;
+  type Cel = S::Cel;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 
@@ -58,6 +74,7 @@ impl<S: State> State for SetValues<S> {
   type MinPairs = S::MinPairs;
   type MaxPairs = S::MaxPairs;
   type Ignore = S::Ignore;
+  type Cel = S::Cel;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -67,6 +84,7 @@ impl<S: State> State for SetMinPairs<S> {
   type MinPairs = Set<members::MinPairs>;
   type MaxPairs = S::MaxPairs;
   type Ignore = S::Ignore;
+  type Cel = S::Cel;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -76,6 +94,7 @@ impl<S: State> State for SetMaxPairs<S> {
   type MinPairs = S::MinPairs;
   type MaxPairs = Set<members::MaxPairs>;
   type Ignore = S::Ignore;
+  type Cel = S::Cel;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -85,5 +104,6 @@ impl<S: State> State for SetIgnore<S> {
   type MinPairs = S::MinPairs;
   type MaxPairs = S::MaxPairs;
   type Ignore = Set<members::Ignore>;
+  type Cel = S::Cel;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }

@@ -67,8 +67,8 @@ impl<K, V> ProtoValidator for ProtoMap<K, V>
 where
   K: ProtoValidator,
   V: ProtoValidator,
-  K::Target: Clone + IntoSubscript + Default + Eq + Hash,
-  V::Target: Default,
+  K::Target: Clone + IntoSubscript + Default + Eq + Hash + IntoCelKey,
+  V::Target: Default + TryIntoCel,
 {
   type Target = HashMap<K::Target, V::Target>;
 
@@ -84,8 +84,8 @@ impl<K, V, S: State> ValidatorBuilderFor<ProtoMap<K, V>> for MapValidatorBuilder
 where
   K: ProtoValidator,
   V: ProtoValidator,
-  K::Target: Clone + IntoSubscript + Default + Eq + Hash,
-  V::Target: Default,
+  K::Target: Clone + IntoSubscript + Default + Eq + Hash + IntoCelKey,
+  V::Target: Default + TryIntoCel,
 {
   type Target = HashMap<K::Target, V::Target>;
   type Validator = MapValidator<K, V>;
@@ -107,6 +107,8 @@ where
   _key_type: PhantomData<K>,
   _value_type: PhantomData<V>,
 
+  pub cel: Vec<&'static CelProgram>,
+
   /// The validation rules to apply to the keys of this map field.
   pub values: Option<V::Validator>,
   /// The minimum amount of key-value pairs that this field should have in order to be valid.
@@ -116,12 +118,29 @@ where
   pub ignore: Option<Ignore>,
 }
 
+#[cfg(feature = "cel")]
+fn try_convert_to_cel<K, V>(map: HashMap<K, V>) -> Result<::cel::Value, CelError>
+where
+  K: IntoCelKey,
+  V: TryIntoCel,
+{
+  let mut cel_map: HashMap<::cel::objects::Key, ::cel::Value> = HashMap::new();
+
+  for (k, v) in map {
+    cel_map.insert(k.into(), v.try_into_cel()?);
+  }
+
+  Ok(::cel::Value::Map(::cel::objects::Map {
+    map: Arc::new(cel_map),
+  }))
+}
+
 impl<K, V> Validator<ProtoMap<K, V>> for MapValidator<K, V>
 where
   K: ProtoValidator,
   V: ProtoValidator,
-  K::Target: Clone + IntoSubscript + Default + Eq + Hash,
-  V::Target: Default,
+  K::Target: Clone + IntoSubscript + Default + Eq + Hash + IntoCelKey,
+  V::Target: Default + TryIntoCel,
 {
   type Target = HashMap<K::Target, V::Target>;
   type UniqueStore<'a>
@@ -139,6 +158,11 @@ where
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(|e| e.to_string()));
+    }
 
     if let Err(e) = check_length_rules(
       None,
@@ -177,8 +201,19 @@ where
   }
 
   #[cfg(all(feature = "testing", feature = "cel"))]
-  fn check_cel_programs_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>> {
+  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
     let mut errors: Vec<CelError> = Vec::new();
+
+    if !self.cel.is_empty() {
+      match try_convert_to_cel(val) {
+        Ok(val) => {
+          if let Err(e) = test_programs(&self.cel, val) {
+            errors.extend(e)
+          }
+        }
+        Err(e) => errors.push(e),
+      }
+    }
 
     if let Some(key_validator) = &self.keys {
       match key_validator.check_cel_programs() {
@@ -214,6 +249,24 @@ where
     let violations = &mut violations_agg;
 
     if let Some(val) = val {
+      #[cfg(feature = "cel")]
+      if !self.cel.is_empty() {
+        match try_convert_to_cel(val.clone()) {
+          Ok(cel_value) => {
+            let ctx = ProgramsExecutionCtx {
+              programs: &self.cel,
+              value: cel_value,
+              violations,
+              field_context: Some(field_context),
+              parent_elements,
+            };
+
+            ctx.execute_programs();
+          }
+          Err(e) => violations.push(e.into_violation(Some(field_context), parent_elements)),
+        };
+      }
+
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {

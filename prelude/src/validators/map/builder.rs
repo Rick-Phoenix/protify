@@ -14,6 +14,7 @@ where
   _key_type: PhantomData<K>,
   _value_type: PhantomData<V>,
 
+  cel: Vec<&'static CelProgram>,
   values: Option<V::Validator>,
   min_pairs: Option<usize>,
   max_pairs: Option<usize>,
@@ -31,6 +32,7 @@ where
       _state: PhantomData,
       _key_type: PhantomData,
       _value_type: PhantomData,
+      cel: vec![],
       values: None,
       keys: None,
       min_pairs: None,
@@ -64,6 +66,7 @@ where
       min_pairs,
       max_pairs,
       ignore,
+      cel,
       ..
     } = self;
 
@@ -71,10 +74,30 @@ where
       keys,
       _key_type,
       _value_type,
+      cel,
       values,
       min_pairs,
       max_pairs,
       ignore,
+    }
+  }
+
+  pub fn cel(mut self, program: &'static CelProgram) -> MapValidatorBuilder<K, V, SetCel<S>>
+  where
+    S::Cel: IsUnset,
+  {
+    self.cel.push(program);
+
+    MapValidatorBuilder {
+      _state: PhantomData,
+      cel: self.cel,
+      keys: self.keys,
+      _key_type: self._key_type,
+      _value_type: self._value_type,
+      values: self.values,
+      min_pairs: self.min_pairs,
+      max_pairs: self.max_pairs,
+      ignore: self.ignore,
     }
   }
 
@@ -84,6 +107,7 @@ where
   {
     MapValidatorBuilder {
       _state: PhantomData,
+      cel: self.cel,
       keys: self.keys,
       _key_type: self._key_type,
       _value_type: self._value_type,
@@ -100,6 +124,7 @@ where
   {
     MapValidatorBuilder {
       _state: PhantomData,
+      cel: self.cel,
       keys: self.keys,
       _key_type: self._key_type,
       _value_type: self._value_type,
@@ -117,6 +142,7 @@ where
   {
     MapValidatorBuilder {
       _state: PhantomData,
+      cel: self.cel,
       keys: self.keys,
       _key_type: self._key_type,
       _value_type: self._value_type,
@@ -138,6 +164,7 @@ where
 
     MapValidatorBuilder {
       _state: PhantomData,
+      cel: self.cel,
       keys: Some(keys_opts),
       _key_type: self._key_type,
       _value_type: self._value_type,
@@ -159,6 +186,7 @@ where
 
     MapValidatorBuilder {
       _state: PhantomData,
+      cel: self.cel,
       keys: self.keys,
       values: Some(values_opts),
       _key_type: self._key_type,

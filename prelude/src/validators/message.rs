@@ -10,17 +10,6 @@ pub trait TryIntoCel: Clone {
   fn try_into_cel(self) -> Result<::cel::Value, CelError>;
 }
 
-macro_rules! impl_into_cel {
-  ($typ:ty) => {
-    #[cfg(feature = "cel")]
-    impl TryIntoCel for $typ {
-      fn try_into_cel(self) -> Result<::cel::Value, CelError> {
-        Ok(self.into())
-      }
-    }
-  };
-}
-
 #[cfg(feature = "cel")]
 impl<E: Display, T: TryInto<::cel::Value, Error = E> + Clone> TryIntoCel for T {
   fn try_into_cel(self) -> Result<::cel::Value, CelError> {
@@ -29,6 +18,17 @@ impl<E: Display, T: TryInto<::cel::Value, Error = E> + Clone> TryIntoCel for T {
       .map_err(|e| CelError::ConversionError(e.to_string()))
   }
 }
+
+#[cfg(feature = "cel")]
+pub trait IntoCelKey: Into<::cel::objects::Key> {}
+
+#[cfg(feature = "cel")]
+impl<T> IntoCelKey for T where T: Into<::cel::objects::Key> {}
+
+#[cfg(not(feature = "cel"))]
+pub trait IntoCelKey {}
+#[cfg(not(feature = "cel"))]
+impl<T> IntoCelKey for T {}
 
 #[cfg(not(feature = "cel"))]
 pub trait TryIntoCel {}
