@@ -10,6 +10,7 @@ where
   _state: PhantomData<S>,
   _inner_type: PhantomData<T>,
 
+  cel: Vec<&'static CelProgram>,
   /// Specifies the rules that will be applied to the individual items of this repeated field.
   items: Option<T::Validator>,
   /// The minimum amount of items that this field must contain in order to be valid.
@@ -30,6 +31,7 @@ where
     RepeatedValidatorBuilder {
       _state: PhantomData,
       _inner_type: PhantomData,
+      cel: vec![],
       items: None,
       min_items: None,
       max_items: None,
@@ -51,16 +53,36 @@ where
       max_items,
       unique,
       ignore,
+      cel,
       ..
     } = self;
 
     RepeatedValidator {
       _inner_type,
+      cel,
       items,
       min_items,
       max_items,
       unique,
       ignore,
+    }
+  }
+
+  pub fn cel(mut self, program: &'static CelProgram) -> RepeatedValidatorBuilder<T, SetCel<S>>
+  where
+    S::Cel: IsUnset,
+  {
+    self.cel.push(program);
+
+    RepeatedValidatorBuilder {
+      _state: PhantomData,
+      _inner_type: self._inner_type,
+      items: self.items,
+      cel: self.cel,
+      min_items: self.min_items,
+      max_items: self.max_items,
+      unique: self.unique,
+      ignore: self.ignore,
     }
   }
 
@@ -78,6 +100,7 @@ where
       _state: PhantomData,
       _inner_type: self._inner_type,
       items: Some(items_builder),
+      cel: self.cel,
       min_items: self.min_items,
       max_items: self.max_items,
       unique: self.unique,
@@ -93,6 +116,7 @@ where
     RepeatedValidatorBuilder {
       _state: PhantomData,
       _inner_type: self._inner_type,
+      cel: self.cel,
       items: self.items,
       min_items: self.min_items,
       max_items: self.max_items,
@@ -108,6 +132,7 @@ where
     RepeatedValidatorBuilder {
       _state: PhantomData,
       _inner_type: self._inner_type,
+      cel: self.cel,
       items: self.items,
       min_items: Some(num),
       max_items: self.max_items,
@@ -123,6 +148,7 @@ where
     RepeatedValidatorBuilder {
       _state: PhantomData,
       _inner_type: self._inner_type,
+      cel: self.cel,
       items: self.items,
       min_items: self.min_items,
       max_items: Some(num),
@@ -138,6 +164,7 @@ where
     RepeatedValidatorBuilder {
       _state: PhantomData,
       _inner_type: self._inner_type,
+      cel: self.cel,
       items: self.items,
       min_items: self.min_items,
       max_items: self.max_items,

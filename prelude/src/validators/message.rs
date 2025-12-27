@@ -2,16 +2,33 @@ pub mod builder;
 pub use builder::MessageValidatorBuilder;
 use builder::state::State;
 
-#[cfg(feature = "cel")]
-use proto_types::cel::CelConversionError;
-
 use super::*;
 use crate::field_context::ViolationsExt;
 
 #[cfg(feature = "cel")]
-pub trait TryIntoCel: TryInto<::cel::Value, Error = CelConversionError> {}
+pub trait TryIntoCel: Clone {
+  fn try_into_cel(self) -> Result<::cel::Value, CelError>;
+}
+
+macro_rules! impl_into_cel {
+  ($typ:ty) => {
+    #[cfg(feature = "cel")]
+    impl TryIntoCel for $typ {
+      fn try_into_cel(self) -> Result<::cel::Value, CelError> {
+        Ok(self.into())
+      }
+    }
+  };
+}
+
 #[cfg(feature = "cel")]
-impl<T: TryInto<::cel::Value, Error = CelConversionError>> TryIntoCel for T {}
+impl<E: Display, T: TryInto<::cel::Value, Error = E> + Clone> TryIntoCel for T {
+  fn try_into_cel(self) -> Result<::cel::Value, CelError> {
+    self
+      .try_into()
+      .map_err(|e| CelError::ConversionError(e.to_string()))
+  }
+}
 
 #[cfg(not(feature = "cel"))]
 pub trait TryIntoCel {}

@@ -321,6 +321,7 @@ name = "cel"
 version = "0.11.6"
 dependencies = [
  "antlr4rust",
+ "bytes",
  "chrono",
  "lazy_static",
  "nom",

@@ -87,8 +87,7 @@ mod cel_impls {
 
   use ::cel::{Context, ExecutionError, Program, Value, objects::ValueType};
   use chrono::Utc;
-  use proto_types::cel::CelConversionError;
-  use std::sync::OnceLock;
+  use std::{convert::Infallible, sync::OnceLock};
 
   #[derive(Debug)]
   pub struct CelProgram {
@@ -144,7 +143,7 @@ mod cel_impls {
     },
     // SHould use FieldPath here to at least get the context of the value
     #[error("Failed to inject value in CEL program: {0}")]
-    ConversionError(#[from] CelConversionError),
+    ConversionError(String),
     #[error("Failed to execute CEL program with id `{rule_id}`: {source}")]
     ExecutionError {
       rule_id: &'static str,
@@ -152,19 +151,19 @@ mod cel_impls {
     },
   }
 
-  fn initialize_context<'a, T, E>(value: T) -> Result<Context<'a>, CelError>
+  impl From<Infallible> for CelError {
+    fn from(value: Infallible) -> Self {
+      match value {}
+    }
+  }
+
+  fn initialize_context<'a, T>(value: T) -> Result<Context<'a>, CelError>
   where
-    T: TryInto<Value, Error = E>,
-    CelConversionError: From<E>,
+    T: TryIntoCel,
   {
     let mut ctx = Context::default();
 
-    ctx.add_variable_from_value(
-      "this",
-      value
-        .try_into()
-        .map_err(|e| CelError::ConversionError(e.into()))?,
-    );
+    ctx.add_variable_from_value("this", value.try_into_cel()?);
     ctx.add_variable_from_value("now", Value::Timestamp(Utc::now().into()));
 
     Ok(ctx)
@@ -178,10 +177,9 @@ mod cel_impls {
     pub parent_elements: &'a [FieldPathElement],
   }
 
-  impl<T, E> ProgramsExecutionCtx<'_, T>
+  impl<T> ProgramsExecutionCtx<'_, T>
   where
-    T: TryInto<Value, Error = E>,
-    CelConversionError: From<E>,
+    T: TryIntoCel,
   {
     pub fn execute_programs(self) {
       let Self {
@@ -214,10 +212,9 @@ mod cel_impls {
   }
 
   #[cfg(feature = "testing")]
-  pub fn test_programs<T, E>(programs: &[&CelProgram], value: T) -> Result<(), Vec<CelError>>
+  pub fn test_programs<T>(programs: &[&CelProgram], value: T) -> Result<(), Vec<CelError>>
   where
-    T: TryInto<Value, Error = E>,
-    CelConversionError: From<E>,
+    T: TryIntoCel,
   {
     let mut errors: Vec<CelError> = Vec::new();
 

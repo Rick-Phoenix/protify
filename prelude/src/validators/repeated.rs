@@ -25,6 +25,7 @@ impl<T: AsProtoField> AsProtoField for Vec<T> {
 impl<T> ProtoValidator for Vec<T>
 where
   T: AsProtoType + ProtoValidator,
+  T::Target: TryIntoCel,
 {
   type Target = Vec<T::Target>;
   type Validator = RepeatedValidator<T>;
@@ -39,6 +40,7 @@ impl<T, S> ValidatorBuilderFor<Vec<T>> for RepeatedValidatorBuilder<T, S>
 where
   S: State,
   T: AsProtoType + ProtoValidator,
+  T::Target: TryIntoCel,
 {
   type Target = Vec<T::Target>;
   type Validator = RepeatedValidator<T>;
@@ -191,6 +193,7 @@ where
 {
   _inner_type: PhantomData<T>,
 
+  pub cel: Vec<&'static CelProgram>,
   pub items: Option<T::Validator>,
   /// The minimum amount of items that this field must contain in order to be valid.
   pub min_items: Option<usize>,
@@ -298,9 +301,20 @@ where
   }
 }
 
+#[cfg(feature = "cel")]
+fn try_convert_to_cel<T: TryIntoCel>(list: Vec<T>) -> Result<::cel::Value, CelError> {
+  let values: Vec<::cel::Value> = list
+    .into_iter()
+    .map(|i| i.try_into_cel())
+    .collect::<Result<Vec<::cel::Value>, CelError>>()?;
+
+  Ok(values.into())
+}
+
 impl<T> Validator<Vec<T>> for RepeatedValidator<T>
 where
   T: AsProtoType + ProtoValidator,
+  T::Target: TryIntoCel,
 {
   type Target = Vec<T::Target>;
   type UniqueStore<'a>
@@ -318,6 +332,11 @@ where
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(|e| e.to_string()));
+    }
 
     if let Err(e) = check_length_rules(
       None,
@@ -341,7 +360,7 @@ where
   }
 
   fn cel_programs(&self) -> Vec<&'static CelProgram> {
-    let mut programs = Vec::new();
+    let mut programs = self.cel.clone();
 
     programs.extend(self.items.iter().flat_map(|i| i.cel_programs()));
 
@@ -349,11 +368,30 @@ where
   }
 
   #[cfg(all(feature = "testing", feature = "cel"))]
-  fn check_cel_programs_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>> {
-    if let Some(items_validator) = &self.items {
-      items_validator.check_cel_programs()
-    } else {
+  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+    let mut errors = Vec::new();
+
+    if !self.cel.is_empty() {
+      match try_convert_to_cel(val) {
+        Ok(val) => {
+          if let Err(e) = test_programs(&self.cel, val) {
+            errors.extend(e)
+          }
+        }
+        Err(e) => errors.push(e),
+      }
+    }
+
+    if let Some(items_validator) = &self.items
+      && let Err(e) = items_validator.check_cel_programs()
+    {
+      errors.extend(e)
+    }
+
+    if errors.is_empty() {
       Ok(())
+    } else {
+      Err(errors)
     }
   }
 
@@ -370,6 +408,24 @@ where
     let violations = &mut violations_agg;
 
     if let Some(val) = val {
+      #[cfg(feature = "cel")]
+      if !self.cel.is_empty() {
+        match try_convert_to_cel(val.clone()) {
+          Ok(cel_value) => {
+            let ctx = ProgramsExecutionCtx {
+              programs: &self.cel,
+              value: cel_value,
+              violations,
+              field_context: Some(field_context),
+              parent_elements,
+            };
+
+            ctx.execute_programs();
+          }
+          Err(e) => violations.push(e.into_violation(Some(field_context), parent_elements)),
+        };
+      }
+
       if let Some(min) = &self.min_items
         && val.len() < *min
       {
