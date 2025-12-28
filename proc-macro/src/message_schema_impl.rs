@@ -58,7 +58,7 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
 
   let top_level_cel_rules_tokens = if let Some(programs) = top_level_cel_rules {
     quote! {
-      vec![ #(&*#programs),* ]
+      vec![ #(#programs),* ]
     }
   } else {
     quote! { vec![] }
@@ -101,12 +101,12 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
         &*NAME
       }
 
-      fn cel_rules() -> &'static [&'static CelProgram] {
-        static PROGRAMS: std::sync::LazyLock<Vec<&'static ::prelude::CelProgram>> = std::sync::LazyLock::new(|| {
+      fn cel_rules() -> &'static [CelProgram] {
+        static PROGRAMS: std::sync::LazyLock<Vec<::prelude::CelProgram>> = std::sync::LazyLock::new(|| {
           #top_level_cel_rules_tokens
         });
 
-        &*PROGRAMS
+        &PROGRAMS
       }
 
       fn proto_path() -> ::prelude::ProtoPath {
@@ -133,7 +133,7 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
           messages: vec![],
           enums: vec![],
           entries: vec![ #(#entries_tokens,)* ],
-          cel_rules: Self::cel_rules().iter().map(|prog| &prog.rule).collect(),
+          cel_rules: Self::cel_rules().iter().map(|prog| prog.rule.clone()).collect(),
           rust_path: #rust_path_field
         };
 
@@ -157,7 +157,7 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
           <#orig_struct_ident as ::prelude::ProtoMessage>::full_name()
         }
 
-        fn cel_rules() -> &'static [&'static CelProgram] {
+        fn cel_rules() -> &'static [CelProgram] {
           <#orig_struct_ident as ::prelude::ProtoMessage>::cel_rules()
         }
 

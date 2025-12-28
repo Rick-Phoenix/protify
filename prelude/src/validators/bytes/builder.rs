@@ -11,7 +11,7 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   ignore: Ignore,
 
@@ -165,7 +165,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
-  pub fn cel(mut self, program: &'static CelProgram) -> BytesValidatorBuilder<S> {
+  pub fn cel(mut self, program: CelProgram) -> BytesValidatorBuilder<S> {
     self.cel.push(program);
 
     BytesValidatorBuilder {

@@ -7,7 +7,7 @@ pub struct FieldMaskValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   ignore: Ignore,
 
@@ -43,7 +43,7 @@ impl FieldMaskValidator {
   clippy::return_self_not_must_use
 )]
 impl<S: State> FieldMaskValidatorBuilder<S> {
-  pub fn cel(mut self, program: &'static CelProgram) -> FieldMaskValidatorBuilder<S> {
+  pub fn cel(mut self, program: CelProgram) -> FieldMaskValidatorBuilder<S> {
     self.cel.push(program);
 
     FieldMaskValidatorBuilder {

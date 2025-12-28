@@ -11,6 +11,24 @@ use protocheck_core::ordered_float::FloatCore;
 
 use super::*;
 
+#[derive(Clone, Debug)]
+pub struct RepeatedValidator<T>
+where
+  T: AsProtoType + ProtoValidator,
+{
+  _inner_type: PhantomData<T>,
+
+  pub cel: Vec<CelProgram>,
+  pub items: Option<T::Validator>,
+  /// The minimum amount of items that this field must contain in order to be valid.
+  pub min_items: Option<usize>,
+  /// The maximum amount of items that this field must contain in order to be valid.
+  pub max_items: Option<usize>,
+  /// Specifies that this field must contain only unique values (only applies to scalar fields).
+  pub unique: bool,
+  pub ignore: Ignore,
+}
+
 impl<T: AsProtoField> AsProtoField for Vec<T> {
   fn as_proto_field() -> ProtoFieldInfo {
     let inner_type = T::as_proto_field();
@@ -186,24 +204,6 @@ where
   }
 }
 
-#[derive(Clone, Debug)]
-pub struct RepeatedValidator<T>
-where
-  T: AsProtoType + ProtoValidator,
-{
-  _inner_type: PhantomData<T>,
-
-  pub cel: Vec<&'static CelProgram>,
-  pub items: Option<T::Validator>,
-  /// The minimum amount of items that this field must contain in order to be valid.
-  pub min_items: Option<usize>,
-  /// The maximum amount of items that this field must contain in order to be valid.
-  pub max_items: Option<usize>,
-  /// Specifies that this field must contain only unique values (only applies to scalar fields).
-  pub unique: bool,
-  pub ignore: Ignore,
-}
-
 pub struct UnsupportedStore<T> {
   _marker: PhantomData<T>,
 }
@@ -359,12 +359,12 @@ where
     }
   }
 
-  fn cel_programs(&self) -> Vec<&'static CelProgram> {
-    let mut programs = self.cel.clone();
+  fn cel_rules(&self) -> Vec<CelRule> {
+    let mut rules: Vec<CelRule> = self.cel.iter().map(|p| p.rule.clone()).collect();
 
-    programs.extend(self.items.iter().flat_map(|i| i.cel_programs()));
+    rules.extend(self.items.iter().flat_map(|i| i.cel_rules()));
 
-    programs
+    rules
   }
 
   #[cfg(all(feature = "testing", feature = "cel"))]

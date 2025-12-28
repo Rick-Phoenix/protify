@@ -13,6 +13,10 @@ impl Validator<bool> for BoolValidator {
   where
     Self: 'a;
 
+  fn cel_rules(&self) -> Vec<CelRule> {
+    Vec::new()
+  }
+
   fn make_unique_store<'a>(&self, _: usize) -> Self::UniqueStore<'a> {
     // This is likely to never be used in the first place, but
     // uniqueness checks would fail after more than 2 elements anyway

@@ -107,7 +107,7 @@ where
   _key_type: PhantomData<K>,
   _value_type: PhantomData<V>,
 
-  pub cel: Vec<&'static CelProgram>,
+  pub cel: Vec<CelProgram>,
 
   /// The validation rules to apply to the keys of this map field.
   pub values: Option<V::Validator>,
@@ -191,13 +191,13 @@ where
     }
   }
 
-  fn cel_programs(&self) -> Vec<&'static CelProgram> {
-    let mut programs = Vec::new();
+  fn cel_rules(&self) -> Vec<CelRule> {
+    let mut rules: Vec<CelRule> = self.cel.iter().map(|p| p.rule.clone()).collect();
 
-    programs.extend(self.keys.iter().flat_map(|k| k.cel_programs()));
-    programs.extend(self.values.iter().flat_map(|v| v.cel_programs()));
+    rules.extend(self.keys.iter().flat_map(|k| k.cel_rules()));
+    rules.extend(self.values.iter().flat_map(|v| v.cel_rules()));
 
-    programs
+    rules
   }
 
   #[cfg(all(feature = "testing", feature = "cel"))]

@@ -8,7 +8,7 @@ use proto_types::Duration;
 pub struct DurationValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   ignore: Ignore,
 
@@ -56,7 +56,7 @@ impl<S: State> From<DurationValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> DurationValidatorBuilder<S> {
-  pub fn cel(mut self, program: &'static CelProgram) -> DurationValidatorBuilder<S> {
+  pub fn cel(mut self, program: CelProgram) -> DurationValidatorBuilder<S> {
     self.cel.push(program);
 
     DurationValidatorBuilder {

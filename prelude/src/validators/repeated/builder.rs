@@ -10,7 +10,7 @@ where
   _state: PhantomData<S>,
   _inner_type: PhantomData<T>,
 
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
   /// Specifies the rules that will be applied to the individual items of this repeated field.
   items: Option<T::Validator>,
   /// The minimum amount of items that this field must contain in order to be valid.
@@ -68,7 +68,7 @@ where
     }
   }
 
-  pub fn cel(mut self, program: &'static CelProgram) -> RepeatedValidatorBuilder<T, SetCel<S>>
+  pub fn cel(mut self, program: CelProgram) -> RepeatedValidatorBuilder<T, SetCel<S>>
   where
     S::Cel: IsUnset,
   {

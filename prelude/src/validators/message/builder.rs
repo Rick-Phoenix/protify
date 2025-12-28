@@ -7,7 +7,7 @@ pub struct MessageValidatorBuilder<T: ProtoMessage, S: State = Empty> {
   _state: PhantomData<S>,
 
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   ignore: Ignore,
 
@@ -42,7 +42,7 @@ impl<T: ProtoMessage, S: State> From<MessageValidatorBuilder<T, S>> for ProtoOpt
   clippy::return_self_not_must_use
 )]
 impl<T: ProtoMessage, S: State> MessageValidatorBuilder<T, S> {
-  pub fn cel(mut self, program: &'static CelProgram) -> MessageValidatorBuilder<T, S> {
+  pub fn cel(mut self, program: CelProgram) -> MessageValidatorBuilder<T, S> {
     self.cel.push(program);
 
     MessageValidatorBuilder {

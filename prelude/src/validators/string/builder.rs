@@ -11,7 +11,7 @@ use regex::Regex;
 pub struct StringValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   pub(crate) well_known: Option<WellKnownStrings>,
 
@@ -83,7 +83,7 @@ impl<S: State> From<StringValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> StringValidatorBuilder<S> {
-  pub fn cel(mut self, program: &'static CelProgram) -> StringValidatorBuilder<S> {
+  pub fn cel(mut self, program: CelProgram) -> StringValidatorBuilder<S> {
     self.cel.push(program);
 
     StringValidatorBuilder {

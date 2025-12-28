@@ -6,7 +6,7 @@ pub use state::*;
 pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
   _state: PhantomData<S>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   ignore: Ignore,
 
@@ -47,7 +47,7 @@ impl<T: ProtoEnum, S: State> From<EnumValidatorBuilder<T, S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
-  pub fn cel(mut self, program: &'static CelProgram) -> EnumValidatorBuilder<T, S> {
+  pub fn cel(mut self, program: CelProgram) -> EnumValidatorBuilder<T, S> {
     self.cel.push(program);
 
     EnumValidatorBuilder {

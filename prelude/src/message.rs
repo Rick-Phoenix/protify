@@ -9,7 +9,7 @@ pub trait ProtoMessage {
 
   // Not for testing only
   #[must_use]
-  fn cel_rules() -> &'static [&'static CelProgram] {
+  fn cel_rules() -> &'static [CelProgram] {
     &[]
   }
 
@@ -71,7 +71,7 @@ pub struct Message {
   pub options: Vec<ProtoOption>,
   pub reserved_names: Vec<&'static str>,
   pub reserved_numbers: Vec<Range<i32>>,
-  pub cel_rules: Vec<&'static CelRule>,
+  pub cel_rules: Vec<CelRule>,
   pub rust_path: String,
 }
 
@@ -82,7 +82,7 @@ pub enum MessageEntry {
 }
 
 impl MessageEntry {
-  pub(crate) fn cel_rules(&self) -> impl Iterator<Item = &'static CelRule> {
+  pub(crate) fn cel_rules(&self) -> impl Iterator<Item = CelRule> {
     let fields_slice = match self {
       Self::Field(f) => std::slice::from_ref(f),
       Self::Oneof(o) => o.fields.as_slice(),
@@ -91,7 +91,7 @@ impl MessageEntry {
     fields_slice
       .iter()
       .flat_map(|f| f.validator.iter())
-      .flat_map(|v| v.cel_rules.iter().copied())
+      .flat_map(|v| v.cel_rules.iter().cloned())
   }
 }
 

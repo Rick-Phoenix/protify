@@ -8,7 +8,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub struct FieldMaskValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  pub cel: Vec<&'static CelProgram>,
+  pub cel: Vec<CelProgram>,
 
   pub ignore: Ignore,
 

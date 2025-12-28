@@ -136,8 +136,8 @@ macro_rules! impl_testing_methods {
       }
     }
 
-    fn cel_programs(&self) -> Vec<&'static CelProgram> {
-      self.cel.clone()
+    fn cel_rules(&self) -> Vec<CelRule> {
+      self.cel.iter().map(|p| p.rule.clone()).collect()
     }
   };
 }
@@ -145,36 +145,27 @@ macro_rules! impl_testing_methods {
 #[macro_export]
 macro_rules! cel_program {
   (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
-    std::sync::LazyLock::new(|| {
-      let rule = $crate::CelRule {
-        id: $id.into(),
-        message: $msg.into(),
-        expression: $expr.into(),
-      };
-
-      ::prelude::CelProgram::new(rule)
+    ::prelude::CelProgram::new($crate::CelRule {
+      id: $id.into(),
+      message: $msg.into(),
+      expression: $expr.into(),
     })
   };
 
   ($rule:expr) => {
-    std::sync::LazyLock::new(|| ::prelude::CelProgram::new($rule))
+    ::prelude::CelProgram::new($rule)
   };
 }
 
 #[macro_export]
 macro_rules! inline_cel_program {
-  (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {{
-    static PROGRAM: ::std::sync::LazyLock<::prelude::CelProgram> =
-      $crate::cel_program!(id = $id, msg = $msg, expr = $expr);
+  (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
+    $crate::cel_program!(id = $id, msg = $msg, expr = $expr);
+  };
 
-    &PROGRAM
-  }};
-
-  ($rule:expr) => {{
-    static PROGRAM: ::std::sync::LazyLock<::prelude::CelProgram> = $crate::cel_program!($rule);
-
-    &PROGRAM
-  }};
+  ($rule:expr) => {
+    $crate::cel_program!($rule)
+  };
 }
 
 macro_rules! reusable_string {

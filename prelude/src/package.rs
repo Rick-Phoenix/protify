@@ -95,15 +95,15 @@ impl Package {
 
   #[cfg(feature = "testing")]
   pub fn check_unique_cel_rules(&self) -> Result<(), String> {
-    let mut rules: FxHashMap<&str, &CelRule> = FxHashMap::default();
-    let mut duplicates: FxHashMap<&str, Vec<&CelRule>> = FxHashMap::default();
+    let mut rules: FxHashMap<&str, CelRule> = FxHashMap::default();
+    let mut duplicates: FxHashMap<&str, Vec<CelRule>> = FxHashMap::default();
 
     for rule in self
       .files
       .iter()
       .flat_map(|f| f.messages.iter())
       .flat_map(|message| {
-        message.cel_rules.iter().copied().chain(
+        message.cel_rules.iter().cloned().chain(
           message
             .entries
             .iter()
@@ -120,7 +120,7 @@ impl Package {
           if *present_rule != rule {
             duplicates
               .entry(rule.id)
-              .or_insert_with(|| vec![present_rule])
+              .or_insert_with(|| vec![present_rule.clone()])
               .push(rule);
           }
         }

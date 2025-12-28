@@ -12,7 +12,7 @@ where
   _wrapper: PhantomData<Num>,
 
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   ignore: Ignore,
 
@@ -97,7 +97,7 @@ where
   }
 
   #[allow(clippy::use_self, clippy::return_self_not_must_use)]
-  pub fn cel(mut self, program: &'static CelProgram) -> IntValidatorBuilder<Num, S> {
+  pub fn cel(mut self, program: CelProgram) -> IntValidatorBuilder<Num, S> {
     self.cel.push(program);
 
     IntValidatorBuilder {

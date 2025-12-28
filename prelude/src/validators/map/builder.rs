@@ -14,7 +14,7 @@ where
   _key_type: PhantomData<K>,
   _value_type: PhantomData<V>,
 
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
   values: Option<V::Validator>,
   min_pairs: Option<usize>,
   max_pairs: Option<usize>,
@@ -82,7 +82,7 @@ where
     }
   }
 
-  pub fn cel(mut self, program: &'static CelProgram) -> MapValidatorBuilder<K, V, SetCel<S>>
+  pub fn cel(mut self, program: CelProgram) -> MapValidatorBuilder<K, V, SetCel<S>>
   where
     S::Cel: IsUnset,
   {

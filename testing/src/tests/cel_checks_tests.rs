@@ -1,11 +1,16 @@
 use super::*;
 
-static RULE_1: CachedProgram = cel_program!(id = "abc", msg = "hi", expr = "true == true");
-static RULE_2: CachedProgram = cel_program!(id = "abc", msg = "not hi", expr = "false == false");
+fn rule_1() -> CelProgram {
+  cel_program!(id = "abc", msg = "hi", expr = "true == true")
+}
+
+fn rule_2() -> CelProgram {
+  cel_program!(id = "abc", msg = "not hi", expr = "false == false")
+}
 
 #[proto_message(direct)]
 struct FieldDuplicateRules {
-  #[proto(tag = 1, validate = |v| v.cel(&RULE_1).cel(&RULE_2))]
+  #[proto(tag = 1, validate = |v| v.cel(rule_1()).cel(rule_2()))]
   pub id: i32,
 }
 
@@ -24,7 +29,7 @@ fn field_duplicate_rules() {
 }
 
 #[proto_message(direct)]
-#[proto(cel_rules(RULE_1, RULE_2))]
+#[proto(cel_rules(rule_1(), rule_2()))]
 struct MsgDuplicateRules {
   #[proto(tag = 1)]
   pub id: i32,
@@ -45,9 +50,9 @@ fn msg_duplicate_rules() {
 }
 
 #[proto_message(direct)]
-#[proto(cel_rules(RULE_1))]
+#[proto(cel_rules(rule_1()))]
 struct MsgAndFieldDuplicateRules {
-  #[proto(tag = 1, validate = |v| v.cel(&RULE_2))]
+  #[proto(tag = 1, validate = |v| v.cel(rule_2()))]
   pub id: i32,
 }
 
@@ -67,14 +72,14 @@ fn msg_and_field_duplicate_rules() {
 
 #[proto_oneof(direct)]
 enum OneofWithRule {
-  #[proto(tag = 1, validate = |v| v.cel(&RULE_1))]
+  #[proto(tag = 1, validate = |v| v.cel(rule_1()))]
   Id(i32),
   #[proto(tag = 2)]
   Name(String),
 }
 
 #[proto_message(direct)]
-#[proto(cel_rules(RULE_2))]
+#[proto(cel_rules(rule_2()))]
 struct MsgAndOneofDuplicateRules {
   #[proto(oneof(tags(1, 2)))]
   pub oneof: Option<OneofWithRule>,
@@ -98,7 +103,7 @@ fn msg_and_oneof_duplicate_rules() {
 struct FieldAndOneofDuplicateRules {
   #[proto(oneof(tags(1, 2)))]
   pub oneof: Option<OneofWithRule>,
-  #[proto(validate = |v| v.cel(&RULE_2))]
+  #[proto(validate = |v| v.cel(rule_2()))]
   pub id: i32,
 }
 
@@ -118,9 +123,9 @@ fn field_and_oneof_duplicate_rules() {
 
 #[proto_oneof(direct)]
 enum DuplicateRuleOneof {
-  #[proto(tag = 1, validate = |v| v.cel(&RULE_1))]
+  #[proto(tag = 1, validate = |v| v.cel(rule_1()))]
   Id(i32),
-  #[proto(tag = 2, validate = |v| v.cel(&RULE_2))]
+  #[proto(tag = 2, validate = |v| v.cel(rule_2()))]
   Name(String),
 }
 
@@ -147,9 +152,9 @@ fn oneof_duplicate_rules() {
 // This one should be okay because it's the same rule used twice, not
 // two different rules with the same ID
 #[proto_message(direct)]
-#[proto(cel_rules(RULE_1))]
+#[proto(cel_rules(rule_1()))]
 struct BenignDuplicateRules {
-  #[proto(tag = 1, validate = |v| v.cel(&RULE_1))]
+  #[proto(tag = 1, validate = |v| v.cel(rule_1()))]
   pub id: i32,
 }
 
@@ -167,11 +172,13 @@ fn benign_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_ok());
 }
 
-static BAD_RULE: CachedProgram = cel_program!(id = "abc", msg = "hi", expr = "hi");
+fn bad_rule() -> CelProgram {
+  cel_program!(id = "abc", msg = "hi", expr = "hi")
+}
 
 #[proto_message(direct, no_auto_test)]
 struct BadFieldRules {
-  #[proto(tag = 1, validate = |v| v.cel(&BAD_RULE))]
+  #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]
   pub id: i32,
 }
 
@@ -190,7 +197,7 @@ fn bad_field_rules() {
 }
 
 #[proto_message(direct, no_auto_test)]
-#[proto(cel_rules(BAD_RULE))]
+#[proto(cel_rules(bad_rule()))]
 struct BadMsgRules {
   #[proto(tag = 1)]
   pub id: i32,
@@ -211,7 +218,7 @@ fn bad_msg_rules() {
 
 #[proto_oneof(direct)]
 enum BadCelOneof {
-  #[proto(tag = 1, validate = |v| v.cel(&BAD_RULE))]
+  #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]
   Id(i32),
   #[proto(tag = 2)]
   Name(String),

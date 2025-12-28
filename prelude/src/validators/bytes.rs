@@ -14,7 +14,7 @@ impl_proto_type!(Bytes, "bytes");
 #[derive(Clone, Debug)]
 pub struct BytesValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  pub cel: Vec<&'static CelProgram>,
+  pub cel: Vec<CelProgram>,
 
   pub ignore: Ignore,
 
@@ -137,8 +137,8 @@ impl Validator<Bytes> for BytesValidator {
     }
   }
 
-  fn cel_programs(&self) -> Vec<&'static CelProgram> {
-    self.cel.clone()
+  fn cel_rules(&self) -> Vec<CelRule> {
+    self.cel.iter().map(|p| p.rule.clone()).collect()
   }
 
   #[cfg(all(feature = "testing", feature = "cel"))]

@@ -11,7 +11,7 @@ impl_validator!(DurationValidator, Duration);
 #[derive(Clone, Debug)]
 pub struct DurationValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  pub cel: Vec<&'static CelProgram>,
+  pub cel: Vec<CelProgram>,
 
   pub ignore: Ignore,
 

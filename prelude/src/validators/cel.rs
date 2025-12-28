@@ -95,6 +95,15 @@ mod cel_impls {
     program: OnceLock<Program>,
   }
 
+  impl Clone for CelProgram {
+    fn clone(&self) -> Self {
+      Self {
+        rule: self.rule.clone(),
+        program: OnceLock::new(),
+      }
+    }
+  }
+
   pub type CachedProgram = LazyLock<CelProgram>;
 
   impl PartialEq for CelProgram {
@@ -170,7 +179,7 @@ mod cel_impls {
   }
 
   pub struct ProgramsExecutionCtx<'a, T> {
-    pub programs: &'a [&'a CelProgram],
+    pub programs: &'a [CelProgram],
     pub value: T,
     pub violations: &'a mut Vec<Violation>,
     pub field_context: Option<&'a FieldContext<'a>>,
@@ -212,7 +221,7 @@ mod cel_impls {
   }
 
   #[cfg(feature = "testing")]
-  pub fn test_programs<T>(programs: &[&CelProgram], value: T) -> Result<(), Vec<CelError>>
+  pub fn test_programs<T>(programs: &[CelProgram], value: T) -> Result<(), Vec<CelError>>
   where
     T: TryIntoCel,
   {

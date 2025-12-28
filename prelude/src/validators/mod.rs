@@ -22,17 +22,7 @@ pub trait Validator<T>: Into<ProtoOption> {
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a>;
 
   // This one cannot be testing only because it is used in the schema impl below
-  fn cel_rules(&self) -> Vec<&'static CelRule> {
-    self
-      .cel_programs()
-      .into_iter()
-      .map(|p| &p.rule)
-      .collect()
-  }
-
-  fn cel_programs(&self) -> Vec<&'static CelProgram> {
-    vec![]
-  }
+  fn cel_rules(&self) -> Vec<CelRule>;
 
   fn into_schema(self) -> FieldValidator {
     FieldValidator {
@@ -191,21 +181,6 @@ pub use oneof::*;
 pub use repeated::*;
 pub use string::*;
 pub use timestamp::*;
-
-pub(crate) fn format_list<T: Display, I: IntoIterator<Item = T>>(list: I) -> String {
-  let mut string = String::new();
-  let mut iter = list.into_iter().peekable();
-
-  while let Some(item) = iter.next() {
-    write!(string, "{item}").unwrap();
-
-    if iter.peek().is_some() {
-      string.push_str(", ");
-    }
-  }
-
-  string
-}
 
 #[cfg(feature = "testing")]
 pub(crate) fn check_list_rules<T>(

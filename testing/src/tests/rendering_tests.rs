@@ -125,13 +125,15 @@ pub enum OneofB {
   B(String),
 }
 
-static MSG_RULE: CachedProgram = cel_program!(id = "abc", msg = "abc", expr = "true == true");
+fn msg_rule() -> CelProgram {
+  cel_program!(id = "abc", msg = "abc", expr = "true == true")
+}
 
 #[proto_message(direct)]
 #[proto(reserved_numbers(1, 2, 3..9))]
 #[proto(reserved_names("abc", "bcd"))]
 #[proto(options = test_options())]
-#[proto(cel_rules(MSG_RULE, MSG_RULE))]
+#[proto(cel_rules(msg_rule(), msg_rule()))]
 pub struct Abc {
   #[proto(repeated(int32), validate = |v| v.min_items(15).items(|it| it.gt(0).lt(50)))]
   pub repeated_field: Vec<i32>,

@@ -1,4 +1,5 @@
 use crate::*;
+use syn_utils::PunctuatedItems;
 
 pub struct MessageAttrs {
   pub reserved_names: Vec<String>,
@@ -9,7 +10,7 @@ pub struct MessageAttrs {
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
-  pub cel_rules: Option<Vec<Path>>,
+  pub cel_rules: Option<Vec<Expr>>,
   pub is_direct: bool,
   pub no_auto_test: bool,
   pub extern_path: Option<String>,
@@ -27,7 +28,7 @@ pub fn process_derive_message_attrs(
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Option<MetaList> = None;
-  let mut cel_rules: Option<Vec<Path>> = None;
+  let mut cel_rules: Option<Vec<Expr>> = None;
   let mut parent_message: Option<Ident> = None;
 
   for arg in filter_attributes(attrs, &["proto"])? {
@@ -37,7 +38,7 @@ pub fn process_derive_message_attrs(
 
         match ident.as_str() {
           "cel_rules" => {
-            cel_rules = Some(list.parse_args::<PathList>()?.list);
+            cel_rules = Some(list.parse_args::<PunctuatedItems<Expr>>()?.list);
           }
           "reserved_names" => {
             let names = list.parse_args::<StringList>()?;

@@ -6,6 +6,43 @@ use proto_types::{Duration, Timestamp};
 
 use super::*;
 
+#[derive(Clone, Debug)]
+pub struct TimestampValidator {
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
+  pub cel: Vec<CelProgram>,
+
+  pub ignore: Ignore,
+
+  /// Specifies that this field's value will be valid only if it in the past.
+  pub lt_now: bool,
+
+  /// Specifies that this field's value will be valid only if it in the future.
+  pub gt_now: bool,
+
+  /// Specifies that the field must be set in order to be valid.
+  pub required: bool,
+
+  /// Specifies that only this specific value will be considered valid for this field.
+  pub const_: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is smaller than the specified amount.
+  pub lt: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount.
+  pub lte: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is greater than the specified amount.
+  pub gt: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is greater than, or equal to, the specified amount.
+  pub gte: Option<Timestamp>,
+
+  /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
+  pub within: Option<Duration>,
+
+  pub now_tolerance: Duration,
+}
+
 impl_validator!(TimestampValidator, Timestamp);
 
 impl Validator<Timestamp> for TimestampValidator {
@@ -171,43 +208,6 @@ impl Validator<Timestamp> for TimestampValidator {
       Err(violations_agg)
     }
   }
-}
-
-#[derive(Clone, Debug)]
-pub struct TimestampValidator {
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  pub cel: Vec<&'static CelProgram>,
-
-  pub ignore: Ignore,
-
-  /// Specifies that this field's value will be valid only if it in the past.
-  pub lt_now: bool,
-
-  /// Specifies that this field's value will be valid only if it in the future.
-  pub gt_now: bool,
-
-  /// Specifies that the field must be set in order to be valid.
-  pub required: bool,
-
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Timestamp>,
-
-  /// Specifies that this field's value will be valid only if it is smaller than the specified amount.
-  pub lt: Option<Timestamp>,
-
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount.
-  pub lte: Option<Timestamp>,
-
-  /// Specifies that this field's value will be valid only if it is greater than the specified amount.
-  pub gt: Option<Timestamp>,
-
-  /// Specifies that this field's value will be valid only if it is greater than, or equal to, the specified amount.
-  pub gte: Option<Timestamp>,
-
-  /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
-  pub within: Option<Duration>,
-
-  pub now_tolerance: Duration,
 }
 
 impl From<TimestampValidator> for ProtoOption {

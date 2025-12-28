@@ -12,7 +12,7 @@ pub struct ProtoField {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FieldValidator {
   pub schema: ProtoOption,
-  pub cel_rules: Vec<&'static CelRule>,
+  pub cel_rules: Vec<CelRule>,
 }
 
 impl ProtoField {

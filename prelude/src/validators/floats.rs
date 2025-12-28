@@ -16,7 +16,7 @@ where
   Num: FloatWrapper,
 {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  pub cel: Vec<&'static CelProgram>,
+  pub cel: Vec<CelProgram>,
 
   pub ignore: Ignore,
 

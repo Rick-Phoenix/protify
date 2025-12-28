@@ -9,7 +9,7 @@ pub struct TimestampValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
   /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<&'static CelProgram>,
+  cel: Vec<CelProgram>,
 
   ignore: Ignore,
 
@@ -62,7 +62,7 @@ impl<S: State> From<TimestampValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> TimestampValidatorBuilder<S> {
-  pub fn cel(mut self, program: &'static CelProgram) -> TimestampValidatorBuilder<S> {
+  pub fn cel(mut self, program: CelProgram) -> TimestampValidatorBuilder<S> {
     self.cel.push(program);
 
     TimestampValidatorBuilder {
