@@ -44,7 +44,7 @@ macro_rules! proto_file {
 }
 
 #[macro_export]
-macro_rules! cached_list {
+macro_rules! static_list {
   ($items:expr) => {{
     use ::prelude::StaticLookup;
     use std::sync::LazyLock;
@@ -54,12 +54,12 @@ macro_rules! cached_list {
 }
 
 #[macro_export]
-macro_rules! inline_cached_list {
+macro_rules! inline_static_list {
   ($typ:ty, $items:expr) => {{
     use ::prelude::StaticLookup;
     use std::sync::LazyLock;
 
-    static LIST: LazyLock<StaticLookup<$typ>> = $crate::cached_list!($items);
+    static LIST: LazyLock<StaticLookup<$typ>> = $crate::static_list!($items);
 
     &LIST
   }};

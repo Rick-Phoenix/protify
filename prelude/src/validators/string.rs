@@ -513,6 +513,7 @@ impl From<StringValidator> for ProtoOption {
     // This is the outer rule grouping, "(buf.validate.field)"
     let mut outer_rules: OptionValueList = vec![];
 
+    // (buf.validate.field).string .et_cetera...
     outer_rules.push((STRING.clone(), OptionValue::Message(rules.into())));
 
     // These must be added on the outer grouping, as they are generic rules

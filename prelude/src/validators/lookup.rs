@@ -22,7 +22,7 @@ impl_standard_format!(i32, i64, u32, u64, f32, f64);
 
 impl<T: protocheck_core::ordered_float::FloatCore + Debug> ListFormatter for OrderedFloat<T> {
   fn format_list(items: &[Self]) -> String {
-    format!("{:?}", items)
+    format!("{items:?}")
   }
 }
 

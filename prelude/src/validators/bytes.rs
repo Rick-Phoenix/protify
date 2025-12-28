@@ -92,21 +92,6 @@ pub(crate) fn check_length_rules(
 #[cfg(feature = "regex")]
 pub type CachedBytesRegex = LazyLock<Regex>;
 
-pub(crate) fn format_bytes_list<'a, I: IntoIterator<Item = &'a [u8]>>(list: I) -> String {
-  let mut string = String::new();
-  let mut iter = list.into_iter().peekable();
-
-  while let Some(item) = iter.next() {
-    write!(string, "{}", item.escape_ascii()).unwrap();
-
-    if iter.peek().is_some() {
-      string.push_str(", ");
-    }
-  }
-
-  string
-}
-
 impl Validator<Bytes> for BytesValidator {
   type Target = Bytes;
   type UniqueStore<'a>
