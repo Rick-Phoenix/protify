@@ -48,7 +48,7 @@ impl FieldDataKind {
   }
 }
 
-pub fn process_field_data(mut field: FieldOrVariant) -> Result<FieldDataKind, Error> {
+pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error> {
   let mut validator: Option<CallOrClosure> = None;
   let mut tag: Option<i32> = None;
   let mut options: Option<Expr> = None;

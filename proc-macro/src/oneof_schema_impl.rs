@@ -1,11 +1,43 @@
 use crate::*;
 
-pub fn oneof_schema_impl(
+pub fn oneof_schema_impl<T>(
   oneof_attrs: &OneofAttrs,
   enum_ident: &Ident,
-  variants_tokens: Vec<TokenStream2>,
+  variants: &[T],
   manually_set_tags: &[ManuallySetTag],
-) -> TokenStream2 {
+) -> TokenStream2
+where
+  T: Borrow<FieldData>,
+{
+  let variants_tokens = variants.iter().map(|data| {
+    let FieldData {
+      tag,
+      validator,
+      options,
+      proto_name,
+      proto_field,
+      ..
+    } = data.borrow();
+
+    let field_type_tokens = proto_field.field_proto_type_tokens();
+    let options_tokens = tokens_or_default!(options, quote! { vec![] });
+
+    let validator_schema_tokens = validator
+      .as_ref()
+      .filter(|v| !v.is_fallback)
+      .map_or_else(|| quote! { None }, |e| quote! { Some(#e.into_schema()) });
+
+    quote! {
+      ::prelude::ProtoField {
+        name: #proto_name.to_string(),
+        tag: #tag,
+        options: #options_tokens,
+        type_: #field_type_tokens,
+        validator: #validator_schema_tokens,
+      }
+    }
+  });
+
   let OneofAttrs {
     options,
     name: proto_name,

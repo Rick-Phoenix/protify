@@ -50,24 +50,6 @@ impl<'a> FieldOrVariant<'a> {
     Ok(output)
   }
 
-  pub fn inject_attr(&mut self, attr: Attribute) {
-    match self {
-      FieldOrVariant::Field(field) => field.attrs.push(attr),
-      FieldOrVariant::Variant(variant) => variant.attrs.push(attr),
-    }
-  }
-
-  pub fn change_type(&mut self, ty: Type) -> Result<(), Error> {
-    let src_type = match self {
-      FieldOrVariant::Field(field) => &mut field.ty,
-      FieldOrVariant::Variant(variant) => variant.type_mut()?,
-    };
-
-    *src_type = ty;
-
-    Ok(())
-  }
-
   /// Returns `true` if the field or variant is [`Variant`].
   ///
   /// [`Variant`]: FieldOrVariant::Variant

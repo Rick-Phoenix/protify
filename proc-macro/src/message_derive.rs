@@ -137,7 +137,7 @@ pub fn process_message_derive_shadow(
 
   let validator_impl = impl_message_validator(shadow_struct_ident, &non_ignored_fields);
 
-  let schema_impls = message_schema_impls2(
+  let schema_impls = message_schema_impls(
     orig_struct_ident,
     Some(shadow_struct_ident),
     &message_attrs,
@@ -294,7 +294,7 @@ pub fn process_message_derive_direct(
   let consistency_checks_impl =
     impl_message_consistency_checks(struct_ident, &fields_attrs, message_attrs.no_auto_test);
 
-  let schema_impls = message_schema_impls2(struct_ident, None, &message_attrs, &fields_attrs);
+  let schema_impls = message_schema_impls(struct_ident, None, &message_attrs, &fields_attrs);
 
   let validator_impl = impl_message_validator(struct_ident, &fields_attrs);
 

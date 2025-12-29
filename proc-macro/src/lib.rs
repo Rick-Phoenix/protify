@@ -30,16 +30,14 @@ use syn_utils::{
 };
 
 use crate::{
-  common_impls::*, enum_derive::*, extension_derive::*, field_proto_impls::*, impls::*,
-  item_cloners::*, message_derive::*, message_schema_impl::*, oneof_derive::*,
-  oneof_schema_impl::*, path_utils::*, proto_field::*, proto_map::*, proto_types::*,
-  service_derive::*, validator_tokens::*,
+  common_impls::*, enum_derive::*, extension_derive::*, impls::*, item_cloners::*,
+  message_derive::*, message_schema_impl::*, oneof_derive::*, oneof_schema_impl::*, path_utils::*,
+  proto_field::*, proto_map::*, proto_types::*, service_derive::*, validator_tokens::*,
 };
 
 mod common_impls;
 mod enum_derive;
 mod extension_derive;
-mod field_proto_impls;
 mod impls;
 mod item_cloners;
 mod message_derive;

@@ -3,20 +3,6 @@ pub use field_or_variant::*;
 
 use crate::*;
 
-pub enum ImplKind<'a, 'b> {
-  Direct,
-  Shadow {
-    ignored_fields: &'a mut Vec<Ident>,
-    proto_conversion_data: &'a mut ProtoConversionImpl<'b>,
-  },
-}
-
-pub struct InputItem<'a, 'b> {
-  pub impl_kind: ImplKind<'a, 'b>,
-  pub validators_tokens: &'b mut Vec<TokenStream2>,
-  pub consistency_checks: &'b mut Vec<TokenStream2>,
-}
-
 pub fn wrap_with_imports(tokens: Vec<TokenStream2>) -> TokenStream2 {
   quote! {
     const _: () = {

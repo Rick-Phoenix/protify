@@ -22,14 +22,10 @@ pub(crate) fn process_oneof_derive_shadow(
   let shadow_enum_ident = &shadow_enum.ident;
 
   let mut output_tokens = TokenStream2::new();
-  let mut variants_tokens: Vec<TokenStream2> = Vec::new();
 
   let orig_enum_variants = item.variants.iter_mut();
   let shadow_enum_variants = shadow_enum.variants.iter_mut();
   let mut ignored_variants: Vec<Ident> = Vec::new();
-
-  let mut validators_tokens: Vec<TokenStream2> = Vec::new();
-  let mut consistency_checks: Vec<TokenStream2> = Vec::new();
 
   let mut proto_conversion_data = ProtoConversionImpl {
     source_ident: orig_enum_ident,
@@ -63,19 +59,20 @@ pub(crate) fn process_oneof_derive_shadow(
 
   sort_and_check_duplicate_tags(&mut manually_set_tags)?;
 
-  for (dst_variant, field_attrs) in shadow_enum_variants.zip(fields_attrs) {
+  for (dst_variant, field_attrs) in shadow_enum_variants.zip(fields_attrs.iter()) {
     let FieldDataKind::Normal(field_attrs) = field_attrs else {
       continue;
     };
 
-    let field_tokens = field_attrs.generate_proto_impls(
-      FieldOrVariant::Variant(dst_variant),
-      &mut validators_tokens,
-      &mut consistency_checks,
-      None,
-    )?;
+    let Some(tag) = field_attrs.tag else {
+      bail!(dst_variant, "Tag has not been set");
+    };
 
-    variants_tokens.push(field_tokens);
+    let prost_compatible_type = field_attrs.proto_field.output_proto_type();
+    *dst_variant.type_mut()? = prost_compatible_type;
+
+    let prost_attr = field_attrs.proto_field.as_prost_attr(tag);
+    dst_variant.attrs.push(prost_attr);
   }
 
   let proto_conversion_impls = proto_conversion_data.generate_conversion_impls();
@@ -87,10 +84,15 @@ pub(crate) fn process_oneof_derive_shadow(
     .filter(|var| !ignored_variants.contains(&var.ident))
     .collect();
 
+  let non_ignored_variants: Vec<&FieldData> = fields_attrs
+    .iter()
+    .filter_map(|f| f.as_normal())
+    .collect();
+
   let oneof_schema_impl = oneof_schema_impl(
     &oneof_attrs,
     orig_enum_ident,
-    variants_tokens,
+    &non_ignored_variants,
     &manually_set_tags,
   );
 
@@ -99,12 +101,9 @@ pub(crate) fn process_oneof_derive_shadow(
     .map(|list| quote! { #[#list] });
 
   let consistency_checks_impl =
-    impl_oneof_consistency_checks(shadow_enum_ident, consistency_checks);
+    impl_oneof_consistency_checks(shadow_enum_ident, &non_ignored_variants);
 
-  let validator_impl = impl_oneof_validator(OneofValidatorImplCtx {
-    oneof_ident: shadow_enum_ident,
-    validators_tokens,
-  });
+  let validator_impl = impl_oneof_validator2(shadow_enum_ident, &non_ignored_variants);
 
   let wrapped_items = wrap_with_imports(vec![
     oneof_schema_impl,
@@ -165,11 +164,6 @@ pub(crate) fn process_oneof_derive_direct(
 
   attrs.push(prost_derive);
 
-  let mut variants_tokens: Vec<TokenStream2> = Vec::new();
-
-  let mut validators_tokens: Vec<TokenStream2> = Vec::new();
-  let mut consistency_checks: Vec<TokenStream2> = Vec::new();
-
   let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
   let mut fields_attrs: Vec<FieldData> = Vec::new();
 
@@ -219,32 +213,26 @@ pub(crate) fn process_oneof_derive_direct(
 
   sort_and_check_duplicate_tags(&mut manually_set_tags)?;
 
-  for (variant, field_attrs) in variants.iter_mut().zip(fields_attrs) {
-    let field_tokens = field_attrs.generate_proto_impls(
-      FieldOrVariant::Variant(variant),
-      &mut validators_tokens,
-      &mut consistency_checks,
-      None,
-    )?;
+  for (variant, field_attrs) in variants.iter_mut().zip(fields_attrs.iter()) {
+    let Some(tag) = field_attrs.tag else {
+      bail!(variant, "Tag has not been set");
+    };
 
-    variants_tokens.push(field_tokens);
+    let prost_compatible_type = field_attrs.proto_field.output_proto_type();
+    *variant.type_mut()? = prost_compatible_type;
+
+    let prost_attr = field_attrs.proto_field.as_prost_attr(tag);
+    variant.attrs.push(prost_attr);
   }
 
   let oneof_ident = &item.ident;
 
-  let oneof_schema_impl = oneof_schema_impl(
-    &oneof_attrs,
-    oneof_ident,
-    variants_tokens,
-    &manually_set_tags,
-  );
+  let oneof_schema_impl =
+    oneof_schema_impl(&oneof_attrs, oneof_ident, &fields_attrs, &manually_set_tags);
 
-  let consistency_checks_impl = impl_oneof_consistency_checks(oneof_ident, consistency_checks);
+  let consistency_checks_impl = impl_oneof_consistency_checks(oneof_ident, &fields_attrs);
 
-  let validator_impl = impl_oneof_validator(OneofValidatorImplCtx {
-    oneof_ident,
-    validators_tokens,
-  });
+  let validator_impl = impl_oneof_validator2(oneof_ident, &fields_attrs);
 
   let wrapped_items = wrap_with_imports(vec![oneof_schema_impl, validator_impl]);
 
