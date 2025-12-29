@@ -7,9 +7,7 @@ where
   let validators_tokens = variants.iter().flat_map(|data| {
     let FieldData {
       ident,
-      type_info,
       ident_str,
-      is_variant,
       tag,
       validator,
       proto_name,
@@ -26,12 +24,6 @@ where
 
       let validator_name = proto_field.validator_name();
 
-      let validator_static = quote! {
-        static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
-          #validator_expr
-        });
-      };
-
       let field_type = proto_field.descriptor_type_tokens();
 
       let field_context_tokens = quote! {
@@ -46,16 +38,22 @@ where
         }
       };
 
-      let validator_tokens = generate_validator_tokens(
-        &type_info.type_,
-        *is_variant,
-        ident,
-        field_context_tokens,
-        &validator_static_ident,
-        validator_static,
-      );
+      Some(quote! {
+        Self::#ident(v) => {
+          static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
+            #validator_expr
+          });
 
-      Some(validator_tokens)
+          #validator_static_ident.validate(
+            &mut ::prelude::ValidationCtx {
+              field_context: #field_context_tokens,
+              parent_elements,
+              violations
+            },
+            Some(v)
+          );
+        }
+      })
     } else {
       None
     }

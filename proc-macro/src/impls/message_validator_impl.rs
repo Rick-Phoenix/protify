@@ -9,7 +9,6 @@ where
       ident,
       type_info,
       ident_str,
-      is_variant,
       tag,
       validator,
       proto_name,
@@ -18,10 +17,8 @@ where
     } = data.borrow();
 
     if let ProtoField::Oneof { .. } = proto_field {
-      let field_ident = ident;
-
       Some(quote! {
-        if let Some(oneof) = self.#field_ident.as_ref() {
+        if let Some(oneof) = self.#ident.as_ref() {
           oneof.validate(parent_elements, violations);
         }
       })
@@ -34,12 +31,6 @@ where
         let validator_static_ident = format_ident!("{}_VALIDATOR", ccase!(constant, &ident_str));
 
         let validator_name = proto_field.validator_name();
-
-        let validator_static = quote! {
-          static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
-            #validator_expr
-          });
-        };
 
         let field_type = proto_field.descriptor_type_tokens();
 
@@ -55,16 +46,34 @@ where
           }
         };
 
-        let validator_tokens = generate_validator_tokens(
-          &type_info.type_,
-          *is_variant,
-          ident,
-          field_context_tokens,
-          &validator_static_ident,
-          validator_static,
-        );
+        let argument = {
+          match type_info.type_.as_ref() {
+            RustType::Option(inner) => {
+              if inner.is_box() {
+                quote! { self.#ident.as_deref() }
+              } else {
+                quote! { self.#ident.as_ref() }
+              }
+            }
+            RustType::Box(_) => quote! { &(*self.#ident) },
+            _ => quote! {  Some(&self.#ident)  },
+          }
+        };
 
-        Some(validator_tokens)
+        Some(quote! {
+          static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
+            #validator_expr
+          });
+
+          #validator_static_ident.validate(
+            &mut ::prelude::ValidationCtx {
+              field_context: #field_context_tokens,
+              parent_elements,
+              violations
+            },
+            #argument
+          );
+        })
       } else {
         None
       }

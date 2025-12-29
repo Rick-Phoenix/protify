@@ -18,7 +18,6 @@ pub struct FieldData {
   pub ident: Ident,
   pub type_info: TypeInfo,
   pub ident_str: String,
-  pub is_variant: bool,
   pub tag: Option<i32>,
   pub validator: Option<ValidatorTokens>,
   pub options: Option<Expr>,
@@ -297,7 +296,6 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     span: field.span(),
     ident_str: field_ident.to_string(),
     ident: field_ident,
-    is_variant: field.is_variant(),
     type_info,
   }))
 }
