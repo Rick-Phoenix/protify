@@ -24,6 +24,7 @@ where
 
     let validator_schema_tokens = validator
       .as_ref()
+      // For default validators (messages only) we skip the schema generation
       .filter(|v| !v.is_fallback)
       .map_or_else(|| quote! { None }, |e| quote! { Some(#e.into_schema()) });
 
