@@ -76,25 +76,23 @@ pub fn process_extension_derive(
   let target = target.ok_or(error!(&ident, "Missing target attribute"))?;
 
   for field in fields {
-    let field_data = process_field_data(FieldOrVariant::Field(field))?;
-
-    let FieldDataKind::Normal(FieldData {
+    let ExtensionFieldAttrs {
       tag,
       options,
-      proto_name: name,
+      proto_name,
       proto_field,
-      ..
-    }) = field_data
-    else {
-      bail!(&field, "Cannot ignore fields in extensions");
-    };
+    } = process_extension_field_attrs(field)?;
+
+    if tag.is_none() {
+      bail!(field, "Tag is missing");
+    }
 
     let options_tokens = tokens_or_default!(options, quote! { vec![] });
     let field_type_tokens = proto_field.field_proto_type_tokens();
 
     fields_tokens.push(quote! {
       ::prelude::ProtoField {
-        name: #name.to_string(),
+        name: #proto_name.to_string(),
         tag: #tag,
         options: #options_tokens,
         type_: #field_type_tokens,
