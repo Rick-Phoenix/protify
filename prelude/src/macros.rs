@@ -157,17 +157,6 @@ macro_rules! cel_program {
   };
 }
 
-#[macro_export]
-macro_rules! inline_cel_program {
-  (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
-    $crate::cel_program!(id = $id, msg = $msg, expr = $expr);
-  };
-
-  ($rule:expr) => {
-    $crate::cel_program!($rule)
-  };
-}
-
 macro_rules! reusable_string {
   ($name:ident) => {
     $crate::paste! {
