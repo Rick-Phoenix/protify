@@ -33,8 +33,8 @@ pub fn oneof_schema_impl(
         Self::proto_schema()
       }
 
-      fn validate(&self, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
-        self.validate(parent_elements)
+      fn validate(&self, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
+        self.validate(parent_elements, violations)
       }
     }
 

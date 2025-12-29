@@ -1096,6 +1096,7 @@ dependencies = [
  "protocheck-core",
  "regex",
  "similar-asserts",
+ "smallvec",
  "thiserror 2.0.17",
  "unindent",
 ]

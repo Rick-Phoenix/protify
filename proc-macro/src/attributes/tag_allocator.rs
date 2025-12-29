@@ -23,7 +23,7 @@ impl<'a> TagAllocator<'a> {
     }
   }
 
-  pub fn next_tag2(&mut self) -> Result<i32, &'static str> {
+  pub fn next_tag(&mut self) -> Result<i32, &'static str> {
     while self.current_range_idx < self.unavailable.len() {
       let range = &self.unavailable[self.current_range_idx];
 
@@ -53,30 +53,5 @@ impl<'a> TagAllocator<'a> {
     let tag = self.next_tag;
     self.next_tag += 1;
     Ok(tag)
-  }
-
-  pub fn next_tag(&mut self) -> Result<i32, &'static str> {
-    loop {
-      let idx = self
-        .unavailable
-        .partition_point(|r| r.end <= self.next_tag);
-
-      if let Some(range) = self.unavailable.get(idx)
-        && range.contains(&self.next_tag)
-      {
-        self.next_tag = range.end;
-        continue;
-      }
-
-      if self.reserved_to_max {
-        return Err(
-          "Protobuf tag limit exceeded! Check if you have set the reserved numbers range to infinity",
-        );
-      }
-
-      let tag = self.next_tag;
-      self.next_tag += 1;
-      return Ok(tag);
-    }
   }
 }

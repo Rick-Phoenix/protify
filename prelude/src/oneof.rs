@@ -31,8 +31,11 @@ pub trait ProtoOneof {
     Ok(())
   }
 
-  fn validate(&self, _parent_messages: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
-    Ok(())
+  fn validate(
+    &self,
+    _parent_messages: &mut Vec<FieldPathElement>,
+    _violations: &mut ViolationsAcc,
+  ) {
   }
 }
 

@@ -2,6 +2,120 @@ use protocheck_core::field_data::FieldKind;
 
 use super::{field_path_element::Subscript, *};
 
+use smallvec::SmallVec;
+
+pub struct ValidationCtx<'a> {
+  pub field_context: FieldContext<'a>,
+  pub parent_elements: &'a mut Vec<FieldPathElement>,
+  pub violations: &'a mut ViolationsAcc,
+}
+
+impl ValidationCtx<'_> {
+  pub fn add_violation(&mut self, violation_data: &ViolationData, error_message: &str) {
+    let violation = new_violation(
+      &self.field_context,
+      self.parent_elements,
+      violation_data,
+      error_message,
+    );
+
+    self.violations.push(violation);
+  }
+
+  pub fn add_cel_violation(&mut self, rule: &CelRule) {
+    self.add_violation_with_custom_id(rule.id.as_ref(), &CEL_VIOLATION, rule.message.as_ref())
+  }
+
+  pub fn add_violation_with_custom_id(
+    &mut self,
+    rule_id: &str,
+    violation_data: &ViolationData,
+    error_message: &str,
+  ) {
+    let violation = new_violation_with_custom_id(
+      rule_id,
+      Some(&self.field_context),
+      self.parent_elements,
+      violation_data,
+      error_message,
+    );
+
+    self.violations.push(violation);
+  }
+
+  pub fn add_required_violation(&mut self) {
+    self.add_violation(&REQUIRED_VIOLATION, "is required")
+  }
+}
+
+pub struct ViolationsAcc {
+  inner: SmallVec<[Violation; 1]>,
+}
+
+impl ViolationsAcc {
+  pub fn add_cel(
+    &mut self,
+    rule: &CelRule,
+    field_context: Option<&FieldContext>,
+    parent_elements: &[FieldPathElement],
+  ) {
+    let violation = new_violation_with_custom_id(
+      rule.id,
+      field_context,
+      parent_elements,
+      &CEL_VIOLATION,
+      rule.message,
+    );
+
+    self.push(violation);
+  }
+
+  #[must_use]
+  pub fn new() -> Self {
+    Self {
+      inner: SmallVec::new(),
+    }
+  }
+
+  #[inline]
+  #[must_use]
+  pub fn to_vec(self) -> Violations {
+    Violations {
+      violations: self.inner.to_vec(),
+    }
+  }
+
+  #[inline]
+  pub fn push(&mut self, v: Violation) {
+    self.inner.push(v);
+  }
+
+  #[inline]
+  pub fn extend<I: IntoIterator<Item = Violation>>(&mut self, iter: I) {
+    self.inner.extend(iter);
+  }
+
+  #[inline]
+  #[must_use]
+  pub fn is_empty(&self) -> bool {
+    self.inner.is_empty()
+  }
+
+  pub fn into_result(self) -> Result<(), Vec<Violation>> {
+    if self.inner.is_empty() {
+      Ok(())
+    } else {
+      Err(self.inner.into_vec())
+    }
+  }
+}
+
+impl Default for ViolationsAcc {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 pub trait ViolationsExt {
   fn add(
     &mut self,

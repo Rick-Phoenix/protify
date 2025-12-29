@@ -21,13 +21,7 @@ pub trait ProtoMessage {
   fn full_name() -> &'static str;
   fn type_url() -> &'static str;
 
-  fn nested_validate(
-    &self,
-    _field_context: &FieldContext,
-    _parent_messages: &mut Vec<FieldPathElement>,
-  ) -> Result<(), Violations> {
-    Ok(())
-  }
+  fn nested_validate(&self, _ctx: &mut ValidationCtx) {}
 }
 
 impl<T> ProtoMessage for Box<T>
@@ -55,6 +49,10 @@ where
 
   fn proto_schema() -> Message {
     T::proto_schema()
+  }
+
+  fn nested_validate(&self, ctx: &mut ValidationCtx) {
+    T::nested_validate(self, ctx);
   }
 }
 

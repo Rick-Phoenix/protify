@@ -39,7 +39,7 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
       tag
     } else if let Some(tag_allocator) = tag_allocator {
       tag_allocator
-        .next_tag2()
+        .next_tag()
         .map_err(|e| error_with_span!(field_span, "{e}"))?
     } else {
       bail_with_span!(field_span, "Missing tag");
@@ -62,7 +62,7 @@ impl<'a, 'field> FieldCtx<'a, 'field> {
 
       validators_tokens.push(quote! {
         if let Some(oneof) = self.#field_ident.as_ref() {
-          oneof.validate(parent_elements).ok_or_push_violations(&mut violations)
+          oneof.validate(parent_elements, violations);
         }
       });
 

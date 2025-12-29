@@ -34,37 +34,18 @@ impl Validator<bool> for BoolValidator {
     Ok(())
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          &BOOL_CONST_VIOLATION,
-          &format!("must be {const_val}"),
-        );
+        ctx.add_violation(&BOOL_CONST_VIOLATION, &format!("must be {const_val}"));
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

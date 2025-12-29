@@ -169,34 +169,19 @@ where
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
 
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
-
     if let Some(&val) = val {
       if self.finite && !val.is_finite() {
-        violations.add(
-          field_context,
-          parent_elements,
-          Num::FINITE_VIOLATION,
-          "must be a finite number",
-        );
+        ctx.add_violation(Num::FINITE_VIOLATION, "must be a finite number");
       }
 
       if let Some(const_val) = self.const_
         && !self.float_is_eq(const_val, val)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           Num::CONST_VIOLATION,
           &format!("must be equal to {const_val}"),
         );
@@ -205,20 +190,13 @@ where
       if let Some(gt) = self.gt
         && (val.is_nan() || self.float_is_eq(gt, val) || val < gt)
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          Num::GT_VIOLATION,
-          &format!("must be greater than {gt}"),
-        );
+        ctx.add_violation(Num::GT_VIOLATION, &format!("must be greater than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && (val.is_nan() || !self.float_is_eq(gte, val) && val < gte)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           Num::GTE_VIOLATION,
           &format!("must be greater than or equal to {gte}"),
         );
@@ -227,20 +205,13 @@ where
       if let Some(lt) = self.lt
         && (val.is_nan() || self.float_is_eq(lt, val) || val > lt)
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          Num::LT_VIOLATION,
-          &format!("must be smaller than {lt}"),
-        );
+        ctx.add_violation(Num::LT_VIOLATION, &format!("must be smaller than {lt}"));
       }
 
       if let Some(lte) = self.lte
         && (val.is_nan() || !self.float_is_eq(lte, val) && val > lte)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           Num::LTE_VIOLATION,
           &format!("must be smaller than or equal to {lte}"),
         );
@@ -256,7 +227,7 @@ where
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, Num::IN_VIOLATION, &err);
+        ctx.add_violation(Num::IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -269,7 +240,7 @@ where
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, Num::NOT_IN_VIOLATION, &err);
+        ctx.add_violation(Num::NOT_IN_VIOLATION, &err);
       }
 
       #[cfg(feature = "cel")]
@@ -277,21 +248,15 @@ where
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val,
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

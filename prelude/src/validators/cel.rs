@@ -1,7 +1,6 @@
 use cel_rule_builder::{IsComplete, State};
 
 use super::*;
-use crate::validators::field_context::ViolationsExt;
 
 // This will be included even without the cel feature, as it is useful for schema purposes
 #[derive(Debug, Clone, Builder, PartialEq, Eq)]
@@ -178,17 +177,17 @@ mod cel_impls {
     Ok(ctx)
   }
 
-  pub struct ProgramsExecutionCtx<'a, T> {
+  pub struct ProgramsExecutionCtx<'a, CelT> {
     pub programs: &'a [CelProgram],
-    pub value: T,
-    pub violations: &'a mut Vec<Violation>,
+    pub value: CelT,
+    pub violations: &'a mut ViolationsAcc,
     pub field_context: Option<&'a FieldContext<'a>>,
     pub parent_elements: &'a [FieldPathElement],
   }
 
-  impl<T> ProgramsExecutionCtx<'_, T>
+  impl<CelT> ProgramsExecutionCtx<'_, CelT>
   where
-    T: TryIntoCel,
+    CelT: TryIntoCel,
   {
     pub fn execute_programs(self) {
       let Self {

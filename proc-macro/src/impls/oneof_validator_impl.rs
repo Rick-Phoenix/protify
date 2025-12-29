@@ -14,18 +14,10 @@ pub fn impl_oneof_validator(ctx: OneofValidatorImplCtx) -> TokenStream2 {
   quote! {
     #[allow(clippy::ptr_arg)]
     impl #oneof_ident {
-      pub fn validate(&self, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
-        let mut violations = Violations::new();
-
+      pub fn validate(&self, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
         match self {
           #(#validators_tokens,)*
           _ => {}
-        }
-
-        if violations.is_empty() {
-          Ok(())
-        } else {
-          Err(violations)
         }
       }
     }

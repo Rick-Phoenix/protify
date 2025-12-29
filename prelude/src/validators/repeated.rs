@@ -395,17 +395,9 @@ where
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Vec<T::Target>>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(val) = val {
       #[cfg(feature = "cel")]
@@ -415,23 +407,23 @@ where
             let ctx = ProgramsExecutionCtx {
               programs: &self.cel,
               value: cel_value,
-              violations,
-              field_context: Some(field_context),
-              parent_elements,
+              violations: ctx.violations,
+              field_context: Some(&ctx.field_context),
+              parent_elements: ctx.parent_elements,
             };
 
             ctx.execute_programs();
           }
-          Err(e) => violations.push(e.into_violation(Some(field_context), parent_elements)),
+          Err(e) => ctx
+            .violations
+            .push(e.into_violation(Some(&ctx.field_context), ctx.parent_elements)),
         };
       }
 
       if let Some(min) = &self.min_items
         && val.len() < *min
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &REPEATED_MIN_ITEMS_VIOLATION,
           &format!("must contain at least {min} items"),
         );
@@ -440,24 +432,13 @@ where
       if let Some(max) = &self.max_items
         && val.len() > *max
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &REPEATED_MAX_ITEMS_VIOLATION,
           &format!("cannot contain more than {max} items"),
         );
       }
 
-      let mut items_validator = self
-        .items
-        .as_ref()
-        .filter(|_| !val.is_empty())
-        .map(|v| {
-          let mut ctx = field_context.clone();
-          ctx.field_kind = FieldKind::RepeatedItem;
-
-          (v, ctx)
-        });
+      let items_validator = self.items.as_ref();
 
       // We only create this if there is a `unique` restriction
       let mut unique_store = if self.unique {
@@ -487,30 +468,21 @@ where
             has_unique_values_so_far = unique_store.insert(value);
           }
 
-          if let Some((validator, ctx)) = &mut items_validator {
-            ctx.subscript = Some(Subscript::Index(i as u64));
+          if let Some(validator) = items_validator {
+            ctx.field_context.subscript = Some(Subscript::Index(i as u64));
+            ctx.field_context.field_kind = FieldKind::RepeatedItem;
 
-            validator
-              .validate(ctx, parent_elements, Some(value))
-              .ok_or_push_violations(violations);
+            validator.validate(ctx, Some(value));
           }
         }
+
+        ctx.field_context.subscript = None;
+        ctx.field_context.field_kind = FieldKind::Repeated;
       }
 
       if !has_unique_values_so_far {
-        violations.add(
-          field_context,
-          parent_elements,
-          &REPEATED_UNIQUE_VIOLATION,
-          "must contain unique values",
-        );
+        ctx.add_violation(&REPEATED_UNIQUE_VIOLATION, "must contain unique values");
       }
-    }
-
-    if violations_agg.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
     }
   }
 }

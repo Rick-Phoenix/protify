@@ -177,8 +177,8 @@ pub fn message_schema_impls(ctx: MessageSchemaImplsCtx) -> TokenStream2 {
           self.validate()
         }
 
-        fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
-          self.nested_validate(field_context, parent_elements)
+        fn nested_validate(&self, ctx: &mut ValidationCtx) {
+          self.nested_validate(ctx);
         }
       }
 

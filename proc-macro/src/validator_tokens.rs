@@ -1,5 +1,13 @@
 use crate::*;
 
+pub struct ValidatorTokens {
+  pub argument: TokenStream2,
+  pub field_ident: Ident,
+  pub field_context_tokens: TokenStream2,
+  pub validator_static_ident: Ident,
+  pub validator_static_tokens: TokenStream2,
+}
+
 pub fn generate_validator_tokens(
   rust_type: &RustType,
   is_variant: bool,
@@ -29,7 +37,14 @@ pub fn generate_validator_tokens(
   let validator_impl = quote! {
     #validator_static_tokens
 
-    #validator_static_ident.validate(&#field_context_tokens, parent_elements, #argument).ok_or_push_violations(&mut violations);
+    #validator_static_ident.validate(
+      &mut ::prelude::ValidationCtx {
+        field_context: #field_context_tokens,
+        parent_elements,
+        violations
+      },
+      #argument
+    );
   };
 
   if is_variant {

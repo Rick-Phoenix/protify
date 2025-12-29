@@ -67,16 +67,8 @@ impl Validator<FieldMask> for FieldMaskValidator {
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(val) = val {
       if let Some(const_val) = self.const_ {
@@ -91,9 +83,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
         };
 
         if !is_valid {
-          violations.add(
-            field_context,
-            parent_elements,
+          ctx.add_violation(
             &FIELD_MASK_CONST_VIOLATION,
             &format!(
               "must contain exactly these paths: [ {} ]",
@@ -108,12 +98,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
           if !allowed_paths.items.contains(&path.as_str()) {
             let err = ["can only contain these paths: ", &allowed_paths.items_str].concat();
 
-            violations.add(
-              field_context,
-              parent_elements,
-              &FIELD_MASK_IN_VIOLATION,
-              &err,
-            );
+            ctx.add_violation(&FIELD_MASK_IN_VIOLATION, &err);
 
             break;
           }
@@ -129,12 +114,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
             ]
             .concat();
 
-            violations.add(
-              field_context,
-              parent_elements,
-              &FIELD_MASK_NOT_IN_VIOLATION,
-              &err,
-            );
+            ctx.add_violation(&FIELD_MASK_NOT_IN_VIOLATION, &err);
 
             break;
           }
@@ -146,21 +126,15 @@ impl Validator<FieldMask> for FieldMaskValidator {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val.clone(),
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

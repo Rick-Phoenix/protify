@@ -58,17 +58,9 @@ impl Validator<Any> for AnyValidator {
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(val) = val {
       if let Some(allowed_list) = &self.in_
@@ -80,7 +72,7 @@ impl Validator<Any> for AnyValidator {
         ]
         .concat();
 
-        violations.add(field_context, parent_elements, &ANY_IN_VIOLATION, &err);
+        ctx.add_violation(&ANY_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -92,7 +84,7 @@ impl Validator<Any> for AnyValidator {
         ]
         .concat();
 
-        violations.add(field_context, parent_elements, &ANY_NOT_IN_VIOLATION, &err);
+        ctx.add_violation(&ANY_NOT_IN_VIOLATION, &err);
       }
 
       #[cfg(feature = "cel")]
@@ -100,21 +92,15 @@ impl Validator<Any> for AnyValidator {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val.clone(),
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

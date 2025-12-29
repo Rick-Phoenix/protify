@@ -3,7 +3,6 @@ pub use builder::MessageValidatorBuilder;
 use builder::state::State;
 
 use super::*;
-use crate::field_context::ViolationsExt;
 
 #[cfg(feature = "cel")]
 pub trait TryIntoCel: Clone {
@@ -79,43 +78,33 @@ where
     LinearRefStore::default_with_capacity(cap)
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none());
 
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
-
     if let Some(val) = val {
-      val
-        .nested_validate(field_context, parent_elements)
-        .ok_or_push_violations(violations);
+      ctx
+        .parent_elements
+        .push(ctx.field_context.as_path_element());
+
+      val.nested_validate(ctx);
+
+      ctx.parent_elements.pop();
 
       #[cfg(feature = "cel")]
       if !self.cel.is_empty() {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val.clone(),
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

@@ -15,20 +15,14 @@ pub fn impl_message_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
     #[allow(clippy::ptr_arg)]
     impl #target_ident {
       #[doc(hidden)]
-      fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
-        let mut violations = Violations::new();
-
-        if let Some(field_context) = field_context {
-          parent_elements.push(field_context.as_path_element());
-        }
-
+      fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
         let top_level_programs = <Self as ::prelude::ProtoMessage>::cel_rules();
 
         if !top_level_programs.is_empty() {
           let ctx = ProgramsExecutionCtx {
             programs: top_level_programs,
             value: self.clone(),
-            violations: &mut violations,
+            violations,
             field_context,
             parent_elements,
           };
@@ -37,24 +31,22 @@ pub fn impl_message_validator(ctx: ValidatorImplCtx) -> TokenStream2 {
         }
 
         #(#validators_tokens)*
+      }
 
-        if field_context.is_some() {
-          parent_elements.pop();
-        }
+      pub fn validate(&self) -> Result<(), Violations> {
+        let mut violations = ViolationsAcc::new();
+
+        self.__validate_internal(None, &mut vec![], &mut violations);
 
         if violations.is_empty() {
           Ok(())
         } else {
-          Err(violations)
+          Err(violations.to_vec())
         }
       }
 
-      pub fn validate(&self) -> Result<(), Violations> {
-        self.__validate_internal(None, &mut vec![])
-      }
-
-      pub fn nested_validate(&self, field_context: &FieldContext, parent_elements: &mut Vec<FieldPathElement>) -> Result<(), Violations> {
-        self.__validate_internal(Some(field_context), parent_elements)
+      pub fn nested_validate(&self, ctx: &mut ValidationCtx) {
+        self.__validate_internal(Some(&ctx.field_context), ctx.parent_elements, ctx.violations)
       }
     }
 

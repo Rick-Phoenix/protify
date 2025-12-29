@@ -90,53 +90,31 @@ impl Validator<Timestamp> for TimestampValidator {
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &TIMESTAMP_CONST_VIOLATION,
           &format!("must be equal to {const_val}"),
         );
       }
 
       if self.gt_now && !(val - self.now_tolerance).is_future() {
-        violations.add(
-          field_context,
-          parent_elements,
-          &TIMESTAMP_GT_NOW_VIOLATION,
-          "must be in the future",
-        );
+        ctx.add_violation(&TIMESTAMP_GT_NOW_VIOLATION, "must be in the future");
       }
 
       if self.lt_now && !val.is_past() {
-        violations.add(
-          field_context,
-          parent_elements,
-          &TIMESTAMP_LT_NOW_VIOLATION,
-          "must be in the past",
-        );
+        ctx.add_violation(&TIMESTAMP_LT_NOW_VIOLATION, "must be in the past");
       }
 
       if let Some(range) = self.within
         && !val.is_within_range_from_now(range)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &TIMESTAMP_WITHIN_VIOLATION,
           &format!("must be within {range} from now"),
         );
@@ -145,20 +123,13 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(gt) = self.gt
         && val <= gt
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          &TIMESTAMP_GT_VIOLATION,
-          &format!("must be later than {gt}"),
-        );
+        ctx.add_violation(&TIMESTAMP_GT_VIOLATION, &format!("must be later than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &TIMESTAMP_GTE_VIOLATION,
           &format!("must be later than or equal to {gte}"),
         );
@@ -167,9 +138,7 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(lt) = self.lt
         && val >= lt
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &TIMESTAMP_LT_VIOLATION,
           &format!("must be earlier than {lt}"),
         );
@@ -178,9 +147,7 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(lte) = self.lte
         && val > lte
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &TIMESTAMP_LTE_VIOLATION,
           &format!("must be earlier than or equal to {lte}"),
         );
@@ -191,21 +158,15 @@ impl Validator<Timestamp> for TimestampValidator {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val,
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

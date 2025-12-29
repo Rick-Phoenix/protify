@@ -8,7 +8,6 @@ use proto_types::protovalidate::violations_data::*;
 pub use protocheck_core::wrappers::{Fixed32, Fixed64, Sfixed32, Sfixed64, Sint32, Sint64};
 
 use super::*;
-use crate::field_context::ViolationsExt;
 
 #[derive(Clone, Debug)]
 pub struct IntValidator<Num>
@@ -99,25 +98,15 @@ where
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           Num::CONST_VIOLATION,
           &format!("must be equal to {const_val}"),
         );
@@ -126,20 +115,13 @@ where
       if let Some(gt) = self.gt
         && val <= gt
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          Num::GT_VIOLATION,
-          &format!("must be greater than {gt}"),
-        );
+        ctx.add_violation(Num::GT_VIOLATION, &format!("must be greater than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           Num::GTE_VIOLATION,
           &format!("must be greater than or equal to {gte}"),
         );
@@ -148,20 +130,13 @@ where
       if let Some(lt) = self.lt
         && val >= lt
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          Num::LT_VIOLATION,
-          &format!("must be smaller than {lt}"),
-        );
+        ctx.add_violation(Num::LT_VIOLATION, &format!("must be smaller than {lt}"));
       }
 
       if let Some(lte) = self.lte
         && val > lte
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           Num::LTE_VIOLATION,
           &format!("must be smaller than or equal to {lte}"),
         );
@@ -172,7 +147,7 @@ where
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, Num::IN_VIOLATION, &err);
+        ctx.add_violation(Num::IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -180,7 +155,7 @@ where
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, Num::NOT_IN_VIOLATION, &err);
+        ctx.add_violation(Num::NOT_IN_VIOLATION, &err);
       }
 
       #[cfg(feature = "cel")]
@@ -188,21 +163,15 @@ where
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val,
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

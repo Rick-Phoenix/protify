@@ -77,24 +77,14 @@ impl Validator<Duration> for DurationValidator {
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &DURATION_CONST_VIOLATION,
           &format!("must be equal to {const_val}"),
         );
@@ -103,20 +93,13 @@ impl Validator<Duration> for DurationValidator {
       if let Some(gt) = self.gt
         && val <= gt
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          &DURATION_GT_VIOLATION,
-          &format!("must be longer than {gt}"),
-        );
+        ctx.add_violation(&DURATION_GT_VIOLATION, &format!("must be longer than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &DURATION_GTE_VIOLATION,
           &format!("must be longer than or equal to {gte}"),
         );
@@ -125,9 +108,7 @@ impl Validator<Duration> for DurationValidator {
       if let Some(lt) = self.lt
         && val >= lt
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &DURATION_LT_VIOLATION,
           &format!("must be shorter than {lt}"),
         );
@@ -136,9 +117,7 @@ impl Validator<Duration> for DurationValidator {
       if let Some(lte) = self.lte
         && val > lte
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &DURATION_LTE_VIOLATION,
           &format!("must be shorter than or equal to {lte}"),
         );
@@ -149,7 +128,7 @@ impl Validator<Duration> for DurationValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, &DURATION_IN_VIOLATION, &err);
+        ctx.add_violation(&DURATION_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = self.not_in
@@ -157,12 +136,7 @@ impl Validator<Duration> for DurationValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        violations.add(
-          field_context,
-          parent_elements,
-          &DURATION_NOT_IN_VIOLATION,
-          &err,
-        );
+        ctx.add_violation(&DURATION_NOT_IN_VIOLATION, &err);
       }
 
       #[cfg(feature = "cel")]
@@ -170,21 +144,15 @@ impl Validator<Duration> for DurationValidator {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val,
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

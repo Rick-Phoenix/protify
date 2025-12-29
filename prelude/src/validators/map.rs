@@ -9,7 +9,6 @@ use proto_types::protovalidate::{
 };
 
 use super::*;
-use crate::field_context::ViolationsExt;
 
 pub struct ProtoMap<K, V>(PhantomData<K>, PhantomData<V>);
 
@@ -236,17 +235,9 @@ where
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&HashMap<K::Target, V::Target>>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(val) = val {
       #[cfg(feature = "cel")]
@@ -256,23 +247,23 @@ where
             let ctx = ProgramsExecutionCtx {
               programs: &self.cel,
               value: cel_value,
-              violations,
-              field_context: Some(field_context),
-              parent_elements,
+              violations: ctx.violations,
+              field_context: Some(&ctx.field_context),
+              parent_elements: ctx.parent_elements,
             };
 
             ctx.execute_programs();
           }
-          Err(e) => violations.push(e.into_violation(Some(field_context), parent_elements)),
+          Err(e) => ctx
+            .violations
+            .push(e.into_violation(Some(&ctx.field_context), ctx.parent_elements)),
         };
       }
 
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &MAP_MIN_PAIRS_VIOLATION,
           &format!("must contain at least {min_pairs} pairs"),
         );
@@ -281,61 +272,36 @@ where
       if let Some(max_pairs) = self.max_pairs
         && val.len() > max_pairs
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &MAP_MAX_PAIRS_VIOLATION,
           &format!("cannot contain more than {max_pairs} pairs"),
         );
       }
 
-      let mut keys_validator = self
-        .keys
-        .as_ref()
-        .filter(|_| !val.is_empty())
-        .map(|v| {
-          let mut ctx = field_context.clone();
-          ctx.field_kind = FieldKind::MapKey;
+      let keys_validator = self.keys.as_ref();
 
-          (v, ctx)
-        });
-
-      let mut values_validator = self
-        .values
-        .as_ref()
-        .filter(|_| !val.is_empty())
-        .map(|v| {
-          let mut ctx = field_context.clone();
-          ctx.field_kind = FieldKind::MapValue;
-
-          (v, ctx)
-        });
+      let values_validator = self.values.as_ref();
 
       if keys_validator.is_some() || values_validator.is_some() {
         for (k, v) in val {
-          if let Some((validator, ctx)) = &mut keys_validator {
-            ctx.subscript = Some(k.clone().into_subscript());
+          ctx.field_context.subscript = Some(k.clone().into_subscript());
 
-            validator
-              .validate(ctx, parent_elements, Some(k))
-              .ok_or_push_violations(violations);
+          if let Some(validator) = keys_validator {
+            ctx.field_context.field_kind = FieldKind::MapKey;
+
+            validator.validate(ctx, Some(k));
           }
 
-          if let Some((validator, ctx)) = &mut values_validator {
-            ctx.subscript = Some(k.clone().into_subscript());
+          if let Some(validator) = values_validator {
+            ctx.field_context.field_kind = FieldKind::MapValue;
 
-            validator
-              .validate(ctx, parent_elements, Some(v))
-              .ok_or_push_violations(violations);
+            validator.validate(ctx, Some(v));
           }
         }
-      }
-    }
 
-    if violations_agg.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+        ctx.field_context.subscript = None;
+        ctx.field_context.field_kind = FieldKind::Map;
+      }
     }
   }
 }

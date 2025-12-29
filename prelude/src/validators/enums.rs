@@ -85,25 +85,15 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &ENUM_CONST_VIOLATION,
           &format!("must be equal to {const_val}"),
         );
@@ -117,7 +107,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, &ENUM_IN_VIOLATION, &err);
+        ctx.add_violation(&ENUM_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -128,16 +118,11 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, &ENUM_NOT_IN_VIOLATION, &err);
+        ctx.add_violation(&ENUM_NOT_IN_VIOLATION, &err);
       }
 
       if self.defined_only && T::try_from(val).is_err() {
-        violations.add(
-          field_context,
-          parent_elements,
-          &ENUM_DEFINED_ONLY_VIOLATION,
-          "must be a known enum value",
-        );
+        ctx.add_violation(&ENUM_DEFINED_ONLY_VIOLATION, "must be a known enum value");
       }
 
       #[cfg(feature = "cel")]
@@ -145,21 +130,15 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val,
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

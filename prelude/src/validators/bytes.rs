@@ -151,25 +151,15 @@ impl Validator<Bytes> for BytesValidator {
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(val) = val {
       if let Some(const_val) = &self.const_
         && *val != const_val
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_CONST_VIOLATION,
           &format!("must be equal to {}", const_val.escape_ascii()),
         );
@@ -178,9 +168,7 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(len) = self.len
         && val.len() != len
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_LEN_VIOLATION,
           &format!("must be exactly {len} bytes long"),
         );
@@ -189,9 +177,7 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(min_len) = self.min_len
         && val.len() < min_len
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_MIN_LEN_VIOLATION,
           &format!("must be at least {min_len} bytes long"),
         );
@@ -200,9 +186,7 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(max_len) = self.max_len
         && val.len() > max_len
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_MAX_LEN_VIOLATION,
           &format!("cannot be longer than {max_len} bytes"),
         );
@@ -212,9 +196,7 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(pattern) = &self.pattern
         && !pattern.is_match(val)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_PATTERN_VIOLATION,
           &format!("must match the pattern `{pattern}`"),
         );
@@ -223,9 +205,7 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(prefix) = &self.prefix
         && !val.starts_with(prefix)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_PREFIX_VIOLATION,
           &format!("must start with {}", prefix.escape_ascii()),
         );
@@ -234,9 +214,7 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(suffix) = &self.suffix
         && !val.ends_with(suffix)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_SUFFIX_VIOLATION,
           &format!("must end with {}", suffix.escape_ascii()),
         );
@@ -247,9 +225,7 @@ impl Validator<Bytes> for BytesValidator {
           .windows(val.len())
           .any(|slice| slice == substring)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &BYTES_CONTAINS_VIOLATION,
           &format!("must contain {}", substring.escape_ascii()),
         );
@@ -260,7 +236,7 @@ impl Validator<Bytes> for BytesValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, &BYTES_IN_VIOLATION, &err);
+        ctx.add_violation(&BYTES_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -268,7 +244,7 @@ impl Validator<Bytes> for BytesValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, &BYTES_IN_VIOLATION, &err);
+        ctx.add_violation(&BYTES_IN_VIOLATION, &err);
       }
 
       if let Some(well_known) = &self.well_known {
@@ -278,42 +254,22 @@ impl Validator<Bytes> for BytesValidator {
           #[cfg(feature = "regex")]
           WellKnownBytes::Uuid => {
             if !is_valid_uuid(byte_str) {
-              violations.add(
-                field_context,
-                parent_elements,
-                &BYTES_UUID_VIOLATION,
-                "must be a valid UUID",
-              );
+              ctx.add_violation(&BYTES_UUID_VIOLATION, "must be a valid UUID");
             }
           }
           WellKnownBytes::Ip => {
             if !is_valid_ip(byte_str) {
-              violations.add(
-                field_context,
-                parent_elements,
-                &BYTES_IP_VIOLATION,
-                "must be a valid ip address",
-              );
+              ctx.add_violation(&BYTES_IP_VIOLATION, "must be a valid ip address");
             }
           }
           WellKnownBytes::Ipv4 => {
             if !is_valid_ipv4(byte_str) {
-              violations.add(
-                field_context,
-                parent_elements,
-                &BYTES_IPV4_VIOLATION,
-                "must be a valid ipv4 address",
-              );
+              ctx.add_violation(&BYTES_IPV4_VIOLATION, "must be a valid ipv4 address");
             }
           }
           WellKnownBytes::Ipv6 => {
             if !is_valid_ipv6(byte_str) {
-              violations.add(
-                field_context,
-                parent_elements,
-                &BYTES_IPV6_VIOLATION,
-                "must be a valid ipv6 address",
-              );
+              ctx.add_violation(&BYTES_IPV6_VIOLATION, "must be a valid ipv6 address");
             }
           }
         };
@@ -324,21 +280,15 @@ impl Validator<Bytes> for BytesValidator {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val.to_vec(),
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }

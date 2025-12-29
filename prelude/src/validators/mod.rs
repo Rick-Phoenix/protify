@@ -42,12 +42,7 @@ pub trait Validator<T>: Into<ProtoOption> {
     self.check_cel_programs_with(Self::Target::default())
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations>;
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>);
 }
 
 pub trait ValidatorBuilderFor<T> {

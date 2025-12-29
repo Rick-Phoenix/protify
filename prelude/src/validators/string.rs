@@ -132,25 +132,15 @@ impl Validator<String> for StringValidator {
     }
   }
 
-  fn validate(
-    &self,
-    field_context: &FieldContext,
-    parent_elements: &mut Vec<FieldPathElement>,
-    val: Option<&Self::Target>,
-  ) -> Result<(), Violations> {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
-
-    let mut violations_agg = Violations::new();
-    let violations = &mut violations_agg;
 
     if let Some(val) = val {
       if let Some(const_val) = &self.const_
         && val != const_val.as_ref()
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_CONST_VIOLATION,
           &format!("must be equal to {const_val}",),
         );
@@ -159,9 +149,7 @@ impl Validator<String> for StringValidator {
       if let Some(len) = self.len
         && val.chars().count() != len
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_LEN_VIOLATION,
           &format!("must be exactly {len} characters long"),
         );
@@ -170,9 +158,7 @@ impl Validator<String> for StringValidator {
       if let Some(min_len) = self.min_len
         && val.chars().count() < min_len
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_MIN_LEN_VIOLATION,
           &format!("must be at least {min_len} characters long"),
         );
@@ -181,9 +167,7 @@ impl Validator<String> for StringValidator {
       if let Some(max_len) = self.max_len
         && val.chars().count() > max_len
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_MAX_LEN_VIOLATION,
           &format!("cannot be longer than {max_len} characters"),
         );
@@ -192,9 +176,7 @@ impl Validator<String> for StringValidator {
       if let Some(len_bytes) = self.len_bytes
         && val.len() != len_bytes
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_LEN_BYTES_VIOLATION,
           &format!("must be exactly {len_bytes} bytes long"),
         );
@@ -203,9 +185,7 @@ impl Validator<String> for StringValidator {
       if let Some(min_bytes) = self.min_bytes
         && val.len() < min_bytes
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_MIN_BYTES_VIOLATION,
           &format!("must be at least {min_bytes} bytes long"),
         );
@@ -214,9 +194,7 @@ impl Validator<String> for StringValidator {
       if let Some(max_bytes) = self.max_bytes
         && val.len() > max_bytes
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_MAX_BYTES_VIOLATION,
           &format!("cannot be longer than {max_bytes} bytes"),
         );
@@ -226,9 +204,7 @@ impl Validator<String> for StringValidator {
       if let Some(pattern) = &self.pattern
         && !pattern.is_match(val)
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_PATTERN_VIOLATION,
           &format!("must match the pattern `{pattern}`"),
         );
@@ -237,9 +213,7 @@ impl Validator<String> for StringValidator {
       if let Some(prefix) = &self.prefix
         && !val.starts_with(prefix.as_ref())
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_PREFIX_VIOLATION,
           &format!("must start with {prefix}"),
         );
@@ -248,20 +222,13 @@ impl Validator<String> for StringValidator {
       if let Some(suffix) = &self.suffix
         && !val.ends_with(suffix.as_ref())
       {
-        violations.add(
-          field_context,
-          parent_elements,
-          &STRING_SUFFIX_VIOLATION,
-          &format!("must end with {suffix}"),
-        );
+        ctx.add_violation(&STRING_SUFFIX_VIOLATION, &format!("must end with {suffix}"));
       }
 
       if let Some(substring) = &self.contains
         && !val.contains(substring.as_ref())
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_CONTAINS_VIOLATION,
           &format!("must contain {substring}"),
         );
@@ -270,9 +237,7 @@ impl Validator<String> for StringValidator {
       if let Some(substring) = &self.not_contains
         && val.contains(substring.as_ref())
       {
-        violations.add(
-          field_context,
-          parent_elements,
+        ctx.add_violation(
           &STRING_NOT_CONTAINS_VIOLATION,
           &format!("cannot contain {substring}"),
         );
@@ -283,7 +248,7 @@ impl Validator<String> for StringValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        violations.add(field_context, parent_elements, &STRING_IN_VIOLATION, &err);
+        ctx.add_violation(&STRING_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -291,21 +256,14 @@ impl Validator<String> for StringValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        violations.add(
-          field_context,
-          parent_elements,
-          &STRING_NOT_IN_VIOLATION,
-          &err,
-        );
+        ctx.add_violation(&STRING_NOT_IN_VIOLATION, &err);
       }
 
       macro_rules! impl_well_known_check {
         ($check:expr, $violation:ident, $msg:literal) => {
           paste::paste! {
             if !$check(val.as_ref()) {
-              violations.add(
-                field_context,
-                parent_elements,
+              ctx.add_violation(
                 &[< STRING_ $violation _VIOLATION >],
                 concat!("must be a valid ", $msg),
               );
@@ -389,9 +347,7 @@ impl Validator<String> for StringValidator {
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderNameLoose => {
             if !is_valid_http_header_name(val.as_ref(), false) {
-              violations.add(
-                field_context,
-                parent_elements,
+              ctx.add_violation(
                 &STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header name",
               );
@@ -400,9 +356,7 @@ impl Validator<String> for StringValidator {
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderNameStrict => {
             if !is_valid_http_header_name(val.as_ref(), true) {
-              violations.add(
-                field_context,
-                parent_elements,
+              ctx.add_violation(
                 &STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header name",
               );
@@ -411,9 +365,7 @@ impl Validator<String> for StringValidator {
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderValueLoose => {
             if !is_valid_http_header_value(val.as_ref(), false) {
-              violations.add(
-                field_context,
-                parent_elements,
+              ctx.add_violation(
                 &STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header value",
               );
@@ -422,9 +374,7 @@ impl Validator<String> for StringValidator {
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderValueStrict => {
             if !is_valid_http_header_value(val.as_ref(), true) {
-              violations.add(
-                field_context,
-                parent_elements,
+              ctx.add_violation(
                 &STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header value",
               );
@@ -438,21 +388,15 @@ impl Validator<String> for StringValidator {
         let ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val.clone(),
-          violations,
-          field_context: Some(field_context),
-          parent_elements,
+          violations: ctx.violations,
+          field_context: Some(&ctx.field_context),
+          parent_elements: ctx.parent_elements,
         };
 
         ctx.execute_programs();
       }
     } else if self.required {
-      violations.add_required(field_context, parent_elements);
-    }
-
-    if violations.is_empty() {
-      Ok(())
-    } else {
-      Err(violations_agg)
+      ctx.add_required_violation();
     }
   }
 }
