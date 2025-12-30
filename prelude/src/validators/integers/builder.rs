@@ -35,10 +35,10 @@ where
   gte: Option<Num::RustType>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<&'static StaticLookup<Num::RustType>>,
+  in_: Option<StaticLookup<Num::RustType>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<&'static StaticLookup<Num::RustType>>,
+  not_in: Option<StaticLookup<Num::RustType>>,
 }
 
 impl<S, N> From<IntValidatorBuilder<N, S>> for ProtoOption
@@ -238,7 +238,7 @@ where
 
   pub fn not_in(
     self,
-    list: &'static StaticLookup<Num::RustType>,
+    list: impl IntoIterator<Item = Num::RustType>,
   ) -> IntValidatorBuilder<Num, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -254,12 +254,15 @@ where
       lte: self.lte,
       gt: self.gt,
       gte: self.gte,
-      not_in: Some(list),
+      not_in: Some(StaticLookup::new(list)),
       in_: self.in_,
     }
   }
 
-  pub fn in_(self, list: &'static StaticLookup<Num::RustType>) -> IntValidatorBuilder<Num, SetIn<S>>
+  pub fn in_(
+    self,
+    list: impl IntoIterator<Item = Num::RustType>,
+  ) -> IntValidatorBuilder<Num, SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -274,7 +277,7 @@ where
       lte: self.lte,
       gt: self.gt,
       gte: self.gte,
-      in_: Some(list),
+      in_: Some(StaticLookup::new(list)),
       not_in: self.not_in,
     }
   }

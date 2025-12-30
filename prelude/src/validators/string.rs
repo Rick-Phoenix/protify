@@ -54,10 +54,10 @@ pub struct StringValidator {
   pub not_contains: Option<Arc<str>>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static StaticLookup<&'static str>>,
+  pub in_: Option<StaticLookup<&'static str>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static StaticLookup<&'static str>>,
+  pub not_in: Option<StaticLookup<&'static str>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Arc<str>>,
@@ -105,7 +105,7 @@ impl Validator<String> for StringValidator {
       errors.push("`contains` and `not_contains` have the same value".to_string());
     }
 
-    if let Err(e) = check_list_rules(self.in_, self.not_in) {
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
       errors.push(e.to_string());
     }
 

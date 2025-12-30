@@ -16,10 +16,10 @@ pub struct DurationValidatorBuilder<S: State = Empty> {
   required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<&'static StaticLookup<Duration>>,
+  in_: Option<StaticLookup<Duration>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<&'static StaticLookup<Duration>>,
+  not_in: Option<StaticLookup<Duration>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<Duration>,
@@ -112,7 +112,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
-  pub fn in_(self, val: &'static StaticLookup<Duration>) -> DurationValidatorBuilder<SetIn<S>>
+  pub fn in_(self, val: impl IntoIterator<Item = Duration>) -> DurationValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -121,7 +121,7 @@ impl<S: State> DurationValidatorBuilder<S> {
       cel: self.cel,
       ignore: self.ignore,
       required: self.required,
-      in_: Some(val),
+      in_: Some(StaticLookup::new(val)),
       not_in: self.not_in,
       const_: self.const_,
       lt: self.lt,
@@ -131,7 +131,10 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
-  pub fn not_in(self, val: &'static StaticLookup<Duration>) -> DurationValidatorBuilder<SetNotIn<S>>
+  pub fn not_in(
+    self,
+    val: impl IntoIterator<Item = Duration>,
+  ) -> DurationValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
@@ -141,7 +144,7 @@ impl<S: State> DurationValidatorBuilder<S> {
       ignore: self.ignore,
       required: self.required,
       in_: self.in_,
-      not_in: Some(val),
+      not_in: Some(StaticLookup::new(val)),
       const_: self.const_,
       lt: self.lt,
       lte: self.lte,

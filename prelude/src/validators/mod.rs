@@ -184,8 +184,8 @@ pub use timestamp::*;
 
 #[cfg(feature = "testing")]
 pub(crate) fn check_list_rules<T>(
-  in_list: Option<&'static StaticLookup<T>>,
-  not_in_list: Option<&'static StaticLookup<T>>,
+  in_list: Option<&StaticLookup<T>>,
+  not_in_list: Option<&StaticLookup<T>>,
 ) -> Result<(), OverlappingListsError<T>>
 where
   T: Debug + PartialEq + Eq + Hash + Ord + Clone + ListFormatter,

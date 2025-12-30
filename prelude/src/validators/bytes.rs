@@ -46,10 +46,10 @@ pub struct BytesValidator {
   pub contains: Option<Bytes>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static StaticLookup<&'static [u8]>>,
+  pub in_: Option<StaticLookup<&'static [u8]>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static StaticLookup<&'static [u8]>>,
+  pub not_in: Option<StaticLookup<&'static [u8]>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Bytes>,
@@ -118,7 +118,7 @@ impl Validator<Bytes> for BytesValidator {
       let _ = regex.is_match(b"abc");
     }
 
-    if let Err(e) = check_list_rules(self.in_, self.not_in) {
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
       errors.push(e.to_string());
     }
 

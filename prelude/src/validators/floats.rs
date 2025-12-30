@@ -50,10 +50,10 @@ where
   pub gte: Option<Num::RustType>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static StaticLookup<OrderedFloat<Num::RustType>>>,
+  pub in_: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static StaticLookup<OrderedFloat<Num::RustType>>>,
+  pub not_in: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
 }
 
 pub(crate) fn float_in_list<T>(target: T, list: &[OrderedFloat<T>], abs_tol: T, r2nd_tol: T) -> bool
@@ -90,8 +90,8 @@ where
 }
 
 pub(crate) fn check_float_list_rules<T>(
-  in_list: Option<&'static [OrderedFloat<T>]>,
-  not_in_list: Option<&'static [OrderedFloat<T>]>,
+  in_list: Option<&[OrderedFloat<T>]>,
+  not_in_list: Option<&[OrderedFloat<T>]>,
   abs_tol: T,
   r2nd_tol: T,
 ) -> Result<(), OverlappingListsError<T>>
@@ -150,8 +150,8 @@ where
     }
 
     if let Err(e) = check_float_list_rules(
-      self.in_.map(|l| l.items.as_slice()),
-      self.not_in.map(|l| l.items.as_slice()),
+      self.in_.as_ref().map(|l| l.items.as_slice()),
+      self.not_in.as_ref().map(|l| l.items.as_slice()),
       self.abs_tolerance,
       self.rel_tolerance,
     ) {

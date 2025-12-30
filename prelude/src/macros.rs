@@ -43,28 +43,6 @@ macro_rules! proto_file {
   };
 }
 
-#[macro_export]
-macro_rules! static_list {
-  ($items:expr) => {{
-    use ::prelude::StaticLookup;
-    use std::sync::LazyLock;
-
-    LazyLock::new(|| StaticLookup::new($items))
-  }};
-}
-
-#[macro_export]
-macro_rules! inline_static_list {
-  ($typ:ty, $items:expr) => {{
-    use ::prelude::StaticLookup;
-    use std::sync::LazyLock;
-
-    static LIST: LazyLock<StaticLookup<$typ>> = $crate::static_list!($items);
-
-    &LIST
-  }};
-}
-
 #[cfg(feature = "regex")]
 #[macro_export]
 macro_rules! regex {

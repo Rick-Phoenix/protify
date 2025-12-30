@@ -44,10 +44,10 @@ where
   gte: Option<Num::RustType>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<&'static StaticLookup<OrderedFloat<Num::RustType>>>,
+  in_: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<&'static StaticLookup<OrderedFloat<Num::RustType>>>,
+  not_in: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
 }
 
 impl<Num, S> FloatValidatorBuilder<Num, S>
@@ -333,7 +333,7 @@ where
 
   pub fn not_in(
     self,
-    list: &'static StaticLookup<OrderedFloat<Num::RustType>>,
+    list: impl IntoIterator<Item = Num::RustType>,
   ) -> FloatValidatorBuilder<Num, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -352,14 +352,14 @@ where
       lte: self.lte,
       gt: self.gt,
       gte: self.gte,
-      not_in: Some(list),
+      not_in: Some(StaticLookup::new(list.into_iter().map(OrderedFloat))),
       in_: self.in_,
     }
   }
 
   pub fn in_(
     self,
-    list: &'static StaticLookup<OrderedFloat<Num::RustType>>,
+    list: impl IntoIterator<Item = Num::RustType>,
   ) -> FloatValidatorBuilder<Num, SetIn<S>>
   where
     S::In: IsUnset,
@@ -378,7 +378,7 @@ where
       lte: self.lte,
       gt: self.gt,
       gte: self.gte,
-      in_: Some(list),
+      in_: Some(StaticLookup::new(list.into_iter().map(OrderedFloat))),
       not_in: self.not_in,
     }
   }

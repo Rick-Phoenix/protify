@@ -19,10 +19,10 @@ pub struct DurationValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static StaticLookup<Duration>>,
+  pub in_: Option<StaticLookup<Duration>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static StaticLookup<Duration>>,
+  pub not_in: Option<StaticLookup<Duration>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Duration>,
@@ -62,7 +62,7 @@ impl Validator<Duration> for DurationValidator {
       errors.extend(e.into_iter().map(|e| e.to_string()));
     }
 
-    if let Err(e) = check_list_rules(self.in_, self.not_in) {
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
       errors.push(e.to_string());
     }
 
@@ -123,7 +123,7 @@ impl Validator<Duration> for DurationValidator {
         );
       }
 
-      if let Some(allowed_list) = self.in_
+      if let Some(allowed_list) = &self.in_
         && !val.is_in(&allowed_list.items)
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
@@ -131,7 +131,7 @@ impl Validator<Duration> for DurationValidator {
         ctx.add_violation(&DURATION_IN_VIOLATION, &err);
       }
 
-      if let Some(forbidden_list) = self.not_in
+      if let Some(forbidden_list) = &self.not_in
         && val.is_in(&forbidden_list.items)
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();

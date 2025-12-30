@@ -43,10 +43,10 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
   contains: Option<Bytes>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<&'static StaticLookup<&'static [u8]>>,
+  in_: Option<StaticLookup<&'static [u8]>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<&'static StaticLookup<&'static [u8]>>,
+  not_in: Option<StaticLookup<&'static [u8]>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<Bytes>,
@@ -358,7 +358,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 
   pub fn not_in(
     self,
-    list: &'static StaticLookup<&'static [u8]>,
+    list: impl IntoIterator<Item = &'static [u8]>,
   ) -> BytesValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -378,12 +378,12 @@ impl<S: State> BytesValidatorBuilder<S> {
       suffix: self.suffix,
       contains: self.contains,
       in_: self.in_,
-      not_in: Some(list),
+      not_in: Some(StaticLookup::new(list)),
       const_: self.const_,
     }
   }
 
-  pub fn in_(self, list: &'static StaticLookup<&'static [u8]>) -> BytesValidatorBuilder<SetIn<S>>
+  pub fn in_(self, list: impl IntoIterator<Item = &'static [u8]>) -> BytesValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -401,7 +401,7 @@ impl<S: State> BytesValidatorBuilder<S> {
       prefix: self.prefix,
       suffix: self.suffix,
       contains: self.contains,
-      in_: Some(list),
+      in_: Some(StaticLookup::new(list)),
       not_in: self.not_in,
       const_: self.const_,
     }

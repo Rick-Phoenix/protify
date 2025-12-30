@@ -20,10 +20,10 @@ pub struct EnumValidator<T: ProtoEnum> {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static StaticLookup<i32>>,
+  pub in_: Option<StaticLookup<i32>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static StaticLookup<i32>>,
+  pub not_in: Option<StaticLookup<i32>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
@@ -63,11 +63,11 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       errors.extend(e.into_iter().map(|e| e.to_string()));
     }
 
-    if let Err(e) = check_list_rules(self.in_, self.not_in) {
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
       errors.push(e.to_string());
     }
 
-    if let Some(in_list) = self.in_ {
+    if let Some(in_list) = &self.in_ {
       for num in in_list.items.iter() {
         if T::try_from(*num).is_err() {
           errors.push(format!(

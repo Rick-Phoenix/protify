@@ -109,7 +109,7 @@ impl ListFormatter for Duration {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StaticLookup<T: Ord + ListFormatter> {
   pub items: SortedList<T>,
   pub items_str: String,

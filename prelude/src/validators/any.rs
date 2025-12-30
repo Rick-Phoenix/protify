@@ -19,10 +19,10 @@ pub struct AnyValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static StaticLookup<&'static str>>,
+  pub in_: Option<StaticLookup<&'static str>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static StaticLookup<&'static str>>,
+  pub not_in: Option<StaticLookup<&'static str>>,
 }
 
 impl Validator<Any> for AnyValidator {
@@ -47,7 +47,7 @@ impl Validator<Any> for AnyValidator {
       errors.extend(e.into_iter().map(|e| e.to_string()));
     }
 
-    if let Err(e) = check_list_rules(self.in_, self.not_in) {
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
       errors.push(e.to_string());
     }
 

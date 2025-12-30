@@ -16,13 +16,13 @@ pub struct FieldMaskValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<&'static StaticLookup<&'static str>>,
+  pub in_: Option<StaticLookup<&'static str>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<&'static StaticLookup<&'static str>>,
+  pub not_in: Option<StaticLookup<&'static str>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<&'static StaticLookup<&'static str>>,
+  pub const_: Option<StaticLookup<&'static str>>,
 }
 
 impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
@@ -56,7 +56,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
       errors.extend(e.into_iter().map(|e| e.to_string()));
     }
 
-    if let Err(e) = check_list_rules(self.in_, self.not_in) {
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
       errors.push(e.to_string());
     }
 
@@ -71,7 +71,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
     handle_ignore_always!(&self.ignore);
 
     if let Some(val) = val {
-      if let Some(const_val) = self.const_ {
+      if let Some(const_val) = &self.const_ {
         let const_val_len = const_val.items.len();
 
         let is_valid = if const_val_len != val.paths.len() {
@@ -93,7 +93,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
         }
       }
 
-      if let Some(allowed_paths) = self.in_ {
+      if let Some(allowed_paths) = &self.in_ {
         for path in &val.paths {
           if !allowed_paths.items.contains(&path.as_str()) {
             let err = ["can only contain these paths: ", &allowed_paths.items_str].concat();
@@ -105,7 +105,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
         }
       }
 
-      if let Some(forbidden_paths) = self.not_in {
+      if let Some(forbidden_paths) = &self.not_in {
         for path in &val.paths {
           if forbidden_paths.items.contains(&path.as_str()) {
             let err = [
@@ -141,10 +141,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
 impl FieldMaskValidator {
   #[inline]
-  fn validate_exact_small(
-    const_val: &'static SortedList<&'static str>,
-    input_paths: &[String],
-  ) -> bool {
+  fn validate_exact_small(const_val: &SortedList<&'static str>, input_paths: &[String]) -> bool {
     let mut visited_mask: u64 = 0;
 
     for path in input_paths {
@@ -168,7 +165,7 @@ impl FieldMaskValidator {
   // Only used in the rare case that a FieldMask has more than 64 paths in it
   #[inline]
   fn validate_exact_large(
-    const_val: &'static SortedList<&'static str>,
+    const_val: &SortedList<&'static str>,
     input_paths: &[String],
     len: usize,
   ) -> bool {

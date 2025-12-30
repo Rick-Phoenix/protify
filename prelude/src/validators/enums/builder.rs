@@ -19,10 +19,10 @@ pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
   required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<&'static StaticLookup<i32>>,
+  in_: Option<StaticLookup<i32>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<&'static StaticLookup<i32>>,
+  not_in: Option<StaticLookup<i32>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<i32>,
@@ -131,7 +131,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
-  pub fn in_(self, val: &'static StaticLookup<i32>) -> EnumValidatorBuilder<T, SetIn<S>>
+  pub fn in_(self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -142,13 +142,13 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
       ignore: self.ignore,
       defined_only: self.defined_only,
       required: self.required,
-      in_: Some(val),
+      in_: Some(StaticLookup::new(val)),
       not_in: self.not_in,
       const_: self.const_,
     }
   }
 
-  pub fn not_in(self, val: &'static StaticLookup<i32>) -> EnumValidatorBuilder<T, SetNotIn<S>>
+  pub fn not_in(self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
@@ -160,7 +160,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
       defined_only: self.defined_only,
       required: self.required,
       in_: self.in_,
-      not_in: Some(val),
+      not_in: Some(StaticLookup::new(val)),
       const_: self.const_,
     }
   }
