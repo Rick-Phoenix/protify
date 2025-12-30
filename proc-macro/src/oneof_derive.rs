@@ -1,5 +1,3 @@
-use syn_utils::EnumVariant;
-
 use crate::*;
 
 pub fn process_oneof_derive(item: &mut ItemEnum, is_direct: bool) -> Result<TokenStream2, Error> {

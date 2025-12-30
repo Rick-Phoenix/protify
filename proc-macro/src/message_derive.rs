@@ -1,5 +1,3 @@
-use syn_utils::AsNamedField;
-
 use crate::*;
 
 #[derive(Default)]

@@ -25,11 +25,7 @@ use syn::{
   spanned::Spanned,
   token,
 };
-use syn_utils::{
-  AsNamedField, CallOrClosure, ExprExt, MetaType, NumList, ParseNestedMetaExt, PathOrClosure,
-  RustType, StringList, TypeInfo, bail, bail_with_span, error, error_with_span,
-  parse_filtered_attrs,
-};
+use syn_utils::*;
 
 use crate::{
   common_impls::*, enum_derive::*, extension_derive::*, impls::*, item_cloners::*,

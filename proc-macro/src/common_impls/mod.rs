@@ -1,6 +1,3 @@
-mod field_or_variant;
-pub use field_or_variant::*;
-
 use crate::*;
 
 pub fn wrap_with_imports(tokens: Vec<TokenStream2>) -> TokenStream2 {
