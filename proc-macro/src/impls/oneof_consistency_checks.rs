@@ -25,8 +25,8 @@ where
   quote! {
     #[cfg(test)]
     impl #oneof_ident {
-      pub fn check_validators_consistency() -> Result<(), Vec<String>> {
-        let mut errors: Vec<(&'static str, Vec<String>)> = Vec::new();
+      pub fn check_validators_consistency() -> Result<(), Vec<ConsistencyError>> {
+        let mut errors: Vec<(&'static str, Vec<ConsistencyError>)> = Vec::new();
 
         #(
           let (field_name, check) = #consistency_checks;
@@ -39,7 +39,14 @@ where
         if errors.is_empty() {
           Ok(())
         } else {
-          Err(::prelude::test_utils::format_oneof_errors(stringify!(#oneof_ident), errors))
+          Err(
+            vec![::prelude::ConsistencyError::OneofErrors(
+              ::prelude::OneofErrors {
+                oneof_name: stringify!(#oneof_ident),
+                errors
+              }
+            )]
+          )
         }
       }
     }

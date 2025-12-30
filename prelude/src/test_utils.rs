@@ -3,7 +3,7 @@ use crate::*;
 #[must_use]
 pub fn format_oneof_errors(
   oneof_name: &'static str,
-  errors: Vec<(&'static str, Vec<String>)>,
+  errors: Vec<(&'static str, Vec<ConsistencyError>)>,
 ) -> Vec<String> {
   let mut errors_vec = Vec::new();
 
@@ -30,7 +30,7 @@ pub fn format_oneof_errors(
 
 pub struct MessageTestError {
   pub message_full_name: &'static str,
-  pub field_errors: Vec<(&'static str, Vec<String>)>,
+  pub field_errors: Vec<(&'static str, Vec<ConsistencyError>)>,
   pub cel_errors: Vec<CelError>,
 }
 

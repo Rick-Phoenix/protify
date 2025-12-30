@@ -62,7 +62,7 @@ where
 
       impl #item_ident {
         pub(crate) fn check_validators_consistency() -> Result<(), ::prelude::test_utils::MessageTestError> {
-          let mut field_errors: Vec<(&'static str, Vec<String>)> = Vec::new();
+          let mut field_errors: Vec<(&'static str, Vec<ConsistencyError>)> = Vec::new();
           let mut cel_errors: Vec<::prelude::CelError> = Vec::new();
 
           #(

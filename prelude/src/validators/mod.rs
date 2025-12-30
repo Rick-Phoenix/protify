@@ -313,4 +313,34 @@ pub enum ConsistencyError {
   CelError(#[from] CelError),
   #[error("{0}")]
   ContradictoryInput(String),
+  #[error(transparent)]
+  OneofErrors(#[from] OneofErrors),
+}
+
+#[derive(Debug)]
+pub struct OneofErrors {
+  pub oneof_name: &'static str,
+  pub errors: Vec<(&'static str, Vec<ConsistencyError>)>,
+}
+
+impl core::error::Error for OneofErrors {}
+
+impl Display for OneofErrors {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    for (variant_name, errs) in &self.errors {
+      let _ = writeln!(
+        f,
+        "{}{}{}:",
+        self.oneof_name.bright_cyan(),
+        "::".bright_cyan(),
+        variant_name.bright_cyan()
+      );
+
+      for err in errs {
+        let _ = writeln!(f, "        - {err}");
+      }
+    }
+
+    Ok(())
+  }
 }
