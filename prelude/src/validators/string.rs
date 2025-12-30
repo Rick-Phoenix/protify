@@ -97,7 +97,7 @@ impl Validator<String> for StringValidator {
   impl_testing_methods!();
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
     macro_rules! check_prop_some {
@@ -125,23 +125,25 @@ impl Validator<String> for StringValidator {
         )
         || self.has_pattern())
     {
-      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+      errors.push(ConsistencyError::ConstWithOtherRules);
     }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(|e| e.to_string()));
+      errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
     if let Some(contains) = self.contains.as_ref()
       && let Some(not_contains) = self.not_contains.as_ref()
       && contains == not_contains
     {
-      errors.push("`contains` and `not_contains` have the same value".to_string());
+      errors.push(ConsistencyError::ContradictoryInput(
+        "`contains` and `not_contains` have the same value".to_string(),
+      ));
     }
 
     if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.to_string());
+      errors.push(e.into());
     }
 
     if let Err(e) = check_length_rules(

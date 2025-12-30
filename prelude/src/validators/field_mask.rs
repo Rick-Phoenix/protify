@@ -48,7 +48,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
   }
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
     macro_rules! check_prop_some {
@@ -58,16 +58,16 @@ impl Validator<FieldMask> for FieldMaskValidator {
     }
 
     if self.const_.is_some() && (!self.cel.is_empty() || check_prop_some!(in_, not_in)) {
-      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+      errors.push(ConsistencyError::ConstWithOtherRules);
     }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(|e| e.to_string()));
+      errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
     if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.to_string());
+      errors.push(e.into());
     }
 
     if errors.is_empty() {

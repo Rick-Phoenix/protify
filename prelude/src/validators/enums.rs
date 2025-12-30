@@ -55,7 +55,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
   }
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
     macro_rules! check_prop_some {
@@ -67,25 +67,25 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     if self.const_.is_some()
       && (!self.cel.is_empty() || self.defined_only || check_prop_some!(in_, not_in))
     {
-      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+      errors.push(ConsistencyError::ConstWithOtherRules);
     }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(|e| e.to_string()));
+      errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
     if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.to_string());
+      errors.push(e.into());
     }
 
     if let Some(in_list) = &self.in_ {
       for num in in_list.items.iter() {
         if T::try_from(*num).is_err() {
-          errors.push(format!(
+          errors.push(ConsistencyError::ContradictoryInput(format!(
             "Number {num} is in the allowed list but it does not belong to the enum {}",
             T::full_name()
-          ));
+          )));
         }
       }
     }

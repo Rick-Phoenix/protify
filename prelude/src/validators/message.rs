@@ -59,12 +59,12 @@ where
   impl_testing_methods!();
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(|e| e.to_string()));
+      errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
     if errors.is_empty() {

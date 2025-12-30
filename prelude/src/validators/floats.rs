@@ -146,7 +146,7 @@ where
   impl_testing_methods!();
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
     macro_rules! check_prop_some {
@@ -158,12 +158,12 @@ where
     if self.const_.is_some()
       && (!self.cel.is_empty() || self.finite || check_prop_some!(in_, not_in, lt, lte, gt, gte))
     {
-      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+      errors.push(ConsistencyError::ConstWithOtherRules);
     }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(|e| e.to_string()));
+      errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
     if let Err(e) = check_float_list_rules(
@@ -172,11 +172,11 @@ where
       self.abs_tolerance,
       self.rel_tolerance,
     ) {
-      errors.push(e.to_string());
+      errors.push(e.into());
     }
 
     if let Err(e) = check_comparable_rules(self.lt, self.lte, self.gt, self.gte) {
-      errors.push(e.to_string());
+      errors.push(e);
     }
 
     if errors.is_empty() {

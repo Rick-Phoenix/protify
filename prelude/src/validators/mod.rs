@@ -32,7 +32,7 @@ pub trait Validator<T>: Into<ProtoOption> {
   }
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>>;
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>>;
 
   #[cfg(all(feature = "testing", feature = "cel"))]
   fn check_cel_programs_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>>;
@@ -237,35 +237,38 @@ impl Display for OverlappingListsError {
   }
 }
 
+#[allow(clippy::useless_let_if_seq)]
 #[cfg(feature = "testing")]
 pub(crate) fn check_comparable_rules<T>(
   lt: Option<T>,
   lte: Option<T>,
   gt: Option<T>,
   gte: Option<T>,
-) -> Result<(), &'static str>
+) -> Result<(), ConsistencyError>
 where
   T: Display + PartialEq + PartialOrd + Copy,
 {
+  let mut err: Option<&str> = None;
+
   if lt.is_some() && lte.is_some() {
-    return Err("Lt and Lte cannot be used together.");
+    err = Some("Lt and Lte cannot be used together.");
   }
 
   if gt.is_some() && gte.is_some() {
-    return Err("Gt and Gte cannot be used together.");
+    err = Some("Gt and Gte cannot be used together.");
   }
 
   if let Some(lt) = lt {
     if let Some(gt) = gt
       && lt <= gt
     {
-      return Err("Lt cannot be smaller than or equal to Gt");
+      err = Some("Lt cannot be smaller than or equal to Gt");
     }
 
     if let Some(gte) = gte
       && lt <= gte
     {
-      return Err("Lte cannot be smaller than or equal to Gte");
+      err = Some("Lte cannot be smaller than or equal to Gte");
     }
   }
 
@@ -273,17 +276,21 @@ where
     if let Some(gt) = gt
       && lte <= gt
     {
-      return Err("Lte cannot be smaller than or equal to Gt");
+      err = Some("Lte cannot be smaller than or equal to Gt");
     }
 
     if let Some(gte) = gte
       && lte < gte
     {
-      return Err("Lte cannot be smaller than Gte");
+      err = Some("Lte cannot be smaller than Gte");
     }
   }
 
-  Ok(())
+  if let Some(err) = err {
+    Err(ConsistencyError::ContradictoryInput(err.to_string()))
+  } else {
+    Ok(())
+  }
 }
 
 #[cfg(feature = "cel")]
@@ -304,4 +311,6 @@ pub enum ConsistencyError {
   OverlappingLists(#[from] OverlappingListsError),
   #[error(transparent)]
   CelError(#[from] CelError),
+  #[error("{0}")]
+  ContradictoryInput(String),
 }

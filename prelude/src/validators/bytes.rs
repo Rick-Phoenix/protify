@@ -79,16 +79,22 @@ pub(crate) fn check_length_rules(
   exact: Option<&LengthRuleValue>,
   min: &LengthRuleValue,
   max: &LengthRuleValue,
-) -> Result<(), String> {
+) -> Result<(), ConsistencyError> {
   if let Some(exact) = exact
     && exact.value.is_some()
   {
     if min.value.is_some() {
-      return Err(format!("{} cannot be used with {}", exact.name, min.name));
+      return Err(ConsistencyError::ContradictoryInput(format!(
+        "{} cannot be used with {}",
+        exact.name, min.name
+      )));
     }
 
     if max.value.is_some() {
-      return Err(format!("{} cannot be used with {}", exact.name, max.name));
+      return Err(ConsistencyError::ContradictoryInput(format!(
+        "{} cannot be used with {}",
+        exact.name, max.name
+      )));
     }
   }
 
@@ -96,7 +102,10 @@ pub(crate) fn check_length_rules(
     && let Some(max_value) = max.value
     && min_value > max_value
   {
-    return Err(format!("{} cannot be greater than {}", min.name, max.name));
+    return Err(ConsistencyError::ContradictoryInput(format!(
+      "{} cannot be greater than {}",
+      min.name, max.name
+    )));
   }
 
   Ok(())
@@ -117,7 +126,7 @@ impl Validator<Bytes> for BytesValidator {
   }
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
     macro_rules! check_prop_some {
@@ -133,16 +142,16 @@ impl Validator<Bytes> for BytesValidator {
         )
         || self.has_pattern())
     {
-      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+      errors.push(ConsistencyError::ConstWithOtherRules);
     }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(|e| e.to_string()));
+      errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
     if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.to_string());
+      errors.push(e.into());
     }
 
     if let Err(e) = check_length_rules(

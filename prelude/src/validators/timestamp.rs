@@ -59,7 +59,7 @@ impl Validator<Timestamp> for TimestampValidator {
   }
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
     macro_rules! check_prop_some {
@@ -74,28 +74,34 @@ impl Validator<Timestamp> for TimestampValidator {
         || self.gt_now
         || check_prop_some!(within, lt, lte, gt, gte))
     {
-      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+      errors.push(ConsistencyError::ConstWithOtherRules);
     }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(|e| e.to_string()));
+      errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
     if let Err(e) = check_comparable_rules(self.lt, self.lte, self.gt, self.gte) {
-      errors.push(e.to_string());
+      errors.push(e);
     }
 
     if self.gt_now && self.lt_now {
-      errors.push("`lt_now` and `gt_now` cannot be used together".to_string())
+      errors.push(ConsistencyError::ContradictoryInput(
+        "`lt_now` and `gt_now` cannot be used together".to_string(),
+      ));
     }
 
     if self.gt_now && (self.gt.is_some() || self.gte.is_some()) {
-      errors.push("`gt_now` cannot be used with `gt` or `gte`".to_string());
+      errors.push(ConsistencyError::ContradictoryInput(
+        "`gt_now` cannot be used with `gt` or `gte`".to_string(),
+      ));
     }
 
     if self.lt_now && (self.lt.is_some() || self.lte.is_some()) {
-      errors.push("`lt_now` cannot be used with `lt` or `lte`".to_string());
+      errors.push(ConsistencyError::ContradictoryInput(
+        "`lt_now` cannot be used with `lt` or `lte`".to_string(),
+      ));
     }
 
     if errors.is_empty() {

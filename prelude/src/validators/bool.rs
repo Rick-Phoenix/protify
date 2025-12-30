@@ -24,7 +24,7 @@ impl Validator<bool> for BoolValidator {
   }
 
   #[cfg(feature = "testing")]
-  fn check_consistency(&self) -> Result<(), Vec<String>> {
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     Ok(())
   }
 
