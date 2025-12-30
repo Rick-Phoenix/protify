@@ -1,4 +1,4 @@
-mod cel_checks_tests;
+mod cel_tests;
 mod maps_tests;
 mod oneof_tags_tests;
 mod rendering_tests;

@@ -1,33 +1,5 @@
 use crate::*;
 
-#[must_use]
-pub fn format_oneof_errors(
-  oneof_name: &'static str,
-  errors: Vec<(&'static str, Vec<ConsistencyError>)>,
-) -> Vec<String> {
-  let mut errors_vec = Vec::new();
-
-  for (variant_name, errs) in errors {
-    let mut error = String::new();
-
-    let _ = writeln!(
-      error,
-      "{}{}{}:",
-      oneof_name.bright_cyan(),
-      "::".bright_cyan(),
-      variant_name.bright_cyan()
-    );
-
-    for err in errs {
-      let _ = writeln!(error, "        - {err}");
-    }
-
-    errors_vec.push(error);
-  }
-
-  errors_vec
-}
-
 pub struct MessageTestError {
   pub message_full_name: &'static str,
   pub field_errors: Vec<(&'static str, Vec<ConsistencyError>)>,
