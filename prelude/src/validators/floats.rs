@@ -94,7 +94,7 @@ pub(crate) fn check_float_list_rules<T>(
   not_in_list: Option<&[OrderedFloat<T>]>,
   abs_tol: T,
   r2nd_tol: T,
-) -> Result<(), OverlappingListsError<T>>
+) -> Result<(), OverlappingListsError>
 where
   T: FloatCore + Debug + FloatEq<Tol = T>,
 {
@@ -114,7 +114,12 @@ where
     if overlapping.is_empty() {
       return Ok(());
     } else {
-      return Err(OverlappingListsError { overlapping });
+      return Err(OverlappingListsError {
+        overlapping: overlapping
+          .into_iter()
+          .map(|i| format!("{i:#?}"))
+          .collect(),
+      });
     }
   }
 
@@ -143,6 +148,18 @@ where
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
+
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some()
+      && (!self.cel.is_empty() || self.finite || check_prop_some!(in_, not_in, lt, lte, gt, gte))
+    {
+      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+    }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {

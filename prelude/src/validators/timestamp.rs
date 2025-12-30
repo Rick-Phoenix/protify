@@ -62,6 +62,21 @@ impl Validator<Timestamp> for TimestampValidator {
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
 
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some()
+      && (!self.cel.is_empty()
+        || self.lt_now
+        || self.gt_now
+        || check_prop_some!(within, lt, lte, gt, gte))
+    {
+      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+    }
+
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
       errors.extend(e.into_iter().map(|e| e.to_string()));

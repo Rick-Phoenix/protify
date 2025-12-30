@@ -55,6 +55,19 @@ pub struct BytesValidator {
   pub const_: Option<Bytes>,
 }
 
+impl BytesValidator {
+  const fn has_pattern(&self) -> bool {
+    #[cfg(feature = "regex")]
+    {
+      self.pattern.is_some()
+    }
+    #[cfg(not(feature = "regex"))]
+    {
+      false
+    }
+  }
+}
+
 #[cfg(feature = "testing")]
 pub(crate) struct LengthRuleValue {
   pub name: &'static str,
@@ -106,6 +119,22 @@ impl Validator<Bytes> for BytesValidator {
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
+
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some()
+      && (!self.cel.is_empty()
+        || check_prop_some!(
+          len, min_len, max_len, prefix, suffix, contains, in_, not_in, well_known
+        )
+        || self.has_pattern())
+    {
+      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+    }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {

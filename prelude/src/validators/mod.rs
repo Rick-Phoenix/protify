@@ -186,7 +186,7 @@ pub use timestamp::*;
 pub(crate) fn check_list_rules<T>(
   in_list: Option<&StaticLookup<T>>,
   not_in_list: Option<&StaticLookup<T>>,
-) -> Result<(), OverlappingListsError<T>>
+) -> Result<(), OverlappingListsError>
 where
   T: Debug + PartialEq + Eq + Hash + Ord + Clone + ListFormatter,
 {
@@ -206,23 +206,31 @@ where
     if overlapping.is_empty() {
       return Ok(());
     } else {
-      return Err(OverlappingListsError { overlapping });
+      return Err(OverlappingListsError {
+        overlapping: overlapping
+          .into_iter()
+          .map(|i| format!("{i:#?}"))
+          .collect(),
+      });
     }
   }
 
   Ok(())
 }
 
-pub(crate) struct OverlappingListsError<T: Debug> {
-  pub overlapping: Vec<T>,
+#[derive(Debug)]
+pub struct OverlappingListsError {
+  pub overlapping: Vec<String>,
 }
 
-impl<T: Debug> Display for OverlappingListsError<T> {
+impl core::error::Error for OverlappingListsError {}
+
+impl Display for OverlappingListsError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "The following values are both allowed and forbidden:")?;
 
     for item in &self.overlapping {
-      let _ = writeln!(f, "  - {item:#?}");
+      let _ = writeln!(f, "  - {item}");
     }
 
     Ok(())
@@ -287,3 +295,13 @@ impl<T: Into<::cel::Value>> IntoCel for T {}
 pub trait IntoCel {}
 #[cfg(not(feature = "cel"))]
 impl<T> IntoCel for T {}
+
+#[derive(Debug, Error)]
+pub enum ConsistencyError {
+  #[error("`const` cannot be used with other rules")]
+  ConstWithOtherRules,
+  #[error(transparent)]
+  OverlappingLists(#[from] OverlappingListsError),
+  #[error(transparent)]
+  CelError(#[from] CelError),
+}

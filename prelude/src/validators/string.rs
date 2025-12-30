@@ -63,6 +63,19 @@ pub struct StringValidator {
   pub const_: Option<Arc<str>>,
 }
 
+impl StringValidator {
+  const fn has_pattern(&self) -> bool {
+    #[cfg(feature = "regex")]
+    {
+      self.pattern.is_some()
+    }
+    #[cfg(not(feature = "regex"))]
+    {
+      false
+    }
+  }
+}
+
 #[cfg(feature = "regex")]
 pub type CachedRegex = LazyLock<Regex>;
 
@@ -86,6 +99,34 @@ impl Validator<String> for StringValidator {
   #[cfg(feature = "testing")]
   fn check_consistency(&self) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
+
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some()
+      && (!self.cel.is_empty()
+        || check_prop_some!(
+          in_,
+          not_in,
+          well_known,
+          len,
+          min_len,
+          max_len,
+          len_bytes,
+          min_bytes,
+          max_bytes,
+          suffix,
+          prefix,
+          contains,
+          not_contains
+        )
+        || self.has_pattern())
+    {
+      errors.push(ConsistencyError::ConstWithOtherRules.to_string());
+    }
 
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
