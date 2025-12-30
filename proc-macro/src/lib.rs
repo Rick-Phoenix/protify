@@ -19,7 +19,7 @@ use syn::{
   Attribute, Error, Expr, Field, Fields, Ident, ItemEnum, ItemStruct, Lit, LitStr, Meta, MetaList,
   MetaNameValue, Path, RangeLimits, Token, Type, Variant, Visibility,
   meta::ParseNestedMeta,
-  parse::{Parse, ParseStream, Parser},
+  parse::{Parse, Parser},
   parse_macro_input, parse_quote,
   punctuated::Punctuated,
   spanned::Spanned,

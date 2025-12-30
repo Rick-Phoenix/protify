@@ -15,10 +15,3 @@ macro_rules! get_ident_or_continue {
     }
   };
 }
-
-macro_rules! ident_string {
-  ($item:expr) => {{
-    let item_ident = $item.require_ident()?;
-    item_ident.to_string()
-  }};
-}
