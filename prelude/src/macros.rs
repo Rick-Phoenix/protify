@@ -43,50 +43,6 @@ macro_rules! proto_file {
   };
 }
 
-#[cfg(feature = "regex")]
-#[macro_export]
-macro_rules! regex {
-  ($id:literal, $content:expr) => {
-    std::sync::LazyLock::new(|| {
-      ::regex::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
-    })
-  };
-}
-
-#[cfg(feature = "regex")]
-#[macro_export]
-macro_rules! inline_regex {
-  ($id:literal, $content:expr) => {{
-    static REGEX: std::sync::LazyLock<::regex::Regex> = std::sync::LazyLock::new(|| {
-      ::regex::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
-    });
-
-    &REGEX
-  }};
-}
-
-#[cfg(feature = "regex")]
-#[macro_export]
-macro_rules! bytes_regex {
-  ($id:literal, $content:expr) => {
-    std::sync::LazyLock::new(|| {
-      ::regex::bytes::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
-    })
-  };
-}
-
-#[cfg(feature = "regex")]
-#[macro_export]
-macro_rules! inline_bytes_regex {
-  ($id:literal, $content:expr) => {{
-    static REGEX: std::sync::LazyLock<::regex::bytes::Regex> = std::sync::LazyLock::new(|| {
-      ::regex::bytes::Regex::new($content).expect(concat!("failed to parse regex with id ", $id))
-    });
-
-    &REGEX
-  }};
-}
-
 macro_rules! handle_ignore_always {
   ($ignore:expr) => {
     if matches!($ignore, Ignore::Always) {

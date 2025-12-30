@@ -34,7 +34,7 @@ pub struct BytesValidator {
 
   #[cfg(feature = "regex")]
   /// Specifies a regex pattern that must be matches by the value to pass validation.
-  pub pattern: Option<&'static Regex>,
+  pub pattern: Option<Regex>,
 
   /// Specifies a prefix that the value must start with in order to pass validation.
   pub prefix: Option<Bytes>,
@@ -110,12 +110,6 @@ impl Validator<Bytes> for BytesValidator {
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
       errors.extend(e.into_iter().map(|e| e.to_string()));
-    }
-
-    #[cfg(feature = "regex")]
-    if let Some(regex) = self.pattern {
-      // This checks if a cached regex panics at formation or not
-      let _ = regex.is_match(b"abc");
     }
 
     if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {

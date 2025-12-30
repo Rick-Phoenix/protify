@@ -100,10 +100,10 @@ pub mod inner {
     #[proto(message(AbcProto, boxed))]
     boxed: Option<Box<Self>>,
 
-    #[proto(bytes, validate = |v| v.pattern(inline_bytes_regex!("abc", "abc")))]
+    #[proto(bytes, validate = |v| v.pattern("abc"))]
     pub bytes: Bytes,
 
-    #[proto(tag = 35, validate = |v| v.pattern(inline_regex!("abc", "abc")).in_(["abc"]))]
+    #[proto(tag = 35, validate = |v| v.pattern("abc").in_(["abc"]))]
     name: String,
 
     #[proto(validate = |v| v.min_pairs(0).keys(|k| k.min_len(25)).values(|v| v.lt(25)))]

@@ -40,7 +40,7 @@ pub struct StringValidatorBuilder<S: State = Empty> {
 
   #[cfg(feature = "regex")]
   /// Specifies a regex pattern that this field's value should match in order to be considered valid.
-  pattern: Option<&'static Regex>,
+  pattern: Option<Regex>,
 
   /// Specifies the prefix that this field's value should contain in order to be considered valid.
   prefix: Option<Arc<str>>,
@@ -363,7 +363,8 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[cfg(feature = "regex")]
-  pub fn pattern(self, val: &'static Regex) -> StringValidatorBuilder<SetPattern<S>>
+  #[track_caller]
+  pub fn pattern(self, val: &str) -> StringValidatorBuilder<SetPattern<S>>
   where
     S::Pattern: IsUnset,
   {
@@ -379,7 +380,7 @@ impl<S: State> StringValidatorBuilder<S> {
       len_bytes: self.len_bytes,
       min_bytes: self.min_bytes,
       max_bytes: self.max_bytes,
-      pattern: Some(val),
+      pattern: Some(Regex::new(val).unwrap()),
       prefix: self.prefix,
       suffix: self.suffix,
       contains: self.contains,

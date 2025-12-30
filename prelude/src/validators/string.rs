@@ -39,7 +39,7 @@ pub struct StringValidator {
 
   #[cfg(feature = "regex")]
   /// Specifies a regex pattern that this field's value should match in order to be considered valid.
-  pub pattern: Option<&'static Regex>,
+  pub pattern: Option<Regex>,
 
   /// Specifies the prefix that this field's value should contain in order to be considered valid.
   pub prefix: Option<Arc<str>>,
@@ -90,12 +90,6 @@ impl Validator<String> for StringValidator {
     #[cfg(feature = "cel")]
     if let Err(e) = self.check_cel_programs() {
       errors.extend(e.into_iter().map(|e| e.to_string()));
-    }
-
-    #[cfg(feature = "regex")]
-    if let Some(regex) = self.pattern {
-      // This checks if a cached regex panics at formation or not
-      let _ = regex.is_match("abc");
     }
 
     if let Some(contains) = self.contains.as_ref()
