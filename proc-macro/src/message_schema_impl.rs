@@ -89,14 +89,6 @@ where
     quote! { format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str) }
   };
 
-  let top_level_cel_rules_tokens = if let Some(programs) = top_level_cel_rules {
-    quote! {
-      vec![ #(#programs),* ]
-    }
-  } else {
-    quote! { vec![] }
-  };
-
   output.extend(quote! {
     ::prelude::inventory::submit! {
       ::prelude::RegistryMessage {
@@ -136,7 +128,7 @@ where
 
       fn cel_rules() -> &'static [CelProgram] {
         static PROGRAMS: std::sync::LazyLock<Vec<::prelude::CelProgram>> = std::sync::LazyLock::new(|| {
-          #top_level_cel_rules_tokens
+          #top_level_cel_rules
         });
 
         &PROGRAMS

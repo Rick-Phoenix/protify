@@ -4,7 +4,7 @@ pub fn impl_oneof_validator<T>(oneof_ident: &Ident, variants: &[T]) -> TokenStre
 where
   T: Borrow<FieldData>,
 {
-  let validators_tokens = variants.iter().flat_map(|data| {
+  let validators_tokens = variants.iter().filter_map(|data| {
     let FieldData {
       ident,
       ident_str,

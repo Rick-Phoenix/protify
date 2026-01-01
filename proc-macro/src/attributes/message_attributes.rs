@@ -11,7 +11,7 @@ pub struct MessageAttrs {
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
-  pub cel_rules: Option<Vec<Expr>>,
+  pub cel_rules: IterTokensOr<TokenStream2>,
   pub is_direct: bool,
   pub no_auto_test: bool,
   pub extern_path: Option<String>,
@@ -29,7 +29,7 @@ pub fn process_derive_message_attrs(
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Option<MetaList> = None;
-  let mut cel_rules: Option<Vec<Expr>> = None;
+  let mut cel_rules = IterTokensOr::<TokenStream2>::vec();
   let mut parent_message: Option<Ident> = None;
 
   parse_filtered_attrs(attrs, &["proto"], |meta| {
@@ -37,7 +37,11 @@ pub fn process_derive_message_attrs(
 
     match ident.as_str() {
       "cel_rules" => {
-        cel_rules = Some(meta.parse_list::<PunctuatedItems<Expr>>()?.list);
+        cel_rules.set(
+          meta
+            .parse_list::<PunctuatedItems<TokenStream2>>()?
+            .list,
+        );
       }
       "reserved_names" => {
         let names = meta.parse_list::<StringList>()?;

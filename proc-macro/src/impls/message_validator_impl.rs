@@ -4,7 +4,7 @@ pub fn impl_message_validator<T>(target_ident: &Ident, fields: &[T]) -> TokenStr
 where
   T: Borrow<FieldData>,
 {
-  let validators_tokens = fields.iter().flat_map(|data| {
+  let validators_tokens = fields.iter().filter_map(|data| {
     let FieldData {
       ident,
       type_info,
