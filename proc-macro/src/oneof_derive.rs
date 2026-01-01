@@ -89,7 +89,7 @@ pub(crate) fn process_oneof_derive_shadow(
 
   let oneof_schema_impl = oneof_schema_impl(
     &oneof_attrs,
-    orig_enum_ident,
+    shadow_enum_ident,
     &non_ignored_variants,
     &manually_set_tags,
   );
@@ -124,20 +124,6 @@ pub(crate) fn process_oneof_derive_shadow(
 
     #wrapped_items
     #consistency_checks_impl
-
-    impl ::prelude::ProtoOneof for #shadow_enum_ident {
-      fn name() -> &'static str {
-        <#orig_enum_ident as ::prelude::ProtoOneof>::name()
-      }
-
-      fn tags() -> &'static [i32] {
-        <#orig_enum_ident as ::prelude::ProtoOneof>::tags()
-      }
-
-      fn proto_schema() -> ::prelude::Oneof {
-        <#orig_enum_ident as ::prelude::ProtoOneof>::proto_schema()
-      }
-    }
   });
 
   Ok(output_tokens)

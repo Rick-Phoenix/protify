@@ -12,6 +12,20 @@ pub trait IntoOneof: From<Self::Oneof> + Into<Self::Oneof> {
   }
 }
 
+impl<T: IntoOneof> ProtoOneof for T {
+  fn proto_schema() -> Oneof {
+    T::Oneof::proto_schema()
+  }
+
+  fn name() -> &'static str {
+    T::Oneof::name()
+  }
+
+  fn tags() -> &'static [i32] {
+    T::Oneof::tags()
+  }
+}
+
 pub trait ProtoOneof {
   fn proto_schema() -> Oneof;
 

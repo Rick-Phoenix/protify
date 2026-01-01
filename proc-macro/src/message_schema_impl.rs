@@ -61,7 +61,7 @@ where
 
   let mut output = TokenStream2::new();
 
-  let validation_target = shadow_struct_ident.unwrap_or(orig_struct_ident);
+  let proto_struct = shadow_struct_ident.unwrap_or(orig_struct_ident);
 
   let name_method = if let Some(parent) = parent_message {
     quote! {
@@ -84,8 +84,7 @@ where
   let rust_path_field = if let Some(path) = extern_path {
     quote! { #path.to_string() }
   } else {
-    let rust_ident_str =
-      shadow_struct_ident.map_or_else(|| orig_struct_ident.to_string(), |id| id.to_string());
+    let rust_ident_str = proto_struct.to_string();
 
     quote! { format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str) }
   };
@@ -95,11 +94,11 @@ where
       ::prelude::RegistryMessage {
         package: __PROTO_FILE.package,
         parent_message: #registry_parent_message,
-        message: || #orig_struct_ident::proto_schema()
+        message: || #proto_struct::proto_schema()
       }
     }
 
-    impl ::prelude::AsProtoType for #orig_struct_ident {
+    impl ::prelude::AsProtoType for #proto_struct {
       fn proto_type() -> ::prelude::ProtoType {
         ::prelude::ProtoType::Message(
           <Self as ::prelude::ProtoMessage>::proto_path()
@@ -107,13 +106,13 @@ where
       }
     }
 
-    impl ::prelude::ProtoMessage for #orig_struct_ident {
+    impl ::prelude::ProtoMessage for #proto_struct {
       const PACKAGE: &str = __PROTO_FILE.package;
       const SHORT_NAME: &str = #proto_name;
 
       fn type_url() -> &'static str {
         static URL: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-          format!("/{}.{}", #orig_struct_ident::PACKAGE, #orig_struct_ident::name())
+          format!("/{}.{}", #proto_struct::PACKAGE, #proto_struct::name())
         });
 
         &*URL
@@ -121,7 +120,7 @@ where
 
       fn full_name() -> &'static str {
         static NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-          format!("{}.{}", #orig_struct_ident::PACKAGE, #orig_struct_ident::name())
+          format!("{}.{}", #proto_struct::PACKAGE, #proto_struct::name())
         });
 
         &*NAME
@@ -151,7 +150,7 @@ where
           messages: vec![],
           enums: vec![],
           entries: vec![ #(#entries_tokens,)* ],
-          cel_rules: #validation_target::cel_rules().iter().map(|prog| prog.rule.clone()).collect(),
+          cel_rules: #proto_struct::cel_rules().iter().map(|prog| prog.rule.clone()).collect(),
           rust_path: #rust_path_field
         };
 
@@ -162,35 +161,9 @@ where
 
   if let Some(shadow_struct_ident) = shadow_struct_ident {
     output.extend(quote! {
-      #[allow(clippy::ptr_arg)]
-      impl ::prelude::ProtoMessage for #shadow_struct_ident {
-        const PACKAGE: &str = __PROTO_FILE.package;
-        const SHORT_NAME: &str = #proto_name;
-
-        fn type_url() -> &'static str {
-          <#orig_struct_ident as ::prelude::ProtoMessage>::type_url()
-        }
-
-        fn full_name() -> &'static str {
-          <#orig_struct_ident as ::prelude::ProtoMessage>::full_name()
-        }
-
-        fn proto_path() -> ::prelude::ProtoPath {
-          <#orig_struct_ident as ::prelude::ProtoMessage>::proto_path()
-        }
-
-        fn name() -> &'static str {
-          <#orig_struct_ident as ::prelude::ProtoMessage>::name()
-        }
-
-        fn proto_schema() -> ::prelude::Message {
-          <#orig_struct_ident as ::prelude::ProtoMessage>::proto_schema()
-        }
-      }
-
-      impl ::prelude::AsProtoType for #shadow_struct_ident {
+      impl ::prelude::AsProtoType for #orig_struct_ident {
         fn proto_type() -> ::prelude::ProtoType {
-          <#orig_struct_ident as ::prelude::AsProtoType>::proto_type()
+          <#shadow_struct_ident as ::prelude::AsProtoType>::proto_type()
         }
       }
     });

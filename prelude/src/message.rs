@@ -28,6 +28,31 @@ pub trait IntoMessage: From<Self::Message> + Into<Self::Message> {
   }
 }
 
+impl<T: IntoMessage> ProtoMessage for T {
+  const PACKAGE: &str = T::Message::PACKAGE;
+  const SHORT_NAME: &str = T::Message::SHORT_NAME;
+
+  fn proto_path() -> ProtoPath {
+    T::Message::proto_path()
+  }
+
+  fn proto_schema() -> Message {
+    T::Message::proto_schema()
+  }
+
+  fn name() -> &'static str {
+    T::Message::name()
+  }
+
+  fn full_name() -> &'static str {
+    T::Message::full_name()
+  }
+
+  fn type_url() -> &'static str {
+    T::Message::type_url()
+  }
+}
+
 pub trait ProtoMessage {
   const PACKAGE: &str;
   const SHORT_NAME: &str;
@@ -38,34 +63,6 @@ pub trait ProtoMessage {
   fn name() -> &'static str;
   fn full_name() -> &'static str;
   fn type_url() -> &'static str;
-}
-
-impl<T> ProtoMessage for Box<T>
-where
-  T: ProtoMessage,
-{
-  const PACKAGE: &str = T::PACKAGE;
-  const SHORT_NAME: &str = T::SHORT_NAME;
-
-  fn full_name() -> &'static str {
-    T::full_name()
-  }
-
-  fn type_url() -> &'static str {
-    T::type_url()
-  }
-
-  fn name() -> &'static str {
-    T::name()
-  }
-
-  fn proto_path() -> ProtoPath {
-    T::proto_path()
-  }
-
-  fn proto_schema() -> Message {
-    T::proto_schema()
-  }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Template)]
