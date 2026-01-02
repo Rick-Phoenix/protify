@@ -8,6 +8,7 @@ pub trait ProtoService {
 #[template(path = "service.proto.j2")]
 pub struct Service {
   pub name: &'static str,
+  pub file: &'static str,
   pub options: Vec<ProtoOption>,
   pub handlers: Vec<ServiceHandler>,
   pub package: &'static str,

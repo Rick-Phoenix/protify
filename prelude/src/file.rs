@@ -154,6 +154,19 @@ impl ProtoFile {
 
   pub fn add_services<I: IntoIterator<Item = Service>>(&mut self, services: I) {
     for service in services {
+      for (request, response) in service
+        .handlers
+        .iter()
+        .map(|h| (&h.request, &h.response))
+      {
+        self.imports.insert_path(request);
+        self.imports.insert_path(response);
+      }
+
+      if service.file != self.name {
+        self.imports.set.insert(service.file);
+      }
+
       self.services.push(service);
     }
   }

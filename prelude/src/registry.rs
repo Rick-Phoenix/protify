@@ -123,22 +123,22 @@ pub fn collect_package(package: &'static str) -> Package {
       .add_messages([msg]);
   }
 
-  for service in inventory::iter::<RegistryService>().filter(|rs| rs.package == package) {
-    let service_data = (service.service)();
+  for service_entry in inventory::iter::<RegistryService>().filter(|rs| rs.package == package) {
+    let service = (service_entry.service)();
 
     files
       .get_mut(service.file)
       .unwrap_or_else(|| panic!("Could not find the data for file {}", service.file))
-      .add_services([service_data]);
+      .add_services([service]);
   }
 
-  for extension in inventory::iter::<RegistryExtension>().filter(|re| re.package == package) {
-    let ext_data = (extension.extension)();
+  for extension_entry in inventory::iter::<RegistryExtension>().filter(|re| re.package == package) {
+    let extension = (extension_entry.extension)();
 
     files
-      .get_mut(extension.file)
-      .unwrap_or_else(|| panic!("Could not find the data for file {}", extension.file))
-      .add_extensions([ext_data]);
+      .get_mut(extension_entry.file)
+      .unwrap_or_else(|| panic!("Could not find the data for file {}", extension_entry.file))
+      .add_extensions([extension]);
   }
 
   Package {
@@ -161,10 +161,10 @@ pub struct RegistryEnum {
 
 pub struct RegistryService {
   pub package: &'static str,
-  pub file: &'static str,
   pub service: fn() -> Service,
 }
 
+// Needs the file because `Extension` does not have the file prop
 pub struct RegistryExtension {
   pub package: &'static str,
   pub file: &'static str,
