@@ -132,9 +132,28 @@ pub fn collect_package(package: &'static str) -> Package {
       .add_services([service]);
   }
 
+  let files: Vec<ProtoFile> = files
+    .into_values()
+    .map(|mut file| {
+      file.extensions.sort_unstable_by_key(|e| e.target);
+
+      file.messages.sort_unstable_by_key(|m| m.name);
+
+      for msg in file.messages.iter_mut() {
+        msg.messages.sort_unstable_by_key(|m| m.name);
+        msg.enums.sort_unstable_by_key(|e| e.name);
+      }
+
+      file.enums.sort_unstable_by_key(|e| e.name);
+      file.services.sort_unstable_by_key(|s| s.name);
+
+      file
+    })
+    .collect();
+
   Package {
     name: package,
-    files: files.into_values().collect(),
+    files,
   }
 }
 
