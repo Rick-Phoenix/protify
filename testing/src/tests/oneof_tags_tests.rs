@@ -1,5 +1,7 @@
 use super::*;
 
+use_proto_file!(TESTING);
+
 #[proto_oneof(direct)]
 pub enum TestOneof {
   #[proto(tag = 100)]

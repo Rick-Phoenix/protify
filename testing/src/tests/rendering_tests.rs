@@ -6,12 +6,14 @@
 
 use std::sync::Arc;
 
-use crate::*;
+use super::*;
 
-use proc_macro_impls::{proto_enum, proto_extension, proto_message, proto_oneof, proto_service};
-
-proto_file!("rendering.proto", package = "rendering_tests");
-file_options!(test_options());
+define_proto_file!(
+  RENDERING,
+  file = "rendering.proto",
+  package = "rendering_tests",
+  options = test_options()
+);
 
 #[test]
 fn test_renders() {

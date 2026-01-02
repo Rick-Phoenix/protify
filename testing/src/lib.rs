@@ -17,11 +17,13 @@ proto_package!(name = "myapp.v1");
 
 pub mod inner {
   use bytes::Bytes;
-  use proc_macro_impls::{proto_enum, proto_extension, proto_message, proto_oneof, proto_service};
+  use proc_macro_impls::{
+    define_proto_file, proto_enum, proto_extension, proto_message, proto_oneof, proto_service,
+  };
 
   use super::*;
 
-  proto_file!("abc.proto", package = "myapp.v1");
+  define_proto_file!(FILE, file = "abc.proto", package = "myapp.v1");
 
   #[proto_extension(target = MessageOptions)]
   pub struct SomeExt {

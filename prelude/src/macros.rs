@@ -8,38 +8,11 @@ macro_rules! length_rule_value {
 }
 
 #[macro_export]
-macro_rules! file_options {
-  ($options:expr) => {
-    $crate::inventory::submit! {
-      $crate::RegistryFileOptions {
-        file: __PROTO_FILE.file,
-        package: __PROTO_FILE.package,
-        options: || $options
-      }
-    }
-  };
-}
-
-#[macro_export]
-macro_rules! proto_file {
-  ($path:literal, package = $package:expr, rust_path = $extern_path:literal) => {
+macro_rules! use_proto_file {
+  ($file:ident) => {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: $crate::RegistryPath = $crate::RegistryPath {
-      file: $path,
-      package: $package,
-      extern_path: $extern_path,
-    };
-  };
-
-  ($path:literal, package = $package:expr) => {
-    #[doc(hidden)]
-    #[allow(unused)]
-    const __PROTO_FILE: $crate::RegistryPath = $crate::RegistryPath {
-      file: $path,
-      package: $package,
-      extern_path: std::module_path!(),
-    };
+    const __PROTO_FILE: $crate::RegistryPath = $file;
   };
 }
 

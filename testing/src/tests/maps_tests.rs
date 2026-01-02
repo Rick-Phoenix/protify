@@ -1,5 +1,7 @@
 use super::*;
 
+use_proto_file!(TESTING);
+
 #[proto_message(direct)]
 struct MinPairs {
   #[proto(map(int32, int32), tag = 1, validate = |v| v.min_pairs(1))]

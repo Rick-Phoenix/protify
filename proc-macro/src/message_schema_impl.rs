@@ -139,7 +139,7 @@ where
       }
 
       fn proto_schema() -> ::prelude::Message {
-        let mut new_msg = ::prelude::Message {
+        ::prelude::Message {
           short_name: #proto_name,
           name: Self::name(),
           file: __PROTO_FILE.file,
@@ -152,9 +152,7 @@ where
           entries: vec![ #(#entries_tokens,)* ],
           cel_rules: #proto_struct::cel_rules().iter().map(|prog| prog.rule.clone()).collect(),
           rust_path: #rust_path_field
-        };
-
-        new_msg
+        }
       }
     }
   });

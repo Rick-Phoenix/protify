@@ -40,11 +40,22 @@ pub struct FileImports {
   pub file: &'static str,
 }
 
-impl FileImports {
-  pub fn extend(&mut self, other: Self) {
-    self.set.extend(other.set);
+impl Extend<&'static str> for FileImports {
+  fn extend<T: IntoIterator<Item = &'static str>>(&mut self, iter: T) {
+    self.set.extend(iter);
   }
+}
 
+impl IntoIterator for FileImports {
+  type Item = &'static str;
+  type IntoIter = std::collections::hash_set::IntoIter<&'static str>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.set.into_iter()
+  }
+}
+
+impl FileImports {
   #[must_use]
   pub fn new(file: &'static str) -> Self {
     Self {

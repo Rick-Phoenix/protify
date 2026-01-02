@@ -1,6 +1,8 @@
 use super::*;
 use prelude::ProtoEnum;
 
+use_proto_file!(TESTING);
+
 #[proto_message(direct)]
 struct DummyMsg {
   #[proto(tag = 1)]

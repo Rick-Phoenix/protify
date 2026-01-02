@@ -56,10 +56,23 @@ pub fn collect_package(package: &'static str) -> Package {
   let mut root_messages: Vec<&'static str> = Vec::new();
   let mut files: Map<&'static str, ProtoFile> = Map::default();
 
-  for entry in inventory::iter::<RegistryMessage>().filter(|rm| rm.package == package) {
-    let msg = (entry.message)();
+  for file_entry in inventory::iter::<RegistryFile>().filter(|f| f.package == package) {
+    let file: ProtoFile = file_entry.into();
 
-    if let Some(parent_getter) = entry.parent_message {
+    match files.entry(file.name) {
+      ordermap::map::Entry::Occupied(mut occupied) => {
+        occupied.get_mut().merge_with(file);
+      }
+      ordermap::map::Entry::Vacant(vacant) => {
+        vacant.insert(file);
+      }
+    };
+  }
+
+  for msg_entry in inventory::iter::<RegistryMessage>().filter(|rm| rm.package == package) {
+    let msg = (msg_entry.message)();
+
+    if let Some(parent_getter) = msg_entry.parent_message {
       let parent = parent_getter();
 
       parent_messages_map
@@ -89,8 +102,8 @@ pub fn collect_package(package: &'static str) -> Package {
       enums.insert(enum_.full_name, enum_);
     } else {
       files
-        .entry(enum_.file)
-        .or_insert_with(|| ProtoFile::new(enum_.file, package))
+        .get_mut(enum_.file)
+        .unwrap_or_else(|| panic!("Could not find the data for file {}", enum_.file))
         .enums
         .push(enum_);
     }
@@ -105,8 +118,8 @@ pub fn collect_package(package: &'static str) -> Package {
     );
 
     files
-      .entry(msg.file)
-      .or_insert_with(|| ProtoFile::new(msg.file, package))
+      .get_mut(msg.file)
+      .unwrap_or_else(|| panic!("Could not find the data for file {}", msg.file))
       .add_messages([msg]);
   }
 
@@ -114,8 +127,8 @@ pub fn collect_package(package: &'static str) -> Package {
     let service_data = (service.service)();
 
     files
-      .entry(service.file)
-      .or_insert_with(|| ProtoFile::new(service.file, package))
+      .get_mut(service.file)
+      .unwrap_or_else(|| panic!("Could not find the data for file {}", service.file))
       .add_services([service_data]);
   }
 
@@ -123,19 +136,9 @@ pub fn collect_package(package: &'static str) -> Package {
     let ext_data = (extension.extension)();
 
     files
-      .entry(extension.file)
-      .or_insert_with(|| ProtoFile::new(extension.file, package))
+      .get_mut(extension.file)
+      .unwrap_or_else(|| panic!("Could not find the data for file {}", extension.file))
       .add_extensions([ext_data]);
-  }
-
-  for option in inventory::iter::<RegistryFileOptions>().filter(|rfo| rfo.package == package) {
-    let options = (option.options)();
-
-    files
-      .entry(option.file)
-      .or_insert_with(|| ProtoFile::new(option.file, package))
-      .options
-      .extend(options);
   }
 
   Package {
@@ -168,14 +171,35 @@ pub struct RegistryExtension {
   pub extension: fn() -> Extension,
 }
 
-pub struct RegistryFileOptions {
+pub struct RegistryFile {
   pub file: &'static str,
   pub package: &'static str,
   pub options: fn() -> Vec<ProtoOption>,
+  pub imports: fn() -> Vec<&'static str>,
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<ProtoFile> for &RegistryFile {
+  fn into(self) -> ProtoFile {
+    let mut imports = FileImports::new(self.file);
+    imports.extend((self.imports)());
+
+    ProtoFile {
+      name: self.file,
+      package: self.package,
+      imports,
+      options: (self.options)(),
+      edition: Default::default(),
+      enums: Default::default(),
+      extensions: Default::default(),
+      messages: Default::default(),
+      services: Default::default(),
+    }
+  }
 }
 
 inventory::collect!(RegistryMessage);
 inventory::collect!(RegistryEnum);
 inventory::collect!(RegistryService);
 inventory::collect!(RegistryExtension);
-inventory::collect!(RegistryFileOptions);
+inventory::collect!(RegistryFile);
