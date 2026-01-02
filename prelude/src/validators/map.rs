@@ -33,30 +33,35 @@ pub trait IntoSubscript {
 }
 
 impl IntoSubscript for String {
+  #[inline]
   fn into_subscript(self) -> Subscript {
     Subscript::StringKey(self)
   }
 }
 
 impl IntoSubscript for bool {
+  #[inline]
   fn into_subscript(self) -> Subscript {
     Subscript::BoolKey(self)
   }
 }
 
 impl IntoSubscript for i64 {
+  #[inline]
   fn into_subscript(self) -> Subscript {
     Subscript::IntKey(self)
   }
 }
 
 impl IntoSubscript for i32 {
+  #[inline]
   fn into_subscript(self) -> Subscript {
     Subscript::IntKey(i64::from(self))
   }
 }
 
 impl IntoSubscript for u64 {
+  #[inline]
   fn into_subscript(self) -> Subscript {
     Subscript::UintKey(self)
   }
@@ -74,6 +79,7 @@ where
   type Validator = MapValidator<K, V>;
   type Builder = MapValidatorBuilder<K, V>;
 
+  #[inline]
   fn validator_builder() -> Self::Builder {
     MapValidator::builder()
   }
@@ -89,6 +95,7 @@ where
   type Target = HashMap<K::Target, V::Target>;
   type Validator = MapValidator<K, V>;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -122,6 +129,7 @@ where
   K: ProtoValidator,
   V: ProtoValidator,
 {
+  #[inline]
   fn default() -> Self {
     Self {
       keys: None,
@@ -141,6 +149,7 @@ where
   K: ProtoValidator,
   V: ProtoValidator,
 {
+  #[inline]
   fn clone(&self) -> Self {
     Self {
       keys: self.keys.clone(),
@@ -161,6 +170,7 @@ where
   V: ProtoValidator + ProtoMessage,
 {
   #[must_use]
+  #[inline]
   pub fn default_message_validator() -> Self {
     Self {
       values: Some(V::validator_builder().build_validator()),
@@ -175,6 +185,7 @@ where
   }
 
   #[must_use]
+  #[inline]
   pub fn with_default_message_validator(mut self) -> Self {
     if self.values.is_none() {
       self.values = Some(V::validator_builder().build_validator());
@@ -214,6 +225,7 @@ where
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(&self, _: usize) -> Self::UniqueStore<'a>
   where
     Self: 'a,

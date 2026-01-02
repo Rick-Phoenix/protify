@@ -33,6 +33,7 @@ impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, 
   type Target = i32;
   type Validator = EnumValidator<T>;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -47,6 +48,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
 
   impl_testing_methods!();
 
+  #[inline]
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a>
   where
     T: 'a,

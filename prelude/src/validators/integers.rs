@@ -50,6 +50,7 @@ impl<S: State, Num: IntWrapper> ValidatorBuilderFor<Num> for IntValidatorBuilder
   type Target = Num::RustType;
   type Validator = IntValidator<Num>;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -65,6 +66,7 @@ where
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a>
   where
     Num: 'a,
@@ -195,6 +197,7 @@ where
   Num: IntWrapper,
 {
   #[must_use]
+  #[inline]
   pub fn builder() -> IntValidatorBuilder<Num> {
     IntValidatorBuilder::default()
   }
@@ -320,6 +323,7 @@ macro_rules! impl_int_validator {
         type Validator = IntValidator<$wrapper>;
         type Builder = IntValidatorBuilder<$wrapper>;
 
+        #[inline]
         fn validator_builder() -> IntValidatorBuilder<$wrapper> {
           IntValidator::builder()
         }

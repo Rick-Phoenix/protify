@@ -54,6 +54,7 @@ pub trait TryIntoCel: Clone {
 
 #[cfg(feature = "cel")]
 impl<E: Display, T: TryInto<::cel::Value, Error = E> + Clone> TryIntoCel for T {
+  #[inline]
   fn try_into_cel(self) -> Result<::cel::Value, CelError> {
     self
       .try_into()
@@ -84,6 +85,7 @@ where
   type Target = T;
   type Validator = MessageValidator<T>;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -116,6 +118,7 @@ where
     }
   }
 
+  #[inline]
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
     LinearRefStore::default_with_capacity(cap)
   }

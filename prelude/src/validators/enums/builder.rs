@@ -30,6 +30,7 @@ pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
 
 impl<T: ProtoEnum> EnumValidator<T> {
   #[must_use]
+  #[inline]
   pub fn builder() -> EnumValidatorBuilder<T> {
     EnumValidatorBuilder::default()
   }
@@ -47,6 +48,7 @@ impl<T: ProtoEnum, S: State> From<EnumValidatorBuilder<T, S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> EnumValidatorBuilder<T, S> {
     self.cel.push(program);
 
@@ -63,6 +65,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn ignore_always(self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -80,6 +83,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn ignore_if_zero_value(self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -97,6 +101,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn defined_only(self) -> EnumValidatorBuilder<T, SetDefinedOnly<S>>
   where
     S::DefinedOnly: IsUnset,
@@ -114,6 +119,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn required(self) -> EnumValidatorBuilder<T, SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -131,6 +137,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn in_(self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetIn<S>>
   where
     S::In: IsUnset,
@@ -148,6 +155,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn not_in(self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -165,6 +173,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn const_(self, val: i32) -> EnumValidatorBuilder<T, SetConst<S>>
   where
     S::Const: IsUnset,
@@ -182,6 +191,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  #[inline]
   pub fn build(self) -> EnumValidator<T> {
     EnumValidator {
       cel: self.cel,

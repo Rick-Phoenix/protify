@@ -54,6 +54,7 @@ impl Validator<Timestamp> for TimestampValidator {
 
   impl_testing_methods!();
 
+  #[inline]
   fn make_unique_store<'a>(&self, size: usize) -> Self::UniqueStore<'a> {
     CopyHybridStore::default_with_capacity(size)
   }

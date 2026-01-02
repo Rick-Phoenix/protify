@@ -29,6 +29,7 @@ impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
   type Target = FieldMask;
   type Validator = FieldMaskValidator;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -43,6 +44,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
   impl_testing_methods!();
 
+  #[inline]
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
     LinearRefStore::default_with_capacity(cap)
   }

@@ -19,6 +19,7 @@ pub struct MessageValidatorBuilder<T: ProtoMessage + ValidatedMessage, S: State 
 
 impl<T: ProtoMessage + ValidatedMessage> MessageValidator<T> {
   #[must_use]
+  #[inline]
   pub const fn builder() -> MessageValidatorBuilder<T> {
     MessageValidatorBuilder {
       _state: PhantomData,
@@ -44,6 +45,7 @@ impl<T: ProtoMessage + ValidatedMessage, S: State> From<MessageValidatorBuilder<
   clippy::return_self_not_must_use
 )]
 impl<T: ProtoMessage + ValidatedMessage, S: State> MessageValidatorBuilder<T, S> {
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> MessageValidatorBuilder<T, S> {
     self.cel.push(program);
 
@@ -56,6 +58,7 @@ impl<T: ProtoMessage + ValidatedMessage, S: State> MessageValidatorBuilder<T, S>
     }
   }
 
+  #[inline]
   pub fn ignore_always(self) -> MessageValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -69,6 +72,7 @@ impl<T: ProtoMessage + ValidatedMessage, S: State> MessageValidatorBuilder<T, S>
     }
   }
 
+  #[inline]
   pub fn required(self) -> MessageValidatorBuilder<T, SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -82,6 +86,7 @@ impl<T: ProtoMessage + ValidatedMessage, S: State> MessageValidatorBuilder<T, S>
     }
   }
 
+  #[inline]
   pub fn build(self) -> MessageValidator<T> {
     MessageValidator {
       cel: self.cel,

@@ -32,6 +32,7 @@ impl Validator<Any> for AnyValidator {
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
     LinearRefStore::default_with_capacity(cap)
   }

@@ -27,6 +27,7 @@ where
   T: AsProtoType + ProtoValidator,
 {
   #[must_use]
+  #[inline]
   pub const fn builder() -> RepeatedValidatorBuilder<T> {
     RepeatedValidatorBuilder {
       _state: PhantomData,
@@ -45,6 +46,7 @@ impl<T, S: State> RepeatedValidatorBuilder<T, S>
 where
   T: AsProtoType + ProtoValidator,
 {
+  #[inline]
   pub fn build(self) -> RepeatedValidator<T> {
     let Self {
       _inner_type,
@@ -68,6 +70,7 @@ where
     }
   }
 
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> RepeatedValidatorBuilder<T, SetCel<S>>
   where
     S::Cel: IsUnset,
@@ -87,6 +90,7 @@ where
   }
 
   /// Specifies the rules that will be applied to the individual items of this repeated field.
+  #[inline]
   pub fn items<F, FinalBuilder>(self, config_fn: F) -> RepeatedValidatorBuilder<T, SetItems<S>>
   where
     S::Items: IsUnset,
@@ -109,6 +113,7 @@ where
   }
 
   /// Rules set for this field will always be ignored.
+  #[inline]
   pub fn ignore_always(self) -> RepeatedValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -125,6 +130,7 @@ where
     }
   }
 
+  #[inline]
   pub fn min_items(self, num: usize) -> RepeatedValidatorBuilder<T, SetMinItems<S>>
   where
     S::MinItems: IsUnset,
@@ -141,6 +147,7 @@ where
     }
   }
 
+  #[inline]
   pub fn max_items(self, num: usize) -> RepeatedValidatorBuilder<T, SetMaxItems<S>>
   where
     S::MaxItems: IsUnset,
@@ -157,6 +164,7 @@ where
     }
   }
 
+  #[inline]
   pub fn unique(self) -> RepeatedValidatorBuilder<T, SetUnique<S>>
   where
     S::Unique: IsUnset,

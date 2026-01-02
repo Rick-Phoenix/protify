@@ -56,6 +56,7 @@ pub struct BytesValidator {
 }
 
 impl BytesValidator {
+  #[inline]
   const fn has_pattern(&self) -> bool {
     #[cfg(feature = "regex")]
     {
@@ -119,6 +120,7 @@ impl Validator<Bytes> for BytesValidator {
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
     RefHybridStore::default_with_capacity(cap)
   }

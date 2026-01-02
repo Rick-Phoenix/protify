@@ -56,6 +56,7 @@ where
   pub not_in: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
 }
 
+#[inline]
 pub(crate) fn float_in_list<T>(target: T, list: &[OrderedFloat<T>], abs_tol: T, r2nd_tol: T) -> bool
 where
   T: FloatCore + FloatEq<Tol = T>,
@@ -136,6 +137,7 @@ where
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(&self, size: usize) -> Self::UniqueStore<'a>
   where
     Num: 'a,
@@ -285,10 +287,12 @@ where
   Num: FloatWrapper,
 {
   #[must_use]
+  #[inline]
   pub fn builder() -> FloatValidatorBuilder<Num> {
     FloatValidatorBuilder::default()
   }
 
+  #[inline]
   fn float_is_eq(&self, first: Num::RustType, second: Num::RustType) -> bool {
     float_eq!(
       first,
@@ -399,6 +403,7 @@ macro_rules! impl_float_wrapper {
         type Validator = FloatValidator<$target_type>;
         type Builder = FloatValidatorBuilder<$target_type>;
 
+        #[inline]
         fn validator_builder() -> Self::Builder {
           FloatValidator::builder()
         }
@@ -408,6 +413,7 @@ macro_rules! impl_float_wrapper {
         type Target = $target_type;
         type Validator = FloatValidator<$target_type>;
 
+        #[inline]
         fn build_validator(self) -> Self::Validator {
           self.build()
         }

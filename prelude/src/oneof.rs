@@ -3,10 +3,12 @@ use crate::*;
 pub trait IntoOneof: From<Self::Oneof> + Into<Self::Oneof> {
   type Oneof: ProtoOneof + From<Self>;
 
+  #[inline]
   fn into_oneof(self) -> Self::Oneof {
     self.into()
   }
 
+  #[inline]
   fn from_oneof(oneof: Self::Oneof) -> Self {
     oneof.into()
   }

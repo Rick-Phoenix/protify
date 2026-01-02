@@ -39,6 +39,7 @@ pub struct DurationValidatorBuilder<S: State = Empty> {
 
 impl DurationValidator {
   #[must_use]
+  #[inline]
   pub fn builder() -> DurationValidatorBuilder {
     DurationValidatorBuilder::default()
   }
@@ -56,6 +57,7 @@ impl<S: State> From<DurationValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> DurationValidatorBuilder<S> {
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> DurationValidatorBuilder<S> {
     self.cel.push(program);
 
@@ -74,6 +76,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn ignore_always(self) -> DurationValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -93,6 +96,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn required(self) -> DurationValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -112,6 +116,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn in_(self, val: impl IntoIterator<Item = Duration>) -> DurationValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
@@ -131,6 +136,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn not_in(
     self,
     val: impl IntoIterator<Item = Duration>,
@@ -153,6 +159,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn const_(self, val: Duration) -> DurationValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
@@ -172,6 +179,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn lt(self, val: Duration) -> DurationValidatorBuilder<SetLt<S>>
   where
     S::Lt: IsUnset,
@@ -191,6 +199,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn lte(self, val: Duration) -> DurationValidatorBuilder<SetLte<S>>
   where
     S::Lte: IsUnset,
@@ -210,6 +219,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn gt(self, val: Duration) -> DurationValidatorBuilder<SetGt<S>>
   where
     S::Gt: IsUnset,
@@ -229,6 +239,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn gte(self, val: Duration) -> DurationValidatorBuilder<SetGte<S>>
   where
     S::Gte: IsUnset,
@@ -248,6 +259,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn build(self) -> DurationValidator {
     DurationValidator {
       cel: self.cel,

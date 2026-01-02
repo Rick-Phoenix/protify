@@ -64,6 +64,7 @@ pub struct StringValidator {
 }
 
 impl StringValidator {
+  #[inline]
   const fn has_pattern(&self) -> bool {
     #[cfg(feature = "regex")]
     {
@@ -90,6 +91,7 @@ impl Validator<String> for StringValidator {
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
     RefHybridStore::default_with_capacity(cap)
   }

@@ -55,6 +55,7 @@ where
   S: State,
   Num: FloatWrapper,
 {
+  #[inline]
   pub fn ignore_always(self) -> FloatValidatorBuilder<Num, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -78,6 +79,7 @@ where
     }
   }
 
+  #[inline]
   pub fn ignore_if_zero_value(self) -> FloatValidatorBuilder<Num, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -101,6 +103,7 @@ where
     }
   }
 
+  #[inline]
   #[allow(clippy::use_self, clippy::return_self_not_must_use)]
   pub fn cel(mut self, program: CelProgram) -> FloatValidatorBuilder<Num, S> {
     self.cel.push(program);
@@ -124,6 +127,7 @@ where
     }
   }
 
+  #[inline]
   pub fn required(self) -> FloatValidatorBuilder<Num, SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -147,6 +151,7 @@ where
     }
   }
 
+  #[inline]
   pub fn abs_tolerance(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetAbsTolerance<S>>
   where
     S::AbsTolerance: IsUnset,
@@ -170,6 +175,7 @@ where
     }
   }
 
+  #[inline]
   pub fn rel_tolerance(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetRelTolerance<S>>
   where
     S::RelTolerance: IsUnset,
@@ -193,6 +199,7 @@ where
     }
   }
 
+  #[inline]
   pub fn finite(self) -> FloatValidatorBuilder<Num, SetFinite<S>>
   where
     S::Finite: IsUnset,
@@ -216,6 +223,7 @@ where
     }
   }
 
+  #[inline]
   pub fn const_(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetConst<S>>
   where
     S::Const: IsUnset,
@@ -239,6 +247,7 @@ where
     }
   }
 
+  #[inline]
   pub fn lt(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetLt<S>>
   where
     S::Lt: IsUnset,
@@ -262,6 +271,7 @@ where
     }
   }
 
+  #[inline]
   pub fn lte(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetLte<S>>
   where
     S::Lte: IsUnset,
@@ -285,6 +295,7 @@ where
     }
   }
 
+  #[inline]
   pub fn gt(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetGt<S>>
   where
     S::Gt: IsUnset,
@@ -308,6 +319,7 @@ where
     }
   }
 
+  #[inline]
   pub fn gte(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetGte<S>>
   where
     S::Gte: IsUnset,
@@ -331,6 +343,7 @@ where
     }
   }
 
+  #[inline]
   pub fn not_in(
     self,
     list: impl IntoIterator<Item = Num::RustType>,
@@ -357,6 +370,7 @@ where
     }
   }
 
+  #[inline]
   pub fn in_(
     self,
     list: impl IntoIterator<Item = Num::RustType>,
@@ -383,6 +397,7 @@ where
     }
   }
 
+  #[inline]
   pub fn build(self) -> FloatValidator<Num> {
     FloatValidator {
       cel: self.cel,

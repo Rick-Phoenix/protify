@@ -60,6 +60,7 @@ impl<S: State> From<BytesValidatorBuilder<S>> for ProtoOption {
 
 impl BytesValidator {
   #[must_use]
+  #[inline]
   pub fn builder() -> BytesValidatorBuilder {
     BytesValidatorBuilder::default()
   }
@@ -68,6 +69,7 @@ impl BytesValidator {
 macro_rules! well_known_impl {
   ($name:ident, $doc:literal) => {
     paste::paste! {
+      #[inline]
       #[doc = $doc]
       pub fn [< $name:snake >](self) -> BytesValidatorBuilder<SetWellKnown<S>>
         where
@@ -117,6 +119,7 @@ impl<S: State> BytesValidatorBuilder<S> {
   clippy::return_self_not_must_use
 )]
 impl<S: State> BytesValidatorBuilder<S> {
+  #[inline]
   pub fn ignore_always(self) -> BytesValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -141,6 +144,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn ignore_if_zero_value(self) -> BytesValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -165,6 +169,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> BytesValidatorBuilder<S> {
     self.cel.push(program);
 
@@ -188,6 +193,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn len(self, val: usize) -> BytesValidatorBuilder<SetLen<S>>
   where
     S::Len: IsUnset,
@@ -212,6 +218,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn min_len(self, val: usize) -> BytesValidatorBuilder<SetMinLen<S>>
   where
     S::MinLen: IsUnset,
@@ -236,6 +243,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn max_len(self, val: usize) -> BytesValidatorBuilder<SetMaxLen<S>>
   where
     S::MaxLen: IsUnset,
@@ -261,6 +269,7 @@ impl<S: State> BytesValidatorBuilder<S> {
   }
 
   #[cfg(feature = "regex")]
+  #[inline]
   pub fn pattern(self, val: &str) -> BytesValidatorBuilder<SetPattern<S>>
   where
     S::Pattern: IsUnset,
@@ -284,6 +293,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn prefix<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetPrefix<S>>
   where
     S::Prefix: IsUnset,
@@ -308,6 +318,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn suffix<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetSuffix<S>>
   where
     S::Suffix: IsUnset,
@@ -332,6 +343,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn contains<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetContains<S>>
   where
     S::Contains: IsUnset,
@@ -356,6 +368,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn not_in(
     self,
     list: impl IntoIterator<Item = &'static [u8]>,
@@ -383,6 +396,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn in_(self, list: impl IntoIterator<Item = &'static [u8]>) -> BytesValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
@@ -407,6 +421,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn const_<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
@@ -431,6 +446,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn required(self) -> BytesValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -455,6 +471,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn build(self) -> BytesValidator {
     BytesValidator {
       cel: self.cel,

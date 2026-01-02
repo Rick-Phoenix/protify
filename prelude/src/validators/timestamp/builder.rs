@@ -45,6 +45,7 @@ pub struct TimestampValidatorBuilder<S: State = Empty> {
 
 impl TimestampValidator {
   #[must_use]
+  #[inline]
   pub fn builder() -> TimestampValidatorBuilder {
     TimestampValidatorBuilder::default()
   }
@@ -62,6 +63,7 @@ impl<S: State> From<TimestampValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> TimestampValidatorBuilder<S> {
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> TimestampValidatorBuilder<S> {
     self.cel.push(program);
 
@@ -82,6 +84,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn ignore_always(self) -> TimestampValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -103,6 +106,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn lt_now(self) -> TimestampValidatorBuilder<SetLtNow<S>>
   where
     S::LtNow: IsUnset,
@@ -124,6 +128,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn gt_now(self) -> TimestampValidatorBuilder<SetGtNow<S>>
   where
     S::GtNow: IsUnset,
@@ -145,6 +150,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn required(self) -> TimestampValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -166,6 +172,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn const_(self, val: Timestamp) -> TimestampValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
@@ -187,6 +194,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn lt(self, val: Timestamp) -> TimestampValidatorBuilder<SetLt<S>>
   where
     S::Lt: IsUnset,
@@ -208,6 +216,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn lte(self, val: Timestamp) -> TimestampValidatorBuilder<SetLte<S>>
   where
     S::Lte: IsUnset,
@@ -229,6 +238,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn gt(self, val: Timestamp) -> TimestampValidatorBuilder<SetGt<S>>
   where
     S::Gt: IsUnset,
@@ -250,6 +260,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn gte(self, val: Timestamp) -> TimestampValidatorBuilder<SetGte<S>>
   where
     S::Gte: IsUnset,
@@ -271,6 +282,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn within(self, val: Duration) -> TimestampValidatorBuilder<SetWithin<S>>
   where
     S::Within: IsUnset,
@@ -292,6 +304,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn now_tolerance(self, val: Duration) -> TimestampValidatorBuilder<SetNowTolerance<S>>
   where
     S::NowTolerance: IsUnset,
@@ -313,6 +326,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn build(self) -> TimestampValidator {
     TimestampValidator {
       cel: self.cel,

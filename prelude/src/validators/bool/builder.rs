@@ -14,6 +14,7 @@ pub struct BoolValidatorBuilder<S: State = Empty> {
 
 impl BoolValidator {
   #[must_use]
+  #[inline]
   pub fn builder() -> BoolValidatorBuilder {
     BoolValidatorBuilder::default()
   }
@@ -31,6 +32,7 @@ impl<S: State> From<BoolValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> BoolValidatorBuilder<S> {
+  #[inline]
   pub const fn ignore_always(self) -> BoolValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -43,6 +45,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub const fn ignore_if_zero_value(self) -> BoolValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -55,6 +58,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub const fn required(self) -> BoolValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -67,6 +71,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub const fn const_(self, val: bool) -> BoolValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
@@ -79,6 +84,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub const fn build(self) -> BoolValidator {
     BoolValidator {
       const_: self.const_,

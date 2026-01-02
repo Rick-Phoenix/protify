@@ -27,6 +27,7 @@ where
   V: ProtoValidator,
 {
   #[must_use]
+  #[inline]
   pub const fn builder() -> MapValidatorBuilder<K, V> {
     MapValidatorBuilder {
       _state: PhantomData,
@@ -57,6 +58,7 @@ where
   K: ProtoValidator,
   V: ProtoValidator,
 {
+  #[inline]
   pub fn build(self) -> MapValidator<K, V> {
     let Self {
       keys,
@@ -82,6 +84,7 @@ where
     }
   }
 
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> MapValidatorBuilder<K, V, SetCel<S>>
   where
     S::Cel: IsUnset,
@@ -101,6 +104,7 @@ where
     }
   }
 
+  #[inline]
   pub fn min_pairs(self, num: usize) -> MapValidatorBuilder<K, V, SetMinPairs<S>>
   where
     S::MinPairs: IsUnset,
@@ -118,6 +122,7 @@ where
     }
   }
 
+  #[inline]
   pub fn max_pairs(self, num: usize) -> MapValidatorBuilder<K, V, SetMaxPairs<S>>
   where
     S::MaxPairs: IsUnset,
@@ -136,6 +141,7 @@ where
   }
 
   /// Rules set for this field will always be ignored.
+  #[inline]
   pub fn ignore_always(self) -> MapValidatorBuilder<K, V, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -153,6 +159,7 @@ where
     }
   }
 
+  #[inline]
   /// Sets the rules for the keys of this map field.
   pub fn keys<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetKeys<S>>
   where
@@ -175,6 +182,7 @@ where
     }
   }
 
+  #[inline]
   /// Sets the rules for the values of this map field.
   pub fn values<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetValues<S>>
   where

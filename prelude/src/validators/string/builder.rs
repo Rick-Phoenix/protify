@@ -66,6 +66,7 @@ pub struct StringValidatorBuilder<S: State = Empty> {
 
 impl StringValidator {
   #[must_use]
+  #[inline]
   pub fn builder() -> StringValidatorBuilder {
     StringValidatorBuilder::default()
   }
@@ -83,6 +84,7 @@ impl<S: State> From<StringValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> StringValidatorBuilder<S> {
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> StringValidatorBuilder<S> {
     self.cel.push(program);
 
@@ -110,6 +112,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn ignore_always(self) -> StringValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -138,6 +141,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn ignore_if_zero_value(self) -> StringValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -166,6 +170,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn required(self) -> StringValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -194,6 +199,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn len(self, val: usize) -> StringValidatorBuilder<SetLen<S>>
   where
     S::Len: IsUnset,
@@ -222,6 +228,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn min_len(self, val: usize) -> StringValidatorBuilder<SetMinLen<S>>
   where
     S::MinLen: IsUnset,
@@ -250,6 +257,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn max_len(self, val: usize) -> StringValidatorBuilder<SetMaxLen<S>>
   where
     S::MaxLen: IsUnset,
@@ -278,6 +286,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn len_bytes(self, val: usize) -> StringValidatorBuilder<SetLenBytes<S>>
   where
     S::LenBytes: IsUnset,
@@ -306,6 +315,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn min_bytes(self, val: usize) -> StringValidatorBuilder<SetMinBytes<S>>
   where
     S::MinBytes: IsUnset,
@@ -334,6 +344,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn max_bytes(self, val: usize) -> StringValidatorBuilder<SetMaxBytes<S>>
   where
     S::MaxBytes: IsUnset,
@@ -362,6 +373,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   #[cfg(feature = "regex")]
   #[track_caller]
   pub fn pattern(self, val: &str) -> StringValidatorBuilder<SetPattern<S>>
@@ -391,6 +403,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn prefix<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetPrefix<S>>
   where
     S::Prefix: IsUnset,
@@ -419,6 +432,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn suffix<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetSuffix<S>>
   where
     S::Suffix: IsUnset,
@@ -447,6 +461,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn contains<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetContains<S>>
   where
     S::Contains: IsUnset,
@@ -475,6 +490,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn not_contains<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetNotContains<S>>
   where
     S::NotContains: IsUnset,
@@ -503,6 +519,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn in_(self, val: impl IntoIterator<Item = &'static str>) -> StringValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
@@ -531,6 +548,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn not_in(
     self,
     val: impl IntoIterator<Item = &'static str>,
@@ -562,6 +580,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn const_<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
@@ -590,6 +609,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn build(self) -> StringValidator {
     StringValidator {
       cel: self.cel,

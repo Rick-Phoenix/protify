@@ -26,6 +26,7 @@ pub trait IntoCel {}
 impl<T> IntoCel for T {}
 
 impl From<CelRule> for CelProgram {
+  #[inline]
   fn from(value: CelRule) -> Self {
     Self::new(value)
   }
@@ -95,6 +96,7 @@ mod cel_impls {
   }
 
   impl Clone for CelProgram {
+    #[inline]
     fn clone(&self) -> Self {
       Self {
         rule: self.rule.clone(),
@@ -106,6 +108,7 @@ mod cel_impls {
   pub type CachedProgram = LazyLock<CelProgram>;
 
   impl PartialEq for CelProgram {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
       self.rule == other.rule
     }
@@ -113,6 +116,7 @@ mod cel_impls {
 
   impl CelError {
     #[must_use]
+    #[inline]
     pub const fn rule_id(&self) -> Option<&'static str> {
       match self {
         Self::ConversionError(_) => None,
@@ -125,6 +129,7 @@ mod cel_impls {
     // This is for runtime errors. If we get a CEL error we log the actual error while
     // producing a generic error message
     #[must_use]
+    #[inline]
     pub fn into_violation(
       self,
       field_context: Option<&FieldContext>,
@@ -248,6 +253,7 @@ mod cel_impls {
 
   impl CelProgram {
     #[must_use]
+    #[inline]
     pub const fn new(rule: CelRule) -> Self {
       Self {
         rule,
@@ -256,6 +262,7 @@ mod cel_impls {
     }
 
     // Potentially making this a result too, even with the automated tests
+    #[inline]
     pub fn get_program(&self) -> &Program {
       self.program.get_or_init(|| {
         Program::compile(self.rule.expression).unwrap_or_else(|e| {

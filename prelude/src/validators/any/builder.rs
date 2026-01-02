@@ -23,6 +23,7 @@ pub struct AnyValidatorBuilder<S: State = Empty> {
 
 impl AnyValidator {
   #[must_use]
+  #[inline]
   pub fn builder() -> AnyValidatorBuilder {
     AnyValidatorBuilder::default()
   }
@@ -34,6 +35,7 @@ impl AnyValidator {
   clippy::return_self_not_must_use
 )]
 impl<S: State> AnyValidatorBuilder<S> {
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> AnyValidatorBuilder<S> {
     self.cel.push(program);
 
@@ -47,6 +49,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn ignore_always(self) -> AnyValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -61,6 +64,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn required(self) -> AnyValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -75,6 +79,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn in_(self, list: impl IntoIterator<Item = &'static str>) -> AnyValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
@@ -89,6 +94,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn not_in(
     self,
     list: impl IntoIterator<Item = &'static str>,
@@ -107,6 +113,7 @@ impl<S: State> AnyValidatorBuilder<S> {
   }
 
   #[must_use]
+  #[inline]
   pub fn build(self) -> AnyValidator {
     AnyValidator {
       cel: self.cel,

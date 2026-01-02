@@ -33,6 +33,7 @@ impl<T> Clone for RepeatedValidator<T>
 where
   T: AsProtoType + ProtoValidator,
 {
+  #[inline]
   fn clone(&self) -> Self {
     Self {
       _inner_type: PhantomData,
@@ -50,6 +51,7 @@ impl<T> Default for RepeatedValidator<T>
 where
   T: AsProtoType + ProtoValidator,
 {
+  #[inline]
   fn default() -> Self {
     Self {
       _inner_type: PhantomData,
@@ -104,6 +106,7 @@ where
   }
 }
 
+#[inline]
 fn clamp_capacity_for_unique_items_collection<T>(requested_cap: usize) -> usize {
   // 128KB Budget
   const MAX_BYTES: usize = 128 * 1024;
@@ -140,6 +143,7 @@ where
 {
   type Item = T;
 
+  #[inline]
   fn default_with_capacity(cap: usize) -> Self {
     let clamped_cap = clamp_capacity_for_unique_items_collection::<&T>(cap);
 
@@ -148,6 +152,7 @@ where
     }
   }
 
+  #[inline]
   fn insert(&mut self, item: &'a T) -> bool {
     if self.seen.contains(&item) {
       false
@@ -172,6 +177,7 @@ impl<T> FloatEpsilonStore<T>
 where
   T: FloatCore + FloatEq<Tol = T>,
 {
+  #[inline]
   pub fn new(cap: usize, abs: T, rel: T) -> Self {
     let clamped_cap = clamp_capacity_for_unique_items_collection::<T>(cap);
 
@@ -182,6 +188,7 @@ where
     }
   }
 
+  #[inline]
   pub fn check_neighbors(&self, idx: usize, item: T) -> bool {
     // Idx at insertion point
     if let Some(above) = self.seen.get(idx)
@@ -208,6 +215,7 @@ where
 {
   type Item = T;
 
+  #[inline]
   fn default_with_capacity(cap: usize) -> Self {
     let clamped_cap = clamp_capacity_for_unique_items_collection::<T>(cap);
 
@@ -218,6 +226,7 @@ where
     }
   }
 
+  #[inline]
   fn insert(&mut self, item: &Self::Item) -> bool {
     let wrapped = OrderedFloat(*item);
 
@@ -245,6 +254,7 @@ pub struct UnsupportedStore<T> {
 }
 
 impl<T> Default for UnsupportedStore<T> {
+  #[inline]
   fn default() -> Self {
     Self {
       _marker: PhantomData,
@@ -255,10 +265,12 @@ impl<T> Default for UnsupportedStore<T> {
 impl<'a, T> UniqueStore<'a> for UnsupportedStore<T> {
   type Item = T;
 
+  #[inline]
   fn default_with_capacity(_size: usize) -> Self {
     Self::default()
   }
 
+  #[inline]
   fn insert(&mut self, _item: &'a Self::Item) -> bool {
     true
   }
@@ -278,6 +290,7 @@ where
 {
   type Item = T;
 
+  #[inline]
   fn default_with_capacity(cap: usize) -> Self {
     let clamped_cap = clamp_capacity_for_unique_items_collection::<&T>(cap);
 
@@ -288,6 +301,7 @@ where
     }
   }
 
+  #[inline]
   fn insert(&mut self, item: &'a T) -> bool {
     match self {
       Self::Small(vec) => match vec.binary_search(&item) {
@@ -313,6 +327,7 @@ where
 {
   type Item = T;
 
+  #[inline]
   fn default_with_capacity(cap: usize) -> Self {
     let clamped_cap = clamp_capacity_for_unique_items_collection::<T>(cap);
 
@@ -323,6 +338,7 @@ where
     }
   }
 
+  #[inline]
   fn insert(&mut self, item: &'a T) -> bool {
     match self {
       Self::Small(vec) => match vec.binary_search(item) {
@@ -358,6 +374,7 @@ where
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(&self, _size: usize) -> Self::UniqueStore<'a>
   where
     T: 'a,

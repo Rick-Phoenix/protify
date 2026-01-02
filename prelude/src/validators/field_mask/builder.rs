@@ -32,6 +32,7 @@ impl<S: State> From<FieldMaskValidatorBuilder<S>> for ProtoOption {
 
 impl FieldMaskValidator {
   #[must_use]
+  #[inline]
   pub fn builder() -> FieldMaskValidatorBuilder {
     FieldMaskValidatorBuilder::default()
   }
@@ -43,6 +44,7 @@ impl FieldMaskValidator {
   clippy::return_self_not_must_use
 )]
 impl<S: State> FieldMaskValidatorBuilder<S> {
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> FieldMaskValidatorBuilder<S> {
     self.cel.push(program);
 
@@ -57,6 +59,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn ignore_always(self) -> FieldMaskValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
@@ -72,6 +75,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn required(self) -> FieldMaskValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
@@ -87,6 +91,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn in_(
     self,
     val: impl IntoIterator<Item = &'static str>,
@@ -105,6 +110,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn not_in(
     self,
     val: impl IntoIterator<Item = &'static str>,
@@ -123,6 +129,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   pub fn const_(
     self,
     val: impl IntoIterator<Item = &'static str>,
@@ -141,6 +148,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  #[inline]
   #[must_use]
   pub fn build(self) -> FieldMaskValidator {
     let Self {
