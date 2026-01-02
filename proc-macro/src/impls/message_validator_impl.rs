@@ -89,29 +89,42 @@ where
     }
   });
 
+  let has_cel_rules = !top_level_cel_rules.is_empty();
+
+  let cel_rules_method = has_cel_rules.then(|| {
+    quote! {
+      #[inline]
+      fn cel_rules() -> &'static [CelProgram] {
+        static PROGRAMS: std::sync::LazyLock<Vec<::prelude::CelProgram>> = std::sync::LazyLock::new(|| {
+          #top_level_cel_rules
+        });
+
+        &PROGRAMS
+      }
+    }
+  });
+
+  let cel_rules_call = has_cel_rules.then(|| {
+    quote! {
+      ::prelude::ValidatedMessage::validate_cel(self, field_context, parent_elements, violations);
+    }
+  });
+
   quote! {
     #[allow(clippy::ptr_arg)]
     impl #target_ident {
       #[doc(hidden)]
       fn __validate_internal(&self, field_context: Option<&FieldContext>, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
-        let top_level_programs = <Self as ::prelude::ValidatedMessage>::cel_rules();
-
-        if !top_level_programs.is_empty() {
-          let ctx = ProgramsExecutionCtx {
-            programs: top_level_programs,
-            value: self.clone(),
-            violations,
-            field_context,
-            parent_elements,
-          };
-
-          ctx.execute_programs();
-        }
+        #cel_rules_call
 
         #(#validators_tokens)*
       }
+    }
 
-      pub fn validate(&self) -> Result<(), Violations> {
+    impl ::prelude::ValidatedMessage for #target_ident {
+      #cel_rules_method
+
+      fn validate(&self) -> Result<(), Violations> {
         let mut violations = ViolationsAcc::new();
 
         self.__validate_internal(None, &mut vec![], &mut violations);
@@ -123,27 +136,9 @@ where
         }
       }
 
-      pub fn nested_validate(&self, ctx: &mut ValidationCtx) {
-        self.__validate_internal(Some(&ctx.field_context), ctx.parent_elements, ctx.violations)
-      }
-    }
-
-
-    impl ::prelude::ValidatedMessage for #target_ident {
-      fn cel_rules() -> &'static [CelProgram] {
-        static PROGRAMS: std::sync::LazyLock<Vec<::prelude::CelProgram>> = std::sync::LazyLock::new(|| {
-          #top_level_cel_rules
-        });
-
-        &PROGRAMS
-      }
-
-      fn validate(&self) -> Result<(), Violations> {
-        self.validate()
-      }
-
+      #[inline]
       fn nested_validate(&self, ctx: &mut ValidationCtx) {
-        self.nested_validate(ctx);
+        self.__validate_internal(Some(&ctx.field_context), ctx.parent_elements, ctx.violations)
       }
     }
 
@@ -152,10 +147,12 @@ where
       type Validator = ::prelude::MessageValidator<Self>;
       type Builder = ::prelude::MessageValidatorBuilder<Self>;
 
+      #[inline]
       fn default_validator() -> Option<Self::Validator> {
         Some(MessageValidator::default())
       }
 
+      #[inline]
       fn validator_builder() -> Self::Builder {
         ::prelude::MessageValidator::builder()
       }

@@ -56,6 +56,7 @@ pub trait ProtoValidator: std::marker::Sized {
   type Builder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
 
   #[must_use]
+  #[inline]
   fn default_validator() -> Option<Self::Validator> {
     None
   }
@@ -72,8 +73,6 @@ pub trait ProtoValidator: std::marker::Sized {
     config_fn(initial_builder).build_validator()
   }
 }
-
-pub type CachedList<T> = LazyLock<[T]>;
 
 type OptionValueList = Vec<(Arc<str>, OptionValue)>;
 

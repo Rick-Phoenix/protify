@@ -44,6 +44,7 @@ manual_let_else = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 
+# missing_inline_in_public_items = "warn"
 float_cmp = "warn"
 branches_sharing_code = "warn"
 clear_with_drain = "warn"

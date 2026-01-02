@@ -4,13 +4,11 @@ use builder::state::State;
 
 use super::*;
 
-pub trait ValidatedMessage {
+pub trait ValidatedMessage: Clone + Sized {
   fn validate(&self) -> Result<(), Violations>;
 
-  fn validated(self) -> Result<Self, Violations>
-  where
-    Self: Sized,
-  {
+  #[inline]
+  fn validated(self) -> Result<Self, Violations> {
     match self.validate() {
       Ok(()) => Ok(self),
       Err(e) => Err(e),
@@ -19,6 +17,30 @@ pub trait ValidatedMessage {
 
   fn nested_validate(&self, ctx: &mut ValidationCtx);
 
+  fn validate_cel(
+    &self,
+    field_context: Option<&FieldContext>,
+    parent_elements: &[FieldPathElement],
+    violations: &mut ViolationsAcc,
+  ) where
+    Self: TryIntoCel,
+  {
+    let top_level_programs = Self::cel_rules();
+
+    if !top_level_programs.is_empty() {
+      let ctx = ProgramsExecutionCtx {
+        programs: top_level_programs,
+        value: self.clone(),
+        violations,
+        field_context,
+        parent_elements,
+      };
+
+      ctx.execute_programs();
+    }
+  }
+
+  #[inline]
   #[must_use]
   fn cel_rules() -> &'static [CelProgram] {
     &[]

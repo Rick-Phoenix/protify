@@ -56,19 +56,12 @@ where
   });
 
   quote! {
-    #[allow(clippy::ptr_arg)]
-    impl #oneof_ident {
-      pub fn validate(&self, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
+    impl ::prelude::ValidatedOneof for #oneof_ident {
+      fn validate(&self, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
         match self {
           #(#validators_tokens,)*
           _ => {}
         }
-      }
-    }
-
-    impl ::prelude::ValidatedOneof for #oneof_ident {
-      fn validate(&self, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
-        self.validate(parent_elements, violations)
       }
     }
   }

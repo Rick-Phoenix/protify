@@ -83,6 +83,7 @@ where
   type Validator = RepeatedValidator<T>;
   type Builder = RepeatedValidatorBuilder<T>;
 
+  #[inline]
   fn validator_builder() -> Self::Builder {
     RepeatedValidator::builder()
   }
@@ -97,6 +98,7 @@ where
   type Target = Vec<T::Target>;
   type Validator = RepeatedValidator<T>;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
