@@ -7,11 +7,19 @@ pub struct MessageMacroAttrs {
   pub extern_path: Option<String>,
 }
 
-pub struct MessageCtx<'a> {
+pub struct MessageCtx<'a, T: Borrow<FieldData>> {
   pub orig_struct_ident: &'a Ident,
   pub shadow_struct_ident: Option<&'a Ident>,
-  pub non_ignored_fields: Vec<&'a FieldData>,
+  pub non_ignored_fields: Vec<T>,
   pub message_attrs: MessageAttrs,
+}
+
+impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
+  pub fn proto_struct_ident(&self) -> &'a Ident {
+    self
+      .shadow_struct_ident
+      .unwrap_or(self.orig_struct_ident)
+  }
 }
 
 pub fn process_message_derive(
@@ -128,26 +136,21 @@ pub fn process_message_derive_shadow(
     .filter_map(|f| f.as_normal())
     .collect();
 
-  let consistency_checks_impl = impl_message_consistency_checks(
-    shadow_struct_ident,
-    &non_ignored_fields,
-    message_attrs.no_auto_test,
-  );
-
-  let validator_impl = impl_message_validator(
-    shadow_struct_ident,
-    &non_ignored_fields,
-    &message_attrs.cel_rules,
-  );
-
-  let schema_impls = message_schema_impls(
+  let message_ctx = MessageCtx {
     orig_struct_ident,
-    Some(shadow_struct_ident),
-    &message_attrs,
-    &non_ignored_fields,
-  );
+    shadow_struct_ident: Some(shadow_struct_ident),
+    non_ignored_fields,
+    message_attrs,
+  };
 
-  let shadow_struct_derives = message_attrs
+  let consistency_checks_impl = message_ctx.generate_consistency_checks();
+
+  let validator_impl = message_ctx.generate_validator();
+
+  let schema_impls = message_ctx.generate_schema_impls();
+
+  let shadow_struct_derives = message_ctx
+    .message_attrs
     .shadow_derives
     .map(|list| quote! { #[#list] });
 
@@ -266,14 +269,18 @@ pub fn process_message_derive_direct(
     field.attrs.push(prost_attr);
   }
 
-  let struct_ident = &item.ident;
+  let message_ctx = MessageCtx {
+    orig_struct_ident: &item.ident,
+    shadow_struct_ident: None,
+    non_ignored_fields: fields_data,
+    message_attrs,
+  };
 
-  let consistency_checks_impl =
-    impl_message_consistency_checks(struct_ident, &fields_data, message_attrs.no_auto_test);
+  let consistency_checks_impl = message_ctx.generate_consistency_checks();
 
-  let schema_impls = message_schema_impls(struct_ident, None, &message_attrs, &fields_data);
+  let schema_impls = message_ctx.generate_schema_impls();
 
-  let validator_impl = impl_message_validator(struct_ident, &fields_data, &message_attrs.cel_rules);
+  let validator_impl = message_ctx.generate_validator();
 
   let wrapped_items = wrap_with_imports(vec![schema_impls, validator_impl]);
 

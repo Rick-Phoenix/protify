@@ -29,8 +29,8 @@ use syn_utils::*;
 
 use crate::{
   common_impls::*, enum_derive::*, extension_derive::*, impls::*, item_cloners::*,
-  message_derive::*, message_schema_impl::*, oneof_derive::*, oneof_schema_impl::*, path_utils::*,
-  proto_field::*, proto_map::*, proto_types::*, service_derive::*,
+  message_derive::*, oneof_derive::*, oneof_schema_impl::*, path_utils::*, proto_field::*,
+  proto_map::*, proto_types::*, service_derive::*,
 };
 
 mod attributes;
