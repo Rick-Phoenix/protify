@@ -2,7 +2,7 @@ use super::*;
 
 use_proto_file!(TESTING);
 
-#[proto_oneof(direct)]
+#[proto_oneof(direct, no_auto_test)]
 pub enum TestOneof {
   #[proto(tag = 100)]
   A(String),

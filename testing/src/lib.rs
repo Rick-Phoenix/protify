@@ -49,7 +49,7 @@ pub mod inner {
     C,
   }
 
-  #[proto_oneof]
+  #[proto_oneof(no_auto_test)]
   #[derive(Clone, Debug)]
   pub enum PseudoOneof {
     #[proto(tag = 200, validate = |v| v.min_len(10).max_len(50))]
@@ -60,7 +60,7 @@ pub mod inner {
     C(Box<Abc>),
   }
 
-  #[proto_oneof(direct)]
+  #[proto_oneof(direct, no_auto_test)]
   pub enum DirectOneof {
     #[proto(tag = 200)]
     A(String),
@@ -145,14 +145,14 @@ pub mod inner {
     sint32_optional: Option<i32>,
   }
 
-  #[proto_message]
+  #[proto_message(no_auto_test)]
   #[proto(parent_message = Abc)]
   #[derive(Clone, Debug)]
   pub struct Nested {
     name: String,
   }
 
-  #[proto_message(direct)]
+  #[proto_message(direct, no_auto_test)]
   #[proto(parent_message = Nested)]
   pub struct Nested2 {
     name: String,

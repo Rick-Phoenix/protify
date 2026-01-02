@@ -1,13 +1,5 @@
 use crate::*;
 
-pub struct FileMacroAttrs {
-  pub file: String,
-  pub package: Path,
-  pub options: TokensOr<TokenStream2>,
-  pub extern_path: TokensOr<LitStr>,
-  pub imports: Vec<String>,
-}
-
 pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let input_span = input.span();
 
