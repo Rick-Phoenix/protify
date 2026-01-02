@@ -11,7 +11,7 @@ use super::*;
 define_proto_file!(
   RENDERING,
   file = "rendering.proto",
-  package = "rendering_tests",
+  package = TESTING_PKG,
   options = test_options()
 );
 

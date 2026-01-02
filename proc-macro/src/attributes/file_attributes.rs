@@ -2,36 +2,10 @@ use crate::*;
 
 pub struct FileMacroAttrs {
   pub file: String,
-  pub package: IdentOrStr,
+  pub package: Path,
   pub options: TokensOr<TokenStream2>,
   pub extern_path: TokensOr<LitStr>,
   pub imports: Vec<String>,
-}
-
-enum IdentOrStr {
-  Ident(Ident),
-  Str(LitStr),
-}
-
-impl Parse for IdentOrStr {
-  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    if let Ok(ident) = input.parse::<Ident>() {
-      Ok(Self::Ident(ident))
-    } else if let Ok(lit_str) = input.parse::<LitStr>() {
-      Ok(Self::Str(lit_str))
-    } else {
-      Err(input.error("Expected an ident or a literal string"))
-    }
-  }
-}
-
-impl ToTokens for IdentOrStr {
-  fn to_tokens(&self, tokens: &mut TokenStream2) {
-    match self {
-      IdentOrStr::Ident(ident) => ident.to_tokens(tokens),
-      IdentOrStr::Str(lit_str) => lit_str.to_tokens(tokens),
-    }
-  }
 }
 
 pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
@@ -39,7 +13,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
   let mut const_ident: Option<Ident> = None;
   let mut file: Option<String> = None;
-  let mut package: Option<IdentOrStr> = None;
+  let mut package: Option<Path> = None;
   let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
   let mut extern_path = TokensOr::<LitStr>::new(|| quote! { std::module_path!() });
   let mut imports: Vec<String> = Vec::new();
@@ -52,7 +26,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
         file = Some(meta.parse_value::<LitStr>()?.value());
       }
       "package" => {
-        package = Some(meta.parse_value::<IdentOrStr>()?);
+        package = Some(meta.parse_value::<Path>()?);
       }
       "options" => {
         options.set(meta.expr_value()?.into_token_stream());
@@ -88,7 +62,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
     #[allow(unused)]
     const #const_ident: ::prelude::RegistryPath = ::prelude::RegistryPath {
       file: #file,
-      package: #package,
+      package: #package.name,
       extern_path: #extern_path,
     };
 

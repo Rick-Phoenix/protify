@@ -11,4 +11,6 @@ use prelude::{test_utils::*, *};
 use proc_macro_impls::*;
 use similar_asserts::assert_eq as assert_eq_pretty;
 
-define_proto_file!(TESTING, file = "testing", package = "testing");
+proto_package!(TESTING_PKG, name = "testing", no_cel_test);
+
+define_proto_file!(TESTING, file = "testing", package = TESTING_PKG);

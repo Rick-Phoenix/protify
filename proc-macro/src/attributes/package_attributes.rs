@@ -3,9 +3,9 @@ use crate::*;
 pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
   let input_span = input.span();
 
+  let mut const_ident: Option<Ident> = None;
   let mut pkg_name: Option<String> = None;
   let mut include_cel_test = true;
-  let mut fn_ident: Option<Ident> = None;
 
   let parser = syn::meta::parser(|meta| {
     let ident = meta.ident_str()?;
@@ -17,10 +17,7 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
       "no_cel_test" => {
         include_cel_test = false;
       }
-      "fn_name" => {
-        fn_ident = Some(meta.parse_value::<Ident>()?);
-      }
-      _ => return Err(meta.error("Unknown attribute")),
+      _ => const_ident = Some(meta.ident()?.clone()),
     };
 
     Ok(())
@@ -28,9 +25,15 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 
   parser.parse2(input)?;
 
+  let const_ident = const_ident.ok_or_else(|| {
+    error_with_span!(
+      input_span,
+      "Missing const ident (must be the first argument)"
+    )
+  })?;
+
   let pkg_name = pkg_name.ok_or_else(|| error_with_span!(input_span, "package name is missing"))?;
   let converted_name = ccase!(snake, pkg_name.replace(".", "_"));
-  let fn_ident = fn_ident.unwrap_or_else(|| format_ident!("{converted_name}_package"));
 
   let test_impl = include_cel_test.then(|| {
     let test_fn_ident = format_ident!("unique_cel_rules_{converted_name}");
@@ -39,7 +42,7 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
       #[cfg(test)]
       #[test]
       fn #test_fn_ident() {
-        let pkg = #fn_ident();
+        let pkg = #const_ident.get_package();
 
         if let Err(e) = pkg.check_unique_cel_rules() {
           panic!("{e}");
@@ -49,9 +52,7 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
   });
 
   Ok(quote! {
-    pub fn #fn_ident() -> ::prelude::Package {
-      ::prelude::collect_package(#pkg_name)
-    }
+    const #const_ident: ::prelude::PackageGetter = ::prelude::PackageGetter::new(#pkg_name);
 
     #test_impl
   })

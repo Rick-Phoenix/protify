@@ -2,6 +2,22 @@ use std::{collections::hash_map::Entry, fs::File, path::Path};
 
 use crate::*;
 
+pub struct PackageGetter {
+  pub name: &'static str,
+}
+
+impl PackageGetter {
+  #[must_use]
+  pub const fn new(name: &'static str) -> Self {
+    Self { name }
+  }
+
+  #[must_use]
+  pub fn get_package(&self) -> Package {
+    collect_package(self.name)
+  }
+}
+
 #[derive(Debug)]
 pub struct Package {
   pub name: &'static str,

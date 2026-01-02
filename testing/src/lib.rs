@@ -13,7 +13,7 @@ pub fn collect_package() -> Package {
   prelude::collect_package("myapp.v1")
 }
 
-proto_package!(name = "myapp.v1");
+proto_package!(MYAPP_V1, name = "myapp.v1", no_cel_test);
 
 pub mod inner {
   use bytes::Bytes;
@@ -23,7 +23,7 @@ pub mod inner {
 
   use super::*;
 
-  define_proto_file!(FILE, file = "abc.proto", package = "myapp.v1");
+  define_proto_file!(FILE, file = "abc.proto", package = MYAPP_V1);
 
   #[proto_extension(target = MessageOptions)]
   pub struct SomeExt {
