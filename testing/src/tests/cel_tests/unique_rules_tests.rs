@@ -70,7 +70,7 @@ fn msg_and_field_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_err());
 }
 
-#[proto_oneof]
+#[proto_oneof(no_auto_test)]
 enum OneofWithRule {
   #[proto(tag = 1, validate = |v| v.cel(rule_1()))]
   Id(i32),
@@ -121,7 +121,7 @@ fn field_and_oneof_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_err());
 }
 
-#[proto_oneof]
+#[proto_oneof(no_auto_test)]
 enum DuplicateRuleOneof {
   #[proto(tag = 1, validate = |v| v.cel(rule_1()))]
   Id(i32),

@@ -6,9 +6,15 @@ pub struct OneofAttrs {
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
+  pub is_proxied: bool,
+  pub no_auto_test: bool,
 }
 
-pub fn process_oneof_attrs(enum_ident: &Ident, attrs: &[Attribute]) -> Result<OneofAttrs, Error> {
+pub fn process_oneof_attrs(
+  enum_ident: &Ident,
+  macro_attrs: OneofMacroAttrs,
+  attrs: &[Attribute],
+) -> Result<OneofAttrs, Error> {
   let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
   let mut name: Option<String> = None;
   let mut from_proto: Option<PathOrClosure> = None;
@@ -46,5 +52,7 @@ pub fn process_oneof_attrs(enum_ident: &Ident, attrs: &[Attribute]) -> Result<On
     from_proto,
     into_proto,
     shadow_derives,
+    is_proxied: macro_attrs.is_proxied,
+    no_auto_test: macro_attrs.no_auto_test,
   })
 }

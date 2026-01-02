@@ -18,9 +18,11 @@ where
       ..
     } = data.borrow();
 
-    if let ProtoField::Oneof(OneofInfo { path, .. }) = proto_field {
+    if let ProtoField::Oneof(OneofInfo { path, tags, .. }) = proto_field {
       Some(quote! {
-        (#ident_str, #path::check_validators_consistency())
+        if let Err(err) = #path::check_tags(#ident_str, &mut [ #(#tags),* ]) {
+          field_errors.push((#ident_str, vec![err]));
+        }
       })
     } else {
       validator
@@ -29,69 +31,62 @@ where
         .filter(|v| !v.is_fallback)
         .map(|validator| {
           quote! {
-            (#ident_str, #validator.check_consistency())
+            let (field_name, check) = (#ident_str, #validator.check_consistency());
+
+            if let Err(errs) = check {
+              field_errors.push((field_name, errs));
+            }
           }
         })
     }
   });
 
-  let test_module_ident = format_ident!(
-    "__{}_consistency_test",
-    ccase!(snake, item_ident.to_string())
-  );
+  let auto_test_fn = (!no_auto_test).then(|| {
+    let test_fn_ident = format_ident!(
+      "{}_validators_consistency",
+      ccase!(snake, item_ident.to_string())
+    );
 
-  let auto_test_fn = if !no_auto_test {
-    Some(quote! {
+    quote! {
+      #[cfg(test)]
       #[test]
-      fn test() {
+      fn #test_fn_ident() {
         if let Err(e) = #item_ident::check_validators_consistency() {
           panic!("{e}")
         }
       }
-    })
-  } else {
-    None
-  };
+    }
+  });
 
   quote! {
+    #auto_test_fn
+
     #[cfg(test)]
-    mod #test_module_ident {
-      use super::*;
+    impl #item_ident {
+      pub fn check_validators_consistency() -> Result<(), ::prelude::test_utils::MessageTestError> {
+        let mut field_errors: Vec<(&'static str, Vec<::prelude::test_utils::ConsistencyError>)> = Vec::new();
+        let mut cel_errors: Vec<::prelude::CelError> = Vec::new();
 
-      #auto_test_fn
+        #(#consistency_checks)*
 
-      impl #item_ident {
-        pub(crate) fn check_validators_consistency() -> Result<(), ::prelude::test_utils::MessageTestError> {
-          let mut field_errors: Vec<(&'static str, Vec<ConsistencyError>)> = Vec::new();
-          let mut cel_errors: Vec<::prelude::CelError> = Vec::new();
+        let top_level_programs = Self::cel_rules();
 
-          #(
-            let (field_name, check) = #consistency_checks;
-
-            if let Err(errs) = check {
-              field_errors.push((field_name, errs));
-            }
-          )*
-
-          let top_level_programs = Self::cel_rules();
-
-          if !top_level_programs.is_empty() {
-            if let Err(errs) = ::prelude::test_programs(top_level_programs, Self::default()) {
-              cel_errors.extend(errs);
-            }
+        if !top_level_programs.is_empty() {
+          if let Err(errs) = ::prelude::test_programs(top_level_programs, Self::default()) {
+            cel_errors.extend(errs);
           }
-
-          if !field_errors.is_empty() || !cel_errors.is_empty() {
-            return Err(::prelude::test_utils::MessageTestError {
-                message_full_name: #item_ident::full_name(),
-                field_errors,
-                cel_errors
-              }
-            );
-          }
-
-          Ok(())
         }
+
+        if !field_errors.is_empty() || !cel_errors.is_empty() {
+          return Err(::prelude::test_utils::MessageTestError {
+              message_full_name: #item_ident::full_name(),
+              field_errors,
+              cel_errors
+            }
+          );
+        }
+
+        Ok(())
       }
     }
   }

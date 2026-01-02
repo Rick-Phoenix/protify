@@ -7,6 +7,13 @@ pub struct MessageMacroAttrs {
   pub extern_path: Option<String>,
 }
 
+pub struct MessageCtx<'a> {
+  pub orig_struct_ident: &'a Ident,
+  pub shadow_struct_ident: Option<&'a Ident>,
+  pub non_ignored_fields: Vec<&'a FieldData>,
+  pub message_attrs: MessageAttrs,
+}
+
 pub fn process_message_derive(
   item: &mut ItemStruct,
   macro_attrs: MessageMacroAttrs,
@@ -41,7 +48,6 @@ pub fn process_message_derive_shadow(
 
   let mut fields_data: Vec<FieldDataKind> = Vec::new();
   let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
-  let mut oneofs_tags_checks: Vec<OneofCheckCtx> = Vec::new();
 
   for field in orig_struct.fields.iter_mut() {
     let field_data_kind = process_field_data(FieldOrVariant::Field(field))?;
@@ -59,18 +65,13 @@ pub fn process_message_derive_shadow(
             tag,
             field_span: field.span(),
           });
-        } else if let ProtoField::Oneof(OneofInfo { tags, path, .. }) = &data.proto_field {
+        } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
           for tag in tags.iter().copied() {
             manually_set_tags.push(ManuallySetTag {
               tag,
               field_span: field.span(),
             });
           }
-
-          oneofs_tags_checks.push(OneofCheckCtx {
-            path: path.to_token_stream(),
-            tags: tags.clone(),
-          });
         }
       }
     };
@@ -146,12 +147,6 @@ pub fn process_message_derive_shadow(
     &non_ignored_fields,
   );
 
-  let oneof_tags_check = generate_oneof_tags_check(
-    shadow_struct_ident,
-    message_attrs.no_auto_test,
-    oneofs_tags_checks,
-  );
-
   let shadow_struct_derives = message_attrs
     .shadow_derives
     .map(|list| quote! { #[#list] });
@@ -172,7 +167,6 @@ pub fn process_message_derive_shadow(
     #shadow_struct
 
     #wrapped_items
-    #oneof_tags_check
     #consistency_checks_impl
   };
 
@@ -198,7 +192,6 @@ pub fn process_message_derive_direct(
 
   let mut fields_data: Vec<FieldData> = Vec::new();
   let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
-  let mut oneofs_tags_checks: Vec<OneofCheckCtx> = Vec::new();
 
   for field in item.fields.iter_mut() {
     let field_data = process_field_data(FieldOrVariant::Field(field))?;
@@ -232,18 +225,13 @@ pub fn process_message_derive_direct(
           tag,
           field_span: field.span(),
         });
-      } else if let ProtoField::Oneof(OneofInfo { tags, path, .. }) = &data.proto_field {
+      } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
         for tag in tags.iter().copied() {
           manually_set_tags.push(ManuallySetTag {
             tag,
             field_span: field.span(),
           });
         }
-
-        oneofs_tags_checks.push(OneofCheckCtx {
-          path: path.to_token_stream(),
-          tags: tags.clone(),
-        });
       }
 
       fields_data.push(data);
@@ -287,14 +275,10 @@ pub fn process_message_derive_direct(
 
   let validator_impl = impl_message_validator(struct_ident, &fields_data, &message_attrs.cel_rules);
 
-  let oneof_tags_check =
-    generate_oneof_tags_check(struct_ident, message_attrs.no_auto_test, oneofs_tags_checks);
-
   let wrapped_items = wrap_with_imports(vec![schema_impls, validator_impl]);
 
   let output_tokens = quote! {
     #wrapped_items
-    #oneof_tags_check
     #consistency_checks_impl
   };
 

@@ -1,6 +1,10 @@
 use crate::*;
 
-pub fn impl_oneof_consistency_checks<T>(oneof_ident: &Ident, variants: &[T]) -> TokenStream2
+pub fn impl_oneof_consistency_checks<T>(
+  oneof_ident: &Ident,
+  variants: &[T],
+  no_auto_test: bool,
+) -> TokenStream2
 where
   T: Borrow<FieldData>,
 {
@@ -22,11 +26,30 @@ where
       })
   });
 
+  let auto_test_fn = (!no_auto_test).then(|| {
+    let test_fn_ident = format_ident!(
+      "{}_validators_consistency",
+      ccase!(snake, oneof_ident.to_string())
+    );
+
+    quote! {
+      #[cfg(test)]
+      #[test]
+      fn #test_fn_ident() {
+        if let Err(e) = #oneof_ident::check_validators_consistency() {
+          panic!("{e}")
+        }
+      }
+    }
+  });
+
   quote! {
+    #auto_test_fn
+
     #[cfg(test)]
     impl #oneof_ident {
-      pub fn check_validators_consistency() -> Result<(), Vec<ConsistencyError>> {
-        let mut errors: Vec<(&'static str, Vec<ConsistencyError>)> = Vec::new();
+      pub fn check_validators_consistency() -> Result<(), ::prelude::test_utils::OneofErrors> {
+        let mut errors: Vec<(&'static str, Vec<::prelude::test_utils::ConsistencyError>)> = Vec::new();
 
         #(
           let (field_name, check) = #consistency_checks;
@@ -40,12 +63,10 @@ where
           Ok(())
         } else {
           Err(
-            vec![::prelude::ConsistencyError::OneofErrors(
-              ::prelude::OneofErrors {
-                oneof_name: stringify!(#oneof_ident),
-                errors
-              }
-            )]
+            ::prelude::test_utils::OneofErrors {
+              oneof_name: stringify!(#oneof_ident),
+              errors
+            }
           )
         }
       }

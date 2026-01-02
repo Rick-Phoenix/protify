@@ -44,7 +44,8 @@ fn bad_msg_rules() {
   assert_eq_pretty!(cel_errors.len(), 1);
 }
 
-#[proto_oneof]
+#[allow(unused)]
+#[proto_oneof(no_auto_test)]
 enum BadCelOneof {
   #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]
   Id(i32),
@@ -52,22 +53,11 @@ enum BadCelOneof {
   Name(String),
 }
 
-#[proto_message(no_auto_test)]
-struct BadOneofRules {
-  #[proto(oneof(tags(1, 2)))]
-  pub oneof: Option<BadCelOneof>,
-}
-
 #[test]
 fn bad_oneof_rules() {
-  let MessageTestError {
-    message_full_name,
-    field_errors,
-    cel_errors,
-  } = BadOneofRules::check_validators_consistency().unwrap_err();
+  let OneofErrors { oneof_name, errors } = BadCelOneof::check_validators_consistency().unwrap_err();
 
-  assert_eq_pretty!(message_full_name, "testing.BadOneofRules");
-  assert_eq_pretty!(field_errors.len(), 1);
-  // Top level rules, which don't apply here
-  assert_eq_pretty!(cel_errors.len(), 0);
+  assert_eq_pretty!(oneof_name, "BadCelOneof");
+  assert_eq_pretty!(errors.len(), 1);
+  assert!(matches!(errors[0].1[0], ConsistencyError::CelError(_)));
 }

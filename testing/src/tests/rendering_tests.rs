@@ -108,7 +108,7 @@ pub enum TestEnum {
   B,
 }
 
-#[proto_oneof]
+#[proto_oneof(no_auto_test)]
 #[proto(options = test_options())]
 pub enum OneofA {
   #[proto(tag = 200, validate = |v| v.min_len(10).max_len(50))]
@@ -117,7 +117,7 @@ pub enum OneofA {
   B(i32),
 }
 
-#[proto_oneof]
+#[proto_oneof(no_auto_test)]
 pub enum OneofB {
   #[proto(tag = 1502)]
   A(String),

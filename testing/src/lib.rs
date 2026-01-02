@@ -49,7 +49,7 @@ pub mod inner {
     C,
   }
 
-  #[proto_oneof(proxied)]
+  #[proto_oneof(proxied, no_auto_test)]
   #[derive(Clone, Debug)]
   pub enum PseudoOneof {
     #[proto(tag = 200, validate = |v| v.min_len(10).max_len(50))]
@@ -60,7 +60,7 @@ pub mod inner {
     C(Box<Abc>),
   }
 
-  #[proto_oneof]
+  #[proto_oneof(no_auto_test)]
   pub enum DirectOneof {
     #[proto(tag = 200)]
     A(String),

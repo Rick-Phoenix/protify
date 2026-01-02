@@ -1,9 +1,18 @@
 use crate::*;
 
-pub fn process_oneof_derive(item: &mut ItemEnum, is_proxied: bool) -> Result<TokenStream2, Error> {
-  let oneof_attrs = process_oneof_attrs(&item.ident, &item.attrs)?;
+#[derive(Default)]
+pub struct OneofMacroAttrs {
+  pub is_proxied: bool,
+  pub no_auto_test: bool,
+}
 
-  if is_proxied {
+pub fn process_oneof_derive(
+  item: &mut ItemEnum,
+  macro_attrs: OneofMacroAttrs,
+) -> Result<TokenStream2, Error> {
+  let oneof_attrs = process_oneof_attrs(&item.ident, macro_attrs, &item.attrs)?;
+
+  if oneof_attrs.is_proxied {
     process_oneof_derive_shadow(item, oneof_attrs)
   } else {
     process_oneof_derive_direct(item, oneof_attrs)
@@ -98,8 +107,11 @@ pub(crate) fn process_oneof_derive_shadow(
     .shadow_derives
     .map(|list| quote! { #[#list] });
 
-  let consistency_checks_impl =
-    impl_oneof_consistency_checks(shadow_enum_ident, &non_ignored_variants);
+  let consistency_checks_impl = impl_oneof_consistency_checks(
+    shadow_enum_ident,
+    &non_ignored_variants,
+    oneof_attrs.no_auto_test,
+  );
 
   let validator_impl = impl_oneof_validator(shadow_enum_ident, &non_ignored_variants);
 
@@ -217,7 +229,8 @@ pub(crate) fn process_oneof_derive_direct(
   let oneof_schema_impl =
     oneof_schema_impl(&oneof_attrs, oneof_ident, &fields_attrs, &manually_set_tags);
 
-  let consistency_checks_impl = impl_oneof_consistency_checks(oneof_ident, &fields_attrs);
+  let consistency_checks_impl =
+    impl_oneof_consistency_checks(oneof_ident, &fields_attrs, oneof_attrs.no_auto_test);
 
   let validator_impl = impl_oneof_validator(oneof_ident, &fields_attrs);
 
