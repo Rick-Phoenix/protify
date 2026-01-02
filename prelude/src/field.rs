@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProtoField {
-  pub name: String,
+  pub name: &'static str,
   pub tag: i32,
   pub type_: ProtoFieldInfo,
   pub options: Vec<ProtoOption>,

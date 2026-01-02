@@ -66,7 +66,7 @@ pub fn process_extension_derive(
 
     fields_tokens.push(quote! {
       ::prelude::ProtoField {
-        name: #proto_name.to_string(),
+        name: #proto_name,
         tag: #tag,
         options: #options,
         type_: #field_type_tokens,
