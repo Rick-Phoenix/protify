@@ -6,7 +6,7 @@ use ::bytes::Bytes;
 #[cfg(feature = "regex")]
 use regex::bytes::Regex;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct BytesValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
@@ -50,6 +50,29 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<Bytes>,
+}
+
+impl<S: State> Default for BytesValidatorBuilder<S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      well_known: Default::default(),
+      required: Default::default(),
+      len: Default::default(),
+      min_len: Default::default(),
+      max_len: Default::default(),
+      pattern: Default::default(),
+      prefix: Default::default(),
+      suffix: Default::default(),
+      contains: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      const_: Default::default(),
+    }
+  }
 }
 
 impl<S: State> From<BytesValidatorBuilder<S>> for ProtoOption {

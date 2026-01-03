@@ -34,6 +34,7 @@ impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, 
   type Validator = EnumValidator<T>;
 
   #[inline]
+  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }

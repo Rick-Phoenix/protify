@@ -4,7 +4,7 @@ pub use state::*;
 
 use proto_types::Duration;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct DurationValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
@@ -35,6 +35,25 @@ pub struct DurationValidatorBuilder<S: State = Empty> {
 
   /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
   gte: Option<Duration>,
+}
+
+impl<S: State> Default for DurationValidatorBuilder<S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      required: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      const_: Default::default(),
+      lt: Default::default(),
+      lte: Default::default(),
+      gt: Default::default(),
+      gte: Default::default(),
+    }
+  }
 }
 
 impl DurationValidator {

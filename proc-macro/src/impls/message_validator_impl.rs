@@ -19,11 +19,6 @@ pub fn fallback_message_validator_impl(target_ident: &Ident) -> TokenStream2 {
       fn default_validator() -> Option<Self::Validator> {
         Some(MessageValidator::default())
       }
-
-      #[inline]
-      fn validator_builder() -> Self::Builder {
-        ::prelude::MessageValidator::builder()
-      }
     }
   }
 }
@@ -162,6 +157,7 @@ impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
           }
         }
 
+        #[doc(hidden)]
         #[inline]
         fn nested_validate(&self, ctx: &mut ValidationCtx) {
           self.__validate_internal(Some(&ctx.field_context), ctx.parent_elements, ctx.violations)
@@ -173,14 +169,10 @@ impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
         type Validator = ::prelude::MessageValidator<Self>;
         type Builder = ::prelude::MessageValidatorBuilder<Self>;
 
+        #[doc(hidden)]
         #[inline]
         fn default_validator() -> Option<Self::Validator> {
           Some(MessageValidator::default())
-        }
-
-        #[inline]
-        fn validator_builder() -> Self::Builder {
-          ::prelude::MessageValidator::builder()
         }
       }
     }

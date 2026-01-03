@@ -21,6 +21,27 @@ where
   ignore: Ignore,
 }
 
+impl<K, V, S: State> Default for MapValidatorBuilder<K, V, S>
+where
+  K: ProtoValidator,
+  V: ProtoValidator,
+{
+  #[inline]
+  fn default() -> Self {
+    Self {
+      keys: Default::default(),
+      _state: PhantomData,
+      _key_type: PhantomData,
+      _value_type: PhantomData,
+      cel: Default::default(),
+      values: Default::default(),
+      min_pairs: Default::default(),
+      max_pairs: Default::default(),
+      ignore: Default::default(),
+    }
+  }
+}
+
 impl<K, V> MapValidator<K, V>
 where
   K: ProtoValidator,
@@ -28,18 +49,8 @@ where
 {
   #[must_use]
   #[inline]
-  pub const fn builder() -> MapValidatorBuilder<K, V> {
-    MapValidatorBuilder {
-      _state: PhantomData,
-      _key_type: PhantomData,
-      _value_type: PhantomData,
-      cel: vec![],
-      values: None,
-      keys: None,
-      min_pairs: None,
-      max_pairs: None,
-      ignore: Ignore::Unspecified,
-    }
+  pub fn builder() -> MapValidatorBuilder<K, V> {
+    MapValidatorBuilder::default()
   }
 }
 

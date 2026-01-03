@@ -30,6 +30,7 @@ impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
   type Validator = FieldMaskValidator;
 
   #[inline]
+  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }

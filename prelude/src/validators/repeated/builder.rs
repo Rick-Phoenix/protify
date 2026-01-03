@@ -22,23 +22,33 @@ where
   ignore: Ignore,
 }
 
+impl<T, S: State> Default for RepeatedValidatorBuilder<T, S>
+where
+  T: ProtoValidator,
+{
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      _inner_type: PhantomData,
+      cel: Default::default(),
+      items: Default::default(),
+      min_items: Default::default(),
+      max_items: Default::default(),
+      unique: Default::default(),
+      ignore: Default::default(),
+    }
+  }
+}
+
 impl<T> RepeatedValidator<T>
 where
   T: ProtoValidator,
 {
   #[must_use]
   #[inline]
-  pub const fn builder() -> RepeatedValidatorBuilder<T> {
-    RepeatedValidatorBuilder {
-      _state: PhantomData,
-      _inner_type: PhantomData,
-      cel: vec![],
-      items: None,
-      min_items: None,
-      max_items: None,
-      unique: false,
-      ignore: Ignore::Unspecified,
-    }
+  pub fn builder() -> RepeatedValidatorBuilder<T> {
+    RepeatedValidatorBuilder::default()
   }
 }
 

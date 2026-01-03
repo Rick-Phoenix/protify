@@ -2,7 +2,7 @@ pub mod state;
 use crate::validators::*;
 pub use state::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct BoolValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
   /// Specifies that only this specific value will be considered valid for this field.
@@ -10,6 +10,18 @@ pub struct BoolValidatorBuilder<S: State = Empty> {
   /// Specifies that the field must be set in order to be valid.
   required: bool,
   ignore: Ignore,
+}
+
+impl<S: State> Default for BoolValidatorBuilder<S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      const_: Default::default(),
+      required: Default::default(),
+      ignore: Default::default(),
+    }
+  }
 }
 
 impl BoolValidator {

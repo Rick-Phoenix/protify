@@ -2,7 +2,7 @@ pub mod state;
 use crate::validators::*;
 pub use state::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
   _state: PhantomData<S>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
@@ -26,6 +26,23 @@ pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<i32>,
+}
+
+impl<T: ProtoEnum, S: State> Default for EnumValidatorBuilder<T, S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      _enum: Default::default(),
+      defined_only: Default::default(),
+      required: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      const_: Default::default(),
+    }
+  }
 }
 
 impl<T: ProtoEnum> EnumValidator<T> {

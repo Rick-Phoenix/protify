@@ -2,7 +2,7 @@ pub mod state;
 use crate::validators::*;
 pub use state::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct IntValidatorBuilder<Num, S = Empty>
 where
   S: State,
@@ -39,6 +39,30 @@ where
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
   not_in: Option<StaticLookup<Num::RustType>>,
+}
+
+impl<Num, S> Default for IntValidatorBuilder<Num, S>
+where
+  S: State,
+  Num: IntWrapper,
+{
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      _wrapper: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      required: Default::default(),
+      const_: Default::default(),
+      lt: Default::default(),
+      lte: Default::default(),
+      gt: Default::default(),
+      gte: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+    }
+  }
 }
 
 impl<S, N> From<IntValidatorBuilder<N, S>> for ProtoOption

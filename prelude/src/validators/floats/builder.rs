@@ -2,7 +2,7 @@ pub mod state;
 use crate::validators::*;
 pub use state::*;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct FloatValidatorBuilder<Num, S = Empty>
 where
   S: State,
@@ -48,6 +48,33 @@ where
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
   not_in: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
+}
+
+impl<Num, S> Default for FloatValidatorBuilder<Num, S>
+where
+  S: State,
+  Num: FloatWrapper,
+{
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _wrapper: PhantomData,
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      required: Default::default(),
+      abs_tolerance: Default::default(),
+      rel_tolerance: Default::default(),
+      finite: Default::default(),
+      const_: Default::default(),
+      lt: Default::default(),
+      lte: Default::default(),
+      gt: Default::default(),
+      gte: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+    }
+  }
 }
 
 impl<Num, S> FloatValidatorBuilder<Num, S>

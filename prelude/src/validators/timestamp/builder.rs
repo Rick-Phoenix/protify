@@ -4,7 +4,7 @@ pub use state::*;
 
 use proto_types::{Duration, Timestamp};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct TimestampValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
@@ -41,6 +41,27 @@ pub struct TimestampValidatorBuilder<S: State = Empty> {
   within: Option<Duration>,
 
   now_tolerance: Duration,
+}
+
+impl<S: State> Default for TimestampValidatorBuilder<S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      lt_now: Default::default(),
+      gt_now: Default::default(),
+      required: Default::default(),
+      const_: Default::default(),
+      lt: Default::default(),
+      lte: Default::default(),
+      gt: Default::default(),
+      gte: Default::default(),
+      within: Default::default(),
+      now_tolerance: Default::default(),
+    }
+  }
 }
 
 impl TimestampValidator {

@@ -86,6 +86,7 @@ where
   type Validator = MessageValidator<T>;
 
   #[inline]
+  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }

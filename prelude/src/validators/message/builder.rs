@@ -17,17 +17,24 @@ pub struct MessageValidatorBuilder<T: ProtoMessage + ValidatedMessage, S: State 
   required: bool,
 }
 
+impl<T: ProtoMessage + ValidatedMessage, S: State> Default for MessageValidatorBuilder<T, S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      _message: PhantomData,
+      required: Default::default(),
+    }
+  }
+}
+
 impl<T: ProtoMessage + ValidatedMessage> MessageValidator<T> {
   #[must_use]
   #[inline]
-  pub const fn builder() -> MessageValidatorBuilder<T> {
-    MessageValidatorBuilder {
-      _state: PhantomData,
-      cel: vec![],
-      ignore: Ignore::Unspecified,
-      _message: PhantomData,
-      required: false,
-    }
+  pub fn builder() -> MessageValidatorBuilder<T> {
+    MessageValidatorBuilder::default()
   }
 }
 

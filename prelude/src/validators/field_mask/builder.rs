@@ -2,7 +2,7 @@ pub mod state;
 use crate::validators::*;
 pub use state::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct FieldMaskValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
@@ -22,6 +22,21 @@ pub struct FieldMaskValidatorBuilder<S: State = Empty> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<StaticLookup<&'static str>>,
+}
+
+impl<S: State> Default for FieldMaskValidatorBuilder<S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      required: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      const_: Default::default(),
+    }
+  }
 }
 
 impl<S: State> From<FieldMaskValidatorBuilder<S>> for ProtoOption {

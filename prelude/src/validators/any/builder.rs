@@ -2,7 +2,7 @@ pub mod state;
 use crate::validators::*;
 pub use state::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct AnyValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
@@ -19,6 +19,20 @@ pub struct AnyValidatorBuilder<S: State = Empty> {
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
   not_in: Option<StaticLookup<&'static str>>,
+}
+
+impl<S: State> Default for AnyValidatorBuilder<S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      ignore: Default::default(),
+      required: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+    }
+  }
 }
 
 impl AnyValidator {

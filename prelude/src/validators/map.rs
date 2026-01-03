@@ -78,11 +78,6 @@ where
 
   type Validator = MapValidator<K, V>;
   type Builder = MapValidatorBuilder<K, V>;
-
-  #[inline]
-  fn validator_builder() -> Self::Builder {
-    MapValidator::builder()
-  }
 }
 
 impl<K, V, S: State> ValidatorBuilderFor<ProtoMap<K, V>> for MapValidatorBuilder<K, V, S>
@@ -96,6 +91,7 @@ where
   type Validator = MapValidator<K, V>;
 
   #[inline]
+  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }

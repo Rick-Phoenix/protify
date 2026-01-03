@@ -85,11 +85,6 @@ macro_rules! impl_validator {
         type Target = $rust_type;
         type Validator = $validator;
         type Builder = [< $validator Builder >];
-
-        #[inline]
-        fn validator_builder() -> Self::Builder {
-          $validator::builder()
-        }
       }
 
       impl<S: State> ValidatorBuilderFor<$rust_type> for [< $validator Builder >]<S> {

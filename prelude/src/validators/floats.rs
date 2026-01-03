@@ -402,11 +402,6 @@ macro_rules! impl_float_wrapper {
         type Target = $target_type;
         type Validator = FloatValidator<$target_type>;
         type Builder = FloatValidatorBuilder<$target_type>;
-
-        #[inline]
-        fn validator_builder() -> Self::Builder {
-          FloatValidator::builder()
-        }
       }
 
       impl<S: State> ValidatorBuilderFor<$target_type> for FloatValidatorBuilder<$target_type, S> {

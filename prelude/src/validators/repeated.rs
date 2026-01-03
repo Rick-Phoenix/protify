@@ -84,11 +84,6 @@ where
   type Target = Vec<T::Target>;
   type Validator = RepeatedValidator<T>;
   type Builder = RepeatedValidatorBuilder<T>;
-
-  #[inline]
-  fn validator_builder() -> Self::Builder {
-    RepeatedValidator::builder()
-  }
 }
 
 impl<T, S> ValidatorBuilderFor<Vec<T>> for RepeatedValidatorBuilder<T, S>
@@ -101,6 +96,7 @@ where
   type Validator = RepeatedValidator<T>;
 
   #[inline]
+  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }

@@ -7,7 +7,7 @@ pub use state::*;
 #[cfg(feature = "regex")]
 use regex::Regex;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct StringValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
   /// Adds custom validation using one or more [`CelRule`]s to this field.
@@ -62,6 +62,33 @@ pub struct StringValidatorBuilder<S: State = Empty> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<Arc<str>>,
+}
+
+impl<S: State> Default for StringValidatorBuilder<S> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      _state: PhantomData,
+      cel: Default::default(),
+      well_known: Default::default(),
+      ignore: Default::default(),
+      required: Default::default(),
+      len: Default::default(),
+      min_len: Default::default(),
+      max_len: Default::default(),
+      len_bytes: Default::default(),
+      min_bytes: Default::default(),
+      max_bytes: Default::default(),
+      pattern: Default::default(),
+      prefix: Default::default(),
+      suffix: Default::default(),
+      contains: Default::default(),
+      not_contains: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      const_: Default::default(),
+    }
+  }
 }
 
 impl StringValidator {

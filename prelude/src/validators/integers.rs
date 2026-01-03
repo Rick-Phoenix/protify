@@ -51,6 +51,7 @@ impl<S: State, Num: IntWrapper> ValidatorBuilderFor<Num> for IntValidatorBuilder
   type Validator = IntValidator<Num>;
 
   #[inline]
+  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -322,11 +323,6 @@ macro_rules! impl_int_validator {
         type Target = $rust_type;
         type Validator = IntValidator<$wrapper>;
         type Builder = IntValidatorBuilder<$wrapper>;
-
-        #[inline]
-        fn validator_builder() -> IntValidatorBuilder<$wrapper> {
-          IntValidator::builder()
-        }
       }
     }
   };

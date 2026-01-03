@@ -178,11 +178,6 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
       type Target = i32;
       type Validator = ::prelude::EnumValidator<#enum_name>;
       type Builder = ::prelude::EnumValidatorBuilder<#enum_name>;
-
-      #[inline]
-      fn validator_builder() -> Self::Builder {
-        ::prelude::EnumValidator::builder()
-      }
     }
 
     impl ::prelude::AsProtoType for #enum_name {
@@ -246,11 +241,6 @@ fn fallback_schema_impl(enum_name: &Ident) -> TokenStream2 {
       type Target = i32;
       type Validator = ::prelude::EnumValidator<#enum_name>;
       type Builder = ::prelude::EnumValidatorBuilder<#enum_name>;
-
-      #[inline]
-      fn validator_builder() -> Self::Builder {
-        ::prelude::EnumValidator::builder()
-      }
     }
 
     impl ::prelude::AsProtoType for #enum_name {

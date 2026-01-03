@@ -43,7 +43,7 @@ pub trait Validator<T>: Into<ProtoOption> {
   fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>);
 }
 
-pub trait ValidatorBuilderFor<T> {
+pub trait ValidatorBuilderFor<T>: Default {
   type Target;
   type Validator: Validator<T, Target = Self::Target>;
 
@@ -55,14 +55,21 @@ pub trait ProtoValidator: std::marker::Sized {
   type Validator: Validator<Self, Target = Self::Target> + Clone;
   type Builder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
 
+  #[doc(hidden)]
   #[must_use]
   #[inline]
   fn default_validator() -> Option<Self::Validator> {
     None
   }
 
-  fn validator_builder() -> Self::Builder;
+  #[doc(hidden)]
+  #[inline]
+  #[must_use]
+  fn validator_builder() -> Self::Builder {
+    Self::Builder::default()
+  }
 
+  #[doc(hidden)]
   fn validator_from_closure<F, FinalBuilder>(config_fn: F) -> Self::Validator
   where
     F: FnOnce(Self::Builder) -> FinalBuilder,
