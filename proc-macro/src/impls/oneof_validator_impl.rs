@@ -1,66 +1,70 @@
 use crate::*;
 
-pub fn impl_oneof_validator<T>(oneof_ident: &Ident, variants: &[T]) -> TokenStream2
-where
-  T: Borrow<FieldData>,
-{
-  let validators_tokens = variants.iter().filter_map(|data| {
-    let FieldData {
-      ident,
-      ident_str,
-      tag,
-      validator,
-      proto_name,
-      proto_field,
-      ..
-    } = data.borrow();
+impl<'a, T: Borrow<FieldData>> OneofCtx<'a, T> {
+  pub fn generate_validator(&self) -> TokenStream2 {
+    let oneof_ident = self.proto_enum_ident();
 
-    if let Some(ValidatorTokens {
-      expr: validator_expr,
-      ..
-    }) = validator.as_ref()
-    {
-      let validator_static_ident = format_ident!("{}_VALIDATOR", ccase!(constant, &ident_str));
+    let validators_tokens = self
+      .non_ignored_variants
+      .iter()
+      .filter_map(|data| {
+        let FieldData {
+          ident,
+          ident_str,
+          tag,
+          validator,
+          proto_name,
+          proto_field,
+          ..
+        } = data.borrow();
 
-      let validator_name = proto_field.validator_name();
+        if let Some(ValidatorTokens {
+          expr: validator_expr,
+          ..
+        }) = validator.as_ref()
+        {
+          let validator_static_ident = format_ident!("{}_VALIDATOR", ccase!(constant, &ident_str));
 
-      let field_type = proto_field.descriptor_type_tokens();
+          let validator_name = proto_field.validator_name();
 
-      Some(quote! {
-        Self::#ident(v) => {
-          static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
-            #validator_expr
-          });
+          let field_type = proto_field.descriptor_type_tokens();
 
-          #validator_static_ident.validate(
-            &mut ::prelude::ValidationCtx {
-              field_context: ::prelude::FieldContext {
-                proto_name: #proto_name,
-                tag: #tag,
-                field_type: #field_type,
-                key_type: None,
-                value_type: None,
-                subscript: None,
-                field_kind: Default::default(),
-              },
-              parent_elements,
-              violations
-            },
-            Some(v)
-          );
+          Some(quote! {
+            Self::#ident(v) => {
+              static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
+                #validator_expr
+              });
+
+              #validator_static_ident.validate(
+                &mut ::prelude::ValidationCtx {
+                  field_context: ::prelude::FieldContext {
+                    proto_name: #proto_name,
+                    tag: #tag,
+                    field_type: #field_type,
+                    key_type: None,
+                    value_type: None,
+                    subscript: None,
+                    field_kind: Default::default(),
+                  },
+                  parent_elements,
+                  violations
+                },
+                Some(v)
+              );
+            }
+          })
+        } else {
+          None
         }
-      })
-    } else {
-      None
-    }
-  });
+      });
 
-  quote! {
-    impl ::prelude::ValidatedOneof for #oneof_ident {
-      fn validate(&self, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
-        match self {
-          #(#validators_tokens,)*
-          _ => {}
+    quote! {
+      impl ::prelude::ValidatedOneof for #oneof_ident {
+        fn validate(&self, parent_elements: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc) {
+          match self {
+            #(#validators_tokens,)*
+            _ => {}
+          }
         }
       }
     }

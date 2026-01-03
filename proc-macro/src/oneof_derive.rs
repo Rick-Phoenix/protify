@@ -6,6 +6,22 @@ pub struct OneofMacroAttrs {
   pub no_auto_test: bool,
 }
 
+pub struct OneofCtx<'a, T: Borrow<FieldData>> {
+  pub oneof_attrs: OneofAttrs,
+  pub orig_enum_ident: &'a Ident,
+  pub shadow_enum_ident: Option<&'a Ident>,
+  pub non_ignored_variants: Vec<T>,
+  pub tags: Vec<ManuallySetTag>,
+}
+
+impl<'a, T: Borrow<FieldData>> OneofCtx<'a, T> {
+  pub fn proto_enum_ident(&self) -> &'a Ident {
+    self
+      .shadow_enum_ident
+      .unwrap_or(self.orig_enum_ident)
+  }
+}
+
 pub fn process_oneof_derive(
   item: &mut ItemEnum,
   macro_attrs: OneofMacroAttrs,
@@ -43,13 +59,13 @@ pub(crate) fn process_oneof_derive_shadow(
   };
 
   let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
-  let mut fields_attrs: Vec<FieldDataKind> = Vec::new();
+  let mut fields_data: Vec<FieldDataKind> = Vec::new();
 
   for src_variant in orig_enum_variants {
-    let field_attrs = process_field_data(FieldOrVariant::Variant(src_variant))?;
-    proto_conversion_data.handle_field_conversions(&field_attrs);
+    let field_data = process_field_data(FieldOrVariant::Variant(src_variant))?;
+    proto_conversion_data.handle_field_conversions(&field_data);
 
-    match &field_attrs {
+    match &field_data {
       FieldDataKind::Ignored { ident, .. } => ignored_variants.push(ident.clone()),
       FieldDataKind::Normal(data) => {
         if let Some(tag) = data.tag {
@@ -61,12 +77,12 @@ pub(crate) fn process_oneof_derive_shadow(
       }
     };
 
-    fields_attrs.push(field_attrs);
+    fields_data.push(field_data);
   }
 
   sort_and_check_invalid_tags(&mut manually_set_tags, &ReservedNumbers::default())?;
 
-  for (dst_variant, field_attrs) in shadow_enum_variants.zip(fields_attrs.iter()) {
+  for (dst_variant, field_attrs) in shadow_enum_variants.zip(fields_data.iter()) {
     let FieldDataKind::Normal(field_attrs) = field_attrs else {
       continue;
     };
@@ -91,35 +107,35 @@ pub(crate) fn process_oneof_derive_shadow(
     .filter(|var| !ignored_variants.contains(&var.ident))
     .collect();
 
-  let non_ignored_variants: Vec<&FieldData> = fields_attrs
+  let non_ignored_variants: Vec<&FieldData> = fields_data
     .iter()
     .filter_map(|f| f.as_normal())
     .collect();
 
-  let oneof_schema_impl = oneof_schema_impl(
-    &oneof_attrs,
-    shadow_enum_ident,
-    &non_ignored_variants,
-    &manually_set_tags,
-  );
+  let oneof_ctx = OneofCtx {
+    oneof_attrs,
+    orig_enum_ident,
+    shadow_enum_ident: Some(shadow_enum_ident),
+    non_ignored_variants,
+    tags: manually_set_tags,
+  };
 
-  let shadow_enum_derives = oneof_attrs
-    .shadow_derives
-    .map(|list| quote! { #[#list] });
+  let oneof_schema_impl = oneof_ctx.generate_schema_impl();
 
-  let consistency_checks_impl = impl_oneof_consistency_checks(
-    shadow_enum_ident,
-    &non_ignored_variants,
-    oneof_attrs.no_auto_test,
-  );
+  let consistency_checks_impl = oneof_ctx.generate_consistency_checks();
 
-  let validator_impl = impl_oneof_validator(shadow_enum_ident, &non_ignored_variants);
+  let validator_impl = oneof_ctx.generate_validator();
 
   let wrapped_items = wrap_with_imports(vec![
     oneof_schema_impl,
     proto_conversion_impls,
     validator_impl,
   ]);
+
+  let shadow_enum_derives = oneof_ctx
+    .oneof_attrs
+    .shadow_derives
+    .map(|list| quote! { #[#list] });
 
   let derives = if cfg!(feature = "cel") {
     quote! { #[derive(::prelude::prost::Oneof, PartialEq, Clone, ::protocheck_proc_macro::TryIntoCelValue)] }
@@ -224,15 +240,19 @@ pub(crate) fn process_oneof_derive_direct(
     variant.attrs.push(prost_attr);
   }
 
-  let oneof_ident = &item.ident;
+  let oneof_ctx = OneofCtx {
+    oneof_attrs,
+    orig_enum_ident: &item.ident,
+    shadow_enum_ident: None,
+    non_ignored_variants: fields_attrs,
+    tags: manually_set_tags,
+  };
 
-  let oneof_schema_impl =
-    oneof_schema_impl(&oneof_attrs, oneof_ident, &fields_attrs, &manually_set_tags);
+  let oneof_schema_impl = oneof_ctx.generate_schema_impl();
 
-  let consistency_checks_impl =
-    impl_oneof_consistency_checks(oneof_ident, &fields_attrs, oneof_attrs.no_auto_test);
+  let consistency_checks_impl = oneof_ctx.generate_consistency_checks();
 
-  let validator_impl = impl_oneof_validator(oneof_ident, &fields_attrs);
+  let validator_impl = oneof_ctx.generate_validator();
 
   let wrapped_items = wrap_with_imports(vec![oneof_schema_impl, validator_impl]);
 
