@@ -33,7 +33,7 @@ impl ItemPathEntry {
 impl ToTokens for ItemPathEntry {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
     match self {
-      Self::Path(path) => tokens.extend(path.to_token_stream()),
+      Self::Path(path) => path.to_tokens(tokens),
       _ => {}
     };
   }

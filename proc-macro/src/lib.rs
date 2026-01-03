@@ -4,9 +4,6 @@
   clippy::collapsible_else_if
 )]
 
-#[macro_use]
-mod macros;
-
 use std::borrow::Borrow;
 use std::{borrow::Cow, fmt::Display, ops::Range};
 
@@ -16,12 +13,11 @@ use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, format_ident, quote, quote_spanned};
 use syn::{
-  Attribute, Error, Expr, Field, Fields, Ident, ItemEnum, ItemStruct, Lit, LitStr, Meta, MetaList,
-  Path, RangeLimits, Token, Type, Variant, Visibility,
+  Attribute, Error, Expr, Field, Fields, Ident, ItemEnum, ItemStruct, Lit, LitStr, MetaList, Path,
+  RangeLimits, Token, Type, Variant, Visibility,
   meta::ParseNestedMeta,
   parse::{Parse, Parser},
   parse_macro_input, parse_quote,
-  punctuated::Punctuated,
   spanned::Spanned,
   token,
 };
@@ -29,8 +25,8 @@ use syn_utils::*;
 
 use crate::{
   common_impls::*, enum_derive::*, extension_derive::*, impls::*, item_cloners::*,
-  message_derive::*, oneof_derive::*, oneof_schema_impl::*, path_utils::*, proto_field::*,
-  proto_map::*, proto_types::*, service_derive::*,
+  message_derive::*, oneof_derive::*, path_utils::*, proto_field::*, proto_map::*, proto_types::*,
+  service_derive::*,
 };
 
 mod attributes;
@@ -143,7 +139,7 @@ pub fn extension_derive(_input: TokenStream) -> TokenStream {
 pub fn proto_service(_args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
 
-  let output = match process_service_derive(item) {
+  let output = match process_service_derive(&item) {
     Ok(output) => output,
     Err(e) => return e.to_compile_error().into(),
   };

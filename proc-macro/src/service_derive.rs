@@ -7,7 +7,7 @@ struct HandlerCtx {
   options: TokensOr<TokenStream2>,
 }
 
-pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
+pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
   let ItemEnum {
     attrs,
     ident,
@@ -20,7 +20,7 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
 
   let ServiceOrHandlerAttrs {
     options: service_options,
-  } = process_service_or_handler_attrs(&attrs)?;
+  } = process_service_or_handler_attrs(attrs)?;
 
   let service_name = ccase!(pascal, ident.to_string());
 
@@ -111,12 +111,6 @@ pub fn process_service_derive(item: ItemEnum) -> Result<TokenStream2, Error> {
 
     impl ::prelude::ProtoService for #ident {
       fn proto_schema() -> ::prelude::Service {
-        Self::proto_schema()
-      }
-    }
-
-    impl #ident {
-      pub fn proto_schema() -> ::prelude::Service {
         ::prelude::Service {
           name: #service_name,
           file: __PROTO_FILE.file,

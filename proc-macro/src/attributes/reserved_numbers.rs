@@ -110,18 +110,14 @@ impl ReservedNumbers {
 
 impl ToTokens for ReservedNumbers {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
-    let mut agg_tokens = TokenStream2::new();
-
     for range in &self.0 {
       let start = range.start;
       let end = range.end;
 
-      agg_tokens.extend(quote! {
+      tokens.extend(quote! {
         #start..#end,
       });
     }
-
-    tokens.extend(agg_tokens);
   }
 }
 
@@ -129,9 +125,9 @@ impl Parse for ReservedNumbers {
   fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
     let mut ranges: Vec<Range<i32>> = Vec::new();
 
-    let items = Punctuated::<Expr, Token![,]>::parse_terminated(input)?;
+    while !input.is_empty() {
+      let item: Expr = input.parse()?;
 
-    for item in items {
       if let Expr::Range(range_expr) = &item {
         let start = if let Some(start_expr) = &range_expr.start {
           start_expr.as_int::<i32>()?
@@ -175,6 +171,11 @@ impl Parse for ReservedNumbers {
       } else {
         return Err(error!(item, "Expected a range (e.g. `1..5`, `10..=15`)"));
       }
+
+      if input.is_empty() {
+        break;
+      }
+      let _: Token![,] = input.parse()?;
     }
 
     ranges.sort_by_key(|range| range.start);

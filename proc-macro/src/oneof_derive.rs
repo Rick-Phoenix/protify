@@ -190,10 +190,7 @@ pub(crate) fn process_oneof_derive_direct(
 
       match data.type_info.type_.as_ref() {
         RustType::Box(_) => {
-          if !matches!(
-            data.proto_field,
-            ProtoField::Single(ProtoType::Message { is_boxed: true, .. })
-          ) {
+          if !data.proto_field.is_boxed_message() {
             bail!(
               variant_type,
               "Box can only be used for messages in a native prost oneof"

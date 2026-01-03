@@ -23,13 +23,11 @@ impl ProtoField {
           None
         };
 
-        let inner = meta
-          .parse_inner_value(|meta| {
-            let inner_ident = meta.path.require_ident()?.to_string();
+        let inner = meta.parse_inner_value(|meta| {
+          let inner_ident = meta.path.require_ident()?.to_string();
 
-            ProtoType::from_nested_meta(&inner_ident, meta, fallback.as_ref())
-          })?
-          .ok_or_else(|| meta.error("Expected a path or list"))?;
+          ProtoType::from_nested_meta(&inner_ident, meta, fallback.as_ref())
+        })?;
 
         Self::Repeated(inner)
       }
@@ -40,13 +38,11 @@ impl ProtoField {
           None
         };
 
-        let inner = meta
-          .parse_inner_value(|meta| {
-            let inner_ident = meta.path.require_ident()?.to_string();
+        let inner = meta.parse_inner_value(|meta| {
+          let inner_ident = meta.path.require_ident()?.to_string();
 
-            ProtoType::from_nested_meta(&inner_ident, meta, fallback.as_ref())
-          })?
-          .ok_or_else(|| meta.error("Expected a path or list"))?;
+          ProtoType::from_nested_meta(&inner_ident, meta, fallback.as_ref())
+        })?;
 
         Self::Optional(inner)
       }
@@ -70,7 +66,7 @@ impl ProtoField {
   pub fn default_validator_expr(&self) -> Option<TokenStream2> {
     match self {
       Self::Map(map) => {
-        if let ProtoType::Message { path, .. } = &map.values {
+        if let ProtoType::Message(MessageInfo { path, .. }) = &map.values {
           let keys_type = map.keys.validator_target_type();
 
           Some(quote! {
@@ -81,7 +77,7 @@ impl ProtoField {
         }
       }
       Self::Repeated(inner) => {
-        if let ProtoType::Message { path, .. } = inner {
+        if let ProtoType::Message(MessageInfo { path, .. }) = inner {
           Some(quote! {
             RepeatedValidator::<#path>::default()
           })
@@ -90,7 +86,7 @@ impl ProtoField {
         }
       }
       Self::Optional(inner) | Self::Single(inner) => {
-        if let ProtoType::Message { path, .. } = inner {
+        if let ProtoType::Message(MessageInfo { path, .. }) = inner {
           Some(quote! {
             MessageValidator::<#path>::default()
           })
@@ -305,7 +301,7 @@ impl ProtoField {
   pub fn is_boxed_message(&self) -> bool {
     matches!(
       self,
-      Self::Single(ProtoType::Message { is_boxed: true, .. })
+      Self::Single(ProtoType::Message(MessageInfo { boxed: true, .. }))
     )
   }
 

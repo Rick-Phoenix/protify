@@ -8,7 +8,7 @@ pub struct ValidatorTokens {
 
 impl ToTokens for ValidatorTokens {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
-    tokens.extend(self.expr.to_token_stream());
+    self.expr.to_tokens(tokens);
   }
 }
 

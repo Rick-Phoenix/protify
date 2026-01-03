@@ -59,7 +59,10 @@ pub fn process_extension_derive(
     } = process_extension_field_attrs(field)?;
 
     if tag.is_none() {
-      bail!(field, "Tag is missing");
+      bail!(
+        field,
+        "Missing protobuf tag. You can set it with `#[proto(tag = 123)]`"
+      );
     }
 
     let field_type_tokens = proto_field.field_proto_type_tokens();

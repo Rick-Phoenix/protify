@@ -1,38 +1,36 @@
 use crate::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct MessageInfo {
-  pub path: ItemPathEntry,
+  pub path: Path,
   pub boxed: bool,
 }
 
-impl Parse for MessageInfo {
-  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
-
+impl MessageInfo {
+  pub fn parse(meta: &ParseNestedMeta, fallback: Option<&Path>) -> syn::Result<Self> {
     let mut item_path = ItemPathEntry::default();
     let mut boxed = false;
 
-    for meta in metas {
-      match meta {
-        Meta::Path(path) => {
-          let ident = get_ident_or_continue!(path);
-
-          match ident.as_str() {
-            "proxied" => {
-              item_path = ItemPathEntry::Proxied;
-            }
-            "boxed" => boxed = true,
-            _ => item_path = ItemPathEntry::Path(path),
-          };
-        }
-        _ => {}
+    meta.parse_nested_meta(|meta| {
+      if let Ok(ident_str) = meta.ident_str() {
+        match ident_str.as_str() {
+          "proxied" => {
+            item_path = ItemPathEntry::Proxied;
+          }
+          "boxed" => boxed = true,
+          _ => item_path = ItemPathEntry::Path(meta.path),
+        };
+      } else {
+        item_path = ItemPathEntry::Path(meta.path);
       }
-    }
 
-    Ok(Self {
-      path: item_path,
-      boxed,
-    })
+      Ok(())
+    })?;
+
+    let path = item_path
+      .get_path_or_fallback(fallback)
+      .ok_or(meta.error("Failed to infer the message path. Please set it manually"))?;
+
+    Ok(Self { path, boxed })
   }
 }

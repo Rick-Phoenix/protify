@@ -9,10 +9,7 @@ pub enum ProtoType {
   Bool,
   Bytes,
   Enum(Path),
-  Message {
-    path: Path,
-    is_boxed: bool,
-  },
+  Message(MessageInfo),
   Float,
   Double,
   Int32,
@@ -81,16 +78,9 @@ impl ProtoType {
   ) -> Result<Self, Error> {
     let output = match ident_str {
       "message" => {
-        let MessageInfo { path, boxed } = meta.parse_list::<MessageInfo>()?;
+        let msg_info = MessageInfo::parse(&meta, fallback)?;
 
-        let path = path
-          .get_path_or_fallback(fallback)
-          .ok_or(meta.error("Failed to infer the message path. Please set it manually"))?;
-
-        Self::Message {
-          path,
-          is_boxed: boxed,
-        }
+        Self::Message(msg_info)
       }
       "enum_" => {
         let path = meta.parse_list::<Path>()?;
@@ -126,10 +116,7 @@ impl ProtoType {
           ))?
           .clone();
 
-        Self::Message {
-          path,
-          is_boxed: false,
-        }
+        Self::Message(MessageInfo { path, boxed: false })
       }
       "bytes" => Self::Bytes,
       "bool" => Self::Bool,
@@ -157,7 +144,7 @@ impl ProtoType {
       ProtoType::Bool => quote! { bool },
       ProtoType::Bytes => quote! { ::bytes::Bytes },
       ProtoType::Enum(path) => quote! { #path },
-      ProtoType::Message { path, .. } => quote! { #path },
+      ProtoType::Message(MessageInfo { path, .. }) => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
       ProtoType::Sint32 => quote! { prelude::Sint32 },
       ProtoType::Duration => quote! { proto_types::Duration },
@@ -202,7 +189,7 @@ impl ProtoType {
   pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
     match self {
       ProtoType::Enum(_) => quote! { #base_ident.try_into().unwrap_or_default() },
-      ProtoType::Message { is_boxed: true, .. } => {
+      ProtoType::Message(MessageInfo { boxed: true, .. }) => {
         quote! { Box::new((*#base_ident).into()) }
       }
       _ => quote! { #base_ident.into() },
@@ -211,7 +198,7 @@ impl ProtoType {
 
   pub fn default_into_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
     match self {
-      ProtoType::Message { is_boxed: true, .. } => {
+      ProtoType::Message(MessageInfo { boxed: true, .. }) => {
         quote! { Box::new((*#base_ident).into()) }
       }
       _ => quote! { #base_ident.into() },
@@ -224,7 +211,7 @@ impl ProtoType {
       ProtoType::Bool => quote! { bool },
       ProtoType::Bytes => quote! { ::bytes::Bytes },
       ProtoType::Enum(path) => quote! { #path },
-      ProtoType::Message { path, .. } => quote! { #path },
+      ProtoType::Message(MessageInfo { path, .. }) => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
       ProtoType::Sint32 => quote! { ::prelude::Sint32 },
       ProtoType::Duration => quote! { ::proto_types::Duration },
@@ -248,7 +235,7 @@ impl ProtoType {
       ProtoType::Bool => quote! { BoolValidator },
       ProtoType::Bytes => quote! { BytesValidator },
       ProtoType::Enum(path) => quote! { EnumValidator<#path> },
-      ProtoType::Message { path, .. } => quote! { MessageValidator<#path> },
+      ProtoType::Message(MessageInfo { path, .. }) => quote! { MessageValidator<#path> },
       ProtoType::Int32 => quote! { IntValidator<i32> },
       ProtoType::Sint32 => quote! { IntValidator<::prelude::Sint32> },
       ProtoType::Duration => quote! { DurationValidator },
@@ -298,8 +285,8 @@ impl ProtoType {
       ProtoType::Bool => quote! { bool },
       ProtoType::Bytes => quote! { ::bytes::Bytes },
       ProtoType::Enum(_) => quote! { i32 },
-      ProtoType::Message { path, is_boxed, .. } => {
-        if *is_boxed {
+      ProtoType::Message(MessageInfo { boxed, path }) => {
+        if *boxed {
           quote! { Box<#path> }
         } else {
           path.to_token_stream()
@@ -332,8 +319,8 @@ impl ProtoType {
 
         quote! { enumeration = #path_as_str }
       }
-      ProtoType::Message { is_boxed, .. } => {
-        if *is_boxed {
+      ProtoType::Message(MessageInfo { boxed, .. }) => {
+        if *boxed {
           quote! { message, boxed }
         } else {
           quote! { message }
