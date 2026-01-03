@@ -5,7 +5,7 @@ pub use state::*;
 #[derive(Clone, Debug)]
 pub struct RepeatedValidatorBuilder<T, S: State = Empty>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   _state: PhantomData<S>,
   _inner_type: PhantomData<T>,
@@ -24,7 +24,7 @@ where
 
 impl<T> RepeatedValidator<T>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   #[must_use]
   #[inline]
@@ -44,7 +44,7 @@ where
 
 impl<T, S: State> RepeatedValidatorBuilder<T, S>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   #[inline]
   pub fn build(self) -> RepeatedValidator<T> {
@@ -184,7 +184,7 @@ where
 
 impl<T, S: State> From<RepeatedValidatorBuilder<T, S>> for ProtoOption
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   fn from(value: RepeatedValidatorBuilder<T, S>) -> Self {
     value.build().into()

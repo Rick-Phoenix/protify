@@ -14,7 +14,7 @@ use super::*;
 #[derive(Debug)]
 pub struct RepeatedValidator<T>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   _inner_type: PhantomData<T>,
 
@@ -31,7 +31,7 @@ where
 
 impl<T> Clone for RepeatedValidator<T>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   #[inline]
   fn clone(&self) -> Self {
@@ -49,7 +49,7 @@ where
 
 impl<T> Default for RepeatedValidator<T>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   #[inline]
   fn default() -> Self {
@@ -78,7 +78,7 @@ impl<T: AsProtoField> AsProtoField for Vec<T> {
 
 impl<T> ProtoValidator for Vec<T>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
   T::Target: TryIntoCel,
 {
   type Target = Vec<T::Target>;
@@ -94,7 +94,7 @@ where
 impl<T, S> ValidatorBuilderFor<Vec<T>> for RepeatedValidatorBuilder<T, S>
 where
   S: State,
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
   T::Target: TryIntoCel,
 {
   type Target = Vec<T::Target>;
@@ -365,7 +365,7 @@ fn try_convert_to_cel<T: TryIntoCel>(list: Vec<T>) -> Result<::cel::Value, CelEr
 
 impl<T> Validator<Vec<T>> for RepeatedValidator<T>
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
   T::Target: TryIntoCel,
 {
   type Target = Vec<T::Target>;
@@ -541,7 +541,7 @@ where
 
 impl<T> From<RepeatedValidator<T>> for ProtoOption
 where
-  T: AsProtoType + ProtoValidator,
+  T: ProtoValidator,
 {
   fn from(validator: RepeatedValidator<T>) -> Self {
     let mut rules: OptionValueList = Vec::new();
