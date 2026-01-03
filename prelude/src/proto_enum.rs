@@ -3,8 +3,16 @@ use crate::*;
 pub trait ProtoEnum: TryFrom<i32> + Default {
   fn proto_path() -> ProtoPath;
   fn proto_schema() -> Enum;
-
   fn full_name() -> &'static str;
+
+  fn as_proto_name(&self) -> &'static str;
+  fn from_proto_name(name: &str) -> Option<Self>;
+
+  #[inline]
+  #[must_use]
+  fn from_int_or_default(int: i32) -> Self {
+    int.try_into().unwrap_or_default()
+  }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Template)]

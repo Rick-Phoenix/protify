@@ -151,17 +151,12 @@ pub fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
       }
     }
 
-    impl #enum_name {
-      pub fn from_int_or_default(int: i32) -> Self {
-        int.try_into().unwrap_or_default()
-      }
-    }
-
     impl ::prelude::ProtoValidator for #enum_name {
       type Target = i32;
       type Validator = ::prelude::EnumValidator<#enum_name>;
       type Builder = ::prelude::EnumValidatorBuilder<#enum_name>;
 
+      #[inline]
       fn validator_builder() -> Self::Builder {
         ::prelude::EnumValidator::builder()
       }
@@ -188,26 +183,22 @@ pub fn process_enum_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
         }
       }
 
-      fn proto_schema() -> ::prelude::Enum {
-        Self::proto_schema()
-      }
-    }
-
-    impl #enum_name {
-      pub fn as_proto_name(&self) -> &'static str {
+      #[inline]
+      fn as_proto_name(&self) -> &'static str {
         match self {
           #(#as_str_impl),*
         }
       }
 
-      pub fn from_proto_name(name: &str) -> Option<Self> {
+      #[inline]
+      fn from_proto_name(name: &str) -> Option<Self> {
         match name {
           #(#from_str_impl,)*
           _ => None
         }
       }
 
-      pub fn proto_schema() -> ::prelude::Enum {
+      fn proto_schema() -> ::prelude::Enum {
         ::prelude::Enum {
           name: #proto_name,
           full_name: Self::full_name(),
