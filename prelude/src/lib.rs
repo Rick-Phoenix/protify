@@ -2,7 +2,7 @@
 pub use ::cel;
 
 #[macro_use]
-mod macros;
+mod decl_macros;
 
 pub use prost;
 use std::fmt::Display;
@@ -14,6 +14,9 @@ pub use inventory;
 use owo_colors::OwoColorize;
 #[doc(hidden)]
 pub use paste::paste;
+pub use proc_macro_impls as macros;
+pub use proc_macro_impls::*;
+pub use proto_types;
 use proto_types::protovalidate::{FieldPathElement, Violations};
 pub use protocheck_core::validators::containing::SortedList;
 use thiserror::Error;

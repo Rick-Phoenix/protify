@@ -83,7 +83,7 @@ pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
   };
 
   quote! {
-    #[derive(::proc_macro_impls::Extension)]
+    #[derive(::prelude::macros::Extension)]
     #item
 
     #extra_tokens

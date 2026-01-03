@@ -28,7 +28,7 @@ pub enum ProtoType {
 
 impl ProtoType {
   pub fn descriptor_type_tokens(&self) -> TokenStream2 {
-    let prefix = quote! { ::proto_types::field_descriptor_proto::Type };
+    let prefix = quote! { ::prelude::proto_types::field_descriptor_proto::Type };
 
     match self {
       ProtoType::Uint32 => quote! { #prefix::Uint32 },
@@ -147,8 +147,8 @@ impl ProtoType {
       ProtoType::Message(MessageInfo { path, .. }) => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
       ProtoType::Sint32 => quote! { prelude::Sint32 },
-      ProtoType::Duration => quote! { proto_types::Duration },
-      ProtoType::Timestamp => quote! { proto_types::Timestamp },
+      ProtoType::Duration => quote! { ::prelude::proto_types::Duration },
+      ProtoType::Timestamp => quote! { ::prelude::proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
       ProtoType::Float => quote! { f32 },
       ProtoType::Double => quote! { f64 },
@@ -214,8 +214,8 @@ impl ProtoType {
       ProtoType::Message(MessageInfo { path, .. }) => quote! { #path },
       ProtoType::Int32 => quote! { i32 },
       ProtoType::Sint32 => quote! { ::prelude::Sint32 },
-      ProtoType::Duration => quote! { ::proto_types::Duration },
-      ProtoType::Timestamp => quote! { ::proto_types::Timestamp },
+      ProtoType::Duration => quote! { ::prelude::proto_types::Duration },
+      ProtoType::Timestamp => quote! { ::prelude::proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
       ProtoType::Float => quote! { f32 },
       ProtoType::Double => quote! { f64 },
@@ -294,8 +294,8 @@ impl ProtoType {
       }
       ProtoType::Int32 => quote! { i32 },
       ProtoType::Sint32 => quote! { i32 },
-      ProtoType::Duration => quote! { proto_types::Duration },
-      ProtoType::Timestamp => quote! { proto_types::Timestamp },
+      ProtoType::Duration => quote! { ::prelude::proto_types::Duration },
+      ProtoType::Timestamp => quote! { ::prelude::proto_types::Timestamp },
       ProtoType::Uint32 => quote! { u32 },
       ProtoType::Float => quote! { f32 },
       ProtoType::Double => quote! { f64 },

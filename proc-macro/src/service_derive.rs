@@ -99,7 +99,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
   });
 
   Ok(quote! {
-    #[derive(::proc_macro_impls::Service)]
+    #[derive(::prelude::macros::Service)]
     #vis struct #ident;
 
     ::prelude::inventory::submit! {

@@ -133,7 +133,7 @@ impl<'a> FallbackImpls<'a> {
     if cfg!(feature = "cel") {
       output.extend(quote! {
         impl #target_ident {
-          pub fn try_into_cel_value_recursive(self, _: usize) -> Result<::prelude::cel::Value, proto_types::cel::CelConversionError> {
+          pub fn try_into_cel_recursive(self, _: usize) -> Result<::prelude::cel::Value, ::prelude::proto_types::cel::CelConversionError> {
             Ok(::prelude::cel::Value::Null)
           }
         }

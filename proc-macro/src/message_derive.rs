@@ -30,7 +30,10 @@ pub fn process_message_derive(mut item: ItemStruct, macro_attrs: TokenStream2) -
 
   // prost::Message already implements Debug and Default
   let mut proto_derives = if cfg!(feature = "cel") {
-    quote! { #[derive(::prelude::prost::Message, Clone, PartialEq, ::protocheck_proc_macro::TryIntoCelValue)] }
+    quote! {
+      #[derive(::prelude::prost::Message, Clone, PartialEq, ::protocheck_proc_macro::TryIntoCel)]
+      #[cel(cel_crate = ::prelude::cel, proto_types_crate = ::prelude::proto_types)]
+    }
   } else {
     quote! { #[derive(::prelude::prost::Message, Clone, PartialEq)] }
   };
@@ -59,7 +62,7 @@ pub fn process_message_derive(mut item: ItemStruct, macro_attrs: TokenStream2) -
 
     quote! {
       #[allow(clippy::derive_partial_eq_without_eq)]
-      #[derive(::proc_macro_impls::Message)]
+      #[derive(::prelude::macros::Message)]
       #item
 
       #[allow(clippy::derive_partial_eq_without_eq)]
@@ -87,7 +90,7 @@ pub fn process_message_derive(mut item: ItemStruct, macro_attrs: TokenStream2) -
 
     quote! {
       #[allow(clippy::derive_partial_eq_without_eq)]
-      #[derive(::proc_macro_impls::Message)]
+      #[derive(::prelude::macros::Message)]
       #proto_derives
       #item
 

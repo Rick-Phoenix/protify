@@ -3,7 +3,7 @@
 #[cfg(test)]
 mod tests;
 
-use proc_macro_impls::proto_package;
+use prelude::proto_package;
 use std::collections::HashMap;
 
 use prelude::*;
@@ -17,7 +17,7 @@ proto_package!(MYAPP_V1, name = "myapp.v1", no_cel_test);
 
 pub mod inner {
   use bytes::Bytes;
-  use proc_macro_impls::{
+  use prelude::{
     define_proto_file, proto_enum, proto_extension, proto_message, proto_oneof, proto_service,
   };
 
