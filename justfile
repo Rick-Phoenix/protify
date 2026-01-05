@@ -2,7 +2,7 @@ run-builder:
     cargo run --bin builder
 
 [working-directory(".")]
-expand-test-reflection:
+expand-test-reflection: run-builder
     cargo expand -p test-reflection > expanded.rs
 
 test-renders:

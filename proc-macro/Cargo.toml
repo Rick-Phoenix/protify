@@ -18,6 +18,7 @@ convert_case = "0.9"
 proto-types = { workspace = true }
 syn-utils = { path = "../../syn-utils/" }
 prost-reflect = { version = "0.16", optional = true }
+paste = "1"
 
 [features]
 default = ["cel"]

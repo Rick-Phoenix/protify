@@ -170,10 +170,13 @@ impl ProtoType {
       "String" => Self::String,
       "bool" => Self::Bool,
       "i32" => Self::Int32,
+      "i64" => Self::Int64,
       "u32" => Self::Uint32,
+      "u64" => Self::Uint64,
       "Timestamp" => Self::Timestamp,
       "Duration" => Self::Duration,
       "f32" => Self::Float,
+      "f64" => Self::Double,
       _ => {
         return Err(error!(
           path,
@@ -242,7 +245,7 @@ impl ProtoType {
       ProtoType::Timestamp => quote! { TimestampValidator },
       ProtoType::Uint32 => quote! { IntValidator<u32> },
       ProtoType::Float => quote! { FloatValidator<f32> },
-      ProtoType::Double => quote! { DoubleValidator<f64> },
+      ProtoType::Double => quote! { FloatValidator<f64> },
       ProtoType::Int64 => quote! { IntValidator<i64> },
       ProtoType::Uint64 => quote! { IntValidator<u64> },
       ProtoType::Sint64 => quote! { IntValidator<prelude::Sint64>  },

@@ -11,6 +11,7 @@ keywords.workspace = true
 proto-types = { workspace = true }
 prelude = { path = "../prelude/", features = ["reflection"] }
 prost = { workspace = true }
+paste = "1"
 
 [build-dependencies]
 prost-build = "0.14"

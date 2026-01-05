@@ -14,6 +14,8 @@ mod pool_loader;
 pub use pool_loader::*;
 mod string_rules;
 pub use string_rules::*;
+mod numeric_rules;
+pub use numeric_rules::*;
 
 pub struct RulesCtx {
   pub ignore: IgnoreWrapper,
@@ -171,24 +173,21 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
           } else if proto.is_map() {
             todo!()
           } else {
-            match rules_type {
-              RulesType::Float(float_rules) => todo!(),
-              RulesType::Double(double_rules) => todo!(),
-              RulesType::Int32(int32_rules) => todo!(),
-              RulesType::Int64(int64_rules) => todo!(),
-              RulesType::Uint32(uint32_rules) => todo!(),
-              RulesType::Uint64(uint64_rules) => todo!(),
-              RulesType::Sint32(sint32_rules) => todo!(),
-              RulesType::Sint64(sint64_rules) => todo!(),
-              RulesType::Fixed32(fixed32_rules) => todo!(),
-              RulesType::Fixed64(fixed64_rules) => todo!(),
-              RulesType::Sfixed32(sfixed32_rules) => todo!(),
-              RulesType::Sfixed64(sfixed64_rules) => todo!(),
+            let expr = match rules_type {
+              RulesType::Float(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Double(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Int32(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Int64(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Uint32(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Uint64(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Sint32(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Sint64(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Fixed32(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Fixed64(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Sfixed32(rules) => get_numeric_validator(rules, &rules_ctx),
+              RulesType::Sfixed64(rules) => get_numeric_validator(rules, &rules_ctx),
               RulesType::Bool(bool_rules) => todo!(),
-              RulesType::String(rules) => ValidatorTokens {
-                expr: get_string_validator(rules, &rules_ctx),
-                is_fallback: false,
-              },
+              RulesType::String(rules) => get_string_validator(rules, &rules_ctx),
               RulesType::Bytes(bytes_rules) => todo!(),
               RulesType::Enum(enum_rules) => todo!(),
               RulesType::Repeated(repeated_rules) => todo!(),
@@ -201,6 +200,11 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
               RulesType::Timestamp(timestamp_rules) => {
                 todo!()
               }
+            };
+
+            ValidatorTokens {
+              expr,
+              is_fallback: false,
             }
           }
         } else {

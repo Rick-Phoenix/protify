@@ -10,6 +10,7 @@ keywords.workspace = true
 [dependencies]
 prelude = { path = "../prelude/" }
 prost = { workspace = true }
+paste = "1"
 
 [lints]
 workspace = true
