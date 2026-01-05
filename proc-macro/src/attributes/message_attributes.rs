@@ -106,13 +106,14 @@ pub fn process_derive_message_attrs(
     Ok(())
   })?;
 
-  let name = proto_name.unwrap_or_else(|| ccase!(pascal, struct_ident.to_string()));
+  let name = proto_name.unwrap_or_else(|| to_pascal_case(&struct_ident.to_string()));
 
   Ok(MessageAttrs {
     reserved_names,
     reserved_numbers,
     options,
     name,
+    parent_message,
     from_proto,
     into_proto,
     shadow_derives,
@@ -120,6 +121,5 @@ pub fn process_derive_message_attrs(
     is_proxied,
     no_auto_test,
     extern_path,
-    parent_message,
   })
 }

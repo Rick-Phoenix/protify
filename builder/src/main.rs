@@ -51,41 +51,76 @@ struct BoolRules {
   pub ignore_always_test: bool,
 }
 
-#[proto_message(no_auto_test)]
-struct StringRules {
-  #[proto(validate = |v| v.const_("a"))]
-  pub const_test: String,
-  #[proto(validate = |v| v.len(1))]
-  pub len_test: String,
-  #[proto(validate = |v| v.min_len(1))]
-  pub min_len_test: String,
-  #[proto(validate = |v| v.max_len(1))]
-  pub max_len_test: String,
-  #[proto(validate = |v| v.len_bytes(1))]
-  pub len_bytes_test: String,
-  #[proto(validate = |v| v.min_bytes(1))]
-  pub min_bytes_test: String,
-  #[proto(validate = |v| v.max_bytes(1))]
-  pub max_bytes_test: String,
-  #[proto(validate = |v| v.pattern("a"))]
-  pub pattern_test: String,
-  #[proto(validate = |v| v.prefix("a"))]
-  pub prefix_test: String,
-  #[proto(validate = |v| v.suffix("a"))]
-  pub suffix_test: String,
-  #[proto(validate = |v| v.contains("a"))]
-  pub contains_test: String,
-  #[proto(validate = |v| v.not_contains("a"))]
-  pub not_contains_test: String,
-  #[proto(validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this == 'a'")))]
-  pub cel_test: String,
-  #[proto(validate = |v| v.required())]
-  pub required_test: Option<String>,
-  #[proto(validate = |v| v.const_("a").ignore_if_zero_value())]
-  pub ignore_if_zero_value_test: Option<String>,
-  #[proto(validate = |v| v.const_("b").ignore_always())]
-  pub ignore_always_test: String,
+macro_rules! string_rules {
+  ($($well_known:ident),*) => {
+    paste::paste! {
+      #[proto_message(no_auto_test)]
+      struct StringRules {
+        #[proto(validate = |v| v.const_("a"))]
+        pub const_test: String,
+        #[proto(validate = |v| v.len(1))]
+        pub len_test: String,
+        #[proto(validate = |v| v.min_len(1))]
+        pub min_len_test: String,
+        #[proto(validate = |v| v.max_len(1))]
+        pub max_len_test: String,
+        #[proto(validate = |v| v.len_bytes(1))]
+        pub len_bytes_test: String,
+        #[proto(validate = |v| v.min_bytes(1))]
+        pub min_bytes_test: String,
+        #[proto(validate = |v| v.max_bytes(1))]
+        pub max_bytes_test: String,
+        #[proto(validate = |v| v.pattern("a"))]
+        pub pattern_test: String,
+        #[proto(validate = |v| v.prefix("a"))]
+        pub prefix_test: String,
+        #[proto(validate = |v| v.suffix("a"))]
+        pub suffix_test: String,
+        #[proto(validate = |v| v.contains("a"))]
+        pub contains_test: String,
+        #[proto(validate = |v| v.not_contains("a"))]
+        pub not_contains_test: String,
+        #[proto(validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this == 'a'")))]
+        pub cel_test: String,
+        #[proto(validate = |v| v.required())]
+        pub required_test: Option<String>,
+        #[proto(validate = |v| v.const_("a").ignore_if_zero_value())]
+        pub ignore_if_zero_value_test: Option<String>,
+        #[proto(validate = |v| v.const_("b").ignore_always())]
+        pub ignore_always_test: String,
+        $(
+          #[proto(validate = |v| v.$well_known())]
+          pub [< $well_known _test >]: String,
+        )*
+      }
+    }
+  };
 }
+
+string_rules!(
+  email,
+  hostname,
+  ip,
+  ipv4,
+  ipv6,
+  uri,
+  uri_ref,
+  address,
+  ulid,
+  uuid,
+  tuuid,
+  ip_with_prefixlen,
+  ipv4_with_prefixlen,
+  ipv6_with_prefixlen,
+  ip_prefix,
+  ipv4_prefix,
+  ipv6_prefix,
+  host_and_port,
+  header_name_strict,
+  header_name_loose,
+  header_value_strict,
+  header_value_loose
+);
 
 proto_package!(REFLECTION, name = "reflection.v1", no_cel_test);
 define_proto_file!(

@@ -22,7 +22,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
     options: service_options,
   } = process_service_or_handler_attrs(attrs)?;
 
-  let service_name = ccase!(pascal, ident.to_string());
+  let service_name = to_pascal_case(&ident.to_string());
 
   for variant in variants {
     let ServiceOrHandlerAttrs {

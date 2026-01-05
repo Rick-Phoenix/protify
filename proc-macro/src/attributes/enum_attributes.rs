@@ -61,15 +61,15 @@ pub fn process_derive_enum_attrs(
     Ok(())
   })?;
 
-  let name = proto_name.unwrap_or_else(|| ccase!(pascal, enum_ident.to_string()));
+  let name = proto_name.unwrap_or_else(|| to_pascal_case(&enum_ident.to_string()));
 
   Ok(EnumAttrs {
-    extern_path,
     reserved_names,
     reserved_numbers,
     options,
+    parent_message,
     name,
     no_prefix,
-    parent_message,
+    extern_path,
   })
 }

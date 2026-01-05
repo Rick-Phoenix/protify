@@ -164,6 +164,14 @@ impl<S: State> StringValidatorBuilder<S> {
   );
   #[cfg(feature = "regex")]
   well_known_impl!(
+    Ulid,
+    r"
+    `ulid` specifies that the field value must be a valid ULID as defined by the
+    [ULID specification](https://github.com/ulid/spec).
+  "
+  );
+  #[cfg(feature = "regex")]
+  well_known_impl!(
     Tuuid,
     r"
     `tuuid` (trimmed UUID) specifies that the field value must be a valid UUID as

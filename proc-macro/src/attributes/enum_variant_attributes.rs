@@ -33,12 +33,12 @@ pub fn process_derive_enum_variants_attrs(
   let name = if let Some(name) = name {
     name
   } else {
-    let plain_name = ccase!(constant, variant_ident.to_string());
+    let plain_name = to_upper_snake_case(&variant_ident.to_string());
 
     if no_prefix {
       plain_name
     } else {
-      let prefix = ccase!(constant, enum_name);
+      let prefix = to_upper_snake_case(&enum_name);
       format!("{}_{}", prefix, plain_name)
     }
   };

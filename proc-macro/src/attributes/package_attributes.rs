@@ -33,7 +33,7 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
   })?;
 
   let pkg_name = pkg_name.ok_or_else(|| error_with_span!(input_span, "package name is missing"))?;
-  let converted_name = ccase!(snake, pkg_name.replace(".", "_"));
+  let converted_name = to_snake_case(&pkg_name.replace(".", "_"));
 
   let test_impl = include_cel_test.then(|| {
     let test_fn_ident = format_ident!("unique_cel_rules_{converted_name}");

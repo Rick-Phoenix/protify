@@ -33,7 +33,8 @@ impl<'a, T: Borrow<FieldData>> OneofCtx<'a, T> {
           ..
         }) = validator.as_ref()
         {
-          let validator_static_ident = format_ident!("{}_VALIDATOR", ccase!(constant, &ident_str));
+          let validator_static_ident =
+            format_ident!("{}_VALIDATOR", to_upper_snake_case(&ident_str));
 
           let validator_name = proto_field.validator_name();
 

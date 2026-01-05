@@ -69,7 +69,7 @@ pub fn process_oneof_attrs(
 
   Ok(OneofAttrs {
     options,
-    name: name.unwrap_or_else(|| ccase!(snake, enum_ident.to_string())),
+    name: name.unwrap_or_else(|| to_snake_case(&enum_ident.to_string())),
     from_proto,
     into_proto,
     shadow_derives,

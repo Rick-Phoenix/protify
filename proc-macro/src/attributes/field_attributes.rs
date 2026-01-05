@@ -181,7 +181,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     validator,
     tag,
     options,
-    proto_name: name.unwrap_or_else(|| ccase!(snake, field_ident.to_string())),
+    proto_name: name.unwrap_or_else(|| to_snake_case(&field_ident.to_string())),
     proto_field,
     from_proto,
     into_proto,

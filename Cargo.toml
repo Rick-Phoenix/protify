@@ -28,7 +28,7 @@ bon = "3.7"
 maplit = "1"
 regex = "1"
 thiserror = "2"
-convert_case = "0.8"
+convert_case = "0.10"
 proto-types = { version = "0.1.11", path = "../protocheck/proto_types/", features = [
   "protovalidate",
 ] }

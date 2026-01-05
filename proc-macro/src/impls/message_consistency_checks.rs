@@ -44,7 +44,7 @@ impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
     let auto_test_fn = (!self.message_attrs.no_auto_test).then(|| {
       let test_fn_ident = format_ident!(
         "{}_validators_consistency",
-        ccase!(snake, item_ident.to_string())
+        to_snake_case(&item_ident.to_string())
       );
 
       quote! {

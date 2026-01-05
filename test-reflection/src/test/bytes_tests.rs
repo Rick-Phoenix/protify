@@ -28,8 +28,8 @@ fn string_test() {
     ignore_if_zero_value_test: Some(bytes!("a")),
     ignore_always_test: bytes!("b"),
     ip_test: bytes!("127.0.0.1"),
-    ipv_4_test: bytes!("127.0.0.1"),
-    ipv_6_test: ipv6.clone(),
+    ipv4_test: bytes!("127.0.0.1"),
+    ipv6_test: ipv6.clone(),
     uuid_test: bytes!("019b8f7c-d933-7be4-8b69-5110ed453a75"),
   };
   let baseline = msg.clone();
@@ -76,10 +76,10 @@ fn string_test() {
   msg.ip_test = bytes!("127.0.0");
   assert_violation!("bytes.ip", "ip rule");
 
-  msg.ipv_4_test = bytes!("127.0.0");
+  msg.ipv4_test = bytes!("127.0.0");
   assert_violation!("bytes.ipv4", "ipv4 rule");
 
-  msg.ipv_6_test = bytes!("127.0.0");
+  msg.ipv6_test = bytes!("127.0.0");
   assert_violation!("bytes.ipv6", "ipv6 rule");
 
   msg.uuid_test = bytes!("abcde");

@@ -8,7 +8,6 @@ use std::borrow::Borrow;
 use std::{borrow::Cow, fmt::Display, ops::Range};
 
 use attributes::*;
-use convert_case::ccase;
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, format_ident, quote, quote_spanned};

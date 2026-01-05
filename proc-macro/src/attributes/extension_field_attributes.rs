@@ -91,7 +91,7 @@ pub fn process_extension_field_attrs(field: &mut Field) -> Result<ExtensionField
   Ok(ExtensionFieldAttrs {
     tag,
     options,
-    proto_name: name.unwrap_or_else(|| ccase!(snake, field_ident.to_string())),
+    proto_name: name.unwrap_or_else(|| to_snake_case(&field_ident.to_string())),
     proto_field,
   })
 }
