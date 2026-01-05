@@ -65,6 +65,7 @@ impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
       impl #item_ident {
         pub fn check_validators_consistency() -> Result<(), ::prelude::test_utils::MessageTestError> {
           use ::prelude::test_utils::*;
+          use ::prelude::*;
 
           let mut field_errors: Vec<FieldError> = Vec::new();
           let mut cel_errors: Vec<::prelude::CelError> = Vec::new();

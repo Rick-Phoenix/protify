@@ -5,6 +5,8 @@ use prost_build::Config;
 use prost_reflect::{prost::Message, prost_types::FileDescriptorSet};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+  println!("cargo:rerun-if-changed=../proto");
+
   let out_dir = env::var("OUT_DIR")
     .map(PathBuf::from)
     .unwrap_or(env::temp_dir());
@@ -43,8 +45,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let message_name = message_desc.full_name();
 
     if packages.contains(&message_desc.package_name()) {
-      let attribute_str = "#[derive(::prelude::ValidatedMessage, ::prelude::TryIntoCelValue)]";
-      config.message_attribute(message_name, &attribute_str);
+      config.message_attribute(
+        message_name,
+        "#[derive(::prelude::ValidatedMessage, ::prelude::TryIntoCelValue)]",
+      );
       config.message_attribute(
         message_name,
         "#[cel(cel_crate = ::prelude::cel, proto_types_crate = ::prelude::proto_types)]",

@@ -484,19 +484,13 @@ impl From<StringValidator> for ProtoOption {
       rules.push((CONST_.clone(), OptionValue::String(const_val)));
     }
 
-    if validator.len.is_none() {
-      insert_option!(validator, rules, min_len);
-      insert_option!(validator, rules, max_len);
-    } else {
-      insert_option!(validator, rules, len);
-    }
+    insert_option!(validator, rules, min_len);
+    insert_option!(validator, rules, max_len);
+    insert_option!(validator, rules, len);
 
-    if validator.len_bytes.is_none() {
-      insert_option!(validator, rules, min_bytes);
-      insert_option!(validator, rules, max_bytes);
-    } else {
-      insert_option!(validator, rules, len_bytes);
-    }
+    insert_option!(validator, rules, min_bytes);
+    insert_option!(validator, rules, max_bytes);
+    insert_option!(validator, rules, len_bytes);
 
     #[cfg(feature = "regex")]
     if let Some(pattern) = validator.pattern {

@@ -153,7 +153,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
       let validator_target_type = proto_field.validator_target_type();
 
       match validator {
-        ClosureOrExpr::Expr(call) => quote! { #call.build_validator() },
+        ClosureOrExpr::Expr(expr) => quote! { #expr },
 
         ClosureOrExpr::Closure(closure) => {
           quote! { <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#closure) }

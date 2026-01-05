@@ -195,7 +195,13 @@ impl Into<ProtoFile> for &RegistryFile {
     let mut file = ProtoFile::new(self.file, self.package);
 
     file.imports.extend((self.imports)());
-    file.add_extensions((self.extensions)());
+
+    let extensions = (self.extensions)();
+
+    if !extensions.is_empty() {
+      file.add_extensions(extensions);
+    }
+
     file.options = (self.options)();
 
     file

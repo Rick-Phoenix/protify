@@ -5,6 +5,7 @@ use ::proto_types::protovalidate::FieldRules;
 use ::proto_types::protovalidate::Ignore;
 use ::proto_types::protovalidate::MessageRules;
 use ::proto_types::protovalidate::OneofRules;
+use ::proto_types::protovalidate::Rule;
 use ::proto_types::protovalidate::field_rules::Type as RulesType;
 use proc_macro2::TokenTree;
 use prost_reflect::prost::Message;
@@ -13,6 +14,56 @@ mod pool_loader;
 pub use pool_loader::*;
 mod string_rules;
 pub use string_rules::*;
+
+pub struct RulesCtx {
+  pub ignore: IgnoreWrapper,
+  pub cel: Vec<Rule>,
+  pub required: bool,
+}
+
+impl RulesCtx {
+  pub fn tokenize_cel_rules(&self, validator: &mut TokenStream2) {
+    for rule in &self.cel {
+      let Rule {
+        id,
+        message,
+        expression,
+      } = rule;
+
+      validator.extend(quote! {
+        .cel(::prelude::cel_program!(id = #id, msg = #message, expr = #expression))
+      });
+    }
+  }
+
+  pub fn tokenize_required(&self, validator: &mut TokenStream2) {
+    if self.required {
+      validator.extend(quote! { .required() });
+    }
+  }
+}
+
+pub struct IgnoreWrapper(Ignore);
+
+impl IgnoreWrapper {
+  pub fn tokenize(&self, validator: &mut TokenStream2) {
+    match &self.0 {
+      Ignore::Always => {
+        validator.extend(quote! { .ignore_always() });
+      }
+      Ignore::IfZeroValue => {
+        validator.extend(quote! { .ignore_if_zero_value() });
+      }
+      _ => {}
+    };
+  }
+
+  pub fn tokenize_always_only(&self, validator: &mut TokenStream2) {
+    if let Ignore::Always = &self.0 {
+      validator.extend(quote! { .ignore_always() });
+    }
+  }
+}
 
 pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
   let ItemStruct { fields, .. } = item;
@@ -108,6 +159,12 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
           continue;
         }
 
+        let rules_ctx = RulesCtx {
+          ignore: IgnoreWrapper(ignore),
+          required: field_rules.required(),
+          cel: field_rules.cel,
+        };
+
         let validator = if let Some(rules_type) = &field_rules.r#type {
           if proto.is_list() {
             todo!()
@@ -129,7 +186,7 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
               RulesType::Sfixed64(sfixed64_rules) => todo!(),
               RulesType::Bool(bool_rules) => todo!(),
               RulesType::String(rules) => ValidatorTokens {
-                expr: get_string_validator(rules),
+                expr: get_string_validator(rules, &rules_ctx),
                 is_fallback: false,
               },
               RulesType::Bytes(bytes_rules) => todo!(),

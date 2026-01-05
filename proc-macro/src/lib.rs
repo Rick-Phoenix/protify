@@ -65,6 +65,7 @@ pub fn validated_message_derive(input: TokenStream) -> TokenStream {
     }
   };
 
+  // TODO: Add consistency checks too
   validator_impl.into()
 }
 

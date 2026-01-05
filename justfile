@@ -1,3 +1,10 @@
+run-builder:
+    cargo run --bin builder
+
+[working-directory(".")]
+expand-test-reflection:
+    cargo expand -p test-reflection > expanded.rs
+
 test-renders:
     cargo test -p testing test_renders -- -q --nocapture
 

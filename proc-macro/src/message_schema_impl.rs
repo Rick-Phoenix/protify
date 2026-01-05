@@ -139,7 +139,7 @@ impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
         ::prelude::RegistryMessage {
           package: __PROTO_FILE.package,
           parent_message: #registry_parent_message,
-          message: || #proto_struct::proto_schema()
+          message: || <#proto_struct as ::prelude::ProtoMessage>::proto_schema()
         }
       }
 
