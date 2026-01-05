@@ -27,6 +27,21 @@ pub enum ProtoType {
 }
 
 impl ProtoType {
+  pub const fn is_custom_message(&self) -> bool {
+    matches!(self, Self::Message { .. })
+  }
+
+  pub const fn is_message(&self) -> bool {
+    matches!(
+      self,
+      Self::Message { .. } | Self::Duration | Self::Timestamp
+    )
+  }
+
+  pub fn is_boxed_message(&self) -> bool {
+    matches!(self, Self::Message(MessageInfo { boxed: true, .. }))
+  }
+
   pub fn descriptor_type_tokens(&self) -> TokenStream2 {
     let prefix = quote! { ::prelude::proto_types::field_descriptor_proto::Type };
 
@@ -174,8 +189,6 @@ impl ProtoType {
       "i64" => Self::Int64,
       "u32" => Self::Uint32,
       "u64" => Self::Uint64,
-      "Timestamp" => Self::Timestamp,
-      "Duration" => Self::Duration,
       "f32" => Self::Float,
       "f64" => Self::Double,
       _ => {
@@ -344,13 +357,5 @@ impl ProtoType {
       ProtoType::Sfixed32 => quote! { sfixed32  },
       ProtoType::Sfixed64 => quote! { sfixed64  },
     }
-  }
-
-  /// Returns `true` if the proto type is [`Message`].
-  ///
-  /// [`Message`]: ProtoType::Message
-  #[must_use]
-  pub fn is_message(&self) -> bool {
-    matches!(self, Self::Message { .. })
   }
 }

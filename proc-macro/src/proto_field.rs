@@ -296,15 +296,26 @@ impl ProtoField {
     }
   }
 
+  pub fn inner(&self) -> Option<&ProtoType> {
+    match self {
+      ProtoField::Map(_) => None,
+      ProtoField::Oneof(_) => None,
+      ProtoField::Repeated(inner) => Some(inner),
+      ProtoField::Optional(inner) => Some(inner),
+      ProtoField::Single(inner) => Some(inner),
+    }
+  }
+
   pub fn is_message(&self) -> bool {
-    matches!(self, Self::Single(ProtoType::Message { .. }))
+    self
+      .inner()
+      .is_some_and(|inner| inner.is_message())
   }
 
   pub fn is_boxed_message(&self) -> bool {
-    matches!(
-      self,
-      Self::Single(ProtoType::Message(MessageInfo { boxed: true, .. }))
-    )
+    self
+      .inner()
+      .is_some_and(|inner| inner.is_boxed_message())
   }
 
   pub fn is_oneof(&self) -> bool {

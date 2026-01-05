@@ -179,7 +179,7 @@ pub fn generate_message_validator(
   }
 }
 
-impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
+impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
   pub fn generate_validator(&self) -> TokenStream2 {
     let target_ident = self.proto_struct_ident();
 

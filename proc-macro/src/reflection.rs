@@ -20,6 +20,8 @@ mod bool_rules;
 pub use bool_rules::*;
 mod bytes_rules;
 pub use bytes_rules::*;
+mod duration_rules;
+pub use duration_rules::*;
 
 pub struct RulesCtx {
   pub ignore: IgnoreWrapper,
@@ -193,11 +195,11 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
               RulesType::String(rules) => get_string_validator(rules, &rules_ctx),
               RulesType::Bool(rules) => get_bool_validator(rules, &rules_ctx),
               RulesType::Bytes(rules) => get_bytes_validator(rules, &rules_ctx),
+              RulesType::Duration(rules) => get_duration_validator(rules, &rules_ctx),
               RulesType::Enum(rules) => todo!(),
               RulesType::Repeated(rules) => todo!(),
               RulesType::Map(rules) => todo!(),
               RulesType::Any(rules) => todo!(),
-              RulesType::Duration(rules) => todo!(),
               RulesType::FieldMask(rules) => {
                 todo!()
               }
@@ -318,10 +320,18 @@ impl ProtoType {
       Kind::Bool => Self::Bool,
       Kind::String => Self::String,
       Kind::Bytes => Self::Bytes,
-      Kind::Message(_) => Self::Message(MessageInfo {
-        path: type_info.inner().as_path().unwrap(),
-        boxed: type_info.is_box(),
-      }),
+      Kind::Message(desc) => {
+        if desc.full_name() == "google.protobuf.Duration" {
+          Self::Duration
+        } else if desc.full_name() == "google.protobuf.Timestamp" {
+          Self::Timestamp
+        } else {
+          Self::Message(MessageInfo {
+            path: type_info.inner().as_path().unwrap(),
+            boxed: type_info.is_box(),
+          })
+        }
+      }
       Kind::Enum(_) => Self::Enum(type_info.inner().as_path().unwrap()),
     }
   }

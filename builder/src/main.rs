@@ -1,7 +1,31 @@
 #![allow(clippy::struct_field_names)]
 
 use bytes::Bytes;
-use prelude::{cel_program, define_proto_file, proto_message, proto_package};
+use prelude::{
+  cel_program, define_proto_file, proto_message, proto_package, proto_types::Duration,
+};
+
+#[proto_message(no_auto_test)]
+struct DurationRules {
+  #[proto(duration, validate = |v| v.const_(Duration::default()))]
+  pub const_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.lt(Duration::default()))]
+  pub lt_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.lte(Duration::default()))]
+  pub lte_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.gt(Duration::default()))]
+  pub gt_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.gte(Duration::default()))]
+  pub gte_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.in_([ Duration::default() ]))]
+  pub in_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.not_in([ Duration::default() ]))]
+  pub not_in_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.required())]
+  pub required_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.const_(Duration::default()).ignore_always())]
+  pub ignore_always_test: Option<Duration>,
+}
 
 #[proto_message(no_auto_test)]
 struct BytesRules {

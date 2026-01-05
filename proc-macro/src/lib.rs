@@ -22,7 +22,6 @@ use syn::{
 };
 use syn_utils::*;
 
-use crate::reflection::reflection_derive;
 use crate::{
   common_impls::*, enum_derive::*, extension_derive::*, impls::*, item_cloners::*,
   message_derive::*, message_schema_impl::*, oneof_derive::*, path_utils::*, proto_field::*,
@@ -47,6 +46,7 @@ mod proto_types;
 mod reflection;
 mod service_derive;
 
+#[cfg(feature = "reflection")]
 #[proc_macro_derive(ValidatedMessage, attributes(proto))]
 pub fn validated_message_derive(input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
