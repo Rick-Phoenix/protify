@@ -18,6 +18,8 @@ mod numeric_rules;
 pub use numeric_rules::*;
 mod bool_rules;
 pub use bool_rules::*;
+mod bytes_rules;
+pub use bytes_rules::*;
 
 pub struct RulesCtx {
   pub ignore: IgnoreWrapper,
@@ -190,7 +192,7 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
               RulesType::Sfixed64(rules) => get_numeric_validator(rules, &rules_ctx),
               RulesType::String(rules) => get_string_validator(rules, &rules_ctx),
               RulesType::Bool(rules) => get_bool_validator(rules, &rules_ctx),
-              RulesType::Bytes(rules) => todo!(),
+              RulesType::Bytes(rules) => get_bytes_validator(rules, &rules_ctx),
               RulesType::Enum(rules) => todo!(),
               RulesType::Repeated(rules) => todo!(),
               RulesType::Map(rules) => todo!(),
@@ -219,7 +221,7 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
           type_info,
           proto_name: proto_name.to_string(),
           ident_str,
-          tag: Some(proto.number() as i32),
+          tag: Some(proto.number().cast_signed()),
           validator: Some(validator),
           options: TokensOr::<TokenStream2>::new(|| quote! {}),
           proto_field,
@@ -258,6 +260,7 @@ fn rust_ident_to_proto_name(rust_ident: &str) -> &str {
 }
 
 impl ProtoMapKeys {
+  #[allow(clippy::needless_pass_by_value)]
   pub fn from_descriptor(kind: Kind) -> Self {
     match kind {
       Kind::Int32 => Self::Int32,
@@ -297,6 +300,7 @@ impl ProtoField {
 }
 
 impl ProtoType {
+  #[allow(clippy::needless_pass_by_value)]
   pub fn from_descriptor(kind: Kind, type_info: &TypeInfo) -> Self {
     match kind {
       Kind::Double => Self::Double,

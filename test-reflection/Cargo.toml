@@ -12,6 +12,7 @@ proto-types = { workspace = true }
 prelude = { path = "../prelude/", features = ["reflection"] }
 prost = { workspace = true }
 paste = "1"
+bytes = { workspace = true }
 
 [build-dependencies]
 prost-build = "0.14"

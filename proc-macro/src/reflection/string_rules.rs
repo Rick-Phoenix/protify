@@ -17,6 +17,7 @@ pub fn get_string_validator(rules: &StringRules, ctx: &super::RulesCtx) -> Token
   macro_rules! len_rule {
     ($name:ident) => {
       if let Some($name) = rules.$name {
+        #[allow(clippy::cast_possible_truncation)]
         let $name = $name as usize;
 
         validator.extend(quote! { .$name(#$name) });

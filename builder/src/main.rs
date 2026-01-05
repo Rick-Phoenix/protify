@@ -1,8 +1,43 @@
 #![allow(clippy::struct_field_names)]
 
-use prelude::{
-  CelProgram, StringValidator, cel_program, define_proto_file, proto_message, proto_package,
-};
+use bytes::Bytes;
+use prelude::{cel_program, define_proto_file, proto_message, proto_package};
+
+#[proto_message(no_auto_test)]
+struct BytesRules {
+  #[proto(validate = |v| v.const_(b"a"))]
+  pub const_test: Bytes,
+  #[proto(validate = |v| v.len(1))]
+  pub len_test: Bytes,
+  #[proto(validate = |v| v.min_len(1))]
+  pub min_len_test: Bytes,
+  #[proto(validate = |v| v.max_len(1))]
+  pub max_len_test: Bytes,
+  #[proto(validate = |v| v.pattern("a"))]
+  pub pattern_test: Bytes,
+  #[proto(validate = |v| v.prefix(b"a"))]
+  pub prefix_test: Bytes,
+  #[proto(validate = |v| v.suffix(b"a"))]
+  pub suffix_test: Bytes,
+  #[proto(validate = |v| v.contains(b"a"))]
+  pub contains_test: Bytes,
+  #[proto(validate = |v| v.ip())]
+  pub ip_test: Bytes,
+  #[proto(validate = |v| v.ipv4())]
+  pub ipv4_test: Bytes,
+  #[proto(validate = |v| v.ipv6())]
+  pub ipv6_test: Bytes,
+  #[proto(validate = |v| v.uuid())]
+  pub uuid_test: Bytes,
+  #[proto(validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this == b'a'")))]
+  pub cel_test: Bytes,
+  #[proto(validate = |v| v.required())]
+  pub required_test: Option<Bytes>,
+  #[proto(validate = |v| v.const_(b"a").ignore_if_zero_value())]
+  pub ignore_if_zero_value_test: Option<Bytes>,
+  #[proto(validate = |v| v.const_(b"b").ignore_always())]
+  pub ignore_always_test: Bytes,
+}
 
 #[proto_message(no_auto_test)]
 struct BoolRules {

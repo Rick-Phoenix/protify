@@ -167,6 +167,7 @@ impl ProtoType {
     let ident_str = ident.to_string();
 
     let output = match ident_str.as_str() {
+      "Bytes" => Self::Bytes,
       "String" => Self::String,
       "bool" => Self::Bool,
       "i32" => Self::Int32,
@@ -286,7 +287,7 @@ impl ProtoType {
     match self {
       ProtoType::String => quote! { String },
       ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { ::bytes::Bytes },
+      ProtoType::Bytes => quote! { Bytes },
       ProtoType::Enum(_) => quote! { i32 },
       ProtoType::Message(MessageInfo { boxed, path }) => {
         if *boxed {

@@ -134,6 +134,10 @@ impl<S: State> BytesValidatorBuilder<S> {
     Ipv6,
     "Specifies that the value must be a valid IPv6 address in byte format."
   );
+  well_known_impl!(
+    Uuid,
+    "Specifies that the value must be a valid UUID in byte format."
+  );
 }
 
 #[allow(
@@ -317,7 +321,7 @@ impl<S: State> BytesValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn prefix<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetPrefix<S>>
+  pub fn prefix(self, val: &'static [u8]) -> BytesValidatorBuilder<SetPrefix<S>>
   where
     S::Prefix: IsUnset,
   {
@@ -342,7 +346,7 @@ impl<S: State> BytesValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn suffix<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetSuffix<S>>
+  pub fn suffix(self, val: &'static [u8]) -> BytesValidatorBuilder<SetSuffix<S>>
   where
     S::Suffix: IsUnset,
   {
@@ -367,7 +371,7 @@ impl<S: State> BytesValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn contains<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetContains<S>>
+  pub fn contains(self, val: &'static [u8]) -> BytesValidatorBuilder<SetContains<S>>
   where
     S::Contains: IsUnset,
   {
@@ -445,7 +449,7 @@ impl<S: State> BytesValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn const_<T: Into<Bytes>>(self, val: T) -> BytesValidatorBuilder<SetConst<S>>
+  pub fn const_(self, val: &'static [u8]) -> BytesValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {
