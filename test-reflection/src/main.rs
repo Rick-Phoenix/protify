@@ -37,6 +37,7 @@ mod test {
     };
   }
 
+  mod bool_tests;
   mod numeric_tests;
   mod string_tests;
 }

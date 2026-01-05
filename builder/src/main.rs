@@ -5,6 +5,18 @@ use prelude::{
 };
 
 #[proto_message(no_auto_test)]
+struct BoolRules {
+  #[proto(validate = |v| v.const_(true))]
+  pub const_test: bool,
+  #[proto(validate = |v| v.required())]
+  pub required_test: Option<bool>,
+  #[proto(validate = |v| v.const_(true).ignore_if_zero_value())]
+  pub ignore_if_zero_value_test: Option<bool>,
+  #[proto(validate = |v| v.const_(true).ignore_always())]
+  pub ignore_always_test: bool,
+}
+
+#[proto_message(no_auto_test)]
 struct StringRules {
   #[proto(validate = |v| v.const_("a"))]
   pub const_test: String,
