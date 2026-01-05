@@ -50,31 +50,31 @@ macro_rules! impl_numeric {
     paste::paste! {
       #[allow(unused, clippy::struct_field_names)]
       #[proto_message(no_auto_test)]
-      struct [< $name Rules >] {
-        #[proto(validate = |v| v.required())]
+      struct [< $name:camel Rules >] {
+        #[proto($name, validate = |v| v.required())]
         pub required_test: Option<$typ>,
-        #[proto(validate = |v| v.lt(num!($($finite)?)))]
+        #[proto($name, validate = |v| v.lt(num!($($finite)?)))]
         pub lt_test: $typ,
-        #[proto(validate = |v| v.lte(num!($($finite)?)))]
+        #[proto($name, validate = |v| v.lte(num!($($finite)?)))]
         pub lte_test: $typ,
-        #[proto(validate = |v| v.gt(num!($($finite)?)))]
+        #[proto($name, validate = |v| v.gt(num!($($finite)?)))]
         pub gt_test: $typ,
-        #[proto(validate = |v| v.gte(num!($($finite)?)))]
+        #[proto($name, validate = |v| v.gte(num!($($finite)?)))]
         pub gte_test: $typ,
-        #[proto(validate = |v| v.in_([num!($($finite)?)]))]
+        #[proto($name, validate = |v| v.in_([num!($($finite)?)]))]
         pub in_test: $typ,
-        #[proto(validate = |v| v.not_in([num!($($finite)?)]))]
+        #[proto($name, validate = |v| v.not_in([num!($($finite)?)]))]
         pub not_in_test: $typ,
-        #[proto(validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this != 0")))]
+        #[proto($name, validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this != 0")))]
         pub cel_test: $typ,
-        #[proto(validate = |v| v.const_(num!($($finite)?)))]
+        #[proto($name, validate = |v| v.const_(num!($($finite)?)))]
         pub const_test: $typ,
-        #[proto(validate = |v| v.const_(num!($($finite)?)).ignore_if_zero_value())]
+        #[proto($name, validate = |v| v.const_(num!($($finite)?)).ignore_if_zero_value())]
         pub ignore_if_zero_value_test: Option<$typ>,
-        #[proto(validate = |v| v.const_(num!($($finite)?)).ignore_always())]
+        #[proto($name, validate = |v| v.const_(num!($($finite)?)).ignore_always())]
         pub ignore_always_test: $typ,
         $(
-          #[proto(validate = |v| v.$finite())]
+          #[proto($name, validate = |v| v.$finite())]
           pub finite_test: $typ,
         )?
       }
@@ -82,12 +82,18 @@ macro_rules! impl_numeric {
   };
 }
 
-impl_numeric!(Int64, i64);
-impl_numeric!(Int32, i32);
-impl_numeric!(Uint64, u64);
-impl_numeric!(Uint32, u32);
-impl_numeric!(Double, f64, finite);
-impl_numeric!(Float, f32, finite);
+impl_numeric!(int64, i64);
+impl_numeric!(sint64, i64);
+impl_numeric!(sfixed64, i64);
+impl_numeric!(int32, i32);
+impl_numeric!(sint32, i32);
+impl_numeric!(sfixed32, i32);
+impl_numeric!(uint64, u64);
+impl_numeric!(uint32, u32);
+impl_numeric!(fixed64, u64);
+impl_numeric!(fixed32, u32);
+impl_numeric!(double, f64, finite);
+impl_numeric!(float, f32, finite);
 
 fn main() {
   REFLECTION

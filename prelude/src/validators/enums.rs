@@ -117,10 +117,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       }
 
       if let Some(allowed_list) = &self.in_
-        && !protocheck_core::wrappers::EnumVariant::is_in(
-          &protocheck_core::wrappers::EnumVariant(val),
-          &allowed_list.items,
-        )
+        && !i32::is_in(&val, &allowed_list.items)
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
@@ -128,10 +125,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && protocheck_core::wrappers::EnumVariant::is_in(
-          &protocheck_core::wrappers::EnumVariant(val),
-          &forbidden_list.items,
-        )
+        && i32::is_in(&val, &forbidden_list.items)
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 

@@ -10,7 +10,10 @@ fn main() {
 mod test {
   use prelude::ValidatedMessage;
 
-  use crate::proto::{DoubleRules, FloatRules, Int32Rules, Int64Rules, Uint32Rules, Uint64Rules};
+  use crate::proto::{
+    DoubleRules, Fixed32Rules, Fixed64Rules, FloatRules, Int32Rules, Int64Rules, Sfixed32Rules,
+    Sfixed64Rules, Sint32Rules, Sint64Rules, Uint32Rules, Uint64Rules,
+  };
 
   #[track_caller]
   fn assert_violation_id(msg: &impl ValidatedMessage, expected: &str, error: &str) {
@@ -114,9 +117,15 @@ mod test {
   }
 
   test_numeric!(Int64);
+  test_numeric!(Sint64);
+  test_numeric!(Sfixed64);
   test_numeric!(Int32);
+  test_numeric!(Sint32);
+  test_numeric!(Sfixed32);
   test_numeric!(Uint64);
+  test_numeric!(Fixed64);
   test_numeric!(Uint32);
+  test_numeric!(Fixed32);
   test_numeric!(Float, finite_test, f32);
   test_numeric!(Double, finite_test, f64);
 }

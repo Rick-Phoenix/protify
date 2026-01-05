@@ -80,13 +80,13 @@ macro_rules! impl_float_methods {
 }
 
 macro_rules! impl_numeric_rules {
-  ($name:ident, $unit:ty $(, $float:ident)?) => {
+  ($name:ident, $unit:ty, $wrapper:ty $(, $float:ident)?) => {
     paste::paste! {
       impl NumericRules for [< $name Rules >] {
         type Unit = $unit;
 
         fn type_tokens() -> TokenStream2 {
-          quote! { $unit }
+          quote! { $wrapper }
         }
 
         fn const_(&self) -> Option<Self::Unit> {
@@ -135,15 +135,15 @@ macro_rules! impl_numeric_rules {
   };
 }
 
-impl_numeric_rules!(Int64, i64);
-impl_numeric_rules!(SInt64, i64);
-impl_numeric_rules!(SFixed64, i64);
-impl_numeric_rules!(Int32, i32);
-impl_numeric_rules!(SInt32, i32);
-impl_numeric_rules!(SFixed32, i32);
-impl_numeric_rules!(UInt64, u64);
-impl_numeric_rules!(Fixed64, u64);
-impl_numeric_rules!(UInt32, u32);
-impl_numeric_rules!(Fixed32, u32);
-impl_numeric_rules!(Float, f32, float);
-impl_numeric_rules!(Double, f64, float);
+impl_numeric_rules!(Int64, i64, i64);
+impl_numeric_rules!(SInt64, i64, Sint64);
+impl_numeric_rules!(SFixed64, i64, Sfixed64);
+impl_numeric_rules!(Int32, i32, i32);
+impl_numeric_rules!(SInt32, i32, Sint32);
+impl_numeric_rules!(SFixed32, i32, Sfixed32);
+impl_numeric_rules!(UInt64, u64, u64);
+impl_numeric_rules!(Fixed64, u64, Fixed64);
+impl_numeric_rules!(UInt32, u32, u32);
+impl_numeric_rules!(Fixed32, u32, Fixed32);
+impl_numeric_rules!(Float, f32, f32, float);
+impl_numeric_rules!(Double, f64, f64, float);

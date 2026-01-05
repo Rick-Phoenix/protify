@@ -1217,6 +1217,7 @@ dependencies = [
  "cel",
  "chrono",
  "document-features",
+ "num-traits",
  "paste",
  "proc-macro2",
  "prost",

@@ -4,8 +4,8 @@ use builder::state::State;
 
 use std::{fmt::Display, marker::PhantomData};
 
+pub use proto_types::num_wrappers::{Fixed32, Fixed64, Sfixed32, Sfixed64, Sint32, Sint64};
 use proto_types::protovalidate::violations_data::*;
-pub use protocheck_core::wrappers::{Fixed32, Fixed64, Sfixed32, Sfixed64, Sint32, Sint64};
 
 use super::*;
 
