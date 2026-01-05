@@ -37,6 +37,7 @@ mod test {
     };
   }
 
+  mod any_tests;
   mod bool_tests;
   mod bytes_tests;
   mod duration_tests;

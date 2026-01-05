@@ -3,8 +3,22 @@
 use bytes::Bytes;
 use prelude::{
   cel_program, define_proto_file, proto_message, proto_package,
-  proto_types::{Duration, Timestamp},
+  proto_types::{Any, Duration, Timestamp},
 };
+
+#[proto_message(no_auto_test)]
+struct AnyRules {
+  #[proto(any, validate = |v| v.in_(["/type_url"]))]
+  pub in_test: Option<Any>,
+  #[proto(any, validate = |v| v.not_in(["/type_url"]))]
+  pub not_in_test: Option<Any>,
+  #[proto(any, validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this.value == b'a'")))]
+  pub cel_test: Option<Any>,
+  #[proto(any, validate = |v| v.required())]
+  pub required_test: Option<Any>,
+  #[proto(any, validate = |v| v.not_in(["/type_url"]).ignore_always())]
+  pub ignore_always_test: Option<Any>,
+}
 
 #[proto_message(no_auto_test)]
 struct TimestampRules {

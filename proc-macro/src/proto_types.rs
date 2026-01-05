@@ -24,6 +24,8 @@ pub enum ProtoType {
   Sfixed64,
   Duration,
   Timestamp,
+  Any,
+  FieldMask,
 }
 
 impl ProtoType {
@@ -46,25 +48,23 @@ impl ProtoType {
     let prefix = quote! { ::prelude::proto_types::field_descriptor_proto::Type };
 
     match self {
-      ProtoType::Uint32 => quote! { #prefix::Uint32 },
-      ProtoType::String => quote! { #prefix::String },
-      ProtoType::Bool => quote! { #prefix::Bool },
-      ProtoType::Bytes => quote! { #prefix::Bytes },
-      ProtoType::Enum(_) => quote! { #prefix::Enum },
-      ProtoType::Message { .. } => quote! { #prefix::Message },
-      ProtoType::Int32 => quote! { #prefix::Int32 },
-      ProtoType::Sint32 => quote! { #prefix::Sint32 },
-      ProtoType::Duration => quote! { #prefix::Message },
-      ProtoType::Timestamp => quote! { #prefix::Message },
-      ProtoType::Float => quote! { #prefix::Float },
-      ProtoType::Double => quote! { #prefix::Double },
-      ProtoType::Int64 => quote! { #prefix::Int64  },
-      ProtoType::Uint64 => quote! { #prefix::Uint64  },
-      ProtoType::Sint64 => quote! { #prefix::Sint64  },
-      ProtoType::Fixed32 => quote! { #prefix::Fixed32  },
-      ProtoType::Fixed64 => quote! { #prefix::Fixed64  },
-      ProtoType::Sfixed32 => quote! { #prefix::Sfixed32  },
-      ProtoType::Sfixed64 => quote! { #prefix::Sfixed64  },
+      Self::Uint32 => quote! { #prefix::Uint32 },
+      Self::String => quote! { #prefix::String },
+      Self::Bool => quote! { #prefix::Bool },
+      Self::Bytes => quote! { #prefix::Bytes },
+      Self::Enum(_) => quote! { #prefix::Enum },
+      Self::Int32 => quote! { #prefix::Int32 },
+      Self::Sint32 => quote! { #prefix::Sint32 },
+      Self::Float => quote! { #prefix::Float },
+      Self::Double => quote! { #prefix::Double },
+      Self::Int64 => quote! { #prefix::Int64  },
+      Self::Uint64 => quote! { #prefix::Uint64  },
+      Self::Sint64 => quote! { #prefix::Sint64  },
+      Self::Fixed32 => quote! { #prefix::Fixed32  },
+      Self::Fixed64 => quote! { #prefix::Fixed64  },
+      Self::Sfixed32 => quote! { #prefix::Sfixed32  },
+      Self::Sfixed64 => quote! { #prefix::Sfixed64  },
+      _ => quote! { #prefix::Message },
     }
   }
 
@@ -147,6 +147,8 @@ impl ProtoType {
 
         Self::Enum(path)
       }
+      "any" => Self::Any,
+      "field_mask" => Self::FieldMask,
       _ => return Err(error_with_span!(span, "Unknown protobuf type {ident_str}")),
     };
 
@@ -155,25 +157,27 @@ impl ProtoType {
 
   pub fn field_proto_type_tokens(&self) -> TokenStream2 {
     match self {
-      ProtoType::String => quote! { String },
-      ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { ::bytes::Bytes },
-      ProtoType::Enum(path) => quote! { #path },
-      ProtoType::Message(MessageInfo { path, .. }) => quote! { #path },
-      ProtoType::Int32 => quote! { i32 },
-      ProtoType::Sint32 => quote! { prelude::Sint32 },
-      ProtoType::Duration => quote! { ::prelude::proto_types::Duration },
-      ProtoType::Timestamp => quote! { ::prelude::proto_types::Timestamp },
-      ProtoType::Uint32 => quote! { u32 },
-      ProtoType::Float => quote! { f32 },
-      ProtoType::Double => quote! { f64 },
-      ProtoType::Int64 => quote! { i64  },
-      ProtoType::Uint64 => quote! { u64 },
-      ProtoType::Sint64 => quote! { prelude::Sint64  },
-      ProtoType::Fixed32 => quote! { prelude::Fixed32  },
-      ProtoType::Fixed64 => quote! { prelude::Fixed64  },
-      ProtoType::Sfixed32 => quote! { prelude::Sfixed32  },
-      ProtoType::Sfixed64 => quote! { prelude::Sfixed64  },
+      Self::String => quote! { String },
+      Self::Bool => quote! { bool },
+      Self::Bytes => quote! { ::bytes::Bytes },
+      Self::Enum(path) => quote! { #path },
+      Self::Message(MessageInfo { path, .. }) => quote! { #path },
+      Self::Int32 => quote! { i32 },
+      Self::Sint32 => quote! { prelude::Sint32 },
+      Self::Duration => quote! { ::prelude::proto_types::Duration },
+      Self::Timestamp => quote! { ::prelude::proto_types::Timestamp },
+      Self::Uint32 => quote! { u32 },
+      Self::Float => quote! { f32 },
+      Self::Double => quote! { f64 },
+      Self::Int64 => quote! { i64  },
+      Self::Uint64 => quote! { u64 },
+      Self::Sint64 => quote! { prelude::Sint64  },
+      Self::Fixed32 => quote! { prelude::Fixed32  },
+      Self::Fixed64 => quote! { prelude::Fixed64  },
+      Self::Sfixed32 => quote! { prelude::Sfixed32  },
+      Self::Sfixed64 => quote! { prelude::Sfixed64  },
+      Self::Any => quote! { ::prelude::proto_types::Any },
+      Self::FieldMask => quote! { ::prelude::proto_types::FieldMask },
     }
   }
 
@@ -205,8 +209,8 @@ impl ProtoType {
 
   pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
     match self {
-      ProtoType::Enum(_) => quote! { #base_ident.try_into().unwrap_or_default() },
-      ProtoType::Message(MessageInfo { boxed: true, .. }) => {
+      Self::Enum(_) => quote! { #base_ident.try_into().unwrap_or_default() },
+      Self::Message(MessageInfo { boxed: true, .. }) => {
         quote! { Box::new((*#base_ident).into()) }
       }
       _ => quote! { #base_ident.into() },
@@ -215,7 +219,7 @@ impl ProtoType {
 
   pub fn default_into_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
     match self {
-      ProtoType::Message(MessageInfo { boxed: true, .. }) => {
+      Self::Message(MessageInfo { boxed: true, .. }) => {
         quote! { Box::new((*#base_ident).into()) }
       }
       _ => quote! { #base_ident.into() },
@@ -224,138 +228,144 @@ impl ProtoType {
 
   pub fn validator_target_type(&self) -> TokenStream2 {
     match self {
-      ProtoType::String => quote! { String },
-      ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { ::bytes::Bytes },
-      ProtoType::Enum(path) => quote! { #path },
-      ProtoType::Message(MessageInfo { path, .. }) => quote! { #path },
-      ProtoType::Int32 => quote! { i32 },
-      ProtoType::Sint32 => quote! { ::prelude::Sint32 },
-      ProtoType::Duration => quote! { ::prelude::proto_types::Duration },
-      ProtoType::Timestamp => quote! { ::prelude::proto_types::Timestamp },
-      ProtoType::Uint32 => quote! { u32 },
-      ProtoType::Float => quote! { f32 },
-      ProtoType::Double => quote! { f64 },
-      ProtoType::Int64 => quote! { i64  },
-      ProtoType::Uint64 => quote! { u64 },
-      ProtoType::Sint64 => quote! { prelude::Sint64  },
-      ProtoType::Fixed32 => quote! { prelude::Fixed32  },
-      ProtoType::Fixed64 => quote! { prelude::Fixed64  },
-      ProtoType::Sfixed32 => quote! { prelude::Sfixed32  },
-      ProtoType::Sfixed64 => quote! { prelude::Sfixed64  },
+      Self::String => quote! { String },
+      Self::Bool => quote! { bool },
+      Self::Bytes => quote! { ::bytes::Bytes },
+      Self::Enum(path) => quote! { #path },
+      Self::Message(MessageInfo { path, .. }) => quote! { #path },
+      Self::Int32 => quote! { i32 },
+      Self::Sint32 => quote! { ::prelude::Sint32 },
+      Self::Duration => quote! { ::prelude::proto_types::Duration },
+      Self::Timestamp => quote! { ::prelude::proto_types::Timestamp },
+      Self::Uint32 => quote! { u32 },
+      Self::Float => quote! { f32 },
+      Self::Double => quote! { f64 },
+      Self::Int64 => quote! { i64  },
+      Self::Uint64 => quote! { u64 },
+      Self::Sint64 => quote! { prelude::Sint64  },
+      Self::Fixed32 => quote! { prelude::Fixed32  },
+      Self::Fixed64 => quote! { prelude::Fixed64  },
+      Self::Sfixed32 => quote! { prelude::Sfixed32  },
+      Self::Sfixed64 => quote! { prelude::Sfixed64  },
+      Self::Any => quote! { ::prelude::proto_types::Any },
+      Self::FieldMask => quote! { ::prelude::proto_types::FieldMask },
     }
   }
 
   pub fn validator_name(&self) -> TokenStream2 {
     match self {
-      ProtoType::String => quote! { StringValidator },
-      ProtoType::Bool => quote! { BoolValidator },
-      ProtoType::Bytes => quote! { BytesValidator },
-      ProtoType::Enum(path) => quote! { EnumValidator<#path> },
-      ProtoType::Message(MessageInfo { path, .. }) => quote! { MessageValidator<#path> },
-      ProtoType::Int32 => quote! { IntValidator<i32> },
-      ProtoType::Sint32 => quote! { IntValidator<::prelude::Sint32> },
-      ProtoType::Duration => quote! { DurationValidator },
-      ProtoType::Timestamp => quote! { TimestampValidator },
-      ProtoType::Uint32 => quote! { IntValidator<u32> },
-      ProtoType::Float => quote! { FloatValidator<f32> },
-      ProtoType::Double => quote! { FloatValidator<f64> },
-      ProtoType::Int64 => quote! { IntValidator<i64> },
-      ProtoType::Uint64 => quote! { IntValidator<u64> },
-      ProtoType::Sint64 => quote! { IntValidator<prelude::Sint64>  },
-      ProtoType::Fixed32 => quote! { IntValidator<prelude::Fixed32>  },
-      ProtoType::Fixed64 => quote! { IntValidator<prelude::Fixed64>  },
-      ProtoType::Sfixed32 => quote! { IntValidator<prelude::Sfixed32>  },
-      ProtoType::Sfixed64 => quote! { IntValidator<prelude::Sfixed64>  },
+      Self::String => quote! { StringValidator },
+      Self::Bool => quote! { BoolValidator },
+      Self::Bytes => quote! { BytesValidator },
+      Self::Enum(path) => quote! { EnumValidator<#path> },
+      Self::Message(MessageInfo { path, .. }) => quote! { MessageValidator<#path> },
+      Self::Int32 => quote! { IntValidator<i32> },
+      Self::Sint32 => quote! { IntValidator<::prelude::Sint32> },
+      Self::Duration => quote! { DurationValidator },
+      Self::Timestamp => quote! { TimestampValidator },
+      Self::Uint32 => quote! { IntValidator<u32> },
+      Self::Float => quote! { FloatValidator<f32> },
+      Self::Double => quote! { FloatValidator<f64> },
+      Self::Int64 => quote! { IntValidator<i64> },
+      Self::Uint64 => quote! { IntValidator<u64> },
+      Self::Sint64 => quote! { IntValidator<prelude::Sint64>  },
+      Self::Fixed32 => quote! { IntValidator<prelude::Fixed32>  },
+      Self::Fixed64 => quote! { IntValidator<prelude::Fixed64>  },
+      Self::Sfixed32 => quote! { IntValidator<prelude::Sfixed32>  },
+      Self::Sfixed64 => quote! { IntValidator<prelude::Sfixed64>  },
+      Self::Any => quote! { AnyValidator },
+      Self::FieldMask => quote! { FieldMaskValidator },
     }
   }
 
   pub fn as_prost_map_value(&self) -> Cow<'static, str> {
     match self {
-      ProtoType::String => "string".into(),
-      ProtoType::Bool => "bool".into(),
-      ProtoType::Bytes => "bytes".into(),
-      ProtoType::Enum(path) => {
+      Self::String => "string".into(),
+      Self::Bool => "bool".into(),
+      Self::Bytes => "bytes".into(),
+      Self::Enum(path) => {
         let path_as_str = path.to_token_stream().to_string();
 
         format!("enumeration({})", path_as_str).into()
       }
-      ProtoType::Message { .. } | ProtoType::Duration | ProtoType::Timestamp => "message".into(),
-      ProtoType::Int32 => "int32".into(),
-      ProtoType::Sint32 => "sint32".into(),
-      ProtoType::Uint32 => "uint32".into(),
-      ProtoType::Float => "float".into(),
-      ProtoType::Double => "double".into(),
-      ProtoType::Int64 => "int64".into(),
-      ProtoType::Uint64 => "uint64".into(),
-      ProtoType::Sint64 => "sint64".into(),
-      ProtoType::Fixed32 => "fixed32".into(),
-      ProtoType::Fixed64 => "fixed64".into(),
-      ProtoType::Sfixed32 => "sfixed32".into(),
-      ProtoType::Sfixed64 => "sfixed64".into(),
+      Self::Int32 => "int32".into(),
+      Self::Sint32 => "sint32".into(),
+      Self::Uint32 => "uint32".into(),
+      Self::Float => "float".into(),
+      Self::Double => "double".into(),
+      Self::Int64 => "int64".into(),
+      Self::Uint64 => "uint64".into(),
+      Self::Sint64 => "sint64".into(),
+      Self::Fixed32 => "fixed32".into(),
+      Self::Fixed64 => "fixed64".into(),
+      Self::Sfixed32 => "sfixed32".into(),
+      Self::Sfixed64 => "sfixed64".into(),
+      _ => "message".into(),
     }
   }
 
   pub fn output_proto_type(&self) -> TokenStream2 {
     match self {
-      ProtoType::String => quote! { String },
-      ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { Bytes },
-      ProtoType::Enum(_) => quote! { i32 },
-      ProtoType::Message(MessageInfo { boxed, path }) => {
+      Self::String => quote! { String },
+      Self::Bool => quote! { bool },
+      Self::Bytes => quote! { Bytes },
+      Self::Enum(_) => quote! { i32 },
+      Self::Message(MessageInfo { boxed, path }) => {
         if *boxed {
           quote! { Box<#path> }
         } else {
           path.to_token_stream()
         }
       }
-      ProtoType::Int32 => quote! { i32 },
-      ProtoType::Sint32 => quote! { i32 },
-      ProtoType::Duration => quote! { ::prelude::proto_types::Duration },
-      ProtoType::Timestamp => quote! { ::prelude::proto_types::Timestamp },
-      ProtoType::Uint32 => quote! { u32 },
-      ProtoType::Float => quote! { f32 },
-      ProtoType::Double => quote! { f64 },
-      ProtoType::Int64 => quote! { i64  },
-      ProtoType::Uint64 => quote! { u64 },
-      ProtoType::Sint64 => quote! { i64  },
-      ProtoType::Fixed32 => quote! { u32 },
-      ProtoType::Fixed64 => quote! { u64 },
-      ProtoType::Sfixed32 => quote! { i32 },
-      ProtoType::Sfixed64 => quote! { i64 },
+      Self::Int32 => quote! { i32 },
+      Self::Sint32 => quote! { i32 },
+      Self::Duration => quote! { ::prelude::proto_types::Duration },
+      Self::Timestamp => quote! { ::prelude::proto_types::Timestamp },
+      Self::Any => quote! { ::prelude::proto_types::Any },
+      Self::FieldMask => quote! { ::prelude::proto_types::FieldMask },
+      Self::Uint32 => quote! { u32 },
+      Self::Float => quote! { f32 },
+      Self::Double => quote! { f64 },
+      Self::Int64 => quote! { i64  },
+      Self::Uint64 => quote! { u64 },
+      Self::Sint64 => quote! { i64  },
+      Self::Fixed32 => quote! { u32 },
+      Self::Fixed64 => quote! { u64 },
+      Self::Sfixed32 => quote! { i32 },
+      Self::Sfixed64 => quote! { i64 },
     }
   }
 
   pub fn as_prost_attr_type(&self) -> TokenStream2 {
     match self {
-      ProtoType::String => quote! { string },
-      ProtoType::Bool => quote! { bool },
-      ProtoType::Bytes => quote! { bytes = "bytes" },
-      ProtoType::Enum(path) => {
+      Self::String => quote! { string },
+      Self::Bool => quote! { bool },
+      Self::Bytes => quote! { bytes = "bytes" },
+      Self::Enum(path) => {
         let path_as_str = path.to_token_stream().to_string();
 
         quote! { enumeration = #path_as_str }
       }
-      ProtoType::Message(MessageInfo { boxed, .. }) => {
+      Self::Message(MessageInfo { boxed, .. }) => {
         if *boxed {
           quote! { message, boxed }
         } else {
           quote! { message }
         }
       }
-      ProtoType::Int32 => quote! { int32 },
-      ProtoType::Sint32 => quote! { sint32 },
-      ProtoType::Duration | ProtoType::Timestamp => quote! { message },
-      ProtoType::Uint32 => quote! { uint32 },
-      ProtoType::Float => quote! { float },
-      ProtoType::Double => quote! { double },
-      ProtoType::Int64 => quote! { int64  },
-      ProtoType::Uint64 => quote! { uint64 },
-      ProtoType::Sint64 => quote! { sint64  },
-      ProtoType::Fixed32 => quote! { fixed32  },
-      ProtoType::Fixed64 => quote! { fixed64  },
-      ProtoType::Sfixed32 => quote! { sfixed32  },
-      ProtoType::Sfixed64 => quote! { sfixed64  },
+      Self::Int32 => quote! { int32 },
+      Self::Sint32 => quote! { sint32 },
+      Self::Uint32 => quote! { uint32 },
+      Self::Float => quote! { float },
+      Self::Double => quote! { double },
+      Self::Int64 => quote! { int64  },
+      Self::Uint64 => quote! { uint64 },
+      Self::Sint64 => quote! { sint64  },
+      Self::Fixed32 => quote! { fixed32  },
+      Self::Fixed64 => quote! { fixed64  },
+      Self::Sfixed32 => quote! { sfixed32  },
+      Self::Sfixed64 => quote! { sfixed64  },
+      _ => quote! { message },
     }
   }
 }
