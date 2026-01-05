@@ -1,39 +1,46 @@
+#![allow(clippy::struct_field_names)]
+
 use prelude::{
   CelProgram, StringValidator, cel_program, define_proto_file, proto_message, proto_package,
 };
 
-fn random_cel() -> CelProgram {
-  cel_program!(id = "abc", msg = "abc", expr = "true == true")
-}
-
-fn string_validator() -> StringValidator {
-  StringValidator::builder()
-    .len(5)
-    .min_len(5)
-    .max_len(5)
-    .len_bytes(5)
-    .min_bytes(5)
-    .max_bytes(6)
-    .pattern("abc")
-    .prefix("abc")
-    .suffix("abc")
-    .contains("abc")
-    .not_contains("abc")
-    .in_(["abc", "cde"])
-    .not_in(["abc", "cde"])
-    .const_("abc")
-    .ignore_if_zero_value()
-    .cel(random_cel())
-    .build()
-}
-
 #[proto_message(no_auto_test)]
 struct StringRules {
-  #[proto(validate = string_validator())]
-  pub string_test: String,
+  #[proto(validate = |v| v.const_("a"))]
+  pub const_test: String,
+  #[proto(validate = |v| v.len(1))]
+  pub len_test: String,
+  #[proto(validate = |v| v.min_len(1))]
+  pub min_len_test: String,
+  #[proto(validate = |v| v.max_len(1))]
+  pub max_len_test: String,
+  #[proto(validate = |v| v.len_bytes(1))]
+  pub len_bytes_test: String,
+  #[proto(validate = |v| v.min_bytes(1))]
+  pub min_bytes_test: String,
+  #[proto(validate = |v| v.max_bytes(1))]
+  pub max_bytes_test: String,
+  #[proto(validate = |v| v.pattern("a"))]
+  pub pattern_test: String,
+  #[proto(validate = |v| v.prefix("a"))]
+  pub prefix_test: String,
+  #[proto(validate = |v| v.suffix("a"))]
+  pub suffix_test: String,
+  #[proto(validate = |v| v.contains("a"))]
+  pub contains_test: String,
+  #[proto(validate = |v| v.not_contains("a"))]
+  pub not_contains_test: String,
+  #[proto(validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this == 'a'")))]
+  pub cel_test: String,
+  #[proto(validate = |v| v.required())]
+  pub required_test: Option<String>,
+  #[proto(validate = |v| v.const_("a").ignore_if_zero_value())]
+  pub ignore_if_zero_value_test: Option<String>,
+  #[proto(validate = |v| v.const_("b").ignore_always())]
+  pub ignore_always_test: String,
 }
 
-proto_package!(REFLECTION, name = "reflection.v1");
+proto_package!(REFLECTION, name = "reflection.v1", no_cel_test);
 define_proto_file!(
   REFLECTION_FILE,
   file = "reflection.proto",

@@ -16,6 +16,8 @@ mod string_rules;
 pub use string_rules::*;
 mod numeric_rules;
 pub use numeric_rules::*;
+mod bool_rules;
+pub use bool_rules::*;
 
 pub struct RulesCtx {
   pub ignore: IgnoreWrapper,
@@ -186,18 +188,18 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
               RulesType::Fixed64(rules) => get_numeric_validator(rules, &rules_ctx),
               RulesType::Sfixed32(rules) => get_numeric_validator(rules, &rules_ctx),
               RulesType::Sfixed64(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Bool(bool_rules) => todo!(),
               RulesType::String(rules) => get_string_validator(rules, &rules_ctx),
-              RulesType::Bytes(bytes_rules) => todo!(),
-              RulesType::Enum(enum_rules) => todo!(),
-              RulesType::Repeated(repeated_rules) => todo!(),
-              RulesType::Map(map_rules) => todo!(),
-              RulesType::Any(any_rules) => todo!(),
-              RulesType::Duration(duration_rules) => todo!(),
-              RulesType::FieldMask(field_mask_rules) => {
+              RulesType::Bool(rules) => get_bool_validator(rules, &rules_ctx),
+              RulesType::Bytes(rules) => todo!(),
+              RulesType::Enum(rules) => todo!(),
+              RulesType::Repeated(rules) => todo!(),
+              RulesType::Map(rules) => todo!(),
+              RulesType::Any(rules) => todo!(),
+              RulesType::Duration(rules) => todo!(),
+              RulesType::FieldMask(rules) => {
                 todo!()
               }
-              RulesType::Timestamp(timestamp_rules) => {
+              RulesType::Timestamp(rules) => {
                 todo!()
               }
             };
