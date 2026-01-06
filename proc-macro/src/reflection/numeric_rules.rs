@@ -1,27 +1,27 @@
 use super::*;
 use ::proto_types::protovalidate::*;
 
-pub fn get_numeric_validator<T: NumericRules>(ctx: &RulesCtx) -> TokenStream2 {
+pub fn get_numeric_validator<T: NumericRules>(ctx: &RulesCtx) -> BuilderTokens {
   let type_tokens = T::type_tokens();
-  let mut validator = if T::IS_FLOAT {
-    quote! { ::prelude::FloatValidator::<#type_tokens>::builder() }
+  let mut builder = BuilderTokens::new(if T::IS_FLOAT {
+    quote! { FloatValidator::<#type_tokens>::builder() }
   } else {
-    quote! { ::prelude::IntValidator::<#type_tokens>::builder() }
-  };
+    quote! { IntValidator::<#type_tokens>::builder() }
+  });
 
-  ctx.tokenize_ignore(&mut validator);
-  ctx.tokenize_required(&mut validator);
-  ctx.tokenize_cel_rules(&mut validator);
+  ctx.tokenize_ignore(&mut builder);
+  ctx.tokenize_required(&mut builder);
+  ctx.tokenize_cel_rules(&mut builder);
 
   if let Some(rules) = T::from_field_rules(&ctx.rules) {
     if let Some(val) = rules.const_() {
-      validator.extend(quote! { .const_(#val) });
+      builder.extend(quote! { .const_(#val) });
     }
 
     macro_rules! rule {
       ($name:ident) => {
         if let Some($name) = rules.$name() {
-          validator.extend(quote! { .$name(#$name) });
+          builder.extend(quote! { .$name(#$name) });
         }
       };
     }
@@ -33,20 +33,20 @@ pub fn get_numeric_validator<T: NumericRules>(ctx: &RulesCtx) -> TokenStream2 {
 
     let in_list = rules.in_();
     if !in_list.is_empty() {
-      validator.extend(quote! { .in_([ #(#in_list),* ]) });
+      builder.extend(quote! { .in_([ #(#in_list),* ]) });
     }
 
     let not_in_list = rules.not_in();
     if !not_in_list.is_empty() {
-      validator.extend(quote! { .not_in([ #(#not_in_list),* ]) });
+      builder.extend(quote! { .not_in([ #(#not_in_list),* ]) });
     }
 
     if rules.finite() {
-      validator.extend(quote! { .finite() });
+      builder.extend(quote! { .finite() });
     }
   }
 
-  quote! { #validator.build() }
+  builder
 }
 
 pub trait NumericRules {

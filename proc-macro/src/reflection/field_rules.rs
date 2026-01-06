@@ -2,7 +2,7 @@ use ::proto_types::protovalidate::*;
 
 use super::*;
 
-pub fn get_field_validator(ctx: &RulesCtx, proto_type: &ProtoType) -> syn::Result<TokenStream2> {
+pub fn get_field_validator(ctx: &RulesCtx, proto_type: &ProtoType) -> syn::Result<BuilderTokens> {
   let validator = match proto_type {
     ProtoType::String => get_string_validator(ctx),
     ProtoType::Bool => get_bool_validator(ctx),

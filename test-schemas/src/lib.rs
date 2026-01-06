@@ -15,6 +15,14 @@ define_proto_file!(
 );
 
 #[proto_message(no_auto_test)]
+pub struct RepeatedItemsTests {
+  #[proto(repeated(int32), validate = |v| v.items(|i| i.const_(15)))]
+  pub items_test: Vec<i32>,
+  #[proto(repeated(int32), validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this[0] == 1")).ignore_if_zero_value())]
+  pub cel_test: Vec<i32>,
+}
+
+#[proto_message(no_auto_test)]
 pub struct DummyMsg {
   #[proto(tag = 1)]
   pub id: i32,

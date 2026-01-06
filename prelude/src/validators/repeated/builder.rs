@@ -122,6 +122,23 @@ where
     }
   }
 
+  #[inline]
+  pub fn ignore_if_zero_value(self) -> RepeatedValidatorBuilder<T, SetIgnore<S>>
+  where
+    S::Ignore: IsUnset,
+  {
+    RepeatedValidatorBuilder {
+      _state: PhantomData,
+      _inner_type: self._inner_type,
+      cel: self.cel,
+      items: self.items,
+      min_items: self.min_items,
+      max_items: self.max_items,
+      unique: self.unique,
+      ignore: Ignore::IfZeroValue,
+    }
+  }
+
   /// Rules set for this field will always be ignored.
   #[inline]
   pub fn ignore_always(self) -> RepeatedValidatorBuilder<T, SetIgnore<S>>

@@ -36,6 +36,50 @@ pub use repeated_rules::*;
 mod map_rules;
 pub use map_rules::*;
 
+pub struct BuilderTokens {
+  pub builder_expr: TokenStream2,
+  pub methods_tokens: TokenStream2,
+}
+
+impl BuilderTokens {
+  pub fn new(builder_expr: TokenStream2) -> Self {
+    Self {
+      builder_expr,
+      methods_tokens: TokenStream2::new(),
+    }
+  }
+
+  pub fn extend(&mut self, tokens: TokenStream2) {
+    self.methods_tokens.extend(tokens);
+  }
+
+  pub fn into_builder(self) -> TokenStream2 {
+    let Self {
+      mut builder_expr,
+      methods_tokens,
+    } = self;
+
+    methods_tokens.to_tokens(&mut builder_expr);
+
+    quote! {
+      ::prelude::#builder_expr
+    }
+  }
+
+  pub fn into_built_validator(self) -> TokenStream2 {
+    let Self {
+      mut builder_expr,
+      methods_tokens,
+    } = self;
+
+    methods_tokens.to_tokens(&mut builder_expr);
+
+    quote! {
+      ::prelude::#builder_expr.build()
+    }
+  }
+}
+
 pub struct RulesCtx<'a> {
   pub field_span: Span,
   pub rules: &'a FieldRules,
@@ -52,7 +96,7 @@ impl<'a> RulesCtx<'a> {
     }
   }
 
-  pub fn tokenize_cel_rules(&self, validator: &mut TokenStream2) {
+  pub fn tokenize_cel_rules(&self, validator: &mut BuilderTokens) {
     for rule in &self.rules.cel {
       let Rule {
         id,
@@ -66,13 +110,13 @@ impl<'a> RulesCtx<'a> {
     }
   }
 
-  pub fn tokenize_required(&self, validator: &mut TokenStream2) {
+  pub fn tokenize_required(&self, validator: &mut BuilderTokens) {
     if self.rules.required() {
       validator.extend(quote! { .required() });
     }
   }
 
-  pub fn tokenize_ignore(&self, validator: &mut TokenStream2) {
+  pub fn tokenize_ignore(&self, validator: &mut BuilderTokens) {
     match self.rules.ignore() {
       Ignore::IfZeroValue => {
         validator.extend(quote! { .ignore_if_zero_value() });
@@ -204,7 +248,7 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
         };
 
         ValidatorTokens {
-          expr,
+          expr: expr.into_built_validator(),
           is_fallback: false,
         }
       } else if let Some(fallback) = proto_field.default_validator_expr() {

@@ -1,18 +1,18 @@
+use ::proto_types::protovalidate::KnownRegex;
 use ::proto_types::protovalidate::string_rules::WellKnown;
-use ::proto_types::protovalidate::{KnownRegex, StringRules};
 
 use super::*;
 
-pub fn get_string_validator(ctx: &RulesCtx) -> TokenStream2 {
-  let mut validator = quote! { ::prelude::StringValidator::builder() };
+pub fn get_string_validator(ctx: &RulesCtx) -> BuilderTokens {
+  let mut builder = BuilderTokens::new(quote! { StringValidator::builder() });
 
-  ctx.tokenize_ignore(&mut validator);
-  ctx.tokenize_required(&mut validator);
-  ctx.tokenize_cel_rules(&mut validator);
+  ctx.tokenize_ignore(&mut builder);
+  ctx.tokenize_required(&mut builder);
+  ctx.tokenize_cel_rules(&mut builder);
 
   if let Some(RulesType::String(rules)) = &ctx.rules.r#type {
     if let Some(val) = &rules.r#const {
-      validator.extend(quote! { .const_(#val) });
+      builder.extend(quote! { .const_(#val) });
     }
 
     macro_rules! len_rule {
@@ -21,7 +21,7 @@ pub fn get_string_validator(ctx: &RulesCtx) -> TokenStream2 {
           #[allow(clippy::cast_possible_truncation)]
           let $name = $name as usize;
 
-          validator.extend(quote! { .$name(#$name) });
+          builder.extend(quote! { .$name(#$name) });
         }
       };
     }
@@ -29,7 +29,7 @@ pub fn get_string_validator(ctx: &RulesCtx) -> TokenStream2 {
     macro_rules! str_rule {
       ($name:ident) => {
         if let Some($name) = &rules.$name {
-          validator.extend(quote! { .$name(#$name) });
+          builder.extend(quote! { .$name(#$name) });
         }
       };
     }
@@ -49,12 +49,12 @@ pub fn get_string_validator(ctx: &RulesCtx) -> TokenStream2 {
 
     if !rules.r#in.is_empty() {
       let list = &rules.r#in;
-      validator.extend(quote! { .in_([ #(#list),* ]) });
+      builder.extend(quote! { .in_([ #(#list),* ]) });
     }
 
     if !rules.not_in.is_empty() {
       let list = &rules.not_in;
-      validator.extend(quote! { .not_in([ #(#list),* ]) });
+      builder.extend(quote! { .not_in([ #(#list),* ]) });
     }
 
     if let Some(well_known) = rules.well_known {
@@ -64,7 +64,7 @@ pub fn get_string_validator(ctx: &RulesCtx) -> TokenStream2 {
             match well_known {
               $(
                 WellKnown::$name(true) => {
-                  validator.extend(quote! { .[< $name:snake >]() });
+                  builder.extend(quote! { .[< $name:snake >]() });
                 }
               )*
               _ => {}
@@ -86,11 +86,11 @@ pub fn get_string_validator(ctx: &RulesCtx) -> TokenStream2 {
         match regex {
           KnownRegex::HttpHeaderName => {
             let method_ident = format_ident!("header_name_{method_suffix}");
-            validator.extend(quote! { .#method_ident() });
+            builder.extend(quote! { .#method_ident() });
           }
           KnownRegex::HttpHeaderValue => {
             let method_ident = format_ident!("header_value_{method_suffix}");
-            validator.extend(quote! { .#method_ident() });
+            builder.extend(quote! { .#method_ident() });
           }
           KnownRegex::Unspecified => {}
         };
@@ -120,5 +120,5 @@ pub fn get_string_validator(ctx: &RulesCtx) -> TokenStream2 {
     }
   }
 
-  quote! { #validator.build() }
+  builder
 }

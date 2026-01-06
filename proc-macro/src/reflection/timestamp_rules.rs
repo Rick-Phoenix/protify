@@ -1,5 +1,4 @@
 use ::proto_types::Timestamp;
-use ::proto_types::protovalidate::TimestampRules;
 use ::proto_types::protovalidate::timestamp_rules::{GreaterThan, LessThan};
 
 use super::*;
@@ -10,32 +9,32 @@ fn tokenize_timestamp(timestamp: Timestamp) -> TokenStream2 {
   quote! { ::prelude::proto_types::Timestamp { seconds: #seconds, nanos: #nanos } }
 }
 
-pub fn get_timestamp_validator(ctx: &RulesCtx) -> TokenStream2 {
-  let mut validator = quote! { ::prelude::TimestampValidator::builder() };
+pub fn get_timestamp_validator(ctx: &RulesCtx) -> BuilderTokens {
+  let mut builder = BuilderTokens::new(quote! { TimestampValidator::builder() });
 
-  ctx.tokenize_ignore(&mut validator);
-  ctx.tokenize_required(&mut validator);
-  ctx.tokenize_cel_rules(&mut validator);
+  ctx.tokenize_ignore(&mut builder);
+  ctx.tokenize_required(&mut builder);
+  ctx.tokenize_cel_rules(&mut builder);
 
   if let Some(RulesType::Timestamp(rules)) = &ctx.rules.r#type {
     if let Some(val) = rules.r#const {
       let val = tokenize_timestamp(val);
 
-      validator.extend(quote! { .const_(#val) });
+      builder.extend(quote! { .const_(#val) });
     }
 
     if let Some(less_than) = &rules.less_than {
       match less_than {
         LessThan::Lt(val) => {
           let val = tokenize_timestamp(*val);
-          validator.extend(quote! { .lt(#val) });
+          builder.extend(quote! { .lt(#val) });
         }
         LessThan::Lte(val) => {
           let val = tokenize_timestamp(*val);
-          validator.extend(quote! { .lte(#val) });
+          builder.extend(quote! { .lte(#val) });
         }
         LessThan::LtNow(true) => {
-          validator.extend(quote! { .lt_now() });
+          builder.extend(quote! { .lt_now() });
         }
         _ => {}
       };
@@ -45,14 +44,14 @@ pub fn get_timestamp_validator(ctx: &RulesCtx) -> TokenStream2 {
       match greater_than {
         GreaterThan::Gt(val) => {
           let val = tokenize_timestamp(*val);
-          validator.extend(quote! { .gt(#val) });
+          builder.extend(quote! { .gt(#val) });
         }
         GreaterThan::Gte(val) => {
           let val = tokenize_timestamp(*val);
-          validator.extend(quote! { .gte(#val) });
+          builder.extend(quote! { .gte(#val) });
         }
         GreaterThan::GtNow(true) => {
-          validator.extend(quote! { .gt_now() });
+          builder.extend(quote! { .gt_now() });
         }
         _ => {}
       };
@@ -61,9 +60,9 @@ pub fn get_timestamp_validator(ctx: &RulesCtx) -> TokenStream2 {
     if let Some(val) = &rules.within {
       let val = tokenize_duration(*val);
 
-      validator.extend(quote! { .within(#val) });
+      builder.extend(quote! { .within(#val) });
     }
   }
 
-  quote! { #validator.build() }
+  builder
 }

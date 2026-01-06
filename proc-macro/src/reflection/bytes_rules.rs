@@ -1,4 +1,4 @@
-use ::proto_types::protovalidate::{BytesRules, bytes_rules::WellKnown};
+use ::proto_types::protovalidate::bytes_rules::WellKnown;
 use bytes::Bytes;
 use syn::LitByteStr;
 
@@ -8,18 +8,18 @@ fn tokenize_bytes(bytes: &Bytes) -> LitByteStr {
   LitByteStr::new(bytes, Span::call_site())
 }
 
-pub fn get_bytes_validator(ctx: &RulesCtx) -> TokenStream2 {
-  let mut validator = quote! { ::prelude::BytesValidator::builder() };
+pub fn get_bytes_validator(ctx: &RulesCtx) -> BuilderTokens {
+  let mut builder = BuilderTokens::new(quote! { BytesValidator::builder() });
 
-  ctx.tokenize_ignore(&mut validator);
-  ctx.tokenize_required(&mut validator);
-  ctx.tokenize_cel_rules(&mut validator);
+  ctx.tokenize_ignore(&mut builder);
+  ctx.tokenize_required(&mut builder);
+  ctx.tokenize_cel_rules(&mut builder);
 
   if let Some(RulesType::Bytes(rules)) = &ctx.rules.r#type {
     if let Some(val) = &rules.r#const {
       let tokens = tokenize_bytes(val);
 
-      validator.extend(quote! { .const_(#tokens) });
+      builder.extend(quote! { .const_(#tokens) });
     }
 
     macro_rules! len_rule {
@@ -28,7 +28,7 @@ pub fn get_bytes_validator(ctx: &RulesCtx) -> TokenStream2 {
           #[allow(clippy::cast_possible_truncation)]
           let val = val as usize;
 
-          validator.extend(quote! { .$name(#val) });
+          builder.extend(quote! { .$name(#val) });
         }
       };
     }
@@ -37,7 +37,7 @@ pub fn get_bytes_validator(ctx: &RulesCtx) -> TokenStream2 {
       ($name:ident) => {
         if let Some(val) = &rules.$name {
           let tokens = tokenize_bytes(val);
-          validator.extend(quote! { .$name(#tokens) });
+          builder.extend(quote! { .$name(#tokens) });
         }
       };
     }
@@ -51,17 +51,17 @@ pub fn get_bytes_validator(ctx: &RulesCtx) -> TokenStream2 {
     str_rule!(contains);
 
     if let Some(val) = &rules.pattern {
-      validator.extend(quote! { .pattern(#val) });
+      builder.extend(quote! { .pattern(#val) });
     }
 
     if !rules.r#in.is_empty() {
       let list = rules.r#in.iter().map(|b| tokenize_bytes(b));
-      validator.extend(quote! { .in_([ #(#list),* ]) });
+      builder.extend(quote! { .in_([ #(#list),* ]) });
     }
 
     if !rules.not_in.is_empty() {
       let list = rules.not_in.iter().map(|b| tokenize_bytes(b));
-      validator.extend(quote! { .not_in([ #(#list),* ]) });
+      builder.extend(quote! { .not_in([ #(#list),* ]) });
     }
 
     if let Some(well_known) = rules.well_known {
@@ -71,7 +71,7 @@ pub fn get_bytes_validator(ctx: &RulesCtx) -> TokenStream2 {
             match well_known {
               $(
                 WellKnown::$name(true) => {
-                  validator.extend(quote! { .[< $name:snake >]() });
+                  builder.extend(quote! { .[< $name:snake >]() });
                 }
               )*
               _ => {}
@@ -84,5 +84,5 @@ pub fn get_bytes_validator(ctx: &RulesCtx) -> TokenStream2 {
     }
   }
 
-  quote! { #validator.build() }
+  builder
 }

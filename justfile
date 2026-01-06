@@ -1,4 +1,4 @@
-test-schemas:
+test-schemas: gen-schemas
     cargo test -p test-reflection -- --nocapture
     cargo test --features reflection -p test-reflection -- --nocapture
 
