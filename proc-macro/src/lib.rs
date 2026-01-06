@@ -24,12 +24,13 @@ use syn_utils::*;
 
 use crate::{
   common_impls::*, enum_proc_macro::*, extension_derive::*, impls::*, item_cloners::*,
-  message_derive::*, message_schema_impl::*, oneof_derive::*, path_utils::*, proto_field::*,
+  message_derive::*, message_schema_impl::*, oneof_proc_macro::*, path_utils::*, proto_field::*,
   proto_map::*, proto_types::*, service_derive::*,
 };
 
 mod attributes;
 mod common_impls;
+#[cfg(feature = "reflection")]
 mod enum_derive;
 mod enum_proc_macro;
 mod extension_derive;
@@ -37,7 +38,7 @@ mod impls;
 mod item_cloners;
 mod message_derive;
 mod message_schema_impl;
-mod oneof_derive;
+mod oneof_proc_macro;
 mod oneof_schema_impl;
 mod path_utils;
 mod proto_field;
@@ -47,6 +48,29 @@ mod proto_types;
 mod reflection;
 mod service_derive;
 
+#[cfg(feature = "reflection")]
+#[proc_macro_derive(ValidatedOneof, attributes(proto))]
+pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
+  let mut item = parse_macro_input!(input as ItemEnum);
+
+  let validator_impl = match reflection::reflection_oneof_derive(&mut item) {
+    Ok(imp) => imp,
+    Err(e) => {
+      let err = e.into_compile_error();
+      let fallback_impl = fallback_oneof_validator(&item.ident);
+
+      quote! {
+        #fallback_impl
+        #err
+      }
+    }
+  };
+
+  // TODO: Add consistency checks too
+  validator_impl.into()
+}
+
+#[cfg(feature = "reflection")]
 #[proc_macro_derive(NamedEnum, attributes(proto))]
 pub fn named_enum_derive(input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
@@ -86,7 +110,7 @@ pub fn named_enum_derive(input: TokenStream) -> TokenStream {
 pub fn validated_message_derive(input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
 
-  let validator_impl = match reflection::reflection_derive(&mut item) {
+  let validator_impl = match reflection::reflection_message_derive(&mut item) {
     Ok(imp) => imp,
     Err(e) => {
       let err = e.into_compile_error();
@@ -187,7 +211,7 @@ pub fn enum_derive(_input: TokenStream) -> TokenStream {
 pub fn proto_oneof(args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
 
-  process_oneof_derive(item, args.into()).into()
+  process_oneof_proc_macro(item, args.into()).into()
 }
 
 #[proc_macro_derive(Oneof, attributes(proto))]

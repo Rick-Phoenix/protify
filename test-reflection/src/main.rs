@@ -69,6 +69,7 @@ mod test {
   mod field_mask_tests;
   mod map_tests;
   mod numeric_tests;
+  mod oneof_tests;
   mod repeated_tests;
   mod string_tests;
   mod timestamp_tests;

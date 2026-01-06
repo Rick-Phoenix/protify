@@ -35,6 +35,8 @@ mod repeated_rules;
 pub use repeated_rules::*;
 mod map_rules;
 pub use map_rules::*;
+mod oneof_derive;
+pub use oneof_derive::*;
 
 pub struct BuilderTokens {
   pub builder_expr: TokenStream2,
@@ -126,7 +128,7 @@ impl<'a> RulesCtx<'a> {
   }
 }
 
-pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
+pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
   let ItemStruct { fields, .. } = item;
 
   let mut msg_name: Option<String> = None;
@@ -160,7 +162,6 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
     let ident = field.require_ident()?;
     let ident_str = ident.to_string();
 
-    let type_info = TypeInfo::from_type(&field.ty)?;
     let mut proto_field: Option<ProtoField> = None;
     let mut found_enum_path: Option<Path> = None;
 
@@ -205,6 +206,7 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
     }
 
     let proto_name = rust_ident_to_proto_name(&ident_str);
+    let type_info = TypeInfo::from_type(&field.ty)?;
 
     if let Some(ProtoField::Oneof(mut oneof)) = proto_field {
       let oneof_desc = message_desc
@@ -221,6 +223,22 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
           .map_err(|e| error!(field, "Could not decode oneof rules: {}", e))?;
 
         oneof.required = oneof_rules.required();
+
+        fields_data.push(FieldData {
+          span: field.span(),
+          ident: ident.clone(),
+          type_info,
+          proto_name: proto_name.to_string(),
+          ident_str,
+          tag: Some(0),
+          validator: None,
+          options: TokensOr::<TokenStream2>::new(|| quote! {}),
+          proto_field: ProtoField::Oneof(oneof),
+          from_proto: None,
+          into_proto: None,
+        });
+
+        continue;
       }
     } else {
       let field_desc = message_desc
@@ -297,7 +315,7 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
   Ok(wrap_with_imports(vec![validator_impl]))
 }
 
-fn rust_ident_to_proto_name(rust_ident: &str) -> &str {
+pub fn rust_ident_to_proto_name(rust_ident: &str) -> &str {
   rust_ident
     .strip_prefix("r#")
     .unwrap_or(rust_ident.strip_suffix("_").unwrap_or(rust_ident))

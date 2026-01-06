@@ -1,6 +1,6 @@
 use crate::*;
 
-impl<'a, T: Borrow<FieldData>> OneofCtx<'a, T> {
+impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
     let oneof_ident = self.proto_enum_ident();
 
@@ -54,6 +54,7 @@ impl<'a, T: Borrow<FieldData>> OneofCtx<'a, T> {
       impl #oneof_ident {
         pub fn check_validators_consistency() -> Result<(), ::prelude::test_utils::OneofErrors> {
           use ::prelude::test_utils::*;
+          use ::prelude::*;
 
           let mut errors: Vec<FieldError> = Vec::new();
 

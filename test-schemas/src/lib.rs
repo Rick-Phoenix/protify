@@ -1,11 +1,11 @@
 #![allow(clippy::struct_field_names)]
 
 use bytes::Bytes;
-use prelude::proto_enum;
 use prelude::{
   cel_program, define_proto_file, proto_message, proto_package,
   proto_types::{Duration, Timestamp},
 };
+use prelude::{proto_enum, proto_oneof};
 
 proto_package!(TEST_SCHEMAS, name = "test_schemas.v1", no_cel_test);
 define_proto_file!(
@@ -13,6 +13,20 @@ define_proto_file!(
   file = "test_schemas.proto",
   package = TEST_SCHEMAS
 );
+
+#[proto_oneof(no_auto_test)]
+pub enum TestOneof {
+  #[proto(tag = 1, validate = |v| v.cel(cel_program!(id = "string_cel_rule", msg = "abc", expr = "this != 'b'")))]
+  String(String),
+  #[proto(tag = 2, message(boxed), validate = |v| v.cel(cel_program!(id = "recursive_cel_rule", msg = "abc", expr = "this.string != 'c'")))]
+  BoxedMsg(Box<OneofTests>),
+}
+
+#[proto_message(no_auto_test)]
+pub struct OneofTests {
+  #[proto(oneof(tags(1, 2)))]
+  pub test_oneof: Option<TestOneof>,
+}
 
 #[proto_message(no_auto_test)]
 pub struct MapTests {

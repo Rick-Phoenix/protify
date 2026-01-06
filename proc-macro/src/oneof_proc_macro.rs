@@ -16,7 +16,7 @@ impl<'a, T: Borrow<FieldData>> OneofCtx<'a, T> {
   }
 }
 
-pub fn process_oneof_derive(mut item: ItemEnum, macro_attrs: TokenStream2) -> TokenStream2 {
+pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -> TokenStream2 {
   let oneof_attrs = match process_oneof_attrs(&item.ident, macro_attrs, &item.attrs) {
     Ok(attrs) => attrs,
     Err(e) => {
@@ -42,7 +42,7 @@ pub fn process_oneof_derive(mut item: ItemEnum, macro_attrs: TokenStream2) -> To
   if oneof_attrs.is_proxied {
     let mut shadow_enum = create_shadow_enum(&item);
 
-    let impls = match process_oneof_derive_shadow(&mut item, &mut shadow_enum, &oneof_attrs) {
+    let impls = match oneof_shadow_proc_macro(&mut item, &mut shadow_enum, &oneof_attrs) {
       Ok(impls) => impls,
       Err(e) => {
         proto_derives = TokenStream2::new();
@@ -74,7 +74,7 @@ pub fn process_oneof_derive(mut item: ItemEnum, macro_attrs: TokenStream2) -> To
       #impls
     }
   } else {
-    let impls = match process_oneof_derive_direct(&mut item, &oneof_attrs) {
+    let impls = match oneof_direct_proc_macro(&mut item, &oneof_attrs) {
       Ok(impls) => impls,
       Err(e) => {
         proto_derives = TokenStream2::new();
@@ -100,7 +100,7 @@ pub fn process_oneof_derive(mut item: ItemEnum, macro_attrs: TokenStream2) -> To
   }
 }
 
-pub(crate) fn process_oneof_derive_shadow(
+pub(crate) fn oneof_shadow_proc_macro(
   item: &mut ItemEnum,
   shadow_enum: &mut ItemEnum,
   oneof_attrs: &OneofAttrs,
@@ -201,7 +201,7 @@ pub(crate) fn process_oneof_derive_shadow(
   })
 }
 
-pub(crate) fn process_oneof_derive_direct(
+pub(crate) fn oneof_direct_proc_macro(
   item: &mut ItemEnum,
   oneof_attrs: &OneofAttrs,
 ) -> Result<TokenStream2, Error> {
