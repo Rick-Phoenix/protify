@@ -100,7 +100,7 @@ pub struct EnumRules {
   pub const_test: TestEnum,
   #[proto(enum_, validate = |v| v.in_([1]))]
   pub in_test: TestEnum,
-  #[proto(enum_, validate = |v| v.not_in([1]))]
+  #[proto(enum_, validate = |v| v.not_in([1]).ignore_if_zero_value())]
   pub not_in_test: TestEnum,
   #[proto(enum_, validate = |v| v.defined_only())]
   pub defined_only_test: TestEnum,
@@ -164,6 +164,8 @@ pub struct TimestampRules {
   pub required_test: Option<Timestamp>,
   #[proto(timestamp, validate = |v| v.const_(Timestamp::default()).ignore_always())]
   pub ignore_always_test: Option<Timestamp>,
+  #[proto(timestamp, validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this < timestamp('2024-01-01T00:00:00Z')")))]
+  pub cel_test: Option<Timestamp>,
 }
 
 #[proto_message(no_auto_test)]
@@ -186,6 +188,8 @@ pub struct DurationRules {
   pub required_test: Option<Duration>,
   #[proto(duration, validate = |v| v.const_(Duration::default()).ignore_always())]
   pub ignore_always_test: Option<Duration>,
+  #[proto(duration, validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this < duration('5m')")))]
+  pub cel_test: Option<Duration>,
 }
 
 #[proto_message(no_auto_test)]

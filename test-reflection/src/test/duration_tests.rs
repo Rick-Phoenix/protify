@@ -1,5 +1,3 @@
-#![allow(clippy::clone_on_copy)]
-
 use proto_types::Duration;
 
 use super::*;
@@ -35,6 +33,7 @@ fn duration_tests() {
     not_in_test: Some(one_sec()),
     required_test: Some(zero_sec()),
     ignore_always_test: Some(one_sec()),
+    cel_test: Some(zero_sec()),
   };
 
   let baseline = msg.clone();
@@ -71,4 +70,10 @@ fn duration_tests() {
 
   msg.required_test = None;
   assert_violation!("required", "required rule");
+
+  msg.cel_test = Some(Duration {
+    seconds: 350,
+    nanos: 0,
+  });
+  assert_violation!("cel_rule", "cel rule");
 }

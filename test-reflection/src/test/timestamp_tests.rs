@@ -44,6 +44,7 @@ fn timestamp_tests() {
     within_test: Some(Timestamp::now()),
     lt_now_test: Some(zero_sec()),
     gt_now_test: Some(future()),
+    cel_test: Some(zero_sec()),
   };
 
   let baseline = msg.clone();
@@ -83,4 +84,7 @@ fn timestamp_tests() {
 
   msg.required_test = None;
   assert_violation!("required", "required rule");
+
+  msg.cel_test = Some(future());
+  assert_violation!("cel_rule", "cel rule");
 }

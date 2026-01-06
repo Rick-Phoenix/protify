@@ -7,6 +7,7 @@ fn main() {
   println!("Hello, world!");
 }
 
+#[allow(clippy::clone_on_copy)]
 #[cfg(test)]
 mod test {
   use prelude::ValidatedMessage;
@@ -64,6 +65,7 @@ mod test {
   mod bool_tests;
   mod bytes_tests;
   mod duration_tests;
+  mod enums_tests;
   mod field_mask_tests;
   mod map_tests;
   mod numeric_tests;
