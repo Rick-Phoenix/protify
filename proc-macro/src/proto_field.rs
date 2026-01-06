@@ -63,6 +63,7 @@ impl ProtoField {
     Ok(output)
   }
 
+  // Maybe I should handle the oneof default here?
   pub fn default_validator_expr(&self) -> Option<TokenStream2> {
     match self {
       Self::Map(map) => {

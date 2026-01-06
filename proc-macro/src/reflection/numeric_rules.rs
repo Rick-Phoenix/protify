@@ -1,7 +1,7 @@
 use super::*;
 use ::proto_types::protovalidate::*;
 
-pub fn get_numeric_validator<T: NumericRules>(rules: &T, ctx: &super::RulesCtx) -> TokenStream2 {
+pub fn get_numeric_validator<T: NumericRules>(ctx: &RulesCtx) -> TokenStream2 {
   let type_tokens = T::type_tokens();
   let mut validator = if T::IS_FLOAT {
     quote! { ::prelude::FloatValidator::<#type_tokens>::builder() }
@@ -9,41 +9,42 @@ pub fn get_numeric_validator<T: NumericRules>(rules: &T, ctx: &super::RulesCtx) 
     quote! { ::prelude::IntValidator::<#type_tokens>::builder() }
   };
 
-  ctx.ignore.tokenize(&mut validator);
+  ctx.tokenize_ignore(&mut validator);
   ctx.tokenize_required(&mut validator);
-
-  if let Some(val) = rules.const_() {
-    validator.extend(quote! { .const_(#val) });
-  }
-
-  macro_rules! rule {
-    ($name:ident) => {
-      if let Some($name) = rules.$name() {
-        validator.extend(quote! { .$name(#$name) });
-      }
-    };
-  }
-
-  rule!(lte);
-  rule!(lt);
-  rule!(gte);
-  rule!(gt);
-
-  let in_list = rules.in_();
-  if !in_list.is_empty() {
-    validator.extend(quote! { .in_([ #(#in_list),* ]) });
-  }
-
-  let not_in_list = rules.not_in();
-  if !not_in_list.is_empty() {
-    validator.extend(quote! { .not_in([ #(#not_in_list),* ]) });
-  }
-
-  if rules.finite() {
-    validator.extend(quote! { .finite() });
-  }
-
   ctx.tokenize_cel_rules(&mut validator);
+
+  if let Some(rules) = T::from_field_rules(&ctx.rules) {
+    if let Some(val) = rules.const_() {
+      validator.extend(quote! { .const_(#val) });
+    }
+
+    macro_rules! rule {
+      ($name:ident) => {
+        if let Some($name) = rules.$name() {
+          validator.extend(quote! { .$name(#$name) });
+        }
+      };
+    }
+
+    rule!(lte);
+    rule!(lt);
+    rule!(gte);
+    rule!(gt);
+
+    let in_list = rules.in_();
+    if !in_list.is_empty() {
+      validator.extend(quote! { .in_([ #(#in_list),* ]) });
+    }
+
+    let not_in_list = rules.not_in();
+    if !not_in_list.is_empty() {
+      validator.extend(quote! { .not_in([ #(#not_in_list),* ]) });
+    }
+
+    if rules.finite() {
+      validator.extend(quote! { .finite() });
+    }
+  }
 
   quote! { #validator.build() }
 }
@@ -53,6 +54,7 @@ pub trait NumericRules {
   const IS_FLOAT: bool = false;
 
   fn type_tokens() -> TokenStream2;
+  fn from_field_rules(field_rules: &FieldRules) -> Option<&Self>;
   fn const_(&self) -> Option<Self::Unit>;
   fn lte(&self) -> Option<Self::Unit>;
   fn lt(&self) -> Option<Self::Unit>;
@@ -84,6 +86,16 @@ macro_rules! impl_numeric_rules {
     paste::paste! {
       impl NumericRules for [< $name Rules >] {
         type Unit = $unit;
+
+        fn from_field_rules(field_rules: &FieldRules) -> Option<&Self> {
+          field_rules
+          .r#type
+          .as_ref()
+          .and_then(|rt| match rt {
+            RulesType::[< $name:camel >](rules) => Some(rules),
+            _ => None,
+          })
+        }
 
         fn type_tokens() -> TokenStream2 {
           quote! { $wrapper }

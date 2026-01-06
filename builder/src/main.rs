@@ -1,10 +1,42 @@
 #![allow(clippy::struct_field_names)]
 
 use bytes::Bytes;
+use prelude::proto_enum;
 use prelude::{
   cel_program, define_proto_file, proto_message, proto_package,
-  proto_types::{Any, Duration, Timestamp},
+  proto_types::{Duration, Timestamp},
 };
+
+#[proto_enum]
+enum TestEnum {
+  Unspecified = 0,
+  One = 1,
+  Two = 2,
+}
+
+#[proto_message(no_auto_test)]
+struct Abc {
+  #[proto(map(int32, enum_))]
+  pub enum_map: HashMap<i32, TestEnum>,
+}
+
+#[proto_message(no_auto_test)]
+struct EnumRules {
+  #[proto(enum_, validate = |v| v.const_(1))]
+  pub const_test: TestEnum,
+  #[proto(enum_, validate = |v| v.in_([1]))]
+  pub in_test: TestEnum,
+  #[proto(enum_, validate = |v| v.not_in([1]))]
+  pub not_in_test: TestEnum,
+  #[proto(enum_, validate = |v| v.defined_only())]
+  pub defined_only_test: TestEnum,
+  #[proto(enum_, validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this == 1")))]
+  pub cel_test: TestEnum,
+  #[proto(enum_, validate = |v| v.required())]
+  pub required_test: Option<TestEnum>,
+  #[proto(enum_, validate = |v| v.not_in([1]).ignore_always())]
+  pub ignore_always_test: TestEnum,
+}
 
 #[proto_message(no_auto_test)]
 struct FieldMaskRules {

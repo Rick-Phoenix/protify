@@ -1,20 +1,21 @@
-use ::proto_types::FieldMask;
-use ::proto_types::protovalidate::FieldMaskRules;
+use ::proto_types::protovalidate::EnumRules;
 
 use super::*;
 
-pub fn get_field_mask_validator(ctx: &super::RulesCtx) -> TokenStream2 {
-  let mut validator = quote! { ::prelude::FieldMaskValidator::builder() };
+pub fn get_enum_validator(ctx: &RulesCtx, enum_path: &Path) -> TokenStream2 {
+  let mut validator = quote! { ::prelude::EnumValidator::<#enum_path>::builder() };
 
   ctx.tokenize_ignore(&mut validator);
   ctx.tokenize_required(&mut validator);
   ctx.tokenize_cel_rules(&mut validator);
 
-  if let Some(RulesType::FieldMask(rules)) = &ctx.rules.r#type {
-    if let Some(val) = &rules.r#const {
-      let paths = &val.paths;
+  if let Some(RulesType::Enum(rules)) = &ctx.rules.r#type {
+    if let Some(val) = rules.r#const {
+      validator.extend(quote! { .const_(#val) });
+    }
 
-      validator.extend(quote! { .const_([ #(#paths),* ]) });
+    if rules.defined_only() {
+      validator.extend(quote! { .defined_only() });
     }
 
     let in_list = &rules.r#in;

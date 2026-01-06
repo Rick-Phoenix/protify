@@ -161,7 +161,6 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
       }
     });
 
-  // I think it's clearer this way
   #[allow(clippy::manual_map)]
   let validator = if let Some(expr) = validator_expr {
     Some(ValidatorTokens {

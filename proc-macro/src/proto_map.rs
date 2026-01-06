@@ -53,11 +53,8 @@ impl ProtoMapKeys {
 }
 
 impl ProtoMapKeys {
-  pub fn from_path(path: &Path) -> Result<Self, Error> {
-    let ident = path.require_ident()?;
-    let ident_str = ident.to_string();
-
-    let output = match ident_str.as_str() {
+  pub fn from_str(str: &str, span: Span) -> Result<Self, Error> {
+    let output = match str {
       "String" | "string" => Self::String,
       "int32" | "i32" => Self::Int32,
       "int64" | "i64" => Self::Int64,
@@ -70,13 +67,17 @@ impl ProtoMapKeys {
       "sfixed64" => Self::Sfixed64,
       "fixed32" => Self::Fixed32,
       "fixed64" => Self::Fixed64,
-      _ => bail!(
-        ident,
-        "Type {ident_str} is not a supported map key primitive"
-      ),
+      _ => bail_with_span!(span, "Type {str} is not a supported map key primitive"),
     };
 
     Ok(output)
+  }
+
+  pub fn from_path(path: &Path) -> Result<Self, Error> {
+    let ident = path.require_ident()?;
+    let ident_str = ident.to_string();
+
+    Self::from_str(&ident_str, ident.span())
   }
 }
 

@@ -28,16 +28,35 @@ mod any_rules;
 pub use any_rules::*;
 mod field_mask_rules;
 pub use field_mask_rules::*;
+mod enum_rules;
+pub use enum_rules::*;
+mod message_rules;
+pub use message_rules::*;
+mod field_rules;
+pub use field_rules::*;
+mod repeated_rules;
+pub use repeated_rules::*;
+mod map_rules;
+pub use map_rules::*;
 
-pub struct RulesCtx {
-  pub ignore: IgnoreWrapper,
-  pub cel: Vec<Rule>,
-  pub required: bool,
+pub struct RulesCtx<'a> {
+  pub field_span: Span,
+  pub rules: &'a FieldRules,
 }
 
-impl RulesCtx {
+impl<'a> RulesCtx<'a> {
+  pub fn from_non_empty_rules(rules: &'a FieldRules, field_span: Span) -> Option<Self> {
+    if matches!(rules.ignore(), Ignore::Always)
+      || (!rules.required() && rules.cel.is_empty() && rules.r#type.is_none())
+    {
+      None
+    } else {
+      Some(Self { field_span, rules })
+    }
+  }
+
   pub fn tokenize_cel_rules(&self, validator: &mut TokenStream2) {
-    for rule in &self.cel {
+    for rule in &self.rules.cel {
       let Rule {
         id,
         message,
@@ -51,32 +70,25 @@ impl RulesCtx {
   }
 
   pub fn tokenize_required(&self, validator: &mut TokenStream2) {
-    if self.required {
+    if self.rules.required() {
       validator.extend(quote! { .required() });
     }
   }
-}
 
-pub struct IgnoreWrapper(Ignore);
-
-impl IgnoreWrapper {
-  pub fn tokenize(&self, validator: &mut TokenStream2) {
-    match &self.0 {
-      Ignore::Always => {
-        validator.extend(quote! { .ignore_always() });
-      }
+  pub fn tokenize_ignore(&self, validator: &mut TokenStream2) {
+    match self.rules.ignore() {
       Ignore::IfZeroValue => {
         validator.extend(quote! { .ignore_if_zero_value() });
       }
       _ => {}
     };
   }
+}
 
-  pub fn tokenize_always_only(&self, validator: &mut TokenStream2) {
-    if let Ignore::Always = &self.0 {
-      validator.extend(quote! { .ignore_always() });
-    }
-  }
+enum FieldKind {
+  Enum(Path),
+  Message(Path),
+  Oneof(Path),
 }
 
 pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
@@ -113,20 +125,87 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
     let ident = field.require_ident()?;
     let ident_str = ident.to_string();
 
-    let mut oneof_path: Option<Path> = None;
+    let mut field_kind: Option<FieldKind> = None;
+    let type_info = TypeInfo::from_type(&field.ty)?;
+    let mut proto_type: Option<ProtoType> = None;
+    let mut proto_field: Option<ProtoField> = None;
 
     for attr in &field.attrs {
       if attr.path().is_ident("prost") {
         attr.parse_nested_meta(|meta| {
-          if meta.path.is_ident("oneof") {
-            let path_str = meta.parse_value::<LitStr>()?;
+          let ident_str = meta.ident_str()?;
 
-            oneof_path = Some(path_str.parse()?);
-          }
+          match ident_str.as_str() {
+            "map" => {
+              let val = meta.parse_value::<LitStr>()?.value();
+              let (key, value) = val
+                .split_once(", ")
+                .ok_or_else(|| meta.error("Failed to parse map attribute"))?;
 
-          while !meta.input.is_empty() {
-            meta.input.parse::<TokenTree>()?;
-          }
+              let key_type = ProtoMapKeys::from_str(key, meta.path.span())?;
+              let value_type = if let Some((_, wrapped_path)) = value.split_once("enumeration") {
+                let str_path = &wrapped_path[1..wrapped_path.len() - 1];
+
+                ProtoType::Enum(syn::parse_str(str_path)?)
+              } else if value == "message" {
+                let msg_path = if let RustType::HashMap((_, rust_val)) = type_info.type_.as_ref()
+                  && let Some(path) = rust_val.as_path()
+                {
+                  path
+                } else {
+                  return Err(meta.error("Failed to infer map value type"));
+                };
+
+                ProtoType::Message(MessageInfo {
+                  path: msg_path,
+                  boxed: false,
+                })
+              } else {
+                ProtoType::from_ident(value, meta.path.span(), None)?
+              };
+
+              proto_field = Some(ProtoField::Map(ProtoMap {
+                keys: key_type,
+                values: value_type,
+              }))
+            }
+            "oneof" => {
+              let path_str = meta.parse_value::<LitStr>()?;
+
+              proto_field = Some(ProtoField::Oneof(OneofInfo {
+                path: path_str.parse()?,
+                tags: vec![],
+                default: false,
+                required: false,
+              }));
+            }
+            "enumeration" => {
+              let path_str = meta.parse_value::<LitStr>()?;
+
+              proto_type = Some(ProtoType::Enum(path_str.parse()?));
+            }
+            "message" => {
+              match type_info.type_.as_ref() {
+                RustType::Option(inner) => {
+                  let mut is_boxed = false;
+                  let path = if inner.is_box() {
+                    is_boxed = true;
+                    inner.inner().as_path()
+                  } else {
+                    inner.as_path()
+                  }
+                  .ok_or_else(|| meta.error("Failed to infer the message path"))?;
+
+                  proto_type = Some(ProtoType::Message(MessageInfo {
+                    path,
+                    boxed: is_boxed,
+                  }))
+                }
+                _ => return Err(meta.error("Failed to infer the message path")),
+              };
+            }
+            _ => drain_token_stream!(meta.input),
+          };
 
           Ok(())
         })?;
@@ -135,104 +214,84 @@ pub fn reflection_derive(item: &mut ItemStruct) -> Result<TokenStream2, Error> {
 
     let proto_name = rust_ident_to_proto_name(&ident_str);
 
-    if let Some(oneof_path) = oneof_path {
-      let oneof = message_desc
+    if let Some(ProtoField::Oneof(mut oneof)) = proto_field {
+      let oneof_desc = message_desc
         .oneofs()
         .find(|oneof| oneof.name() == proto_name)
         .ok_or_else(|| error!(field, "Oneof `{proto_name}` missing in the descriptor"))?;
 
-      if let ProstValue::Message(oneof_rules_msg) = oneof
+      if let ProstValue::Message(oneof_rules_msg) = oneof_desc
         .options()
         .get_extension(&ONEOF_RULES_EXT_DESCRIPTOR)
         .as_ref()
       {
         let oneof_rules = OneofRules::decode(oneof_rules_msg.encode_to_vec().as_slice())
           .map_err(|e| error!(field, "Could not decode oneof rules: {}", e))?;
+
+        oneof.required = oneof_rules.required();
       }
     } else {
-      let proto = message_desc
+      let field_desc = message_desc
         .get_field_by_name(proto_name)
         .ok_or_else(|| error!(field, "Field `{proto_name}` not found in the descriptor"))?;
 
-      let type_info = TypeInfo::from_type(&field.ty)?;
+      let proto_type =
+        proto_type.unwrap_or_else(|| ProtoType::from_descriptor(field_desc.kind(), &type_info));
 
-      let proto_field = ProtoField::from_descriptor(&proto, &type_info);
+      let proto_field = proto_field.unwrap_or_else(|| {
+        if field_desc.is_list() {
+          ProtoField::Repeated(proto_type)
+        } else if field_desc.supports_presence() {
+          ProtoField::Optional(proto_type)
+        } else {
+          ProtoField::Single(proto_type)
+        }
+      });
 
-      if let ProstValue::Message(field_rules_msg) = proto
+      let validator = if let ProstValue::Message(field_rules_msg) = field_desc
         .options()
         .get_extension(&FIELD_RULES_EXT_DESCRIPTOR)
         .as_ref()
-      {
-        let field_rules = FieldRules::decode(field_rules_msg.encode_to_vec().as_slice())
-          .map_err(|e| error!(field, "Could not decode field rules: {e}"))?;
-
-        let ignore = field_rules.ignore();
-        let is_required = field_rules.required() && proto.supports_presence();
-
-        if matches!(ignore, Ignore::Always) {
-          continue;
-        }
-
-        let rules_ctx = RulesCtx {
-          ignore: IgnoreWrapper(ignore),
-          required: field_rules.required(),
-          cel: field_rules.cel,
-        };
-
-        let validator = if let Some(rules_type) = &field_rules.r#type {
-          if proto.is_list() {
-            todo!()
-          } else if proto.is_map() {
-            todo!()
-          } else {
-            let expr = match rules_type {
-              RulesType::Float(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Double(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Int32(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Int64(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Uint32(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Uint64(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Sint32(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Sint64(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Fixed32(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Fixed64(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Sfixed32(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::Sfixed64(rules) => get_numeric_validator(rules, &rules_ctx),
-              RulesType::String(rules) => get_string_validator(rules, &rules_ctx),
-              RulesType::Bool(rules) => get_bool_validator(rules, &rules_ctx),
-              RulesType::Bytes(rules) => get_bytes_validator(rules, &rules_ctx),
-              RulesType::Duration(rules) => get_duration_validator(rules, &rules_ctx),
-              RulesType::Timestamp(rules) => get_timestamp_validator(rules, &rules_ctx),
-              RulesType::Any(rules) => get_any_validator(rules, &rules_ctx),
-              RulesType::FieldMask(rules) => get_field_mask_validator(rules, &rules_ctx),
-              RulesType::Enum(rules) => todo!(),
-              RulesType::Repeated(rules) => todo!(),
-              RulesType::Map(rules) => todo!(),
-            };
-
-            ValidatorTokens {
-              expr,
-              is_fallback: false,
-            }
+        && let Some(rules_ctx) = RulesCtx::from_non_empty_rules(
+          &FieldRules::decode(field_rules_msg.encode_to_vec().as_ref())
+            .expect("Failed to decode field rules"),
+          field.span(),
+        ) {
+        let expr = match &proto_field {
+          ProtoField::Map(proto_map) => get_map_validator(&rules_ctx, proto_map),
+          ProtoField::Oneof(_) => todo!(),
+          ProtoField::Repeated(inner) => get_repeated_validator(&rules_ctx, inner),
+          ProtoField::Optional(inner) | ProtoField::Single(inner) => {
+            get_field_validator(&rules_ctx, inner).unwrap()
           }
-        } else {
-          continue;
         };
 
-        fields_data.push(FieldData {
-          span: field.span(),
-          ident: ident.clone(),
-          type_info,
-          proto_name: proto_name.to_string(),
-          ident_str,
-          tag: Some(proto.number().cast_signed()),
-          validator: Some(validator),
-          options: TokensOr::<TokenStream2>::new(|| quote! {}),
-          proto_field,
-          from_proto: None,
-          into_proto: None,
-        });
-      }
+        ValidatorTokens {
+          expr,
+          is_fallback: false,
+        }
+      } else if let Some(fallback) = proto_field.default_validator_expr() {
+        ValidatorTokens {
+          expr: fallback,
+          is_fallback: true,
+        }
+      } else {
+        continue;
+      };
+
+      fields_data.push(FieldData {
+        span: field.span(),
+        ident: ident.clone(),
+        type_info,
+        proto_name: proto_name.to_string(),
+        ident_str,
+        tag: Some(field_desc.number().cast_signed()),
+        validator: Some(validator),
+        options: TokensOr::<TokenStream2>::new(|| quote! {}),
+        proto_field,
+        from_proto: None,
+        into_proto: None,
+      });
     }
   }
 

@@ -170,7 +170,7 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
       ::prelude::RegistryEnum {
         parent_message: #parent_message_registry,
         package: __PROTO_FILE.package,
-        enum_: || #enum_name::proto_schema()
+        enum_: || <#enum_name as ::prelude::ProtoEnum>::proto_schema()
       }
     }
 
