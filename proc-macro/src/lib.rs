@@ -23,7 +23,7 @@ use syn::{
 use syn_utils::*;
 
 use crate::{
-  common_impls::*, enum_derive::*, extension_derive::*, impls::*, item_cloners::*,
+  common_impls::*, enum_proc_macro::*, extension_derive::*, impls::*, item_cloners::*,
   message_derive::*, message_schema_impl::*, oneof_derive::*, path_utils::*, proto_field::*,
   proto_map::*, proto_types::*, service_derive::*,
 };
@@ -31,6 +31,7 @@ use crate::{
 mod attributes;
 mod common_impls;
 mod enum_derive;
+mod enum_proc_macro;
 mod extension_derive;
 mod impls;
 mod item_cloners;
@@ -45,6 +46,31 @@ mod proto_types;
 #[cfg(feature = "reflection")]
 mod reflection;
 mod service_derive;
+
+#[proc_macro_derive(NamedEnum, attributes(proto))]
+pub fn named_enum_derive(input: TokenStream) -> TokenStream {
+  let item = parse_macro_input!(input as ItemEnum);
+
+  let impl_tokens = match enum_derive::named_enum_derive(&item) {
+    Ok(t) => t,
+    Err(e) => {
+      let err = e.into_compile_error();
+      let ident = &item.ident;
+
+      quote! {
+        impl ::prelude::ProtoEnum for #ident {
+          fn proto_name() -> &'static str {
+            unimplemented!()
+          }
+        }
+
+        #err
+      }
+    }
+  };
+
+  impl_tokens.into()
+}
 
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ValidatedMessage, attributes(proto))]
@@ -140,7 +166,7 @@ pub fn service_derive(_input: TokenStream) -> TokenStream {
 pub fn proto_enum(_args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
 
-  process_enum_derive(item).into()
+  enum_proc_macro(item).into()
 }
 
 #[proc_macro_derive(Enum, attributes(proto))]

@@ -13,7 +13,7 @@ pub fn fallback_oneof_schema_impl(enum_ident: &Ident) -> TokenStream2 {
   }
 }
 
-impl<'a, T: Borrow<FieldData>> OneofCtx<'a, T> {
+impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
   pub fn generate_schema_impl(&self) -> TokenStream2 {
     let enum_ident = self.proto_enum_ident();
 
