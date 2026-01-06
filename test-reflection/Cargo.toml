@@ -13,6 +13,7 @@ prelude = { path = "../prelude/", features = ["reflection"] }
 prost = { workspace = true }
 paste = "1"
 bytes = { workspace = true }
+test-schemas = { path = "../test-schemas" }
 
 [build-dependencies]
 prost-build = "0.14"
@@ -20,3 +21,6 @@ prost-reflect = "0.16"
 
 [lints]
 workspace = true
+
+[features]
+reflection = []

@@ -1,6 +1,6 @@
-use proto_types::Duration;
+#![allow(clippy::clone_on_copy)]
 
-use crate::proto::DurationRules;
+use proto_types::Duration;
 
 use super::*;
 
@@ -37,14 +37,14 @@ fn duration_tests() {
     ignore_always_test: Some(one_sec()),
   };
 
-  let baseline = msg;
+  let baseline = msg.clone();
 
   assert!(msg.validate().is_ok(), "basic validation");
 
   macro_rules! assert_violation {
     ($violation:expr, $error:literal) => {
       assert_violation_id(&msg, $violation, $error);
-      msg = baseline;
+      msg = baseline.clone();
     };
   }
 

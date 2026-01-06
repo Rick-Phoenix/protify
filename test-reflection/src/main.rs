@@ -1,5 +1,6 @@
+#[cfg(feature = "reflection")]
 mod proto {
-  include!(concat!(env!("OUT_DIR"), "/reflection.v1.rs"));
+  include!(concat!(env!("OUT_DIR"), "/test_schemas.v1.rs"));
 }
 
 fn main() {
@@ -9,6 +10,12 @@ fn main() {
 #[cfg(test)]
 mod test {
   use prelude::ValidatedMessage;
+
+  #[cfg(feature = "reflection")]
+  use crate::proto::*;
+
+  #[cfg(not(feature = "reflection"))]
+  use test_schemas::*;
 
   #[allow(unused)]
   pub(crate) fn get_rules_ids<T: ValidatedMessage>(msg: &T) -> Vec<String> {
@@ -43,6 +50,7 @@ mod test {
   mod duration_tests;
   mod field_mask_tests;
   mod numeric_tests;
+  mod repeated_tests;
   mod string_tests;
   mod timestamp_tests;
 }

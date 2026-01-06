@@ -1,5 +1,4 @@
-use crate::proto::BoolRules;
-
+#![allow(clippy::clone_on_copy)]
 use super::*;
 
 #[test]
@@ -11,14 +10,14 @@ fn bool_test() {
     ignore_always_test: false,
   };
 
-  let baseline = msg;
+  let baseline = msg.clone();
 
   assert!(msg.validate().is_ok(), "basic validation");
 
   macro_rules! assert_violation {
     ($violation:expr, $error:literal) => {
       assert_violation_id(&msg, $violation, $error);
-      msg = baseline;
+      msg = baseline.clone();
     };
   }
 

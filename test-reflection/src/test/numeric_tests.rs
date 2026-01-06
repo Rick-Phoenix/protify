@@ -1,9 +1,6 @@
-use super::*;
+#![allow(clippy::clone_on_copy)]
 
-use crate::proto::{
-  DoubleRules, Fixed32Rules, Fixed64Rules, FloatRules, Int32Rules, Int64Rules, Sfixed32Rules,
-  Sfixed64Rules, Sint32Rules, Sint64Rules, Uint32Rules, Uint64Rules,
-};
+use super::*;
 
 macro_rules! test_numeric {
   ($name:ident $(, $finite_test:ident, $float_type:ty)?) => {
@@ -25,7 +22,7 @@ macro_rules! test_numeric {
           const_test: num!(1 $(, $finite_test)?),
           $($finite_test: 1.0)?
         };
-        let baseline = msg;
+        let baseline = msg.clone();
 
         // This implicitly tests `ignore_always` too
         assert!(msg.validate().is_ok());
@@ -33,7 +30,7 @@ macro_rules! test_numeric {
         macro_rules! assert_violation {
           ($violation:expr, $error:literal) => {
             assert_violation_id(&msg, $violation, $error);
-            msg = baseline;
+            msg = baseline.clone();
           };
         }
 

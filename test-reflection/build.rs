@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let proto_include_paths = &["proto", "proto_deps"];
 
-  let files = &["proto/reflection.proto"];
+  let files = &["proto/test_schemas.proto"];
 
   let mut config = Config::new();
   config
@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let fds = FileDescriptorSet::decode(fds_bytes.as_slice())?;
   let pool = prost_reflect::DescriptorPool::from_file_descriptor_set(fds)?;
 
-  let packages = ["reflection.v1"];
+  let packages = ["test_schemas.v1"];
 
   for message_desc in pool.all_messages() {
     let message_name = message_desc.full_name();

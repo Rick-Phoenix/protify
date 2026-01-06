@@ -7,21 +7,71 @@ use prelude::{
   proto_types::{Duration, Timestamp},
 };
 
+proto_package!(TEST_SCHEMAS, name = "test_schemas.v1", no_cel_test);
+define_proto_file!(
+  TEST_SCHEMAS_FILE,
+  file = "test_schemas.proto",
+  package = TEST_SCHEMAS
+);
+
+#[proto_message(no_auto_test)]
+pub struct DummyMsg {
+  #[proto(tag = 1)]
+  pub id: i32,
+}
+
 #[proto_enum]
-enum TestEnum {
+pub enum DummyEnum {
+  A,
+  B,
+  C,
+}
+
+#[proto_message(no_auto_test)]
+pub struct UniqueEnums {
+  #[proto(repeated(enum_), tag = 1, validate = |v| v.unique())]
+  pub unique_enums: Vec<DummyEnum>,
+}
+
+#[proto_message(no_auto_test)]
+pub struct UniqueFloats {
+  #[proto(tag = 1, validate = |v| v.unique())]
+  pub unique_floats: Vec<f32>,
+}
+
+#[proto_message(no_auto_test)]
+pub struct UniqueMessages {
+  #[proto(repeated(message), tag = 1, validate = |v| v.unique())]
+  pub unique_messages: Vec<DummyMsg>,
+}
+
+#[proto_message(no_auto_test)]
+pub struct UniqueBytes {
+  #[proto(repeated(message), tag = 1, validate = |v| v.unique())]
+  pub unique_bytes: Vec<Bytes>,
+}
+
+#[proto_message(no_auto_test)]
+pub struct MinItems {
+  #[proto(repeated(int32), tag = 1, validate = |v| v.min_items(3))]
+  pub items: Vec<i32>,
+}
+
+#[proto_message(no_auto_test)]
+pub struct MaxItems {
+  #[proto(repeated(int32), tag = 1, validate = |v| v.max_items(1))]
+  pub items: Vec<i32>,
+}
+
+#[proto_enum]
+pub enum TestEnum {
   Unspecified = 0,
   One = 1,
   Two = 2,
 }
 
 #[proto_message(no_auto_test)]
-struct Abc {
-  #[proto(map(int32, enum_))]
-  pub enum_map: HashMap<i32, TestEnum>,
-}
-
-#[proto_message(no_auto_test)]
-struct EnumRules {
+pub struct EnumRules {
   #[proto(enum_, validate = |v| v.const_(1))]
   pub const_test: TestEnum,
   #[proto(enum_, validate = |v| v.in_([1]))]
@@ -39,7 +89,7 @@ struct EnumRules {
 }
 
 #[proto_message(no_auto_test)]
-struct FieldMaskRules {
+pub struct FieldMaskRules {
   #[proto(field_mask, validate = |v| v.const_(["tom_bombadil"]))]
   pub const_test: Option<FieldMask>,
   #[proto(field_mask, validate = |v| v.in_(["tom_bombadil"]))]
@@ -55,7 +105,7 @@ struct FieldMaskRules {
 }
 
 #[proto_message(no_auto_test)]
-struct AnyRules {
+pub struct AnyRules {
   #[proto(any, validate = |v| v.in_(["/type_url"]))]
   pub in_test: Option<Any>,
   #[proto(any, validate = |v| v.not_in(["/type_url"]))]
@@ -69,7 +119,7 @@ struct AnyRules {
 }
 
 #[proto_message(no_auto_test)]
-struct TimestampRules {
+pub struct TimestampRules {
   #[proto(timestamp, validate = |v| v.const_(Timestamp::default()))]
   pub const_test: Option<Timestamp>,
   #[proto(timestamp, validate = |v| v.lt(Timestamp::default()))]
@@ -93,7 +143,7 @@ struct TimestampRules {
 }
 
 #[proto_message(no_auto_test)]
-struct DurationRules {
+pub struct DurationRules {
   #[proto(duration, validate = |v| v.const_(Duration::default()))]
   pub const_test: Option<Duration>,
   #[proto(duration, validate = |v| v.lt(Duration::default()))]
@@ -115,7 +165,7 @@ struct DurationRules {
 }
 
 #[proto_message(no_auto_test)]
-struct BytesRules {
+pub struct BytesRules {
   #[proto(validate = |v| v.const_(b"a"))]
   pub const_test: Bytes,
   #[proto(validate = |v| v.len(1))]
@@ -151,7 +201,7 @@ struct BytesRules {
 }
 
 #[proto_message(no_auto_test)]
-struct BoolRules {
+pub struct BoolRules {
   #[proto(validate = |v| v.const_(true))]
   pub const_test: bool,
   #[proto(validate = |v| v.required())]
@@ -166,7 +216,7 @@ macro_rules! string_rules {
   ($($well_known:ident),*) => {
     paste::paste! {
       #[proto_message(no_auto_test)]
-      struct StringRules {
+      pub struct StringRules {
         #[proto(validate = |v| v.const_("a"))]
         pub const_test: String,
         #[proto(validate = |v| v.len(1))]
@@ -233,13 +283,6 @@ string_rules!(
   header_value_loose
 );
 
-proto_package!(REFLECTION, name = "reflection.v1", no_cel_test);
-define_proto_file!(
-  REFLECTION_FILE,
-  file = "reflection.proto",
-  package = REFLECTION
-);
-
 macro_rules! impl_numeric {
   ($name:ident, $typ:ty $(, $finite:ident)?) => {
     macro_rules! num {
@@ -250,7 +293,7 @@ macro_rules! impl_numeric {
     paste::paste! {
       #[allow(unused, clippy::struct_field_names)]
       #[proto_message(no_auto_test)]
-      struct [< $name:camel Rules >] {
+      pub struct [< $name:camel Rules >] {
         #[proto($name, validate = |v| v.required())]
         pub required_test: Option<$typ>,
         #[proto($name, validate = |v| v.lt(num!($($finite)?)))]
@@ -294,13 +337,3 @@ impl_numeric!(fixed64, u64);
 impl_numeric!(fixed32, u32);
 impl_numeric!(double, f64, finite);
 impl_numeric!(float, f32, finite);
-
-fn main() {
-  REFLECTION
-    .get_package()
-    .render_files(concat!(
-      env!("CARGO_MANIFEST_DIR"),
-      "/../test-reflection/proto"
-    ))
-    .unwrap()
-}

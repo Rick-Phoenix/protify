@@ -2,7 +2,6 @@ mod cel_tests;
 mod maps_tests;
 mod oneof_tags_tests;
 mod rendering_tests;
-mod repeated_tests;
 
 use std::collections::HashMap;
 

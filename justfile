@@ -1,9 +1,13 @@
-run-builder:
-    cargo run --bin builder
+test-schemas:
+    cargo test -p test-reflection -- --nocapture
+    cargo test --features reflection -p test-reflection -- --nocapture
+
+gen-schemas:
+    cargo run --bin test-schemas
 
 [working-directory(".")]
-expand-test-reflection: run-builder
-    cargo expand -p test-reflection > expanded.rs
+expand-reflection: gen-schemas
+    cargo expand --features reflection -p test-reflection > expanded.rs
 
 test-renders:
     cargo test -p testing test_renders -- -q --nocapture

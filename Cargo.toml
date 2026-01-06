@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "builder",
+  "test-schemas",
   "prelude",
   "proc-macro",
   "test-reflection",

@@ -1,7 +1,5 @@
 use proto_types::FieldMask;
 
-use crate::proto::FieldMaskRules;
-
 use super::*;
 
 fn test_value_1() -> FieldMask {

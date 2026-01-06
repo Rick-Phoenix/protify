@@ -64,6 +64,15 @@ pub fn named_enum_derive(input: TokenStream) -> TokenStream {
           }
         }
 
+        impl ::prelude::ProtoValidator for #ident {
+          #[doc(hidden)]
+          type Target = i32;
+          #[doc(hidden)]
+          type Validator = ::prelude::EnumValidator<#ident>;
+          #[doc(hidden)]
+          type Builder = ::prelude::EnumValidatorBuilder<#ident>;
+        }
+
         #err
       }
     }

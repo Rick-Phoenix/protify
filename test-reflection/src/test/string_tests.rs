@@ -1,7 +1,5 @@
 use super::*;
 
-use crate::proto::StringRules;
-
 macro_rules! string {
   ($str:literal) => {
     $str.to_string()

@@ -1,7 +1,5 @@
 use proto_types::Any;
 
-use crate::proto::AnyRules;
-
 use super::*;
 
 #[allow(unused)]

@@ -2,8 +2,6 @@ use bytes::Bytes;
 
 use super::*;
 
-use crate::proto::BytesRules;
-
 macro_rules! bytes {
   ($byt:literal) => {
     $byt.into()
