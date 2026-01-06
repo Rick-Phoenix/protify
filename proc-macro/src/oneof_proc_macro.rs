@@ -222,6 +222,10 @@ pub(crate) fn oneof_direct_proc_macro(
         });
       }
 
+      if data.proto_field.is_enum() && !data.type_info.inner().is_int() {
+        bail!(&data.type_info, "Enums must use `i32` in direct impls")
+      }
+
       match data.type_info.type_.as_ref() {
         RustType::Box(_) => {
           if !data.proto_field.is_boxed_message() {
@@ -263,12 +267,6 @@ pub(crate) fn oneof_direct_proc_macro(
 
     let prost_attr = field_attrs.proto_field.as_prost_attr(tag);
     variant.attrs.push(prost_attr);
-
-    // We change the type in direct impls as well,
-    // mostly just to be able to use the real enum names
-    // as opposed to just an opaque `i32`
-    let prost_compatible_type = field_attrs.proto_field.output_proto_type();
-    *variant.type_mut()? = prost_compatible_type;
   }
 
   let oneof_ctx = OneofCtx {

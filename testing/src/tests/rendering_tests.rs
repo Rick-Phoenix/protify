@@ -4,6 +4,7 @@
   clippy::struct_field_names
 )]
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use super::*;

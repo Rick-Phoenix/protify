@@ -230,6 +230,10 @@ pub fn process_message_derive_direct(
     let field_data_kind = process_field_data(FieldOrVariant::Field(field))?;
 
     if let FieldDataKind::Normal(data) = field_data_kind {
+      if data.proto_field.is_enum() && !data.type_info.inner().is_int() {
+        bail!(&data.type_info, "Enums must use `i32` in direct impls")
+      }
+
       match data.type_info.type_.as_ref() {
         RustType::Box(inner) => {
           bail!(inner, "Boxed messages must be optional in a direct impl")
@@ -292,12 +296,6 @@ pub fn process_message_derive_direct(
       field_data.tag = Some(new_tag);
       new_tag
     };
-
-    // We change the type in direct impls as well,
-    // mostly just to be able to use the real enum names
-    // as opposed to just an opaque `i32`
-    let prost_compatible_type = field_data.proto_field.output_proto_type();
-    field.ty = prost_compatible_type;
 
     let prost_attr = field_data.proto_field.as_prost_attr(tag);
     field.attrs.push(prost_attr);

@@ -307,6 +307,10 @@ impl ProtoField {
     }
   }
 
+  pub fn is_enum(&self) -> bool {
+    self.inner().is_some_and(|inner| inner.is_enum())
+  }
+
   pub fn is_message(&self) -> bool {
     self
       .inner()

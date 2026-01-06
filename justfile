@@ -1,3 +1,7 @@
+[working-directory(".")]
+test-all: test-schemas
+    cargo test --workspace --exclude test-server -- --nocapture
+
 test-schemas: gen-schemas
     cargo test -p test-reflection -- --nocapture
     cargo test --features reflection -p test-reflection -- --nocapture

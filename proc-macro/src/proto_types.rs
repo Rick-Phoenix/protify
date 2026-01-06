@@ -359,4 +359,12 @@ impl ProtoType {
       _ => quote! { message },
     }
   }
+
+  /// Returns `true` if the proto type is [`Enum`].
+  ///
+  /// [`Enum`]: ProtoType::Enum
+  #[must_use]
+  pub fn is_enum(&self) -> bool {
+    matches!(self, Self::Enum(..))
+  }
 }

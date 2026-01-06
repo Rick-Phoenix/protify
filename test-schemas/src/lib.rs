@@ -3,9 +3,10 @@
 use bytes::Bytes;
 use prelude::{
   cel_program, define_proto_file, proto_message, proto_package,
-  proto_types::{Duration, Timestamp},
+  proto_types::{Any, Duration, FieldMask, Timestamp},
 };
 use prelude::{proto_enum, proto_oneof};
+use std::collections::HashMap;
 
 proto_package!(TEST_SCHEMAS, name = "test_schemas.v1", no_cel_test);
 define_proto_file!(
@@ -96,8 +97,8 @@ pub enum DummyEnum {
 
 #[proto_message(no_auto_test)]
 pub struct UniqueEnums {
-  #[proto(repeated(enum_), tag = 1, validate = |v| v.unique())]
-  pub unique_enums: Vec<DummyEnum>,
+  #[proto(repeated(enum_(DummyEnum)), tag = 1, validate = |v| v.unique())]
+  pub unique_enums: Vec<i32>,
 }
 
 #[proto_message(no_auto_test)]
@@ -139,20 +140,20 @@ pub enum TestEnum {
 
 #[proto_message(no_auto_test)]
 pub struct EnumRules {
-  #[proto(enum_, validate = |v| v.const_(1))]
-  pub const_test: TestEnum,
-  #[proto(enum_, validate = |v| v.in_([1]))]
-  pub in_test: TestEnum,
-  #[proto(enum_, validate = |v| v.not_in([1]).ignore_if_zero_value())]
-  pub not_in_test: TestEnum,
-  #[proto(enum_, validate = |v| v.defined_only())]
-  pub defined_only_test: TestEnum,
-  #[proto(enum_, validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this == 1")))]
-  pub cel_test: TestEnum,
-  #[proto(enum_, validate = |v| v.required())]
-  pub required_test: Option<TestEnum>,
-  #[proto(enum_, validate = |v| v.not_in([1]).ignore_always())]
-  pub ignore_always_test: TestEnum,
+  #[proto(enum_(TestEnum), validate = |v| v.const_(1))]
+  pub const_test: i32,
+  #[proto(enum_(TestEnum), validate = |v| v.in_([1]))]
+  pub in_test: i32,
+  #[proto(enum_(TestEnum), validate = |v| v.not_in([1]).ignore_if_zero_value())]
+  pub not_in_test: i32,
+  #[proto(enum_(TestEnum), validate = |v| v.defined_only())]
+  pub defined_only_test: i32,
+  #[proto(enum_(TestEnum), validate = |v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this == 1")))]
+  pub cel_test: i32,
+  #[proto(enum_(TestEnum), validate = |v| v.required())]
+  pub required_test: Option<i32>,
+  #[proto(enum_(TestEnum), validate = |v| v.not_in([1]).ignore_always())]
+  pub ignore_always_test: i32,
 }
 
 #[proto_message(no_auto_test)]
