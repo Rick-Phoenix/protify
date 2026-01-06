@@ -1,6 +1,6 @@
 use protocheck_core::field_data::FieldKind;
 
-use super::{field_path_element::Subscript, *};
+use super::*;
 
 use smallvec::SmallVec;
 
@@ -125,12 +125,6 @@ impl ViolationsAcc {
 impl Default for ViolationsAcc {
   fn default() -> Self {
     Self::new()
-  }
-}
-
-impl IntoSubscript for Subscript {
-  fn into_subscript(self) -> Subscript {
-    self
   }
 }
 

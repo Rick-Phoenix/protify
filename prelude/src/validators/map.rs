@@ -28,51 +28,11 @@ impl<K: AsProtoField, V: AsProtoField> AsProtoField for ProtoMap<K, V> {
   }
 }
 
-#[doc(hidden)]
-pub trait IntoSubscript {
-  fn into_subscript(self) -> Subscript;
-}
-
-impl IntoSubscript for String {
-  #[inline]
-  fn into_subscript(self) -> Subscript {
-    Subscript::StringKey(self)
-  }
-}
-
-impl IntoSubscript for bool {
-  #[inline]
-  fn into_subscript(self) -> Subscript {
-    Subscript::BoolKey(self)
-  }
-}
-
-impl IntoSubscript for i64 {
-  #[inline]
-  fn into_subscript(self) -> Subscript {
-    Subscript::IntKey(self)
-  }
-}
-
-impl IntoSubscript for i32 {
-  #[inline]
-  fn into_subscript(self) -> Subscript {
-    Subscript::IntKey(i64::from(self))
-  }
-}
-
-impl IntoSubscript for u64 {
-  #[inline]
-  fn into_subscript(self) -> Subscript {
-    Subscript::UintKey(self)
-  }
-}
-
 impl<K, V> ProtoValidator for ProtoMap<K, V>
 where
   K: ProtoValidator,
   V: ProtoValidator,
-  K::Target: Clone + IntoSubscript + Default + Eq + Hash + IntoCelKey,
+  K::Target: Clone + Into<Subscript> + Default + Eq + Hash + IntoCelKey,
   V::Target: Default + TryIntoCel,
 {
   type Target = HashMap<K::Target, V::Target>;
@@ -85,7 +45,7 @@ impl<K, V, S: State> ValidatorBuilderFor<ProtoMap<K, V>> for MapValidatorBuilder
 where
   K: ProtoValidator,
   V: ProtoValidator,
-  K::Target: Clone + IntoSubscript + Default + Eq + Hash + IntoCelKey,
+  K::Target: Clone + Into<Subscript> + Default + Eq + Hash + IntoCelKey,
   V::Target: Default + TryIntoCel,
 {
   type Target = HashMap<K::Target, V::Target>;
@@ -182,7 +142,7 @@ impl<K, V> Validator<ProtoMap<K, V>> for MapValidator<K, V>
 where
   K: ProtoValidator,
   V: ProtoValidator,
-  K::Target: Clone + IntoSubscript + Default + Eq + Hash + IntoCelKey,
+  K::Target: Clone + Into<Subscript> + Default + Eq + Hash + IntoCelKey,
   V::Target: Default + TryIntoCel,
 {
   type Target = HashMap<K::Target, V::Target>;
@@ -330,7 +290,7 @@ where
 
       if keys_validator.is_some() || values_validator.is_some() {
         for (k, v) in val {
-          ctx.field_context.subscript = Some(k.clone().into_subscript());
+          ctx.field_context.subscript = Some(k.clone().into());
 
           if let Some(validator) = keys_validator {
             ctx.field_context.field_kind = FieldKind::MapKey;

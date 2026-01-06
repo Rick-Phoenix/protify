@@ -172,7 +172,11 @@ impl Validator<String> for StringValidator {
 
   fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
+
+    if self.required && val.is_none_or(|v| v.is_empty()) {
+      ctx.add_required_violation();
+    }
 
     if let Some(val) = val {
       if let Some(const_val) = &self.const_ {
@@ -436,8 +440,6 @@ impl Validator<String> for StringValidator {
 
         ctx.execute_programs();
       }
-    } else if self.required {
-      ctx.add_required_violation();
     }
   }
 }

@@ -184,6 +184,10 @@ impl Validator<Bytes> for BytesValidator {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
 
+    if self.required && val.is_none_or(|v| v.is_empty()) {
+      ctx.add_required_violation();
+    }
+
     if let Some(val) = val {
       if let Some(const_val) = &self.const_ {
         if *val != const_val {
@@ -319,8 +323,6 @@ impl Validator<Bytes> for BytesValidator {
 
         ctx.execute_programs();
       }
-    } else if self.required {
-      ctx.add_required_violation();
     }
   }
 }
