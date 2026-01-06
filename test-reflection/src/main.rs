@@ -19,6 +19,17 @@ mod test {
   #[cfg(not(feature = "reflection"))]
   use test_schemas::*;
 
+  #[cfg(feature = "reflection")]
+  use crate::proto::default_validator_test::TestOneof2;
+  #[cfg(not(feature = "reflection"))]
+  use test_schemas::TestOneof2;
+
+  #[cfg(feature = "reflection")]
+  use crate::proto::oneof_tests::TestOneof;
+
+  #[cfg(not(feature = "reflection"))]
+  use test_schemas::TestOneof;
+
   #[allow(unused)]
   pub(crate) fn full_rule_id_path<T: ValidatedMessage>(msg: &T) -> String {
     let violations = msg.validate().unwrap_err();
@@ -75,4 +86,6 @@ mod test {
   mod repeated_tests;
   mod string_tests;
   mod timestamp_tests;
+  #[cfg(not(feature = "reflection"))]
+  mod tolerances_tests;
 }

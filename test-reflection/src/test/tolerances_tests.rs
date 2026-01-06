@@ -1,0 +1,27 @@
+use proto_types::{Duration, Timestamp};
+
+use super::*;
+
+#[test]
+fn tolerances_tests() {
+  let mut msg = TolerancesTests {
+    float_tolerance: 12.00001,
+    timestamp_tolerance: Some(Timestamp::now() - Duration::new(3, 0)),
+  };
+  let baseline = msg.clone();
+
+  assert!(msg.validate().is_ok(), "basic validation");
+
+  macro_rules! assert_violation {
+    ($violation:expr, $error:literal) => {
+      assert_violation_id(&msg, $violation, $error);
+      msg = baseline.clone();
+    };
+  }
+
+  msg.float_tolerance = 12.00011;
+  assert_violation!("double.const", "float tolerance");
+
+  msg.timestamp_tolerance = Some(Timestamp::now() - Duration::new(6, 0));
+  assert_violation!("timestamp.gt_now", "timestamp gt_now tolerance");
+}

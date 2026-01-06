@@ -139,7 +139,7 @@ impl<'a> FallbackImpls<'a> {
         }
 
         impl ::prelude::TryIntoCel for #target_ident {
-          fn try_into_cel(self) -> Result<::prelude::cel::Value, CelError> {
+          fn try_into_cel(self) -> Result<::prelude::cel::Value, ::prelude::CelError> {
             Ok(::prelude::cel::Value::Null)
           }
         }

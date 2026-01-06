@@ -127,7 +127,7 @@ impl Validator<Timestamp> for TimestampValidator {
         return;
       }
 
-      if self.gt_now && !(val - self.now_tolerance).is_future() {
+      if self.gt_now && !(val + self.now_tolerance).is_future() {
         ctx.add_violation(&TIMESTAMP_GT_NOW_VIOLATION, "must be in the future");
       }
 

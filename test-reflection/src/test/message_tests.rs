@@ -1,14 +1,3 @@
-#[cfg(feature = "reflection")]
-use crate::proto::default_validator_test::TestOneof2;
-#[cfg(not(feature = "reflection"))]
-use test_schemas::TestOneof2;
-
-#[cfg(feature = "reflection")]
-use crate::proto::oneof_tests::TestOneof;
-
-#[cfg(not(feature = "reflection"))]
-use test_schemas::TestOneof;
-
 use super::*;
 
 #[test]
