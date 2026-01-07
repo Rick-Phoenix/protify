@@ -61,6 +61,7 @@ pub fn get_string_validator(ctx: &RulesCtx) -> BuilderTokens {
       macro_rules! match_well_known {
         ($($name:ident),*) => {
           paste::paste! {
+            #[allow(unreachable_patterns)]
             match well_known {
               $(
                 WellKnown::$name(true) => {

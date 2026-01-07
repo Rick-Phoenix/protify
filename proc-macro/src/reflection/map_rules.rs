@@ -44,7 +44,7 @@ pub fn get_map_validator(ctx: &RulesCtx, map_data: &ProtoMap) -> BuilderTokens {
       .as_ref()
       .and_then(|r| RulesCtx::from_non_empty_rules(r, ctx.field_span))
     {
-      let values_validator = get_field_validator(&values_rules, &values)
+      let values_validator = get_field_validator(&values_rules, values)
         .unwrap()
         .into_builder();
 

@@ -36,18 +36,18 @@ impl From<ProtoMapKeys> for ProtoType {
 }
 
 impl ProtoMapKeys {
-  pub fn validator_target_type(&self) -> TokenStream2 {
-    let pt: ProtoType = (*self).into();
+  pub fn validator_target_type(self) -> TokenStream2 {
+    let pt: ProtoType = self.into();
     pt.validator_target_type()
   }
 
-  pub fn output_proto_type(&self) -> TokenStream2 {
-    let pt: ProtoType = (*self).into();
+  pub fn output_proto_type(self) -> TokenStream2 {
+    let pt: ProtoType = self.into();
     pt.output_proto_type()
   }
 
-  pub fn field_proto_type_tokens(&self) -> TokenStream2 {
-    let pt: ProtoType = (*self).into();
+  pub fn field_proto_type_tokens(self) -> TokenStream2 {
+    let pt: ProtoType = self.into();
     pt.field_proto_type_tokens()
   }
 }
@@ -97,7 +97,7 @@ pub struct ProtoMap {
 }
 
 pub fn parse_map_with_context(
-  meta: ParseNestedMeta,
+  meta: &ParseNestedMeta,
   rust_type: &RustType,
 ) -> syn::Result<ProtoMap> {
   let mut values: Option<ProtoType> = None;
@@ -117,7 +117,7 @@ pub fn parse_map_with_context(
 
         values = Some(ProtoType::from_nested_meta(
           &meta.path.require_ident()?.to_string(),
-          meta,
+          &meta,
           fallback.as_ref(),
         )?);
       }

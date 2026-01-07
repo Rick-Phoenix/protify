@@ -12,7 +12,7 @@ pub enum ProtoField {
 impl ProtoField {
   pub fn from_meta(
     ident_str: &str,
-    meta: ParseNestedMeta,
+    meta: &ParseNestedMeta,
     type_info: &TypeInfo,
   ) -> syn::Result<Self> {
     let output = match ident_str {
@@ -26,7 +26,7 @@ impl ProtoField {
         let inner = meta.parse_inner_value(|meta| {
           let inner_ident = meta.path.require_ident()?.to_string();
 
-          ProtoType::from_nested_meta(&inner_ident, meta, fallback.as_ref())
+          ProtoType::from_nested_meta(&inner_ident, &meta, fallback.as_ref())
         })?;
 
         Self::Repeated(inner)
@@ -41,7 +41,7 @@ impl ProtoField {
         let inner = meta.parse_inner_value(|meta| {
           let inner_ident = meta.path.require_ident()?.to_string();
 
-          ProtoType::from_nested_meta(&inner_ident, meta, fallback.as_ref())
+          ProtoType::from_nested_meta(&inner_ident, &meta, fallback.as_ref())
         })?;
 
         Self::Optional(inner)

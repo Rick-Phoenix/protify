@@ -4,7 +4,6 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
   let ItemEnum { variants, .. } = item;
 
   let mut parent_message: Option<String> = None;
-  let mut oneof_name: Option<String> = None;
 
   for attr in &item.attrs {
     if attr.path().is_ident("proto") {
@@ -12,9 +11,6 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
         let ident_str = meta.ident_str()?;
 
         match ident_str.as_str() {
-          "name" => {
-            oneof_name = Some(meta.parse_value::<LitStr>()?.value());
-          }
           "parent_message" => {
             parent_message = Some(meta.parse_value::<LitStr>()?.value());
           }
@@ -28,8 +24,6 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
 
   let parent_message =
     parent_message.ok_or_else(|| error_call_site!("Missing parent message name attribute"))?;
-
-  let oneof_name = oneof_name.unwrap_or_else(|| to_snake_case(&item.ident.to_string()));
 
   let message_desc = match DESCRIPTOR_POOL.get_message_by_name(&parent_message) {
     Some(message) => message,
@@ -122,5 +116,5 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
 
   let validator_impl = generate_oneof_validator(&item.ident, &fields_data);
 
-  Ok(wrap_with_imports(vec![validator_impl]))
+  Ok(wrap_with_imports(&[validator_impl]))
 }

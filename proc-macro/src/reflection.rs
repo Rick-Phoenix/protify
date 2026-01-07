@@ -319,7 +319,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
 
   let validator_impl = generate_message_validator(&item.ident, &fields_data, &cel_rules);
 
-  Ok(wrap_with_imports(vec![validator_impl]))
+  Ok(wrap_with_imports(&[validator_impl]))
 }
 
 pub fn rust_ident_to_proto_name(rust_ident: &str) -> &str {

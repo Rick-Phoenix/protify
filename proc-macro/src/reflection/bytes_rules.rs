@@ -70,6 +70,7 @@ pub fn get_bytes_validator(ctx: &RulesCtx) -> BuilderTokens {
           paste::paste! {
             match well_known {
               $(
+                #[allow(unreachable_patterns)]
                 WellKnown::$name(true) => {
                   builder.extend(quote! { .[< $name:snake >]() });
                 }

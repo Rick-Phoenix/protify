@@ -114,8 +114,8 @@ pub(crate) fn oneof_shadow_proc_macro(
     source_ident: orig_enum_ident,
     target_ident: shadow_enum_ident,
     kind: InputItemKind::Oneof,
-    into_proto: ConversionData::new(&oneof_attrs.into_proto),
-    from_proto: ConversionData::new(&oneof_attrs.from_proto),
+    into_proto: ConversionData::new(oneof_attrs.into_proto.as_ref()),
+    from_proto: ConversionData::new(oneof_attrs.from_proto.as_ref()),
   };
 
   let mut manually_set_tags: Vec<ManuallySetTag> = Vec::new();
@@ -189,11 +189,8 @@ pub(crate) fn oneof_shadow_proc_macro(
   let consistency_checks_impl = oneof_ctx.generate_consistency_checks();
   let validator_impl = oneof_ctx.generate_validator();
 
-  let wrapped_items = wrap_with_imports(vec![
-    oneof_schema_impl,
-    proto_conversion_impls,
-    validator_impl,
-  ]);
+  let wrapped_items =
+    wrap_with_imports(&[oneof_schema_impl, proto_conversion_impls, validator_impl]);
 
   Ok(quote! {
     #wrapped_items
@@ -281,7 +278,7 @@ pub(crate) fn oneof_direct_proc_macro(
   let consistency_checks_impl = oneof_ctx.generate_consistency_checks();
   let validator_impl = oneof_ctx.generate_validator();
 
-  let wrapped_items = wrap_with_imports(vec![oneof_schema_impl, validator_impl]);
+  let wrapped_items = wrap_with_imports(&[oneof_schema_impl, validator_impl]);
 
   let output = quote! {
     #wrapped_items

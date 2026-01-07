@@ -38,10 +38,10 @@ pub fn process_derive_enum_variants_attrs(
     if no_prefix {
       plain_name
     } else {
-      let prefix = to_upper_snake_case(&enum_name);
-      format!("{}_{}", prefix, plain_name)
+      let prefix = to_upper_snake_case(enum_name);
+      format!("{prefix}_{plain_name}")
     }
   };
 
-  Ok(EnumVariantAttrs { options, name })
+  Ok(EnumVariantAttrs { name, options })
 }

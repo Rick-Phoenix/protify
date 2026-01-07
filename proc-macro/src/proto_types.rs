@@ -66,7 +66,7 @@ impl ProtoType {
 
   pub fn from_nested_meta(
     ident_str: &str,
-    meta: ParseNestedMeta,
+    meta: &ParseNestedMeta,
     fallback: Option<&Path>,
   ) -> Result<Self, Error> {
     let output = match meta.meta_type() {
@@ -84,12 +84,12 @@ impl ProtoType {
 
   pub fn from_meta_list(
     ident_str: &str,
-    meta: ParseNestedMeta,
+    meta: &ParseNestedMeta,
     fallback: Option<&Path>,
   ) -> Result<Self, Error> {
     let output = match ident_str {
       "message" => {
-        let msg_info = MessageInfo::parse(&meta, fallback)?;
+        let msg_info = MessageInfo::parse(meta, fallback)?;
 
         Self::Message(msg_info)
       }

@@ -113,8 +113,8 @@ pub fn message_macro_shadow(
     source_ident: orig_struct_ident,
     target_ident: shadow_struct_ident,
     kind: InputItemKind::Message,
-    into_proto: ConversionData::new(&message_attrs.into_proto),
-    from_proto: ConversionData::new(&message_attrs.from_proto),
+    into_proto: ConversionData::new(message_attrs.into_proto.as_ref()),
+    from_proto: ConversionData::new(message_attrs.from_proto.as_ref()),
   };
 
   let mut fields_data: Vec<FieldDataKind> = Vec::new();
@@ -211,7 +211,7 @@ pub fn message_macro_shadow(
   let validator_impl = message_ctx.generate_validator();
   let schema_impls = message_ctx.generate_schema_impls();
 
-  let wrapped_items = wrap_with_imports(vec![schema_impls, proto_conversion_impls, validator_impl]);
+  let wrapped_items = wrap_with_imports(&[schema_impls, proto_conversion_impls, validator_impl]);
 
   Ok(quote! {
     #wrapped_items
@@ -312,7 +312,7 @@ pub fn message_macro_direct(
   let schema_impls = message_ctx.generate_schema_impls();
   let validator_impl = message_ctx.generate_validator();
 
-  let wrapped_items = wrap_with_imports(vec![schema_impls, validator_impl]);
+  let wrapped_items = wrap_with_imports(&[schema_impls, validator_impl]);
 
   let output_tokens = quote! {
     #wrapped_items

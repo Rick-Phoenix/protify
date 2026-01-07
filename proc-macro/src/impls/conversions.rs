@@ -11,7 +11,7 @@ pub enum FieldConversionKind<'a> {
   },
 }
 
-impl<'a> FieldConversionKind<'a> {
+impl FieldConversionKind<'_> {
   pub fn base_ident(&self) -> TokenStream2 {
     match self {
       Self::StructField { ident } => quote! { value.#ident },
@@ -114,7 +114,7 @@ pub fn fallback_conversion_impls(
   }
 }
 
-impl<'a> ProtoConversionImpl<'a> {
+impl ProtoConversionImpl<'_> {
   pub fn generate_conversion_impls(&self) -> TokenStream2 {
     let Self {
       source_ident,
@@ -186,13 +186,13 @@ impl<'a> ProtoConversionImpl<'a> {
     match field_attr_data {
       FieldDataKind::Ignored { from_proto, ident } => {
         if !self.from_proto.has_custom_impl() {
-          self.add_field_from_proto_impl(from_proto, None, ident);
+          self.add_field_from_proto_impl(from_proto.as_ref(), None, ident);
         }
       }
       FieldDataKind::Normal(field_attrs) => {
         if !self.from_proto.has_custom_impl() {
           self.add_field_from_proto_impl(
-            &field_attrs.from_proto,
+            field_attrs.from_proto.as_ref(),
             Some(&field_attrs.proto_field),
             &field_attrs.ident,
           );
@@ -200,7 +200,7 @@ impl<'a> ProtoConversionImpl<'a> {
 
         if !self.into_proto.has_custom_impl() {
           self.add_field_into_proto_impl(
-            &field_attrs.into_proto,
+            field_attrs.into_proto.as_ref(),
             &field_attrs.proto_field,
             &field_attrs.ident,
           );
@@ -211,7 +211,7 @@ impl<'a> ProtoConversionImpl<'a> {
 
   pub fn add_field_into_proto_impl(
     &mut self,
-    custom_expression: &Option<PathOrClosure>,
+    custom_expression: Option<&PathOrClosure>,
     proto_field: &ProtoField,
     field_ident: &Ident,
   ) {
@@ -241,7 +241,7 @@ impl<'a> ProtoConversionImpl<'a> {
 
   pub fn add_field_from_proto_impl(
     &mut self,
-    custom_expression: &Option<PathOrClosure>,
+    custom_expression: Option<&PathOrClosure>,
     proto_field: Option<&ProtoField>,
     field_ident: &Ident,
   ) {
@@ -287,16 +287,16 @@ impl<'a> ProtoConversionImpl<'a> {
 // This is used as a wrapper to store the custom expression that was given
 // (if there was one) or provide the implementation tokens (if there wasn't one)
 pub struct ConversionData<'a> {
-  pub custom_expression: &'a Option<PathOrClosure>,
+  pub custom_expression: Option<&'a PathOrClosure>,
   pub tokens: TokenStream2,
 }
 
 impl<'a> ConversionData<'a> {
-  pub fn has_custom_impl(&self) -> bool {
+  pub const fn has_custom_impl(&self) -> bool {
     self.custom_expression.is_some()
   }
 
-  pub fn new(custom_expression: &'a Option<PathOrClosure>) -> Self {
+  pub fn new(custom_expression: Option<&'a PathOrClosure>) -> Self {
     Self {
       custom_expression,
       tokens: TokenStream2::new(),
@@ -315,7 +315,7 @@ impl InputItemKind {
   ///
   /// [`Message`]: InputItemKind::Message
   #[must_use]
-  pub fn is_message(&self) -> bool {
+  pub const fn is_message(self) -> bool {
     matches!(self, Self::Message)
   }
 }

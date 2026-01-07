@@ -18,7 +18,7 @@ pub use paste::paste;
 pub use proc_macro_impls as macros;
 pub use proc_macro_impls::*;
 pub use proto_types;
-use proto_types::protovalidate::{FieldPathElement, Violations};
+pub use proto_types::protovalidate::{FieldPathElement, Violations};
 use thiserror::Error;
 mod oneof;
 mod options;

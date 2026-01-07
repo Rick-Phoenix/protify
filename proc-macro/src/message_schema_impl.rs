@@ -111,7 +111,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
     let name_method = if let Some(parent) = parent_message {
       quote! {
         static __NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-          format!("{}.{}", #parent::proto_name(), #proto_name)
+          format!("{}.{}", <#parent as ::prelude::ProtoMessage>::proto_name(), #proto_name)
         });
 
         &*__NAME
@@ -121,7 +121,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
     };
 
     let registry_parent_message = if let Some(parent) = parent_message {
-      quote! { Some(|| #parent::proto_name()) }
+      quote! { Some(|| <#parent as ::prelude::ProtoMessage>::proto_name()) }
     } else {
       quote! { None }
     };

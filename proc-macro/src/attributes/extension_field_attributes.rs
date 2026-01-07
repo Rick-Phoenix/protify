@@ -8,7 +8,7 @@ pub struct ExtensionFieldAttrs {
   pub proto_field: ProtoField,
 }
 
-pub fn process_extension_field_attrs(field: &mut Field) -> Result<ExtensionFieldAttrs, Error> {
+pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttrs, Error> {
   let mut tag: Option<i32> = None;
   let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
   let mut name: Option<String> = None;
@@ -32,7 +32,7 @@ pub fn process_extension_field_attrs(field: &mut Field) -> Result<ExtensionField
       }
 
       _ => {
-        proto_field = Some(ProtoField::from_meta(&ident, meta, &type_info)?);
+        proto_field = Some(ProtoField::from_meta(&ident, &meta, &type_info)?);
       }
     };
 

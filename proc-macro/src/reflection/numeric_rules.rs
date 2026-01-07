@@ -13,7 +13,7 @@ pub fn get_numeric_validator<T: NumericRules>(ctx: &RulesCtx) -> BuilderTokens {
   ctx.tokenize_required(&mut builder);
   ctx.tokenize_cel_rules(&mut builder);
 
-  if let Some(rules) = T::from_field_rules(&ctx.rules) {
+  if let Some(rules) = T::from_field_rules(ctx.rules) {
     if let Some(val) = rules.const_() {
       builder.extend(quote! { .const_(#val) });
     }

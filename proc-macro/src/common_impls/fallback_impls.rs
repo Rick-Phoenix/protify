@@ -37,7 +37,7 @@ impl<'a> FallbackImpls<'a> {
       to_wrap.push(fallback_conversion_impls(orig_ident, shadow_ident, *kind));
     }
 
-    let wrapped = wrap_with_imports(to_wrap);
+    let wrapped = wrap_with_imports(&to_wrap);
 
     let fallback_derive_impls = self.fallback_derive_impls();
     let fallback_prost_impls = self.fallback_prost_impls();

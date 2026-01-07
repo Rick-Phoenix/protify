@@ -23,7 +23,7 @@ pub fn tags_to_str(tags: &[i32]) -> String {
 }
 
 impl OneofInfo {
-  pub fn parse(meta: ParseNestedMeta, type_info: &TypeInfo) -> syn::Result<Self> {
+  pub fn parse(meta: &ParseNestedMeta, type_info: &TypeInfo) -> syn::Result<Self> {
     let mut oneof_path = ItemPathEntry::default();
     let mut tags: Vec<i32> = Vec::new();
     let mut default = false;

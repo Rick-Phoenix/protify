@@ -38,7 +38,7 @@ pub enum FieldDataKind {
 }
 
 impl FieldDataKind {
-  pub fn as_normal(&self) -> Option<&FieldData> {
+  pub const fn as_normal(&self) -> Option<&FieldData> {
     if let Self::Normal(v) = self {
       Some(v)
     } else {
@@ -47,6 +47,7 @@ impl FieldDataKind {
   }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error> {
   let mut validator: Option<ClosureOrExpr> = None;
   let mut tag: Option<i32> = None;
@@ -86,7 +87,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
       }
 
       _ => {
-        proto_field = Some(ProtoField::from_meta(&ident, meta, &type_info)?);
+        proto_field = Some(ProtoField::from_meta(&ident, &meta, &type_info)?);
       }
     };
 

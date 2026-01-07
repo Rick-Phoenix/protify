@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 
 use crate::*;
 
-impl<'a, T: Borrow<FieldData>> MessageCtx<'a, T> {
+impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
     let item_ident = self.proto_struct_ident();
 
