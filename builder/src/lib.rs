@@ -1,19 +1,77 @@
+use std::fmt::Write;
 use std::fs;
 use std::io::{self, Read};
 use std::path::Path;
 use std::{env, path::PathBuf};
 
 use prost_build::Config;
-use prost_reflect::{prost::Message, prost_types::FileDescriptorSet};
+use prost_reflect::{prost::Message as ProstMessage, prost_types::FileDescriptorSet};
 
+#[derive(Default)]
 pub struct DescriptorData {
   pub oneofs: Vec<Oneof>,
+  pub enums: Vec<Enum>,
+  pub messages: Vec<Message>,
 }
 
 pub struct Oneof {
   pub name: String,
   pub parent_message: String,
   pub package: String,
+}
+
+pub struct Message {
+  pub name: String,
+  pub parent_message: Option<String>,
+  pub package: String,
+}
+
+pub struct Enum {
+  pub name: String,
+  pub parent_message: Option<String>,
+  pub package: String,
+}
+
+impl Message {
+  #[must_use]
+  pub fn full_name(&self) -> String {
+    let Self {
+      name,
+      parent_message,
+      package,
+    } = self;
+
+    let mut str = format!("{package}.");
+
+    if let Some(parent) = parent_message {
+      let _ = write!(str, "{parent}.{name}");
+    } else {
+      let _ = write!(str, "{name}");
+    }
+
+    str
+  }
+}
+
+impl Enum {
+  #[must_use]
+  pub fn full_name(&self) -> String {
+    let Self {
+      name,
+      parent_message,
+      package,
+    } = self;
+
+    let mut str = format!("{package}.");
+
+    if let Some(parent) = parent_message {
+      let _ = write!(str, "{parent}.{name}");
+    } else {
+      let _ = write!(str, "{name}");
+    }
+
+    str
+  }
 }
 
 impl Oneof {
@@ -64,13 +122,21 @@ pub fn set_up_validators(
   let fds = FileDescriptorSet::decode(fds_bytes.as_slice())?;
   let pool = prost_reflect::DescriptorPool::from_file_descriptor_set(fds)?;
 
-  let mut desc_data = DescriptorData { oneofs: vec![] };
+  let mut desc_data = DescriptorData::default();
 
   for message_desc in pool.all_messages() {
     let package = message_desc.package_name();
 
     if packages.contains(&package) {
       let message_name = message_desc.full_name();
+
+      desc_data.messages.push(Message {
+        name: message_desc.name().to_string(),
+        parent_message: message_desc
+          .parent_message()
+          .map(|p| full_ish_name(p.full_name(), package).to_string()),
+        package: package.to_string(),
+      });
 
       config.message_attribute(message_name, "#[derive(::prelude::ValidatedMessage)]");
       #[cfg(feature = "cel")]
@@ -108,12 +174,20 @@ pub fn set_up_validators(
     let package = enum_desc.package_name();
 
     if packages.contains(&package) {
-      let full_ish_name = full_ish_name(enum_desc.full_name(), package);
+      let enum_full_ish_name = full_ish_name(enum_desc.full_name(), package);
 
-      config.enum_attribute(full_ish_name, "#[derive(::prelude::ProtoEnum)]");
+      desc_data.enums.push(Enum {
+        name: enum_desc.name().to_string(),
+        parent_message: enum_desc
+          .parent_message()
+          .map(|p| full_ish_name(p.full_name(), package).to_string()),
+        package: package.to_string(),
+      });
+
+      config.enum_attribute(enum_desc.full_name(), "#[derive(::prelude::ProtoEnum)]");
       config.enum_attribute(
-        full_ish_name,
-        format!(r#"#[proto(name = "{full_ish_name}")]"#),
+        enum_desc.full_name(),
+        format!(r#"#[proto(name = "{enum_full_ish_name}")]"#),
       );
     }
   }

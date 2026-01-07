@@ -18,7 +18,7 @@ fn bad_field_rules() {
     cel_errors,
   } = BadFieldRules::check_validators_consistency().unwrap_err();
 
-  assert_eq_pretty!(message_full_name, "testing.BadFieldRules");
+  assert_eq_pretty!(message_full_name, "BadFieldRules");
   assert_eq_pretty!(field_errors.len(), 1);
   // Top level rules, which don't apply here
   assert_eq_pretty!(cel_errors.len(), 0);
@@ -39,7 +39,7 @@ fn bad_msg_rules() {
     cel_errors,
   } = BadMsgRules::check_validators_consistency().unwrap_err();
 
-  assert_eq_pretty!(message_full_name, "testing.BadMsgRules");
+  assert_eq_pretty!(message_full_name, "BadMsgRules");
   assert_eq_pretty!(field_errors.len(), 0);
   assert_eq_pretty!(cel_errors.len(), 1);
 }
