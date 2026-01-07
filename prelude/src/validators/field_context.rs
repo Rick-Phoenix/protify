@@ -1,3 +1,5 @@
+use std::ops::{Deref, DerefMut};
+
 use super::*;
 
 use proto_types::field_descriptor_proto::Type as ProtoPrimitive;
@@ -65,6 +67,7 @@ pub struct ValidationCtx<'a> {
 }
 
 impl ValidationCtx<'_> {
+  #[inline]
   pub fn add_violation(&mut self, violation_data: &ViolationData, error_message: &str) {
     let violation = new_violation(
       &self.field_context,
@@ -76,10 +79,7 @@ impl ValidationCtx<'_> {
     self.violations.push(violation);
   }
 
-  pub fn add_cel_violation(&mut self, rule: &CelRule) {
-    self.add_violation_with_custom_id(rule.id.as_ref(), &CEL_VIOLATION, rule.message.as_ref())
-  }
-
+  #[inline]
   pub fn add_violation_with_custom_id(
     &mut self,
     rule_id: &str,
@@ -97,6 +97,21 @@ impl ValidationCtx<'_> {
     self.violations.push(violation);
   }
 
+  #[inline]
+  pub fn add_cel_violation(&mut self, rule: &CelRule) {
+    self
+      .violations
+      .add_cel_violation(rule, Some(&self.field_context), self.parent_elements);
+  }
+
+  #[inline]
+  pub fn add_required_oneof_violation(&mut self) {
+    self
+      .violations
+      .add_required_oneof_violation(self.parent_elements);
+  }
+
+  #[inline]
   pub fn add_required_violation(&mut self) {
     self.add_violation(&REQUIRED_VIOLATION, "is required")
   }
@@ -106,8 +121,54 @@ pub struct ViolationsAcc {
   inner: SmallVec<[Violation; 1]>,
 }
 
+impl IntoIterator for ViolationsAcc {
+  type IntoIter = smallvec::IntoIter<[Violation; 1]>;
+  type Item = Violation;
+
+  #[inline]
+  fn into_iter(self) -> Self::IntoIter {
+    self.inner.into_iter()
+  }
+}
+
+impl Deref for ViolationsAcc {
+  type Target = [Violation];
+
+  fn deref(&self) -> &Self::Target {
+    &self.inner
+  }
+}
+
+impl DerefMut for ViolationsAcc {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.inner
+  }
+}
+
+impl<'a> IntoIterator for &'a ViolationsAcc {
+  type IntoIter = std::slice::Iter<'a, Violation>;
+  type Item = &'a Violation;
+
+  #[inline]
+  fn into_iter(self) -> Self::IntoIter {
+    self.inner.iter()
+  }
+}
+
+impl Extend<Violation> for ViolationsAcc {
+  #[inline]
+  fn extend<T: IntoIterator<Item = Violation>>(&mut self, iter: T) {
+    self.inner.extend(iter);
+  }
+}
+
 impl ViolationsAcc {
-  pub fn add_oneof_required(&mut self, parent_elements: &[FieldPathElement]) {
+  #[inline]
+  pub fn iter(&self) -> std::slice::Iter<'_, Violation> {
+    self.inner.iter()
+  }
+  #[inline]
+  pub fn add_required_oneof_violation(&mut self, parent_elements: &[FieldPathElement]) {
     let violation = new_violation_with_custom_id(
       ONEOF_REQUIRED_VIOLATION.name,
       None,
@@ -119,7 +180,8 @@ impl ViolationsAcc {
     self.inner.push(violation);
   }
 
-  pub fn add_cel(
+  #[inline]
+  pub fn add_cel_violation(
     &mut self,
     rule: &CelRule,
     field_context: Option<&FieldContext>,
@@ -157,11 +219,6 @@ impl ViolationsAcc {
   }
 
   #[inline]
-  pub fn extend<I: IntoIterator<Item = Violation>>(&mut self, iter: I) {
-    self.inner.extend(iter);
-  }
-
-  #[inline]
   #[must_use]
   pub fn is_empty(&self) -> bool {
     self.inner.is_empty()
@@ -177,6 +234,7 @@ impl ViolationsAcc {
 }
 
 impl Default for ViolationsAcc {
+  #[inline]
   fn default() -> Self {
     Self::new()
   }
@@ -237,6 +295,7 @@ pub(crate) fn create_violation_core(
   }
 }
 
+#[inline]
 pub(crate) fn new_violation(
   field_context: &FieldContext,
   parent_elements: &[FieldPathElement],
@@ -252,6 +311,7 @@ pub(crate) fn new_violation(
   )
 }
 
+#[inline]
 pub(crate) fn new_violation_with_custom_id(
   rule_id: &str,
   field_context: Option<&FieldContext>,

@@ -205,7 +205,7 @@ mod cel_impls {
         match program.execute(&ctx) {
           Ok(was_successful) => {
             if !was_successful {
-              violations.add_cel(&program.rule, field_context, parent_elements);
+              violations.add_cel_violation(&program.rule, field_context, parent_elements);
             }
           }
           Err(e) => violations.push(e.into_violation(field_context, parent_elements)),

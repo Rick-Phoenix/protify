@@ -44,7 +44,7 @@ pub fn generate_message_validator(
         quote! {
           match self.#ident.as_ref() {
             Some(oneof) => oneof.validate(parent_elements, violations),
-            None => violations.add_oneof_required(parent_elements)
+            None => violations.add_required_oneof_violation(parent_elements)
           };
         }
       } else {
@@ -200,7 +200,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
           quote! {
             match self.#ident.as_ref() {
               Some(oneof) => oneof.validate(parent_elements, violations),
-              None => violations.add_oneof_required(parent_elements)
+              None => violations.add_required_oneof_violation(parent_elements)
             };
           }
         } else {
