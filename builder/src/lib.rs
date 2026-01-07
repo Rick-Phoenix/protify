@@ -6,12 +6,41 @@ use std::{env, path::PathBuf};
 use prost_build::Config;
 use prost_reflect::{prost::Message, prost_types::FileDescriptorSet};
 
+pub struct DescriptorData {
+  pub oneofs: Vec<Oneof>,
+}
+
+pub struct Oneof {
+  pub name: String,
+  pub parent_message: String,
+  pub package: String,
+}
+
+impl Oneof {
+  #[must_use]
+  pub fn full_name(&self) -> String {
+    let Self {
+      name,
+      parent_message,
+      package,
+    } = self;
+
+    format!("{package}.{parent_message}.{name}")
+  }
+}
+
+fn full_ish_name<'a>(item: &'a str, package: &'a str) -> &'a str {
+  item
+    .strip_prefix(&format!("{package}."))
+    .unwrap_or(item)
+}
+
 pub fn set_up_validators(
   config: &mut Config,
   files: &[impl AsRef<Path>],
   include_paths: &[impl AsRef<Path>],
   packages: &[&str],
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<DescriptorData, Box<dyn std::error::Error>> {
   let out_dir = env::var("OUT_DIR")
     .map(PathBuf::from)
     .unwrap_or(env::temp_dir());
@@ -35,6 +64,8 @@ pub fn set_up_validators(
   let fds = FileDescriptorSet::decode(fds_bytes.as_slice())?;
   let pool = prost_reflect::DescriptorPool::from_file_descriptor_set(fds)?;
 
+  let mut desc_data = DescriptorData { oneofs: vec![] };
+
   for message_desc in pool.all_messages() {
     let package = message_desc.package_name();
 
@@ -54,6 +85,12 @@ pub fn set_up_validators(
       for oneof in message_desc.oneofs() {
         let parent_message = oneof.parent_message().full_name();
 
+        desc_data.oneofs.push(Oneof {
+          name: oneof.name().to_string(),
+          parent_message: full_ish_name(parent_message, package).to_string(),
+          package: package.to_string(),
+        });
+
         config.enum_attribute(oneof.full_name(), "#[derive(::prelude::ValidatedOneof)]");
         #[cfg(feature = "cel")]
         {
@@ -71,10 +108,7 @@ pub fn set_up_validators(
     let package = enum_desc.package_name();
 
     if packages.contains(&package) {
-      let full_ish_name = enum_desc
-        .full_name()
-        .strip_prefix(&format!("{}.", enum_desc.package_name()))
-        .unwrap_or(enum_desc.full_name());
+      let full_ish_name = full_ish_name(enum_desc.full_name(), package);
 
       config.enum_attribute(full_ish_name, "#[derive(::prelude::ProtoEnum)]");
       config.enum_attribute(
@@ -84,7 +118,7 @@ pub fn set_up_validators(
     }
   }
 
-  Ok(())
+  Ok(desc_data)
 }
 
 /// A helper to use when gathering the names of proto files to pass to [`prost_build::Config::compile_protos`].

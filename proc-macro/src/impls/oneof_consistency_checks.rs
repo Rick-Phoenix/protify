@@ -1,6 +1,6 @@
 use crate::*;
 
-pub fn generate_consistency_checks<T: Borrow<FieldData>>(
+pub fn generate_oneof_consistency_checks<T: Borrow<FieldData>>(
   oneof_ident: &Ident,
   variants: &[T],
   no_auto_test: bool,
@@ -18,7 +18,7 @@ pub fn generate_consistency_checks<T: Borrow<FieldData>>(
       .filter(|v| !v.is_fallback)
       .map(|validator| {
         quote! {
-          if let Err(errs) = ::prelude::Validator::check_consistency(#validator) {
+          if let Err(errs) = ::prelude::Validator::check_consistency(&#validator) {
             errors.push(::prelude::FieldError {
               field: #ident_str,
               errors: errs
@@ -50,6 +50,7 @@ pub fn generate_consistency_checks<T: Borrow<FieldData>>(
 
     #[cfg(test)]
     impl #oneof_ident {
+      #[track_caller]
       pub fn check_validators_consistency() -> Result<(), ::prelude::OneofErrors> {
         use ::prelude::*;
 
@@ -74,7 +75,7 @@ pub fn generate_consistency_checks<T: Borrow<FieldData>>(
 
 impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
-    generate_consistency_checks(
+    generate_oneof_consistency_checks(
       self.proto_enum_ident(),
       &self.non_ignored_variants,
       self.oneof_attrs.no_auto_test,

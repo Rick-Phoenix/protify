@@ -4,6 +4,7 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
   let ItemEnum { variants, .. } = item;
 
   let mut parent_message: Option<String> = None;
+  let mut no_auto_test = false;
 
   for attr in &item.attrs {
     if attr.path().is_ident("proto") {
@@ -13,6 +14,9 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
         match ident_str.as_str() {
           "parent_message" => {
             parent_message = Some(meta.parse_value::<LitStr>()?.value());
+          }
+          "no_auto_test" => {
+            no_auto_test = true;
           }
           _ => return Err(meta.error("Unknown attribute")),
         };
@@ -114,7 +118,12 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
     });
   }
 
-  let validator_impl = generate_oneof_validator(&item.ident, &fields_data);
+  let validator_impl = wrap_with_imports(&[generate_oneof_validator(&item.ident, &fields_data)]);
+  let consistency_checks =
+    generate_oneof_consistency_checks(&item.ident, &fields_data, no_auto_test);
 
-  Ok(wrap_with_imports(&[validator_impl]))
+  Ok(quote! {
+    #validator_impl
+    #consistency_checks
+  })
 }

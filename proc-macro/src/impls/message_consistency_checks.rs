@@ -2,11 +2,12 @@ use std::borrow::Borrow;
 
 use crate::*;
 
-pub fn generate_consistency_checks<T: Borrow<FieldData>>(
+pub fn generate_message_consistency_checks<T: Borrow<FieldData>>(
   item_ident: &Ident,
   fields: &[T],
   skip_auto_test: bool,
   skip_oneof_tags_check: bool,
+  message_name: &str,
 ) -> TokenStream2 {
   let consistency_checks = fields.iter().filter_map(|data| {
     let FieldData {
@@ -34,7 +35,7 @@ pub fn generate_consistency_checks<T: Borrow<FieldData>>(
         .filter(|v| !v.is_fallback)
         .map(|validator| {
           quote! {
-            if let Err(errs) = ::prelude::Validator::check_consistency(#validator) {
+            if let Err(errs) = ::prelude::Validator::check_consistency(&#validator) {
               field_errors.push(::prelude::FieldError {
                 field: #ident_str,
                 errors: errs
@@ -67,6 +68,7 @@ pub fn generate_consistency_checks<T: Borrow<FieldData>>(
 
     #[cfg(test)]
     impl #item_ident {
+      #[track_caller]
       pub fn check_validators_consistency() -> Result<(), ::prelude::MessageTestError> {
         use ::prelude::*;
 
@@ -85,7 +87,7 @@ pub fn generate_consistency_checks<T: Borrow<FieldData>>(
 
         if !field_errors.is_empty() || !cel_errors.is_empty() {
           return Err(::prelude::MessageTestError {
-              message_full_name: #item_ident::full_name(),
+              message_full_name: #message_name,
               field_errors,
               cel_errors
             }
@@ -102,11 +104,12 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
     let item_ident = self.proto_struct_ident();
 
-    generate_consistency_checks(
+    generate_message_consistency_checks(
       item_ident,
       &self.non_ignored_fields,
       self.message_attrs.no_auto_test,
       false,
+      &self.message_attrs.name,
     )
   }
 }

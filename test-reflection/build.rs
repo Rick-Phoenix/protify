@@ -18,12 +18,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let mut config = Config::new();
   config
     .file_descriptor_set_path(&descriptor_path)
-    .extern_path(".google.type", "::proto_types")
-    .extern_path(".google.rpc", "::proto_types")
     .bytes(["."])
     .out_dir(&out_dir);
 
-  set_up_validators(&mut config, files, include_paths, &["test_schemas.v1"])?;
+  let desc_data = set_up_validators(&mut config, files, include_paths, &["test_schemas.v1"])?;
+
+  for oneof in desc_data.oneofs {
+    config.enum_attribute(oneof.full_name(), "#[proto(no_auto_test)]");
+  }
+
+  config.message_attribute(".test_schemas", "#[proto(no_auto_test)]");
 
   config.compile_protos(files, include_paths)?;
 
