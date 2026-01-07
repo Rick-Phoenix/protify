@@ -29,6 +29,8 @@ use crate::{
 };
 
 mod attributes;
+#[cfg(feature = "cel")]
+mod cel_try_into;
 mod common_impls;
 #[cfg(feature = "reflection")]
 mod enum_derive;
@@ -47,6 +49,34 @@ mod proto_types;
 #[cfg(feature = "reflection")]
 mod reflection;
 mod service_derive;
+
+#[cfg(feature = "cel")]
+#[proc_macro_derive(CelOneof, attributes(cel))]
+pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
+  let item = parse_macro_input!(input as ItemEnum);
+
+  let cel_crate_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::cel });
+  let proto_types_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::proto_types });
+
+  match cel_try_into::derive_cel_value_oneof(&item, &cel_crate_path, &proto_types_path) {
+    Ok(tokens) => tokens.into(),
+    Err(e) => e.into_compile_error().into(),
+  }
+}
+
+#[cfg(feature = "cel")]
+#[proc_macro_derive(CelValue, attributes(cel))]
+pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
+  let item = parse_macro_input!(input as ItemStruct);
+
+  let cel_crate_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::cel });
+  let proto_types_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::proto_types });
+
+  match cel_try_into::derive_cel_value_struct(&item, &cel_crate_path, &proto_types_path) {
+    Ok(tokens) => tokens.into(),
+    Err(e) => e.into_compile_error().into(),
+  }
+}
 
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ValidatedOneof, attributes(proto))]

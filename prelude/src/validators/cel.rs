@@ -1,4 +1,6 @@
 use cel_rule_builder::{IsComplete, State};
+mod cel_trait;
+pub use cel_trait::*;
 
 use super::*;
 
@@ -12,18 +14,6 @@ pub struct CelRule {
   /// The CEL expression that must be used to perform the validation check.
   pub expression: &'static str,
 }
-
-// Not being detected by the LSP that this is used
-#[allow(unused)]
-#[cfg(feature = "cel")]
-pub trait IntoCel: Into<::cel::Value> {}
-#[cfg(feature = "cel")]
-impl<T: Into<::cel::Value>> IntoCel for T {}
-
-#[cfg(not(feature = "cel"))]
-pub trait IntoCel {}
-#[cfg(not(feature = "cel"))]
-impl<T> IntoCel for T {}
 
 impl From<CelRule> for CelProgram {
   #[inline]

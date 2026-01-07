@@ -32,7 +32,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
   // prost::Oneof already implements Debug and Default
   let mut proto_derives = if cfg!(feature = "cel") {
     quote! {
-      #[derive(::prost::Oneof, Clone, PartialEq, ::prelude::TryIntoCelValue)]
+      #[derive(::prost::Oneof, Clone, PartialEq, ::prelude::CelOneof)]
       #[cel(cel_crate = ::prelude::cel, proto_types_crate = ::prelude::proto_types)]
     }
   } else {

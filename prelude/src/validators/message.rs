@@ -50,37 +50,6 @@ pub trait ValidatedMessage: Clone + Sized {
   }
 }
 
-#[cfg(feature = "cel")]
-pub trait TryIntoCel: Clone {
-  fn try_into_cel(self) -> Result<::cel::Value, CelError>;
-}
-
-#[cfg(feature = "cel")]
-impl<E: Display, T: TryInto<::cel::Value, Error = E> + Clone> TryIntoCel for T {
-  #[inline]
-  fn try_into_cel(self) -> Result<::cel::Value, CelError> {
-    self
-      .try_into()
-      .map_err(|e| CelError::ConversionError(e.to_string()))
-  }
-}
-
-#[cfg(feature = "cel")]
-pub trait IntoCelKey: Into<::cel::objects::Key> {}
-
-#[cfg(feature = "cel")]
-impl<T> IntoCelKey for T where T: Into<::cel::objects::Key> {}
-
-#[cfg(not(feature = "cel"))]
-pub trait IntoCelKey {}
-#[cfg(not(feature = "cel"))]
-impl<T> IntoCelKey for T {}
-
-#[cfg(not(feature = "cel"))]
-pub trait TryIntoCel {}
-#[cfg(not(feature = "cel"))]
-impl<T> TryIntoCel for T {}
-
 impl<T, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
 where
   T: ValidatedMessage + PartialEq + Clone + Default + TryIntoCel,

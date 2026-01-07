@@ -49,11 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if packages.contains(&message_desc.package_name()) {
       config.message_attribute(
         message_name,
-        "#[derive(::prelude::ValidatedMessage, ::prelude::TryIntoCelValue)]",
-      );
-      config.message_attribute(
-        message_name,
-        "#[cel(cel_crate = ::prelude::cel, proto_types_crate = ::prelude::proto_types)]",
+        "#[derive(::prelude::ValidatedMessage, ::prelude::CelValue)]",
       );
       config.message_attribute(
         message_name,
@@ -64,11 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let parent_message = oneof.parent_message().full_name();
 
         config.enum_attribute(oneof.full_name(), "#[derive(::prelude::ValidatedOneof)]");
-        config.enum_attribute(oneof.full_name(), "#[derive(::prelude::TryIntoCelValue)]");
-        config.enum_attribute(
-          oneof.full_name(),
-          "#[cel(cel_crate = ::prelude::cel, proto_types_crate = ::prelude::proto_types)]",
-        );
+        config.enum_attribute(oneof.full_name(), "#[derive(::prelude::CelOneof)]");
         config.enum_attribute(
           oneof.full_name(),
           format!(r#"#[proto(parent_message = "{parent_message}")]"#),
