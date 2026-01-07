@@ -36,7 +36,6 @@ mod service;
 pub mod test_utils;
 use test_utils::*;
 mod well_known_types;
-use bon::Builder;
 pub use field::*;
 pub use file::*;
 pub use message::*;

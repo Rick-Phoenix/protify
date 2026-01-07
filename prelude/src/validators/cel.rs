@@ -1,11 +1,10 @@
-use cel_rule_builder::{IsComplete, State};
 mod cel_trait;
 pub use cel_trait::*;
 
 use super::*;
 
 // This will be included even without the cel feature, as it is useful for schema purposes
-#[derive(Debug, Clone, Builder, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CelRule {
   /// The id of this specific rule.
   pub id: &'static str,
@@ -19,15 +18,6 @@ impl From<CelRule> for CelProgram {
   #[inline]
   fn from(value: CelRule) -> Self {
     Self::new(value)
-  }
-}
-
-impl<S> From<CelRuleBuilder<S>> for OptionValue
-where
-  S: State + IsComplete,
-{
-  fn from(value: CelRuleBuilder<S>) -> Self {
-    value.build().into()
   }
 }
 
