@@ -32,32 +32,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   }
 }
 
-impl<T: MessageProxy> ProtoMessage for T {
-  const PACKAGE: &str = T::Message::PACKAGE;
-  const SHORT_NAME: &str = T::Message::SHORT_NAME;
-
-  fn proto_path() -> ProtoPath {
-    T::Message::proto_path()
-  }
-
-  fn proto_schema() -> Message {
-    T::Message::proto_schema()
-  }
-
-  fn proto_name() -> &'static str {
-    T::Message::proto_name()
-  }
-
-  fn full_name() -> &'static str {
-    T::Message::full_name()
-  }
-
-  fn type_url() -> &'static str {
-    T::Message::type_url()
-  }
-}
-
-pub trait ProtoMessage {
+pub trait ProtoMessage: Default {
   const PACKAGE: &str;
   const SHORT_NAME: &str;
 

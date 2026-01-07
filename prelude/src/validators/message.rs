@@ -4,7 +4,7 @@ use builder::state::State;
 
 use super::*;
 
-pub trait ValidatedMessage: Clone + Sized {
+pub trait ValidatedMessage: Default {
   fn validate(&self) -> Result<(), Violations>;
 
   #[inline]
@@ -52,7 +52,7 @@ pub trait ValidatedMessage: Clone + Sized {
 
 impl<T, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
 where
-  T: ValidatedMessage + PartialEq + Clone + Default + TryIntoCel,
+  T: ValidatedMessage + PartialEq + TryIntoCel,
 {
   type Target = T;
   type Validator = MessageValidator<T>;
@@ -66,7 +66,7 @@ where
 
 impl<T> Validator<T> for MessageValidator<T>
 where
-  T: ValidatedMessage + PartialEq + Clone + Default + TryIntoCel,
+  T: ValidatedMessage + PartialEq + TryIntoCel,
 {
   type Target = T;
   type UniqueStore<'a>

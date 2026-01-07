@@ -4,7 +4,7 @@ pub use ::cel;
 #[macro_use]
 mod decl_macros;
 
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 use askama::Template;
 use float_eq::{FloatEq, float_eq};
