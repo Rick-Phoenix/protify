@@ -23,11 +23,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let desc_data = set_up_validators(&mut config, files, include_paths, &["test_schemas.v1"])?;
 
+  let skip_test_attr = "#[proto(no_auto_test)]";
+
   for oneof in desc_data.oneofs {
-    config.enum_attribute(oneof.full_name(), "#[proto(no_auto_test)]");
+    config.enum_attribute(oneof.full_name(), skip_test_attr);
   }
 
-  config.message_attribute(".test_schemas", "#[proto(no_auto_test)]");
+  config.message_attribute(".test_schemas.v1", skip_test_attr);
 
   config.compile_protos(files, include_paths)?;
 

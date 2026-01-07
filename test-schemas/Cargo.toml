@@ -7,6 +7,9 @@ authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
+[dev-dependencies]
+similar-asserts = { workspace = true }
+
 [dependencies]
 prelude = { path = "../prelude/" }
 prost = { workspace = true }

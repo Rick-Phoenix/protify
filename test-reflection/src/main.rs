@@ -64,6 +64,8 @@ mod test {
     assert_eq!(violations.first().unwrap().rule_id(), expected, "{error}");
   }
 
+  use similar_asserts::assert_eq as assert_eq_pretty;
+
   mod any_tests;
   mod bool_tests;
   mod bytes_tests;
@@ -74,6 +76,8 @@ mod test {
   mod message_tests;
   mod numeric_tests;
   mod oneof_tests;
+  #[cfg(feature = "reflection")]
+  mod reflection_consistency_tests;
   mod repeated_tests;
   mod string_tests;
   mod timestamp_tests;

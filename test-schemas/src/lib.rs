@@ -1,11 +1,19 @@
 #![allow(clippy::struct_field_names)]
 
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use similar_asserts::assert_eq as assert_eq_pretty;
+
+  mod consistency_tests;
+}
+
 use bytes::Bytes;
-use prelude::{
-  cel_program, define_proto_file, proto_message, proto_package,
-  proto_types::{Any, Duration, FieldMask, Timestamp},
-};
 use prelude::{proto_enum, proto_oneof};
+use prelude::{
+  proto_types::{Any, Duration, FieldMask, Timestamp},
+  *,
+};
 use std::collections::HashMap;
 
 proto_package!(TEST_SCHEMAS, name = "test_schemas.v1", no_cel_test);
@@ -21,6 +29,38 @@ pub enum TestOneof2 {
   String(String),
   #[proto(tag = 2, validate = |v| v.const_(1))]
   Number(i32),
+}
+
+fn bad_rule() -> CelProgram {
+  cel_program!(id = "abc", msg = "hi", expr = "hi")
+}
+
+#[proto_message(no_auto_test)]
+pub struct BadFieldRules {
+  #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]
+  pub id: i32,
+}
+
+#[proto_message(no_auto_test)]
+#[proto(cel_rules(bad_rule()))]
+pub struct BadMsgRules {
+  #[proto(tag = 1)]
+  pub id: i32,
+}
+
+// Just to let the oneof be picked up in the schema
+#[proto_message(no_auto_test)]
+pub struct BadCelOneofTest {
+  #[proto(oneof(tags(1, 2)))]
+  pub bad_cel_oneof: Option<BadCelOneof>,
+}
+
+#[proto_oneof(no_auto_test)]
+pub enum BadCelOneof {
+  #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]
+  Id(i32),
+  #[proto(tag = 2)]
+  Name(String),
 }
 
 #[proto_message(no_auto_test)]

@@ -15,6 +15,7 @@ paste = "1"
 bytes = { workspace = true }
 test-schemas = { path = "../test-schemas" }
 maplit = "1.0"
+similar-asserts = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }

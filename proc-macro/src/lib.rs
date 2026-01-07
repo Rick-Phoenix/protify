@@ -4,8 +4,11 @@
   clippy::collapsible_else_if
 )]
 
-use std::borrow::Borrow;
-use std::{borrow::Cow, fmt::Display, ops::Range};
+use std::{
+  borrow::{Borrow, Cow},
+  fmt::Display,
+  ops::Range,
+};
 
 use attributes::*;
 use proc_macro::TokenStream;
@@ -97,7 +100,6 @@ pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
     }
   };
 
-  // TODO: Add consistency checks too
   validator_impl.into()
 }
 
@@ -154,7 +156,6 @@ pub fn validated_message_derive(input: TokenStream) -> TokenStream {
     }
   };
 
-  // TODO: Add consistency checks too
   validator_impl.into()
 }
 

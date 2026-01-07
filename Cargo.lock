@@ -1416,6 +1416,7 @@ dependencies = [
  "prost",
  "prost-build",
  "proto-types",
+ "similar-asserts",
  "test-schemas",
 ]
 
@@ -1427,6 +1428,7 @@ dependencies = [
  "paste",
  "prelude",
  "prost",
+ "similar-asserts",
 ]
 
 [[package]]
