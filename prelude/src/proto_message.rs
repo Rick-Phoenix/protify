@@ -97,6 +97,30 @@ impl MessageEntry {
       .filter_map(|f| f.validator)
       .flat_map(|v| v.cel_rules)
   }
+
+  /// Returns `true` if the message entry is [`Field`].
+  ///
+  /// [`Field`]: MessageEntry::Field
+  #[must_use]
+  pub const fn is_field(&self) -> bool {
+    matches!(self, Self::Field(..))
+  }
+
+  /// Returns `true` if the message entry is [`Oneof`].
+  ///
+  /// [`Oneof`]: MessageEntry::Oneof
+  #[must_use]
+  pub const fn is_oneof(&self) -> bool {
+    matches!(self, Self::Oneof { .. })
+  }
+
+  pub const fn as_field(&self) -> Option<&Field> {
+    if let Self::Field(v) = self {
+      Some(v)
+    } else {
+      None
+    }
+  }
 }
 
 impl Message {

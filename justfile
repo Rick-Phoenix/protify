@@ -1,8 +1,11 @@
 [working-directory(".")]
-test-all: test-schemas
+test-all: test-shared-schemas
     cargo test --workspace --exclude proc-macro-impls --exclude test-server -- --nocapture
 
-test-schemas: gen-schemas
+test-schemas:
+    cargo test -p testing -- --nocapture
+
+test-shared-schemas: gen-schemas
     cargo test -p test-reflection -- --nocapture
     cargo test --features reflection -p test-reflection -- --nocapture
 

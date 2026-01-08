@@ -2,13 +2,9 @@ use crate::*;
 
 reusable_string!(PROTO_DEPRECATED, "deprecated");
 
-pub struct DEPRECATED;
-
-impl From<DEPRECATED> for ProtoOption {
-  fn from(_: DEPRECATED) -> Self {
-    Self {
-      name: PROTO_DEPRECATED.clone(),
-      value: OptionValue::Bool(true),
-    }
+pub fn proto_deprecated() -> ProtoOption {
+  ProtoOption {
+    name: PROTO_DEPRECATED.clone(),
+    value: OptionValue::Bool(true),
   }
 }

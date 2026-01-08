@@ -1,3 +1,4 @@
+use syn::LitBool;
 use syn_utils::PunctuatedItems;
 
 use crate::*;
@@ -15,6 +16,7 @@ pub struct MessageAttrs {
   pub is_proxied: bool,
   pub no_auto_test: bool,
   pub extern_path: Option<String>,
+  pub deprecated: bool,
 }
 
 pub fn process_message_attrs(
@@ -52,59 +54,81 @@ pub fn process_message_attrs(
   let mut shadow_derives: Option<MetaList> = None;
   let mut cel_rules = IterTokensOr::<TokenStream2>::vec();
   let mut parent_message: Option<Ident> = None;
+  let mut deprecated = false;
 
-  parse_filtered_attrs(attrs, &["proto"], |meta| {
-    let ident = meta.path.require_ident()?.to_string();
-
-    match ident.as_str() {
-      "cel_rules" => {
-        cel_rules.set(
-          meta
-            .parse_list::<PunctuatedItems<TokenStream2>>()?
-            .list,
-        );
-      }
-      "reserved_names" => {
-        let names = meta.parse_list::<StringList>()?;
-
-        reserved_names = names.list;
-      }
-      "reserved_numbers" => {
-        let numbers = meta.parse_list::<ReservedNumbers>()?;
-
-        reserved_numbers = numbers;
-      }
-      "derive" => {
-        let list = meta.parse_list::<MetaList>()?;
-
-        shadow_derives = Some(list);
-      }
-      "parent_message" => {
-        parent_message = Some(
-          meta
-            .expr_value()?
-            .as_path()?
-            .require_ident()?
-            .clone(),
-        );
-      }
-      "options" => {
-        options.set(meta.expr_value()?.into_token_stream());
-      }
-      "from_proto" => {
-        from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
-      }
-      "into_proto" => {
-        into_proto = Some(meta.expr_value()?.as_path_or_closure()?);
-      }
-      "name" => {
-        proto_name = Some(meta.expr_value()?.as_string()?);
-      }
-      _ => return Err(meta.error("Unknown attribute")),
+  for attr in attrs {
+    let ident = if let Some(ident) = attr.path().get_ident() {
+      ident.to_string()
+    } else {
+      continue;
     };
 
-    Ok(())
-  })?;
+    match ident.as_str() {
+      "deprecated" => {
+        deprecated = true;
+      }
+      "proto" => {
+        attr.parse_nested_meta(|meta| {
+          let ident = meta.path.require_ident()?.to_string();
+
+          match ident.as_str() {
+            "deprecated" => {
+              let boolean = meta.parse_value::<LitBool>()?;
+
+              deprecated = boolean.value();
+            }
+            "cel_rules" => {
+              cel_rules.set(
+                meta
+                  .parse_list::<PunctuatedItems<TokenStream2>>()?
+                  .list,
+              );
+            }
+            "reserved_names" => {
+              let names = meta.parse_list::<StringList>()?;
+
+              reserved_names = names.list;
+            }
+            "reserved_numbers" => {
+              let numbers = meta.parse_list::<ReservedNumbers>()?;
+
+              reserved_numbers = numbers;
+            }
+            "derive" => {
+              let list = meta.parse_list::<MetaList>()?;
+
+              shadow_derives = Some(list);
+            }
+            "parent_message" => {
+              parent_message = Some(
+                meta
+                  .expr_value()?
+                  .as_path()?
+                  .require_ident()?
+                  .clone(),
+              );
+            }
+            "options" => {
+              options.set(meta.expr_value()?.into_token_stream());
+            }
+            "from_proto" => {
+              from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
+            }
+            "into_proto" => {
+              into_proto = Some(meta.expr_value()?.as_path_or_closure()?);
+            }
+            "name" => {
+              proto_name = Some(meta.expr_value()?.as_string()?);
+            }
+            _ => return Err(meta.error("Unknown attribute")),
+          };
+
+          Ok(())
+        })?;
+      }
+      _ => {}
+    }
+  }
 
   let name = proto_name.unwrap_or_else(|| to_pascal_case(&struct_ident.to_string()));
 
@@ -121,5 +145,6 @@ pub fn process_message_attrs(
     is_proxied,
     no_auto_test,
     extern_path,
+    deprecated,
   })
 }

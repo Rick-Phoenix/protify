@@ -5,6 +5,7 @@ struct HandlerCtx {
   request: TokenStream2,
   response: TokenStream2,
   options: TokensOr<TokenStream2>,
+  deprecated: bool,
 }
 
 pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
@@ -20,6 +21,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 
   let ServiceOrHandlerAttrs {
     options: service_options,
+    deprecated,
   } = process_service_or_handler_attrs(attrs)?;
 
   let service_name = to_pascal_case(&ident.to_string());
@@ -27,6 +29,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
   for variant in variants {
     let ServiceOrHandlerAttrs {
       options: handler_options,
+      deprecated,
     } = process_service_or_handler_attrs(&variant.attrs)?;
 
     let handler_name = variant.ident.to_string();
@@ -77,6 +80,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
       request,
       response,
       options: handler_options,
+      deprecated,
     });
   }
 
@@ -86,17 +90,22 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
       request,
       response,
       options,
+      deprecated,
     } = data;
+
+    let options_tokens = options_tokens(options, *deprecated);
 
     quote! {
       ::prelude::ServiceHandler {
         name: #name,
         request: <#request as ::prelude::ProtoMessage>::proto_path(),
         response: <#response as ::prelude::ProtoMessage>::proto_path(),
-        options: #options
+        options: #options_tokens
       }
     }
   });
+
+  let options_tokens = options_tokens(&service_options, deprecated);
 
   Ok(quote! {
     #[derive(::prelude::macros::Service)]
@@ -116,7 +125,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
           file: __PROTO_FILE.file,
           package: __PROTO_FILE.package,
           handlers: vec![ #(#handlers_tokens),* ],
-          options: #service_options
+          options: #options_tokens
         }
       }
     }

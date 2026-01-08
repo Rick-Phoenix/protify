@@ -3,6 +3,7 @@ use crate::*;
 pub struct EnumVariantAttrs {
   pub name: String,
   pub options: TokensOr<TokenStream2>,
+  pub deprecated: bool,
 }
 
 pub fn process_derive_enum_variants_attrs(
@@ -13,22 +14,44 @@ pub fn process_derive_enum_variants_attrs(
 ) -> Result<EnumVariantAttrs, Error> {
   let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
   let mut name: Option<String> = None;
+  let mut deprecated = false;
 
-  parse_filtered_attrs(attrs, &["proto"], |meta| {
-    let ident_str = meta.ident_str()?;
-
-    match ident_str.as_str() {
-      "options" => {
-        options.set(meta.expr_value()?.into_token_stream());
-      }
-      "name" => {
-        name = Some(meta.parse_value::<LitStr>()?.value());
-      }
-      _ => return Err(meta.error("Unknown attribute")),
+  for attr in attrs {
+    let ident = if let Some(ident) = attr.path().get_ident() {
+      ident.to_string()
+    } else {
+      continue;
     };
 
-    Ok(())
-  })?;
+    match ident.as_str() {
+      "deprecated" => {
+        deprecated = true;
+      }
+      "proto" => {
+        attr.parse_nested_meta(|meta| {
+          let ident_str = meta.ident_str()?;
+
+          match ident_str.as_str() {
+            "deprecated" => {
+              let boolean = meta.parse_value::<LitBool>()?;
+
+              deprecated = boolean.value();
+            }
+            "options" => {
+              options.set(meta.expr_value()?.into_token_stream());
+            }
+            "name" => {
+              name = Some(meta.parse_value::<LitStr>()?.value());
+            }
+            _ => return Err(meta.error("Unknown attribute")),
+          };
+
+          Ok(())
+        })?;
+      }
+      _ => {}
+    }
+  }
 
   let name = if let Some(name) = name {
     name
@@ -43,5 +66,9 @@ pub fn process_derive_enum_variants_attrs(
     }
   };
 
-  Ok(EnumVariantAttrs { name, options })
+  Ok(EnumVariantAttrs {
+    name,
+    options,
+    deprecated,
+  })
 }

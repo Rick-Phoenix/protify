@@ -1,4 +1,5 @@
 use super::*;
+mod deprecated_tests;
 
 #[proto_message(no_auto_test)]
 pub struct ParentMessage {

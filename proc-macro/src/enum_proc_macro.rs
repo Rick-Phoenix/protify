@@ -5,6 +5,7 @@ struct EnumVariantCtx {
   options: TokensOr<TokenStream2>,
   tag: i32,
   ident: Ident,
+  deprecated: bool,
 }
 
 pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
@@ -46,6 +47,7 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
     no_prefix,
     parent_message,
     extern_path,
+    deprecated,
     ..
   } = process_derive_enum_attrs(enum_name, attrs)?;
 
@@ -74,8 +76,11 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
 
     let variant_ident = &variant.ident;
 
-    let EnumVariantAttrs { options, name } =
-      process_derive_enum_variants_attrs(&proto_name, variant_ident, &variant.attrs, no_prefix)?;
+    let EnumVariantAttrs {
+      options,
+      name,
+      deprecated,
+    } = process_derive_enum_variants_attrs(&proto_name, variant_ident, &variant.attrs, no_prefix)?;
 
     if reserved_names.contains(&name) {
       bail!(&variant, "Name `{name}` is reserved");
@@ -110,6 +115,7 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
       options,
       tag,
       ident: variant_ident.clone(),
+      deprecated,
     });
   }
 
@@ -141,11 +147,17 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
 
   let variants_tokens = variants_data.iter().map(|var| {
     let EnumVariantCtx {
-      name, options, tag, ..
+      name,
+      options,
+      tag,
+      deprecated,
+      ..
     } = var;
 
+    let options_tokens = options_tokens(options, *deprecated);
+
     quote! {
-      ::prelude::EnumVariant { name: #name, options: #options, tag: #tag, }
+      ::prelude::EnumVariant { name: #name, options: #options_tokens, tag: #tag, }
     }
   });
 
@@ -175,7 +187,9 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
 
   let first_variant_ident = &variants_data.first().as_ref().unwrap().ident;
 
-  let output_tokens = quote! {
+  let options_tokens = options_tokens(&enum_options, deprecated);
+
+  Ok(quote! {
     ::prelude::inventory::submit! {
       ::prelude::RegistryEnum {
         parent_message: #parent_message_registry,
@@ -263,14 +277,12 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
           variants: vec! [ #(#variants_tokens,)* ],
           reserved_names: vec![ #(#reserved_names),* ],
           reserved_numbers: vec![ #reserved_numbers ],
-          options: #enum_options,
+          options: #options_tokens,
           rust_path: #rust_path_field
         }
       }
     }
-  };
-
-  Ok(output_tokens)
+  })
 }
 
 fn fallback_schema_impl(enum_name: &Ident) -> TokenStream2 {

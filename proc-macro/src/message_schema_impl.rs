@@ -61,6 +61,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
       name: proto_name,
       parent_message,
       extern_path,
+      deprecated,
       ..
     } = &self.message_attrs;
 
@@ -71,6 +72,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
         options,
         proto_name,
         proto_field,
+        deprecated,
         ..
       } = data.borrow();
 
@@ -90,12 +92,14 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
           .filter(|v| !v.is_fallback)
           .map_or_else(|| quote! { None }, |e| quote! { Some(#e.into_schema()) });
 
+        let options_tokens = options_tokens(options, *deprecated);
+
         quote! {
           ::prelude::MessageEntry::Field(
             ::prelude::Field {
               name: #proto_name,
               tag: #tag,
-              options: #options,
+              options: #options_tokens,
               type_: #field_type_tokens,
               validator: #validator_schema_tokens,
             }
@@ -133,6 +137,8 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
 
       quote! { format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str) }
     };
+
+    let options_tokens = options_tokens(message_options, *deprecated);
 
     output.extend(quote! {
       ::prelude::inventory::submit! {
@@ -191,7 +197,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
             package: __PROTO_FILE.package,
             reserved_names: vec![ #(#reserved_names),* ],
             reserved_numbers: vec![ #reserved_numbers ],
-            options: #message_options,
+            options: #options_tokens,
             messages: vec![],
             enums: vec![],
             entries: vec![ #(#entries_tokens,)* ],

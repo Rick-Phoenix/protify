@@ -115,6 +115,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
           proto_field: ProtoField::Oneof(oneof),
           from_proto: None,
           into_proto: None,
+          deprecated: false,
         });
 
         continue;
@@ -169,6 +170,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
         proto_field,
         from_proto: None,
         into_proto: None,
+        deprecated: false,
       });
     }
   }

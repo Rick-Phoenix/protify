@@ -25,6 +25,7 @@ pub struct FieldData {
   pub proto_field: ProtoField,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
+  pub deprecated: bool,
 }
 
 // No sense in boxing since it's the most common path
@@ -57,42 +58,64 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
   let mut is_ignored = false;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
+  let mut deprecated = false;
   let field_ident = field.ident()?.clone();
   let type_info = TypeInfo::from_type(field.get_type()?)?;
 
-  parse_filtered_attrs(field.attributes(), &["proto"], |meta| {
-    let ident = meta.path.require_ident()?.to_string();
-
-    match ident.as_str() {
-      "options" => {
-        options.set(meta.expr_value()?.into_token_stream());
-      }
-      "tag" => {
-        tag = Some(meta.expr_value()?.as_int::<i32>()?);
-      }
-      "name" => {
-        name = Some(meta.expr_value()?.as_string()?);
-      }
-      "validate" => {
-        validator = Some(meta.expr_value()?.as_closure_or_expr());
-      }
-      "from_proto" => {
-        from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
-      }
-      "into_proto" => {
-        into_proto = Some(meta.expr_value()?.as_path_or_closure()?);
-      }
-      "ignore" => {
-        is_ignored = true;
-      }
-
-      _ => {
-        proto_field = Some(ProtoField::from_meta(&ident, &meta, &type_info)?);
-      }
+  for attr in field.attributes() {
+    let ident = if let Some(ident) = attr.path().get_ident() {
+      ident.to_string()
+    } else {
+      continue;
     };
 
-    Ok(())
-  })?;
+    match ident.as_str() {
+      "deprecated" => {
+        deprecated = true;
+      }
+      "proto" => {
+        attr.parse_nested_meta(|meta| {
+          let ident = meta.path.require_ident()?.to_string();
+
+          match ident.as_str() {
+            "deprecated" => {
+              let boolean = meta.parse_value::<LitBool>()?;
+
+              deprecated = boolean.value();
+            }
+            "options" => {
+              options.set(meta.expr_value()?.into_token_stream());
+            }
+            "tag" => {
+              tag = Some(meta.expr_value()?.as_int::<i32>()?);
+            }
+            "name" => {
+              name = Some(meta.expr_value()?.as_string()?);
+            }
+            "validate" => {
+              validator = Some(meta.expr_value()?.as_closure_or_expr());
+            }
+            "from_proto" => {
+              from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
+            }
+            "into_proto" => {
+              into_proto = Some(meta.expr_value()?.as_path_or_closure()?);
+            }
+            "ignore" => {
+              is_ignored = true;
+            }
+
+            _ => {
+              proto_field = Some(ProtoField::from_meta(&ident, &meta, &type_info)?);
+            }
+          };
+
+          Ok(())
+        })?;
+      }
+      _ => {}
+    }
+  }
 
   if is_ignored {
     return Ok(FieldDataKind::Ignored {
@@ -189,5 +212,6 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     ident_str: field_ident.to_string(),
     ident: field_ident,
     type_info,
+    deprecated,
   }))
 }

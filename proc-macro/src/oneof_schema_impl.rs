@@ -24,6 +24,7 @@ impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
         options,
         proto_name,
         proto_field,
+        deprecated,
         ..
       } = data.borrow();
 
@@ -35,11 +36,13 @@ impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
         .filter(|v| !v.is_fallback)
         .map_or_else(|| quote! { None }, |e| quote! { Some(#e.into_schema()) });
 
+      let options_tokens = options_tokens(options, *deprecated);
+
       quote! {
         ::prelude::Field {
           name: #proto_name,
           tag: #tag,
-          options: #options,
+          options: #options_tokens,
           type_: #field_type_tokens,
           validator: #validator_schema_tokens,
         }

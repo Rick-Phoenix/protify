@@ -115,6 +115,7 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
       proto_field,
       from_proto: None,
       into_proto: None,
+      deprecated: false,
     });
   }
 
