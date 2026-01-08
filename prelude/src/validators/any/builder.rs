@@ -1,6 +1,8 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+use proto_types::Any;
+pub(crate) use state::*;
 
 #[derive(Clone, Debug)]
 pub struct AnyValidatorBuilder<S: State = Empty> {
@@ -42,6 +44,8 @@ impl AnyValidator {
     AnyValidatorBuilder::default()
   }
 }
+
+impl_validator!(AnyValidator, Any);
 
 #[allow(
   clippy::must_use_candidate,

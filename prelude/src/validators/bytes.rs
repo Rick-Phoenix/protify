@@ -1,7 +1,6 @@
 use crate::validators::string::well_known_strings::*;
-pub mod builder;
+mod builder;
 pub use builder::BytesValidatorBuilder;
-use builder::state::State;
 
 use ::bytes::Bytes;
 #[cfg(feature = "regex")]
@@ -9,7 +8,6 @@ use regex::bytes::Regex;
 
 use super::*;
 
-impl_validator!(BytesValidator, Bytes);
 impl_proto_type!(Bytes, Bytes);
 impl_proto_type!(Vec<u8>, Bytes);
 

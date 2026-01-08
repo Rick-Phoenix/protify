@@ -1,6 +1,7 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 #[derive(Debug, Clone)]
 pub struct MessageValidatorBuilder<T: ValidatedMessage, S: State = Empty> {

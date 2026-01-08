@@ -1,6 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::EnumValidatorBuilder;
-use builder::state::State;
 
 use super::*;
 
@@ -27,17 +26,6 @@ pub struct EnumValidator<T: ProtoEnum> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
-}
-
-impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, S> {
-  type Target = i32;
-  type Validator = EnumValidator<T>;
-
-  #[inline]
-  #[doc(hidden)]
-  fn build_validator(self) -> Self::Validator {
-    self.build()
-  }
 }
 
 impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {

@@ -8,7 +8,7 @@ mod tests {
   mod consistency_tests;
 }
 
-use bytes::Bytes;
+use ::bytes::Bytes;
 use prelude::{proto_enum, proto_oneof};
 use prelude::{
   proto_types::{Any, Duration, FieldMask, Timestamp},

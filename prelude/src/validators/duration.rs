@@ -1,12 +1,9 @@
-pub mod builder;
+mod builder;
 pub use builder::DurationValidatorBuilder;
-use builder::state::State;
 
 use proto_types::Duration;
 
 use super::*;
-
-impl_validator!(DurationValidator, Duration);
 
 #[derive(Clone, Debug)]
 pub struct DurationValidator {

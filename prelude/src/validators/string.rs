@@ -1,8 +1,7 @@
 pub(crate) mod well_known_strings;
 use well_known_strings::*;
-pub mod builder;
+mod builder;
 pub use builder::StringValidatorBuilder;
-use builder::state::State;
 
 #[cfg(feature = "regex")]
 use regex::Regex;
@@ -80,7 +79,6 @@ impl StringValidator {
 }
 
 impl_proto_type!(String, String);
-impl_validator!(StringValidator, String);
 
 impl Validator<String> for StringValidator {
   type Target = String;

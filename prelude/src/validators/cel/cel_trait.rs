@@ -4,8 +4,6 @@ use proto_types::cel::CelConversionError;
 use crate::*;
 
 #[doc(hidden)]
-// Not being detected by the LSP that this is used
-#[allow(unused)]
 #[cfg(feature = "cel")]
 pub trait IntoCel: Into<::cel::Value> {}
 #[doc(hidden)]

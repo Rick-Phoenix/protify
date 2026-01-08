@@ -1,10 +1,8 @@
-pub mod builder;
+mod builder;
 pub use builder::BoolValidatorBuilder;
-use builder::state::State;
 
 use super::*;
 
-impl_validator!(BoolValidator, bool);
 impl_proto_type!(bool, Bool);
 
 impl Validator<bool> for BoolValidator {

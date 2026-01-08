@@ -1,12 +1,9 @@
-pub mod builder;
+mod builder;
 pub use builder::AnyValidatorBuilder;
-use builder::state::State;
 
 use proto_types::Any;
 
 use super::*;
-
-impl_validator!(AnyValidator, Any);
 
 #[derive(Clone, Debug)]
 pub struct AnyValidator {

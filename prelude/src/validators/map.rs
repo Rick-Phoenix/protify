@@ -1,6 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::MapValidatorBuilder;
-use builder::state::State;
 
 use std::{collections::HashMap, marker::PhantomData};
 
@@ -41,7 +40,8 @@ where
   type Builder = MapValidatorBuilder<K, V>;
 }
 
-impl<K, V, S: State> ValidatorBuilderFor<ProtoMap<K, V>> for MapValidatorBuilder<K, V, S>
+impl<K, V, S: builder::state::State> ValidatorBuilderFor<ProtoMap<K, V>>
+  for MapValidatorBuilder<K, V, S>
 where
   K: ProtoValidator,
   V: ProtoValidator,

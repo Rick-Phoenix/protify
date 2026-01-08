@@ -1,6 +1,8 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+use proto_types::FieldMask;
+pub(crate) use state::*;
 
 #[derive(Clone, Debug)]
 pub struct FieldMaskValidatorBuilder<S: State = Empty> {
@@ -22,6 +24,17 @@ pub struct FieldMaskValidatorBuilder<S: State = Empty> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<StaticLookup<&'static str>>,
+}
+
+impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
+  type Target = FieldMask;
+  type Validator = FieldMaskValidator;
+
+  #[inline]
+  #[doc(hidden)]
+  fn build_validator(self) -> Self::Validator {
+    self.build()
+  }
 }
 
 impl<S: State> Default for FieldMaskValidatorBuilder<S> {

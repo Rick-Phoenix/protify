@@ -1,6 +1,7 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 use ::bytes::Bytes;
 #[cfg(feature = "regex")]
@@ -51,6 +52,8 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<Bytes>,
 }
+
+impl_validator!(BytesValidator, Bytes);
 
 impl<S: State> Default for BytesValidatorBuilder<S> {
   #[inline]

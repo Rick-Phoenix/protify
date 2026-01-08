@@ -2,8 +2,8 @@ mod common_options;
 
 use std::sync::Arc;
 
+use ::bytes::Bytes;
 use askama::Template;
-use bytes::Bytes;
 pub use common_options::*;
 use proto_types::{Duration, Timestamp, protovalidate::Ignore};
 
@@ -278,6 +278,18 @@ impl From<std::time::Duration> for OptionValue {
     let duration = Duration { seconds, nanos };
 
     Self::Duration(duration)
+  }
+}
+
+impl From<Ignore> for OptionValue {
+  fn from(value: Ignore) -> Self {
+    let name = match value {
+      Ignore::Unspecified => IGNORE_UNSPECIFIED.clone(),
+      Ignore::IfZeroValue => IGNORE_IF_ZERO_VALUE.clone(),
+      Ignore::Always => IGNORE_ALWAYS.clone(),
+    };
+
+    Self::Enum(name)
   }
 }
 

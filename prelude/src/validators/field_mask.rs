@@ -1,6 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::FieldMaskValidatorBuilder;
-use builder::state::State;
 use proto_types::FieldMask;
 
 use super::*;
@@ -23,17 +22,6 @@ pub struct FieldMaskValidator {
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<StaticLookup<&'static str>>,
-}
-
-impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
-  type Target = FieldMask;
-  type Validator = FieldMaskValidator;
-
-  #[inline]
-  #[doc(hidden)]
-  fn build_validator(self) -> Self::Validator {
-    self.build()
-  }
 }
 
 impl ProtoValidator for FieldMask {

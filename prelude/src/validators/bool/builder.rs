@@ -1,6 +1,7 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 #[derive(Clone, Debug)]
 pub struct BoolValidatorBuilder<S: State = Empty> {
@@ -11,6 +12,8 @@ pub struct BoolValidatorBuilder<S: State = Empty> {
   required: bool,
   ignore: Ignore,
 }
+
+impl_validator!(BoolValidator, bool);
 
 impl<S: State> Default for BoolValidatorBuilder<S> {
   #[inline]

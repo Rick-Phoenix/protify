@@ -1,6 +1,7 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 use proto_types::Duration;
 
@@ -36,6 +37,8 @@ pub struct DurationValidatorBuilder<S: State = Empty> {
   /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
   gte: Option<Duration>,
 }
+
+impl_validator!(DurationValidator, Duration);
 
 impl<S: State> Default for DurationValidatorBuilder<S> {
   #[inline]

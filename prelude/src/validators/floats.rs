@@ -1,6 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::FloatValidatorBuilder;
-use builder::state::State;
 
 use float_eq::FloatEq;
 use float_eq::float_eq;
@@ -413,7 +412,7 @@ macro_rules! impl_float_wrapper {
         type Builder = FloatValidatorBuilder<$target_type>;
       }
 
-      impl<S: State> ValidatorBuilderFor<$target_type> for FloatValidatorBuilder<$target_type, S> {
+      impl<S: builder::state::State> ValidatorBuilderFor<$target_type> for FloatValidatorBuilder<$target_type, S> {
         type Target = $target_type;
         type Validator = FloatValidator<$target_type>;
 

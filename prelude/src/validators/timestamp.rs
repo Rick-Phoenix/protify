@@ -1,6 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::TimestampValidatorBuilder;
-use builder::state::State;
 
 use proto_types::{Duration, Timestamp};
 
@@ -42,8 +41,6 @@ pub struct TimestampValidator {
 
   pub now_tolerance: Duration,
 }
-
-impl_validator!(TimestampValidator, Timestamp);
 
 impl Validator<Timestamp> for TimestampValidator {
   type Target = Timestamp;

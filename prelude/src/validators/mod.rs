@@ -19,8 +19,8 @@ pub trait Validator<T>: Into<ProtoOption> {
 
   fn cel_rules(&self) -> Vec<CelRule>;
 
-  fn into_schema(self) -> FieldValidator {
-    FieldValidator {
+  fn into_schema(self) -> FieldValidatorSchema {
+    FieldValidatorSchema {
       cel_rules: self.cel_rules(),
       schema: self.into(),
     }
@@ -77,18 +77,6 @@ pub trait ProtoValidator: std::marker::Sized {
   }
 }
 
-impl From<Ignore> for OptionValue {
-  fn from(value: Ignore) -> Self {
-    let name = match value {
-      Ignore::Unspecified => IGNORE_UNSPECIFIED.clone(),
-      Ignore::IfZeroValue => IGNORE_IF_ZERO_VALUE.clone(),
-      Ignore::Always => IGNORE_ALWAYS.clone(),
-    };
-
-    Self::Enum(name)
-  }
-}
-
 pub(crate) trait IsDefault: Default + PartialEq {
   fn is_default(&self) -> bool {
     (*self) == Self::default()
@@ -97,28 +85,27 @@ pub(crate) trait IsDefault: Default + PartialEq {
 
 impl<T: Default + PartialEq> IsDefault for T {}
 
-mod any;
-mod bool;
+pub mod any;
+pub mod bool;
 mod builder_internals;
-mod bytes;
+pub mod bytes;
 mod cel;
-mod duration;
-mod enums;
+pub mod duration;
+pub mod enums;
 pub mod field_context;
-mod map;
-mod message;
-mod oneof;
-mod repeated;
-mod string;
-mod timestamp;
+pub mod map;
+pub mod message;
+pub mod repeated;
+pub mod string;
+pub mod timestamp;
 
-mod floats;
+pub mod floats;
 pub use floats::*;
-mod integers;
+pub mod integers;
 pub use integers::*;
-mod field_mask;
+pub mod field_mask;
 pub use field_mask::*;
-mod lookup;
+pub mod lookup;
 pub use lookup::*;
 
 pub use any::*;
@@ -131,126 +118,6 @@ pub use enums::*;
 pub use field_context::*;
 pub use map::*;
 pub use message::*;
-pub use oneof::*;
 pub use repeated::*;
 pub use string::*;
 pub use timestamp::*;
-
-pub(crate) fn check_list_rules<T>(
-  in_list: Option<&StaticLookup<T>>,
-  not_in_list: Option<&StaticLookup<T>>,
-) -> Result<(), OverlappingListsError>
-where
-  T: Debug + PartialEq + Eq + Hash + Ord + Clone + ListFormatter,
-{
-  if let Some(in_list) = in_list
-    && let Some(not_in_list) = not_in_list
-  {
-    let mut overlapping: Vec<T> = Vec::with_capacity(in_list.items.len());
-
-    for item in &in_list.items {
-      let is_overlapping = not_in_list.items.contains(item);
-
-      if is_overlapping {
-        overlapping.push(item.clone());
-      }
-    }
-
-    if overlapping.is_empty() {
-      return Ok(());
-    } else {
-      return Err(OverlappingListsError {
-        overlapping: overlapping
-          .into_iter()
-          .map(|i| format!("{i:#?}"))
-          .collect(),
-      });
-    }
-  }
-
-  Ok(())
-}
-
-#[derive(Debug)]
-pub struct OverlappingListsError {
-  pub overlapping: Vec<String>,
-}
-
-impl core::error::Error for OverlappingListsError {}
-
-impl Display for OverlappingListsError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    writeln!(f, "The following values are both allowed and forbidden:")?;
-
-    for item in &self.overlapping {
-      let _ = writeln!(f, "  - {item}");
-    }
-
-    Ok(())
-  }
-}
-
-#[allow(clippy::useless_let_if_seq)]
-pub(crate) fn check_comparable_rules<T>(
-  lt: Option<T>,
-  lte: Option<T>,
-  gt: Option<T>,
-  gte: Option<T>,
-) -> Result<(), ConsistencyError>
-where
-  T: Display + PartialEq + PartialOrd + Copy,
-{
-  let mut err: Option<&str> = None;
-
-  if lt.is_some() && lte.is_some() {
-    err = Some("Lt and Lte cannot be used together.");
-  }
-
-  if gt.is_some() && gte.is_some() {
-    err = Some("Gt and Gte cannot be used together.");
-  }
-
-  if let Some(lt) = lt {
-    if let Some(gt) = gt
-      && lt <= gt
-    {
-      err = Some("Lt cannot be smaller than or equal to Gt");
-    }
-
-    if let Some(gte) = gte
-      && lt <= gte
-    {
-      err = Some("Lte cannot be smaller than or equal to Gte");
-    }
-  }
-
-  if let Some(lte) = lte {
-    if let Some(gt) = gt
-      && lte <= gt
-    {
-      err = Some("Lte cannot be smaller than or equal to Gt");
-    }
-
-    if let Some(gte) = gte
-      && lte < gte
-    {
-      err = Some("Lte cannot be smaller than Gte");
-    }
-  }
-
-  if let Some(err) = err {
-    Err(ConsistencyError::ContradictoryInput(err.to_string()))
-  } else {
-    Ok(())
-  }
-}
-
-#[cfg(feature = "cel")]
-pub trait IntoCel: Into<::cel::Value> {}
-#[cfg(feature = "cel")]
-impl<T: Into<::cel::Value>> IntoCel for T {}
-
-#[cfg(not(feature = "cel"))]
-pub trait IntoCel {}
-#[cfg(not(feature = "cel"))]
-impl<T> IntoCel for T {}

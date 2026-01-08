@@ -1,6 +1,7 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 #[derive(Clone, Debug)]
 pub struct MapValidatorBuilder<K, V, S: State = Empty>

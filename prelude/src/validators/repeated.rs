@@ -1,8 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::RepeatedValidatorBuilder;
-use builder::state::State;
-
-use std::marker::PhantomData;
 
 use proto_types::protovalidate::field_path_element::Subscript;
 
@@ -85,7 +82,7 @@ where
 
 impl<T, S> ValidatorBuilderFor<Vec<T>> for RepeatedValidatorBuilder<T, S>
 where
-  S: State,
+  S: builder::State,
   T: ProtoValidator,
   T::Target: TryIntoCel,
 {

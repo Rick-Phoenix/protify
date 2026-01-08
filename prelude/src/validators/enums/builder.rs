@@ -1,6 +1,7 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 #[derive(Clone, Debug)]
 pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
@@ -26,6 +27,17 @@ pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<i32>,
+}
+
+impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, S> {
+  type Target = i32;
+  type Validator = EnumValidator<T>;
+
+  #[inline]
+  #[doc(hidden)]
+  fn build_validator(self) -> Self::Validator {
+    self.build()
+  }
 }
 
 impl<T: ProtoEnum, S: State> Default for EnumValidatorBuilder<T, S> {

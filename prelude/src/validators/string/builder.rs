@@ -1,7 +1,8 @@
+#[doc(hidden)]
 pub mod state;
 use super::well_known_strings::WellKnownStrings;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 #[cfg(feature = "regex")]
 use regex::Regex;
@@ -62,6 +63,8 @@ pub struct StringValidatorBuilder<S: State = Empty> {
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<Arc<str>>,
 }
+
+impl_validator!(StringValidator, String);
 
 impl<S: State> Default for StringValidatorBuilder<S> {
   #[inline]

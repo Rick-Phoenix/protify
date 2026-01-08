@@ -1,6 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::IntValidatorBuilder;
-use builder::state::State;
 
 use std::{fmt::Display, marker::PhantomData};
 
@@ -46,7 +45,9 @@ where
   pub not_in: Option<StaticLookup<Num::RustType>>,
 }
 
-impl<S: State, Num: IntWrapper> ValidatorBuilderFor<Num> for IntValidatorBuilder<Num, S> {
+impl<S: builder::state::State, Num: IntWrapper> ValidatorBuilderFor<Num>
+  for IntValidatorBuilder<Num, S>
+{
   type Target = Num::RustType;
   type Validator = IntValidator<Num>;
 

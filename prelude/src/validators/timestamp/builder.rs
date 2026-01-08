@@ -1,6 +1,7 @@
+#[doc(hidden)]
 pub mod state;
 use crate::validators::*;
-pub use state::*;
+pub(crate) use state::*;
 
 use proto_types::{Duration, Timestamp};
 
@@ -42,6 +43,8 @@ pub struct TimestampValidatorBuilder<S: State = Empty> {
 
   now_tolerance: Duration,
 }
+
+impl_validator!(TimestampValidator, Timestamp);
 
 impl<S: State> Default for TimestampValidatorBuilder<S> {
   #[inline]

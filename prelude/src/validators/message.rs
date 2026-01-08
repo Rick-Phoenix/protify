@@ -1,6 +1,5 @@
-pub mod builder;
+mod builder;
 pub use builder::MessageValidatorBuilder;
-use builder::state::State;
 
 use super::*;
 
@@ -50,7 +49,7 @@ pub trait ValidatedMessage: Default {
   }
 }
 
-impl<T, S: State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
+impl<T, S: builder::State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
 where
   T: ValidatedMessage + PartialEq + TryIntoCel,
 {
