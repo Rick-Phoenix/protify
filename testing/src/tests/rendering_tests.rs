@@ -5,7 +5,6 @@
 )]
 
 use std::collections::HashMap;
-use std::sync::Arc;
 
 use super::*;
 
@@ -27,45 +26,31 @@ fn test_renders() {
 }
 
 fn list_option() -> ProtoOption {
-  ProtoOption {
-    name: "list_option".into(),
-    value: OptionValue::new_list([1i32, 2i32, 3i32, 4i32]),
-  }
+  proto_option!("list_option" => [1i32, 2i32, 3i32, 4i32])
 }
 
 fn simple_option() -> ProtoOption {
-  ProtoOption {
-    name: "is_cool".into(),
-    value: true.into(),
-  }
+  proto_option!("is_cool" => true)
 }
 
 fn message_option() -> ProtoOption {
-  let mut values: Vec<(Arc<str>, OptionValue)> = Vec::new();
-
-  values.push(("thing1".into(), 15.into()));
-  values.push(("thing2".into(), OptionValue::Bool(true)));
-  values.push(("thing3".into(), list_option().value));
-
-  ProtoOption {
-    name: "message_opt".into(),
-    value: OptionValue::new_message(values),
-  }
+  proto_option!("message_opt" => {
+    "thing1" => 15,
+    "thing2" => true,
+    "thing3" => list_option().value
+  })
 }
 
 fn nested_message_option() -> ProtoOption {
-  let mut values: Vec<(Arc<str>, OptionValue)> = Vec::new();
+  let innermost = option_message!("thing1" => 15,
+    "thing2" => true,
+    "thing3" => list_option().value
+  );
 
-  values.push(("very_nested".into(), message_option().value));
+  let inner = option_message!("very_nested" => innermost);
+  let outer = option_message!("nested" => inner);
 
-  let mut outer: Vec<(Arc<str>, OptionValue)> = Vec::new();
-
-  outer.push(("nested".into(), OptionValue::new_message(values)));
-
-  ProtoOption {
-    name: "nested_opt".into(),
-    value: OptionValue::new_message(outer),
-  }
+  proto_option!("nested_opt" => outer)
 }
 
 fn test_options() -> Vec<ProtoOption> {

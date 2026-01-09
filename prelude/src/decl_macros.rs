@@ -1,3 +1,44 @@
+#[macro_export]
+macro_rules! proto_option {
+  ( $name:expr => { $($key:expr => $val:expr),* $(,)? } ) => {
+    $crate::ProtoOption {
+      name: $name.into(),
+      value: $crate::OptionValue::Message($crate::option_message!($($key => $val),*)),
+    }
+  };
+
+  ($name:expr => $val:expr) => {
+    $crate::ProtoOption {
+      name: $name.into(),
+      value: $val.into(),
+    }
+  };
+}
+
+#[macro_export]
+macro_rules! option_list {
+  ($list:expr) => {
+    $crate::OptionValue::new_list($list)
+  };
+}
+
+#[macro_export]
+macro_rules! option_message {
+  ($($key:expr => $val:expr),* $(,)?) => {
+    {
+      let mut builder = $crate::OptionMessageBuilder::new();
+      $(
+        builder.set($key, $val);
+      )*
+      builder.build()
+    }
+  };
+
+  ($msg:expr) => {
+    $crate::OptionValue::new_message($msg)
+  }
+}
+
 macro_rules! length_rule_value {
   ($name:literal, $value:expr) => {
     &LengthRuleValue {

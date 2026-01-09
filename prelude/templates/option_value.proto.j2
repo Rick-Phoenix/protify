@@ -12,8 +12,8 @@
 
 {% when Self::Message with (val) %}
 {
-{% for (name, item) in val ~%}
-  {{+ name +}}: {{+ item.render()? | indent(2) +}}{% if !loop.last +%}, {%+ endif %}
+{% for opt in val ~%}
+  {{+ opt.name +}}: {{+ opt.value.render()? | indent(2) +}}{% if !loop.last +%}, {%+ endif %}
 {% endfor ~%} 
 }
 {% when Self::Bool with (val) %}

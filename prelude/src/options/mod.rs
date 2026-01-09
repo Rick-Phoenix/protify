@@ -1,6 +1,10 @@
 mod common_options;
 
-use std::sync::Arc;
+use std::{
+  collections::{BTreeMap, BTreeSet, HashMap},
+  ops::Deref,
+  sync::Arc,
+};
 
 use ::bytes::Bytes;
 use askama::Template;
@@ -25,7 +29,7 @@ pub enum OptionValue {
   Float(f64),
   String(Arc<str>),
   Bytes(Bytes),
-  List(Arc<[Self]>),
+  List(OptionList),
   Message(OptionMessage),
   Enum(Arc<str>),
   Duration(Duration),
@@ -34,12 +38,12 @@ pub enum OptionValue {
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct OptionMessage {
-  inner: Arc<[(Arc<str>, OptionValue)]>,
+  inner: Arc<[ProtoOption]>,
 }
 
 impl<'a> IntoIterator for &'a OptionMessage {
-  type Item = &'a (Arc<str>, OptionValue);
-  type IntoIter = std::slice::Iter<'a, (Arc<str>, OptionValue)>;
+  type Item = &'a ProtoOption;
+  type IntoIter = std::slice::Iter<'a, ProtoOption>;
 
   #[inline]
   fn into_iter(self) -> Self::IntoIter {
@@ -47,16 +51,12 @@ impl<'a> IntoIterator for &'a OptionMessage {
   }
 }
 
-impl<N, V> FromIterator<(N, V)> for OptionMessage
+impl<T> FromIterator<T> for OptionMessage
 where
-  N: Into<Arc<str>>,
-  V: Into<OptionValue>,
+  T: Into<ProtoOption>,
 {
-  fn from_iter<T: IntoIterator<Item = (N, V)>>(iter: T) -> Self {
-    let items: Vec<(Arc<str>, OptionValue)> = iter
-      .into_iter()
-      .map(|(n, v)| (n.into(), v.into()))
-      .collect();
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    let items: Vec<ProtoOption> = iter.into_iter().map(|v| v.into()).collect();
 
     Self {
       inner: items.into_boxed_slice().into(),
@@ -77,18 +77,18 @@ impl OptionMessage {
     self
       .inner
       .iter()
-      .find_map(|(n, v)| (n.as_ref() == name).then_some(v))
+      .find_map(|opt| (opt.name.as_ref() == name).then_some(&opt.value))
   }
 
   #[inline]
-  pub fn iter(&self) -> std::slice::Iter<'_, (Arc<str>, OptionValue)> {
+  pub fn iter(&self) -> std::slice::Iter<'_, ProtoOption> {
     self.inner.iter()
   }
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct OptionMessageBuilder {
-  inner: Vec<(Arc<str>, OptionValue)>,
+  inner: Vec<ProtoOption>,
 }
 
 impl OptionMessageBuilder {
@@ -129,7 +129,16 @@ impl OptionMessageBuilder {
 
   #[inline]
   pub fn set(&mut self, name: impl Into<Arc<str>>, value: impl Into<OptionValue>) -> &mut Self {
-    self.inner.push((name.into(), value.into()));
+    self.inner.push(ProtoOption {
+      name: name.into(),
+      value: value.into(),
+    });
+    self
+  }
+
+  #[inline]
+  pub fn set_from_option(&mut self, option: impl Into<ProtoOption>) -> &mut Self {
+    self.inner.push(option.into());
     self
   }
 
@@ -149,7 +158,7 @@ impl OptionMessageBuilder {
   }
 
   #[inline]
-  pub fn iter(&self) -> std::slice::Iter<'_, KeyValue> {
+  pub fn iter(&self) -> std::slice::Iter<'_, ProtoOption> {
     self.inner.iter()
   }
 
@@ -162,17 +171,119 @@ impl OptionMessageBuilder {
   }
 }
 
+impl<N, V> From<(N, V)> for ProtoOption
+where
+  N: Into<Arc<str>>,
+  V: Into<OptionValue>,
+{
+  fn from(value: (N, V)) -> Self {
+    let (name, val) = value;
+    Self {
+      name: name.into(),
+      value: val.into(),
+    }
+  }
+}
+
+impl<T> From<Vec<T>> for OptionMessage
+where
+  T: Into<ProtoOption>,
+{
+  fn from(value: Vec<T>) -> Self {
+    value.into_iter().map(|v| v.into()).collect()
+  }
+}
+
+impl<N, V> From<Vec<(N, V)>> for OptionValue
+where
+  N: Into<Arc<str>>,
+  V: Into<Self>,
+{
+  fn from(value: Vec<(N, V)>) -> Self {
+    Self::Message(value.into())
+  }
+}
+
+impl<N, V> From<HashMap<N, V>> for OptionMessage
+where
+  N: Into<Arc<str>>,
+  V: Into<OptionValue>,
+{
+  fn from(value: HashMap<N, V>) -> Self {
+    value
+      .into_iter()
+      .map(|(n, v)| ProtoOption {
+        name: n.into(),
+        value: v.into(),
+      })
+      .collect()
+  }
+}
+
+impl<N, V> From<HashMap<N, V>> for OptionValue
+where
+  N: Into<Arc<str>>,
+  V: Into<Self>,
+{
+  fn from(value: HashMap<N, V>) -> Self {
+    Self::Message(value.into())
+  }
+}
+
+impl<N, V> From<BTreeMap<N, V>> for OptionMessage
+where
+  N: Into<Arc<str>>,
+  V: Into<OptionValue>,
+{
+  fn from(value: BTreeMap<N, V>) -> Self {
+    value
+      .into_iter()
+      .map(|(n, v)| ProtoOption {
+        name: n.into(),
+        value: v.into(),
+      })
+      .collect()
+  }
+}
+
+impl<N, V> From<BTreeMap<N, V>> for OptionValue
+where
+  N: Into<Arc<str>>,
+  V: Into<Self>,
+{
+  fn from(value: BTreeMap<N, V>) -> Self {
+    Self::Message(value.into())
+  }
+}
+
+impl<T, const S: usize> From<[T; S]> for OptionMessage
+where
+  T: Into<ProtoOption>,
+{
+  fn from(value: [T; S]) -> Self {
+    value.into_iter().map(|v| v.into()).collect()
+  }
+}
+
+impl<N, V, const S: usize> From<[(N, V); S]> for OptionValue
+where
+  N: Into<Arc<str>>,
+  V: Into<Self>,
+{
+  fn from(value: [(N, V); S]) -> Self {
+    Self::Message(value.into())
+  }
+}
+
 impl From<OptionMessageBuilder> for OptionMessage {
   fn from(value: OptionMessageBuilder) -> Self {
     value.build()
   }
 }
 
-type KeyValue = (Arc<str>, OptionValue);
-
 impl IntoIterator for OptionMessageBuilder {
-  type Item = KeyValue;
-  type IntoIter = std::vec::IntoIter<KeyValue>;
+  type Item = ProtoOption;
+  type IntoIter = std::vec::IntoIter<ProtoOption>;
 
   #[inline]
   fn into_iter(self) -> Self::IntoIter {
@@ -181,8 +292,8 @@ impl IntoIterator for OptionMessageBuilder {
 }
 
 impl<'a> IntoIterator for &'a OptionMessageBuilder {
-  type Item = &'a KeyValue;
-  type IntoIter = std::slice::Iter<'a, KeyValue>;
+  type Item = &'a ProtoOption;
+  type IntoIter = std::slice::Iter<'a, ProtoOption>;
 
   #[inline]
   fn into_iter(self) -> Self::IntoIter {
@@ -190,32 +301,25 @@ impl<'a> IntoIterator for &'a OptionMessageBuilder {
   }
 }
 
-impl<N, V> FromIterator<(N, V)> for OptionMessageBuilder
+impl<T> FromIterator<T> for OptionMessageBuilder
 where
-  N: Into<Arc<str>>,
-  V: Into<OptionValue>,
+  T: Into<ProtoOption>,
 {
-  fn from_iter<T: IntoIterator<Item = (N, V)>>(iter: T) -> Self {
-    let items: Vec<KeyValue> = iter
-      .into_iter()
-      .map(|(n, v)| (n.into(), v.into()))
-      .collect();
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    let items: Vec<ProtoOption> = iter.into_iter().map(|v| v.into()).collect();
 
     Self { inner: items }
   }
 }
 
-impl<N, V> Extend<(N, V)> for OptionMessageBuilder
+impl<T> Extend<T> for OptionMessageBuilder
 where
-  N: Into<Arc<str>>,
-  V: Into<OptionValue>,
+  T: Into<ProtoOption>,
 {
-  fn extend<T: IntoIterator<Item = (N, V)>>(&mut self, iter: T) {
-    self.inner.extend(
-      iter
-        .into_iter()
-        .map(|(n, v)| (n.into(), v.into())),
-    )
+  fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+    self
+      .inner
+      .extend(iter.into_iter().map(|v| v.into()))
   }
 }
 
@@ -230,36 +334,106 @@ impl OptionValue {
   }
 
   /// Creates a new message option value.
-  pub fn new_message<S, V, I>(items: I) -> Self
+  pub fn new_message<I>(items: I) -> Self
   where
-    S: Into<Arc<str>>,
-    V: Into<Self>,
-    I: IntoIterator<Item = (S, V)>,
+    I: Into<OptionMessage>,
   {
-    Self::Message(items.into_iter().collect())
+    Self::Message(items.into())
   }
 
   /// Creates a new list option value.
-  pub fn new_list<I, V>(items: I) -> Self
+  pub fn new_list<I>(items: I) -> Self
   where
-    V: Into<Self>,
-    I: IntoIterator<Item = V>,
+    I: Into<OptionList>,
   {
-    let items: Vec<Self> = items.into_iter().map(Into::into).collect();
-
     Self::List(items.into())
+  }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OptionList {
+  inner: Arc<[OptionValue]>,
+}
+
+impl Deref for OptionList {
+  type Target = [OptionValue];
+
+  fn deref(&self) -> &Self::Target {
+    &self.inner
+  }
+}
+
+impl OptionList {
+  pub fn iter(&self) -> std::slice::Iter<'_, OptionValue> {
+    self.inner.iter()
+  }
+}
+
+impl<T> FromIterator<T> for OptionList
+where
+  T: Into<OptionValue>,
+{
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    let vec: Vec<OptionValue> = iter.into_iter().map(|i| i.into()).collect();
+
+    Self { inner: vec.into() }
+  }
+}
+
+impl<'a> IntoIterator for &'a OptionList {
+  type Item = &'a OptionValue;
+  type IntoIter = std::slice::Iter<'a, OptionValue>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.inner.iter()
+  }
+}
+
+impl<T: Into<OptionValue>> From<Vec<T>> for OptionList {
+  fn from(value: Vec<T>) -> Self {
+    value.into_iter().collect()
+  }
+}
+
+impl<T: Into<OptionValue> + Ord> From<SortedList<T>> for OptionList {
+  fn from(value: SortedList<T>) -> Self {
+    value.into_iter().collect()
+  }
+}
+
+impl<T: Into<OptionValue>> From<BTreeSet<T>> for OptionList {
+  fn from(value: BTreeSet<T>) -> Self {
+    value.into_iter().collect()
+  }
+}
+
+impl<T: Into<OptionValue>, const S: usize> From<[T; S]> for OptionList {
+  fn from(value: [T; S]) -> Self {
+    value.into_iter().collect()
+  }
+}
+
+impl From<Arc<[OptionValue]>> for OptionList {
+  fn from(value: Arc<[OptionValue]>) -> Self {
+    Self { inner: value }
   }
 }
 
 impl<T: Into<Self>> From<Vec<T>> for OptionValue {
   fn from(value: Vec<T>) -> Self {
-    Self::List(
-      value
-        .into_iter()
-        .map(|item| item.into())
-        .collect::<Vec<Self>>()
-        .into(),
-    )
+    Self::List(value.into())
+  }
+}
+
+impl<T: Into<Self>, const S: usize> From<[T; S]> for OptionValue {
+  fn from(value: [T; S]) -> Self {
+    Self::List(value.into())
+  }
+}
+
+impl<T: Into<Self>> From<BTreeSet<T>> for OptionValue {
+  fn from(value: BTreeSet<T>) -> Self {
+    Self::List(value.into())
   }
 }
 
@@ -315,4 +489,5 @@ option_value_conversion!(f64, Float);
 option_value_conversion!(f32, Float, as f64);
 option_value_conversion!(Bytes, Bytes);
 option_value_conversion!(OptionMessage, Message);
+option_value_conversion!(OptionList, List);
 option_value_conversion!(Arc<str>, String);

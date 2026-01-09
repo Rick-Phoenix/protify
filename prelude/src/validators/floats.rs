@@ -327,13 +327,13 @@ where
         &IN_,
         validator
           .in_
-          .map(|list| OptionValue::new_list(list.items.iter().map(|of| of.0))),
+          .map(|list| OptionValue::List(list.items.iter().map(|of| of.0).collect())),
       )
       .maybe_set(
         &NOT_IN,
         validator
           .not_in
-          .map(|list| OptionValue::new_list(list.items.iter().map(|of| of.0))),
+          .map(|list| OptionValue::List(list.items.iter().map(|of| of.0).collect())),
       );
 
     let mut outer_rules = OptionMessageBuilder::new();

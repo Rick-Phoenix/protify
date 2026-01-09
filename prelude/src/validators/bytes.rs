@@ -356,22 +356,24 @@ impl From<BytesValidator> for ProtoOption {
       .maybe_set(
         &IN_,
         validator.in_.map(|list| {
-          OptionValue::new_list(
+          OptionValue::List(
             list
               .items
               .iter()
-              .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b).into())),
+              .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b).into()))
+              .collect(),
           )
         }),
       )
       .maybe_set(
         &NOT_IN,
         validator.not_in.map(|list| {
-          OptionValue::new_list(
+          OptionValue::List(
             list
               .items
               .iter()
-              .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b).into())),
+              .map(|b| OptionValue::String(format_bytes_as_proto_string_literal(b).into()))
+              .collect(),
           )
         }),
       );
