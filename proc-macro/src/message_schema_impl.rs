@@ -108,7 +108,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
             ::prelude::Field {
               name: #proto_name,
               tag: #tag,
-              options: #options_tokens,
+              options: #options_tokens.into_iter().collect(),
               type_: #field_type_tokens,
               validator: #validator_schema_tokens,
             }
@@ -206,7 +206,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
             package: __PROTO_FILE.package,
             reserved_names: vec![ #(#reserved_names),* ],
             reserved_numbers: vec![ #reserved_numbers ],
-            options: #options_tokens,
+            options: #options_tokens.into_iter().collect(),
             messages: vec![],
             enums: vec![],
             entries: vec![ #(#entries_tokens,)* ],

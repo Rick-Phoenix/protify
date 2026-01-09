@@ -157,7 +157,7 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
     let options_tokens = options_tokens(options, *deprecated);
 
     quote! {
-      ::prelude::EnumVariant { name: #name, options: #options_tokens, tag: #tag, }
+      ::prelude::EnumVariant { name: #name, options: #options_tokens.into_iter().collect(), tag: #tag, }
     }
   });
 
@@ -277,7 +277,7 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
           variants: vec! [ #(#variants_tokens,)* ],
           reserved_names: vec![ #(#reserved_names),* ],
           reserved_numbers: vec![ #reserved_numbers ],
-          options: #options_tokens,
+          options: #options_tokens.into_iter().collect(),
           rust_path: #rust_path_field
         }
       }

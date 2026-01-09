@@ -100,7 +100,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
         name: #name,
         request: <#request as ::prelude::ProtoMessage>::proto_path(),
         response: <#response as ::prelude::ProtoMessage>::proto_path(),
-        options: #options_tokens
+        options: #options_tokens.into_iter().collect()
       }
     }
   });
@@ -125,7 +125,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
           file: __PROTO_FILE.file,
           package: __PROTO_FILE.package,
           handlers: vec![ #(#handlers_tokens),* ],
-          options: #options_tokens
+          options: #options_tokens.into_iter().collect()
         }
       }
     }

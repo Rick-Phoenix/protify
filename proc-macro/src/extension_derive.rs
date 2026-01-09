@@ -71,7 +71,7 @@ pub fn process_extension_derive(
       ::prelude::Field {
         name: #proto_name,
         tag: #tag,
-        options: #options,
+        options: #options.into_iter().collect(),
         type_: #field_type_tokens,
         validator: None,
       }

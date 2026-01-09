@@ -42,7 +42,7 @@ impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
         ::prelude::Field {
           name: #proto_name,
           tag: #tag,
-          options: #options_tokens,
+          options: #options_tokens.into_iter().collect(),
           type_: #field_type_tokens,
           validator: #validator_schema_tokens,
         }
@@ -67,7 +67,7 @@ impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
           ::prelude::Oneof {
             name: #proto_name,
             fields: vec![ #(#variants_tokens,)* ],
-            options: #options_tokens,
+            options: #options_tokens.into_iter().collect(),
           }
         }
       }

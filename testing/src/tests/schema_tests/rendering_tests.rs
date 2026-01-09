@@ -71,8 +71,8 @@ fn nested_option() -> ProtoOption {
   proto_option!("nested_opt" => outer)
 }
 
-fn test_options() -> Vec<ProtoOption> {
-  vec![normal_option(), nested_option()]
+fn test_options() -> [ProtoOption; 2] {
+  [normal_option(), nested_option()]
 }
 
 #[proto_extension(target = MessageOptions)]

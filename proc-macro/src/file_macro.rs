@@ -78,7 +78,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
         file: __PROTO_FILE.file,
         package: __PROTO_FILE.package,
         edition: #edition,
-        options: || #options,
+        options: || #options.into_iter().collect(),
         imports: || vec![ #(#imports),* ],
         extensions: || #extensions
       }
