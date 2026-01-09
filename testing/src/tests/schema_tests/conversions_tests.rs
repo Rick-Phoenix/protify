@@ -15,12 +15,13 @@ impl From<IntWrapper> for i32 {
   }
 }
 
+// This implicitly checks the automatic conversion working
 #[proto_oneof(proxied, no_auto_test)]
 #[derive(PartialEq)]
 enum OneofWithDefault {
   #[proto(tag = 1)]
   A(String),
-  #[proto(tag = 2, int32, from_proto = |v| IntWrapper(v), into_proto = |_| 1)]
+  #[proto(tag = 2, int32)]
   B(IntWrapper),
 }
 
@@ -116,16 +117,6 @@ fn oneof_field_from_proto_only() {
   assert_eq_pretty!(proxy, OneofFieldFromProtoOnly::B(IntWrapper(1)));
 }
 
-// Correct if it compiles
-#[proto_oneof(proxied, no_auto_test)]
-#[derive(PartialEq)]
-enum OneofDefaultConversion {
-  #[proto(tag = 1, sint32)]
-  A(IntWrapper),
-  #[proto(tag = 2, int32)]
-  B(IntWrapper),
-}
-
 #[proto_oneof(proxied, no_auto_test)]
 #[derive(PartialEq)]
 #[proto(from_proto = |_| OneofCustomConversions::A("from_proto".to_string()))]
@@ -192,4 +183,125 @@ fn oneof_from_proto_only() {
   let proxy: OneofFromProtoOnly = oneof.into();
 
   assert_eq_pretty!(proxy, OneofFromProtoOnly::A("from_proto".to_string()));
+}
+
+// This implicitly tests the automatic conversions
+#[proto_message(proxied, no_auto_test)]
+struct ProxiedMessage {
+  #[proto(int32)]
+  id: IntWrapper,
+}
+
+// This just checks if the proxy is working
+#[proto_message(proxied, no_auto_test)]
+struct ProxiedMessage2 {
+  #[proto(message(proxied))]
+  msg: Option<ProxiedMessage>,
+}
+
+#[proto_message(proxied, no_auto_test)]
+struct MessageFieldCustomConversions {
+  #[proto(int32)]
+  #[proto(from_proto = |_| IntWrapper(1))]
+  #[proto(into_proto = |_| 2)]
+  id: IntWrapper,
+}
+
+#[test]
+fn message_field_custom_conversions() {
+  let mut msg = MessageFieldCustomConversionsProto::default();
+
+  let proxy: MessageFieldCustomConversions = msg.into();
+
+  assert_eq_pretty!(proxy.id.0, 1);
+
+  msg = proxy.into_message();
+
+  assert_eq_pretty!(msg.id, 2);
+}
+
+#[proto_message(proxied, no_auto_test)]
+struct MessageFieldCustomFromProtoOnly {
+  #[proto(int32)]
+  #[proto(from_proto = |_| IntWrapper(1))]
+  id: IntWrapper,
+}
+
+#[test]
+fn message_field_custom_from_proto_only() {
+  let msg = MessageFieldCustomFromProtoOnlyProto::default();
+
+  let proxy: MessageFieldCustomFromProtoOnly = msg.into();
+
+  assert_eq_pretty!(proxy.id.0, 1);
+}
+
+#[proto_message(proxied, no_auto_test)]
+struct MessageFieldCustomIntoProtoOnly {
+  #[proto(int32)]
+  #[proto(into_proto = |_| 2)]
+  id: IntWrapper,
+}
+
+#[test]
+fn message_field_custom_into_proto_only() {
+  let proxy = MessageFieldCustomIntoProtoOnly { id: IntWrapper(0) };
+
+  let msg = proxy.into_message();
+
+  assert_eq_pretty!(msg.id, 2);
+}
+
+#[proto_message(proxied, no_auto_test)]
+#[proto(from_proto = |_| MessageCustomConversions { id: IntWrapper(1) })]
+#[proto(into_proto = |_| MessageCustomConversionsProto { id: 2 })]
+struct MessageCustomConversions {
+  #[proto(int32)]
+  id: IntWrapper,
+}
+
+#[test]
+fn message_custom_conversions() {
+  let mut msg = MessageCustomConversionsProto::default();
+
+  let proxy: MessageCustomConversions = msg.into();
+
+  assert_eq_pretty!(proxy.id.0, 1);
+
+  msg = proxy.into_message();
+
+  assert_eq_pretty!(msg.id, 2);
+}
+
+#[proto_message(proxied, no_auto_test)]
+#[proto(from_proto = |_| MessageCustomFromProtoOnly { id: IntWrapper(1) })]
+struct MessageCustomFromProtoOnly {
+  #[proto(int32)]
+  id: IntWrapper,
+}
+
+#[test]
+fn message_custom_from_proto_only() {
+  let msg = MessageCustomFromProtoOnlyProto::default();
+
+  let proxy: MessageCustomFromProtoOnly = msg.into();
+
+  assert_eq_pretty!(proxy.id.0, 1);
+}
+
+#[proto_message(proxied, no_auto_test)]
+#[proto(into_proto = |_| MessageCustomIntoProtoOnlyProto { id: 2 })]
+struct MessageCustomIntoProtoOnly {
+  #[allow(unused)]
+  #[proto(int32)]
+  id: IntWrapper,
+}
+
+#[test]
+fn message_custom_into_proto_only() {
+  let proxy = MessageCustomIntoProtoOnly { id: IntWrapper(0) };
+
+  let msg = proxy.into_message();
+
+  assert_eq_pretty!(msg.id, 2);
 }
