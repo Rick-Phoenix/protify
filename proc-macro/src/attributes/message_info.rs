@@ -4,12 +4,14 @@ use crate::*;
 pub struct MessageInfo {
   pub path: Path,
   pub boxed: bool,
+  pub default: bool,
 }
 
 impl MessageInfo {
   pub fn parse(meta: &ParseNestedMeta, type_info: Option<&TypeInfo>) -> syn::Result<Self> {
     let mut item_path = ItemPathEntry::default();
     let mut boxed = false;
+    let mut default = false;
 
     // Checking first in case we just get `message` without the parentheses
     if meta.is_list() {
@@ -20,6 +22,7 @@ impl MessageInfo {
               item_path = ItemPathEntry::Proxied;
             }
             "boxed" => boxed = true,
+            "default" => default = true,
             _ => item_path = ItemPathEntry::Path(meta.path),
           };
         } else {
@@ -64,6 +67,10 @@ impl MessageInfo {
       }
     };
 
-    Ok(Self { path, boxed })
+    Ok(Self {
+      path,
+      boxed,
+      default,
+    })
   }
 }

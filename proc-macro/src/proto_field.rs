@@ -162,16 +162,32 @@ impl ProtoField {
         quote! { #base_ident.into_iter().map(Into::into).collect() }
       }
       Self::Optional(inner) => {
-        let conversion = if inner.is_message() {
-          let base_ident2 = quote! { v };
-          inner.default_into_proto(&base_ident2)
+        let conversion = if let ProtoType::Message(MessageInfo { boxed: true, .. }) = inner {
+          quote! { Box::new((*v)).into() }
         } else {
           quote! { v.into() }
         };
 
         quote! { #base_ident.map(|v| #conversion) }
       }
-      Self::Single(proto_type) => proto_type.default_into_proto(base_ident),
+      // If a message is with `default`, then it would be processed here
+      Self::Single(inner) => {
+        if let ProtoType::Message(MessageInfo { boxed, default, .. }) = inner {
+          let conversion = if *boxed {
+            quote! { Box::new((*#base_ident).into()) }
+          } else {
+            quote! { #base_ident.into() }
+          };
+
+          if *default {
+            quote! { Some(#conversion) }
+          } else {
+            conversion
+          }
+        } else {
+          quote! { #base_ident.into() }
+        }
+      }
     }
   }
 
@@ -202,6 +218,7 @@ impl ProtoField {
 
         quote! { #base_ident.map(|v| #inner) }
       }
+      // If a message is with `default`, then it would be processed here
       Self::Single(proto_type) => proto_type.default_from_proto(base_ident),
     }
   }

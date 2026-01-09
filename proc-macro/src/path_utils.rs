@@ -52,7 +52,7 @@ impl ItemPathEntry {
   ///
   /// [`Proxied`]: ItemPathEntry::Proxied
   #[must_use]
-  pub fn is_proxied(&self) -> bool {
+  pub const fn is_proxied(&self) -> bool {
     matches!(self, Self::Proxied)
   }
 }

@@ -249,6 +249,7 @@ impl ProtoType {
               .as_path()
               .ok_or_else(|| error!(type_info, "Failed to infer message path"))?,
             boxed,
+            default: false,
           })
         }
       },

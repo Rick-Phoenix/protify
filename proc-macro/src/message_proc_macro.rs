@@ -176,6 +176,18 @@ pub fn message_macro_shadow(
       );
     }
 
+    if let Some(ProtoType::Message(MessageInfo { default: false, .. })) =
+      field_data.proto_field.inner()
+      && !field_data.type_info.is_option()
+      && !field_data.has_custom_conversions()
+      && !proto_conversion_data.has_custom_impls()
+    {
+      bail!(
+        &field_data.type_info,
+        "A message must be wrapped in `Option` unless a custom to/from proto implementation is provided or the `default` attribute is used"
+      );
+    }
+
     let tag = if field_data.proto_field.is_oneof() {
       // We don't need an actual tag for oneofs
       0

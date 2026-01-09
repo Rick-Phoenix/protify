@@ -163,17 +163,18 @@ impl ProtoType {
   pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
     match self {
       Self::Enum(_) => quote! { #base_ident.try_into().unwrap_or_default() },
-      Self::Message(MessageInfo { boxed: true, .. }) => {
-        quote! { Box::new((*#base_ident).into()) }
-      }
-      _ => quote! { #base_ident.into() },
-    }
-  }
+      Self::Message(MessageInfo { boxed, default, .. }) => {
+        let conversion = if *boxed {
+          quote! { Box::new((*#base_ident).into()) }
+        } else {
+          quote! { #base_ident.into() }
+        };
 
-  pub fn default_into_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
-    match self {
-      Self::Message(MessageInfo { boxed: true, .. }) => {
-        quote! { Box::new((*#base_ident).into()) }
+        if *default {
+          quote! { Some(#conversion) }
+        } else {
+          conversion
+        }
       }
       _ => quote! { #base_ident.into() },
     }
@@ -262,7 +263,7 @@ impl ProtoType {
       Self::Bool => quote! { bool },
       Self::Bytes => quote! { Bytes },
       Self::Enum(_) | Self::Int32 | Self::Sint32 | Self::Sfixed32 => quote! { i32 },
-      Self::Message(MessageInfo { boxed, path }) => {
+      Self::Message(MessageInfo { boxed, path, .. }) => {
         if *boxed {
           quote! { Box<#path> }
         } else {
