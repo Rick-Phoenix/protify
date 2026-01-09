@@ -185,6 +185,12 @@ where
   }
 }
 
+impl From<Arc<[ProtoOption]>> for OptionMessage {
+  fn from(value: Arc<[ProtoOption]>) -> Self {
+    Self { inner: value }
+  }
+}
+
 impl<T> From<Vec<T>> for OptionMessage
 where
   T: Into<ProtoOption>,
@@ -200,6 +206,12 @@ where
   V: Into<Self>,
 {
   fn from(value: Vec<(N, V)>) -> Self {
+    Self::Message(value.into())
+  }
+}
+
+impl From<Vec<ProtoOption>> for OptionValue {
+  fn from(value: Vec<ProtoOption>) -> Self {
     Self::Message(value.into())
   }
 }
@@ -265,12 +277,8 @@ where
   }
 }
 
-impl<N, V, const S: usize> From<[(N, V); S]> for OptionValue
-where
-  N: Into<Arc<str>>,
-  V: Into<Self>,
-{
-  fn from(value: [(N, V); S]) -> Self {
+impl<const S: usize> From<[ProtoOption; S]> for OptionValue {
+  fn from(value: [ProtoOption; S]) -> Self {
     Self::Message(value.into())
   }
 }
@@ -401,15 +409,45 @@ impl<T: Into<OptionValue> + Ord> From<SortedList<T>> for OptionList {
   }
 }
 
+impl<T: Into<Self> + Ord> From<SortedList<T>> for OptionValue {
+  fn from(value: SortedList<T>) -> Self {
+    Self::List(value.into())
+  }
+}
+
 impl<T: Into<OptionValue>> From<BTreeSet<T>> for OptionList {
   fn from(value: BTreeSet<T>) -> Self {
     value.into_iter().collect()
   }
 }
 
+impl<T: Into<Self>> From<BTreeSet<T>> for OptionValue {
+  fn from(value: BTreeSet<T>) -> Self {
+    Self::List(value.into())
+  }
+}
+
+impl<T: Into<OptionValue>> From<HashSet<T>> for OptionList {
+  fn from(value: HashSet<T>) -> Self {
+    value.into_iter().collect()
+  }
+}
+
+impl<T: Into<Self>> From<HashSet<T>> for OptionValue {
+  fn from(value: HashSet<T>) -> Self {
+    Self::List(value.into())
+  }
+}
+
 impl<T: Into<OptionValue>, const S: usize> From<[T; S]> for OptionList {
   fn from(value: [T; S]) -> Self {
     value.into_iter().collect()
+  }
+}
+
+impl<T: Into<Self>, const S: usize> From<[T; S]> for OptionValue {
+  fn from(value: [T; S]) -> Self {
+    Self::List(value.into())
   }
 }
 
@@ -421,18 +459,6 @@ impl From<Arc<[OptionValue]>> for OptionList {
 
 impl<T: Into<Self>> From<Vec<T>> for OptionValue {
   fn from(value: Vec<T>) -> Self {
-    Self::List(value.into())
-  }
-}
-
-impl<T: Into<Self>, const S: usize> From<[T; S]> for OptionValue {
-  fn from(value: [T; S]) -> Self {
-    Self::List(value.into())
-  }
-}
-
-impl<T: Into<Self>> From<BTreeSet<T>> for OptionValue {
-  fn from(value: BTreeSet<T>) -> Self {
     Self::List(value.into())
   }
 }
