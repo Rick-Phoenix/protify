@@ -1,4 +1,4 @@
-#![allow(clippy::struct_field_names)]
+#![allow(clippy::struct_field_names, clippy::must_use_candidate)]
 
 #[cfg(test)]
 mod tests {

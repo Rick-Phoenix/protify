@@ -191,6 +191,12 @@ impl From<Arc<[ProtoOption]>> for OptionMessage {
   }
 }
 
+impl From<ProtoOption> for OptionMessage {
+  fn from(value: ProtoOption) -> Self {
+    std::iter::once(value).collect()
+  }
+}
+
 impl<T> From<Vec<T>> for OptionMessage
 where
   T: Into<ProtoOption>,
@@ -490,6 +496,18 @@ impl From<Ignore> for OptionValue {
     };
 
     Self::Enum(name)
+  }
+}
+
+impl From<&'static [u8]> for OptionValue {
+  fn from(value: &'static [u8]) -> Self {
+    Self::Bytes(Bytes::from_static(value))
+  }
+}
+
+impl<'a, const S: usize> From<&'a [u8; S]> for OptionValue {
+  fn from(value: &'a [u8; S]) -> Self {
+    Self::Bytes(value.to_vec().into())
   }
 }
 

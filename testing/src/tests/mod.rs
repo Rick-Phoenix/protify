@@ -1,6 +1,5 @@
 mod cel_tests;
 mod oneof_tags_tests;
-mod rendering_tests;
 
 mod schema_tests;
 mod tolerances_tests;

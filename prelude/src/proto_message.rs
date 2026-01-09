@@ -76,6 +76,19 @@ impl Message {
       }))
       .collect()
   }
+
+  pub fn fields(&self) -> impl Iterator<Item = &Field> {
+    self.entries.iter().flat_map(|entry| {
+      let (field_opt, oneof_vec) = match entry {
+        MessageEntry::Field(f) => (Some(f), None),
+        MessageEntry::Oneof { oneof, .. } => (None, Some(&oneof.fields)),
+      };
+
+      field_opt
+        .into_iter()
+        .chain(oneof_vec.into_iter().flatten())
+    })
+  }
 }
 
 #[derive(Debug, Clone, PartialEq)]
