@@ -12,7 +12,7 @@ pub fn process_derive_enum_variants_attrs(
   attrs: &[Attribute],
   no_prefix: bool,
 ) -> Result<EnumVariantAttrs, Error> {
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
+  let mut options = TokensOr::<TokenStream2>::vec();
   let mut name: Option<String> = None;
   let mut deprecated = false;
 
@@ -38,6 +38,7 @@ pub fn process_derive_enum_variants_attrs(
               deprecated = boolean.value();
             }
             "options" => {
+              options.span = meta.input.span();
               options.set(meta.expr_value()?.into_token_stream());
             }
             "name" => {

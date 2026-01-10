@@ -36,7 +36,7 @@ pub fn process_oneof_attrs(
 
   macro_attrs_parser.parse2(macro_attrs)?;
 
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
+  let mut options = TokensOr::<TokenStream2>::vec();
   let mut name: Option<String> = None;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
@@ -52,6 +52,7 @@ pub fn process_oneof_attrs(
         shadow_derives = Some(list);
       }
       "options" => {
+        options.span = meta.input.span();
         options.set(meta.expr_value()?.into_token_stream());
       }
       "from_proto" => {

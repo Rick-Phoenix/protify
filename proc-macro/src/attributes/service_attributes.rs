@@ -8,7 +8,7 @@ pub struct ServiceOrHandlerAttrs {
 pub fn process_service_or_handler_attrs(
   attrs: &[Attribute],
 ) -> Result<ServiceOrHandlerAttrs, Error> {
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
+  let mut options = TokensOr::<TokenStream2>::vec();
   let mut deprecated = false;
 
   for attr in attrs {
@@ -33,6 +33,7 @@ pub fn process_service_or_handler_attrs(
               deprecated = boolean.value();
             }
             "options" => {
+              options.span = meta.input.span();
               options.set(meta.expr_value()?.into_token_stream());
             }
             _ => return Err(meta.error("Unknown attribute")),

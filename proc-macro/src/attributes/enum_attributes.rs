@@ -17,7 +17,7 @@ pub fn process_derive_enum_attrs(
 ) -> Result<EnumAttrs, Error> {
   let mut reserved_names: Vec<String> = Vec::new();
   let mut reserved_numbers = ReservedNumbers::default();
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
+  let mut options = TokensOr::<TokenStream2>::vec();
   let mut proto_name: Option<String> = None;
   let mut no_prefix = false;
   let mut parent_message: Option<Ident> = None;
@@ -68,6 +68,7 @@ pub fn process_derive_enum_attrs(
               );
             }
             "options" => {
+              options.span = meta.input.span();
               options.set(meta.expr_value()?.into_token_stream());
             }
             "name" => {

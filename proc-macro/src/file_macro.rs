@@ -6,14 +6,13 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut const_ident: Option<Ident> = None;
   let mut name: Option<String> = None;
   let mut package: Option<Path> = None;
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
-  let mut extern_path = TokensOr::<LitStr>::new(|| quote! { std::module_path!() });
+  let mut options = TokenStreamOr::vec();
+  let mut extern_path = TokensOr::<LitStr>::new(|span| quote_spanned! (span=> std::module_path!()));
   let mut imports: Vec<String> = Vec::new();
-  let mut extensions = IterTokensOr::<Path>::vec().with_formatter(|items, tokens| {
-    tokens
-      .extend(quote! { vec![ #(<#items as ::prelude::ProtoExtension>::as_proto_extension()),* ] })
+  let mut extensions = IterTokensOr::<Path>::vec().with_formatter(|_, items| {
+    quote! { vec![ #(<#items as ::prelude::ProtoExtension>::as_proto_extension()),* ] }
   });
-  let mut edition = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::Edition::Proto3 });
+  let mut edition = TokenStreamOr::new(|_| quote! { ::prelude::Edition::Proto3 });
 
   let parser = syn::meta::parser(|meta| {
     let ident_str = meta.ident_str()?;
@@ -26,6 +25,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
         package = Some(meta.parse_value::<Path>()?);
       }
       "options" => {
+        options.span = meta.input.span();
         options.set(meta.expr_value()?.into_token_stream());
       }
       "extern_path" => {

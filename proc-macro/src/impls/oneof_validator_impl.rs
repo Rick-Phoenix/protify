@@ -27,6 +27,7 @@ pub fn generate_oneof_validator<T: Borrow<FieldData>>(
 
     if let Some(ValidatorTokens {
       expr: validator_expr,
+      span,
       ..
     }) = validator.as_ref()
     {
@@ -36,7 +37,7 @@ pub fn generate_oneof_validator<T: Borrow<FieldData>>(
 
       let field_type = proto_field.descriptor_type_tokens();
 
-      Some(quote! {
+      Some(quote_spanned! {*span=>
         Self::#ident(v) => {
           static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
             #validator_expr

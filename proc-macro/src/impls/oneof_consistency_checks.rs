@@ -9,6 +9,7 @@ pub fn generate_oneof_consistency_checks<T: Borrow<FieldData>>(
     let FieldData {
       ident_str,
       validator,
+      span,
       ..
     } = data.borrow();
 
@@ -17,7 +18,7 @@ pub fn generate_oneof_consistency_checks<T: Borrow<FieldData>>(
       // Useless to check consistency for default validators
       .filter(|v| !v.is_fallback)
       .map(|validator| {
-        quote! {
+        quote_spanned! {*span=>
           if let Err(errs) = ::prelude::Validator::check_consistency(&#validator) {
             errors.push(::prelude::FieldError {
               field: #ident_str,

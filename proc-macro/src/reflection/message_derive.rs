@@ -38,6 +38,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
   let mut fields_data: Vec<FieldData> = Vec::new();
 
   for field in fields {
+    let field_span = field.span();
     let ident = field.require_ident()?;
     let ident_str = ident.to_string();
 
@@ -111,7 +112,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
           ident_str,
           tag: Some(0),
           validator: None,
-          options: TokensOr::<TokenStream2>::new(|| quote! {}),
+          options: TokensOr::<TokenStream2>::vec(),
           proto_field: ProtoField::Oneof(oneof),
           from_proto: None,
           into_proto: None,
@@ -148,11 +149,13 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
         ValidatorTokens {
           expr: expr.into_built_validator(),
           is_fallback: false,
+          span: field_span,
         }
       } else if let Some(fallback) = proto_field.default_validator_expr() {
         ValidatorTokens {
           expr: fallback,
           is_fallback: true,
+          span: field_span,
         }
       } else {
         continue;
@@ -166,7 +169,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
         ident_str,
         tag: Some(field_desc.number().cast_signed()),
         validator: Some(validator),
-        options: TokensOr::<TokenStream2>::new(|| quote! {}),
+        options: TokensOr::<TokenStream2>::vec(),
         proto_field,
         from_proto: None,
         into_proto: None,

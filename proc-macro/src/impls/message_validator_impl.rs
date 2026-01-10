@@ -32,19 +32,20 @@ pub fn generate_message_validator<T: Borrow<FieldData>>(
       validator,
       proto_name,
       proto_field,
+      span,
       ..
     } = data.borrow();
 
     if let ProtoField::Oneof(OneofInfo { required, .. }) = proto_field {
       Some(if *required {
-        quote! {
+        quote_spanned! {*span=>
           match self.#ident.as_ref() {
             Some(oneof) => ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations),
             None => violations.add_required_oneof_violation(parent_elements)
           };
         }
       } else {
-        quote! {
+        quote_spanned! {*span=>
           if let Some(oneof) = self.#ident.as_ref() {
             ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations);
           }
@@ -53,6 +54,7 @@ pub fn generate_message_validator<T: Borrow<FieldData>>(
     } else {
       if let Some(ValidatorTokens {
         expr: validator_expr,
+        span,
         ..
       }) = validator.as_ref()
       {
@@ -66,23 +68,23 @@ pub fn generate_message_validator<T: Borrow<FieldData>>(
           match type_info.type_.as_ref() {
             RustType::Option(inner) => {
               if inner.is_box() {
-                quote! { self.#ident.as_deref() }
+                quote_spanned! (*span=> self.#ident.as_deref())
               } else {
-                quote! { self.#ident.as_ref() }
+                quote_spanned! (*span=> self.#ident.as_ref())
               }
             }
-            RustType::Box(_) => quote! { self.#ident.as_deref() },
+            RustType::Box(_) => quote_spanned! (*span=> self.#ident.as_deref()),
             _ => {
               if let ProtoField::Single(ProtoType::Message(MessageInfo { .. })) = proto_field {
-                quote! { self.#ident.as_ref() }
+                quote_spanned! (*span=> self.#ident.as_ref())
               } else {
-                quote! {  Some(&self.#ident)  }
+                quote_spanned! (*span=> Some(&self.#ident))
               }
             }
           }
         };
 
-        Some(quote! {
+        Some(quote_spanned! {*span=>
           static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
             #validator_expr
           });
@@ -113,7 +115,7 @@ pub fn generate_message_validator<T: Borrow<FieldData>>(
   let has_cel_rules = !top_level_cel_rules.is_empty();
 
   let cel_rules_method = has_cel_rules.then(|| {
-      quote! {
+      quote_spanned! {top_level_cel_rules.span()=>
         #[inline]
         fn cel_rules() -> &'static [::prelude::CelProgram] {
           static PROGRAMS: std::sync::LazyLock<Vec<::prelude::CelProgram>> = std::sync::LazyLock::new(|| {
@@ -126,7 +128,7 @@ pub fn generate_message_validator<T: Borrow<FieldData>>(
     });
 
   let cel_rules_call = has_cel_rules.then(|| {
-    quote! {
+    quote_spanned! {top_level_cel_rules.span()=>
       ::prelude::ValidatedMessage::validate_cel(self, field_context, parent_elements, violations);
     }
   });

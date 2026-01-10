@@ -10,7 +10,7 @@ pub struct ExtensionFieldAttrs {
 
 pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttrs, Error> {
   let mut tag: Option<i32> = None;
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
+  let mut options = TokensOr::<TokenStream2>::vec();
   let mut name: Option<String> = None;
   let mut proto_field: Option<ProtoField> = None;
 
@@ -22,6 +22,7 @@ pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttr
 
     match ident.as_str() {
       "options" => {
+        options.span = meta.input.span();
         options.set(meta.expr_value()?.into_token_stream());
       }
       "tag" => {

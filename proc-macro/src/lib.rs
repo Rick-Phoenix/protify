@@ -59,8 +59,8 @@ mod service_derive;
 pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
 
-  let cel_crate_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::cel });
-  let proto_types_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::proto_types });
+  let cel_crate_path = TokensOr::<TokenStream2>::new(|_| quote! { ::prelude::cel });
+  let proto_types_path = TokensOr::<TokenStream2>::new(|_| quote! { ::prelude::proto_types });
 
   match cel_try_into::derive_cel_value_oneof(&item, &cel_crate_path, &proto_types_path) {
     Ok(tokens) => tokens.into(),
@@ -73,8 +73,8 @@ pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
 pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemStruct);
 
-  let cel_crate_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::cel });
-  let proto_types_path = TokensOr::<TokenStream2>::new(|| quote! { ::prelude::proto_types });
+  let cel_crate_path = TokensOr::<TokenStream2>::new(|_| quote! { ::prelude::cel });
+  let proto_types_path = TokensOr::<TokenStream2>::new(|_| quote! { ::prelude::proto_types });
 
   match cel_try_into::derive_cel_value_struct(&item, &cel_crate_path, &proto_types_path) {
     Ok(tokens) => tokens.into(),

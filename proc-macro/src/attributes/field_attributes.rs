@@ -4,6 +4,7 @@ use crate::*;
 pub struct ValidatorTokens {
   pub expr: TokenStream2,
   pub is_fallback: bool,
+  pub span: Span,
 }
 
 impl ToTokens for ValidatorTokens {
@@ -29,7 +30,7 @@ pub struct FieldData {
 }
 
 impl FieldData {
-  pub fn has_custom_conversions(&self) -> bool {
+  pub const fn has_custom_conversions(&self) -> bool {
     self.from_proto.is_some() && self.into_proto.is_some()
   }
 }
@@ -56,9 +57,11 @@ impl FieldDataKind {
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error> {
-  let mut validator: Option<ClosureOrExpr> = None;
+  let field_span = field.span();
+
+  let mut validator: Option<(ClosureOrExpr, Span)> = None;
   let mut tag: Option<i32> = None;
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
+  let mut options = TokensOr::<TokenStream2>::vec();
   let mut name: Option<String> = None;
   let mut proto_field: Option<ProtoField> = None;
   let mut is_ignored = false;
@@ -90,6 +93,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
               deprecated = boolean.value();
             }
             "options" => {
+              options.span = meta.input.span();
               options.set(meta.expr_value()?.into_token_stream());
             }
             "tag" => {
@@ -99,7 +103,10 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
               name = Some(meta.expr_value()?.as_string()?);
             }
             "validate" => {
-              validator = Some(meta.expr_value()?.as_closure_or_expr());
+              let span = meta.input.span();
+              let expr = meta.expr_value()?.as_closure_or_expr();
+
+              validator = Some((expr, span));
             }
             "from_proto" => {
               from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
@@ -179,28 +186,32 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     }
   };
 
-  let validator_expr = validator.as_ref().map(|validator|  {
+  let validator_expr = validator.as_ref().map(|(validator, span)|  {
       let validator_target_type = proto_field.validator_target_type();
 
-      match validator {
-        ClosureOrExpr::Expr(expr) => quote! { #expr },
+      let expr = match validator {
+        ClosureOrExpr::Expr(expr) => quote_spanned! (*span=> #expr),
 
         ClosureOrExpr::Closure(closure) => {
-          quote! { <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#closure) }
+          quote_spanned! {*span=> <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#closure) }
         }
-      }
+      };
+
+      (expr, *span)
     });
 
   #[allow(clippy::manual_map)]
-  let validator = if let Some(expr) = validator_expr {
+  let validator = if let Some((expr, span)) = validator_expr {
     Some(ValidatorTokens {
       expr,
       is_fallback: false,
+      span,
     })
   } else if let Some(expr) = proto_field.default_validator_expr() {
     Some(ValidatorTokens {
       expr,
       is_fallback: true,
+      span: field_span,
     })
   } else {
     None

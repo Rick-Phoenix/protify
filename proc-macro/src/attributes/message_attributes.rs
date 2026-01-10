@@ -47,7 +47,7 @@ pub fn process_message_attrs(
 
   let mut reserved_names: Vec<String> = Vec::new();
   let mut reserved_numbers = ReservedNumbers::default();
-  let mut options = TokensOr::<TokenStream2>::new(|| quote! { vec![] });
+  let mut options = TokensOr::<TokenStream2>::vec();
   let mut proto_name: Option<String> = None;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
@@ -78,6 +78,7 @@ pub fn process_message_attrs(
               deprecated = boolean.value();
             }
             "cel_rules" => {
+              cel_rules.span = meta.input.span();
               cel_rules.set(
                 meta
                   .parse_list::<PunctuatedItems<TokenStream2>>()?
@@ -109,6 +110,7 @@ pub fn process_message_attrs(
               );
             }
             "options" => {
+              options.span = meta.input.span();
               options.set(meta.expr_value()?.into_token_stream());
             }
             "from_proto" => {

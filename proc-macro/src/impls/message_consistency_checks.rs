@@ -14,13 +14,14 @@ pub fn generate_message_consistency_checks<T: Borrow<FieldData>>(
       ident_str,
       validator,
       proto_field,
+      span,
       ..
     } = data.borrow();
 
     if let ProtoField::Oneof(OneofInfo { path, tags, .. }) = proto_field
       && !skip_oneof_tags_check
     {
-      Some(quote! {
+      Some(quote_spanned! {*span=>
         if let Err(err) = <#path as ::prelude::ProtoOneof>::check_tags(#ident_str, &mut [ #(#tags),* ]) {
           field_errors.push(::prelude::FieldError {
             field: #ident_str,
@@ -34,7 +35,7 @@ pub fn generate_message_consistency_checks<T: Borrow<FieldData>>(
         // Useless to check consistency for default validators
         .filter(|v| !v.is_fallback)
         .map(|validator| {
-          quote! {
+          quote_spanned! {*span=>
             if let Err(errs) = ::prelude::Validator::check_consistency(&#validator) {
               field_errors.push(::prelude::FieldError {
                 field: #ident_str,

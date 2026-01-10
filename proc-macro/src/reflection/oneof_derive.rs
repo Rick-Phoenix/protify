@@ -39,6 +39,8 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
   let mut fields_data: Vec<FieldData> = Vec::new();
 
   for variant in variants {
+    let variant_span = variant.span();
+
     let ident = &variant.ident;
     let ident_str = ident.to_string();
 
@@ -93,25 +95,27 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
       ValidatorTokens {
         expr: expr.into_built_validator(),
         is_fallback: false,
+        span: variant_span,
       }
     } else if let Some(fallback) = proto_field.default_validator_expr() {
       ValidatorTokens {
         expr: fallback,
         is_fallback: true,
+        span: variant_span,
       }
     } else {
       continue;
     };
 
     fields_data.push(FieldData {
-      span: variant.span(),
+      span: variant_span,
       ident: ident.clone(),
       type_info,
       proto_name,
       ident_str,
       tag: Some(field_desc.number().cast_signed()),
       validator: Some(validator),
-      options: TokensOr::<TokenStream2>::new(|| quote! {}),
+      options: TokenStreamOr::vec(),
       proto_field,
       from_proto: None,
       into_proto: None,
