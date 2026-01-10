@@ -284,7 +284,7 @@ impl ProtoField {
     quote! { <#target_type as ::prelude::AsProtoField>::as_proto_field() }
   }
 
-  pub fn output_proto_type(&self) -> Type {
+  pub fn output_proto_type(&self, is_oneof: bool) -> Type {
     match self {
       Self::Map(map) => {
         let keys = map.keys.output_proto_type();
@@ -304,9 +304,13 @@ impl ProtoField {
         parse_quote! { Option<#inner_type> }
       }
       Self::Single(inner) => {
-        let inner = inner.output_proto_type();
+        let output_type = inner.output_proto_type();
 
-        parse_quote! { #inner }
+        if inner.is_message() && !is_oneof {
+          parse_quote! { Option<#output_type> }
+        } else {
+          parse_quote! { #output_type }
+        }
       }
     }
   }

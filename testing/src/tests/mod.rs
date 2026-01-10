@@ -1,4 +1,4 @@
-#![allow(clippy::struct_field_names)]
+#![allow(clippy::struct_field_names, clippy::use_self)]
 
 mod cel_tests;
 mod oneof_tags_tests;
@@ -20,4 +20,14 @@ pub(crate) fn assert_violation_id(msg: &impl ValidatedMessage, expected: &str, e
 
   assert_eq!(violations.len(), 1, "Expected a single violation");
   assert_eq!(violations.first().unwrap().rule_id(), expected, "{error}");
+}
+
+#[proto_message(no_auto_test)]
+pub struct DirectMsg {
+  pub id: i32,
+}
+
+#[proto_message(proxied, no_auto_test)]
+pub struct ProxiedMsg {
+  pub id: i32,
 }

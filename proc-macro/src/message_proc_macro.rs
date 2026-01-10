@@ -201,7 +201,14 @@ pub fn message_macro_shadow(
     let prost_attr = field_data.proto_field.as_prost_attr(tag);
     dst_field.attrs.push(prost_attr);
 
-    let prost_compatible_type = field_data.proto_field.output_proto_type();
+    let prost_compatible_type = field_data.proto_field.output_proto_type(false);
+
+    // if field_data.proto_field.is_boxed_message() {
+    //   dst_field.ty = parse_quote!(Option<#prost_compatible_type>);
+    // } else {
+    //   dst_field.ty = prost_compatible_type;
+    // }
+
     dst_field.ty = prost_compatible_type;
   }
 

@@ -163,17 +163,24 @@ impl ProtoType {
   pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
     match self {
       Self::Enum(_) => quote! { #base_ident.try_into().unwrap_or_default() },
-      Self::Message(MessageInfo { boxed, default, .. }) => {
-        let conversion = if *boxed {
-          quote! { Box::new((*#base_ident).into()) }
-        } else {
-          quote! { #base_ident.into() }
-        };
-
+      Self::Message(MessageInfo {
+        boxed,
+        default,
+        path,
+        ..
+      }) => {
         if *default {
-          quote! { Some(#conversion) }
+          if *boxed {
+            quote! { #base_ident.map(|v| Box::new((*v).into())).unwrap_or_else(|| Box::new(#path::default().into())) }
+          } else {
+            quote! { #base_ident.map(|v| v.into()).unwrap_or_else(|| #path::default().into()) }
+          }
         } else {
-          conversion
+          if *boxed {
+            quote! { Box::new((*#base_ident).into()) }
+          } else {
+            quote! { #base_ident.into() }
+          }
         }
       }
       _ => quote! { #base_ident.into() },

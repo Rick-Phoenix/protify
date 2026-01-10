@@ -159,7 +159,7 @@ pub(crate) fn oneof_shadow_proc_macro(
     let prost_attr = field_attrs.proto_field.as_prost_attr(tag);
     dst_variant.attrs.push(prost_attr);
 
-    let prost_compatible_type = field_attrs.proto_field.output_proto_type();
+    let prost_compatible_type = field_attrs.proto_field.output_proto_type(true);
     *dst_variant.type_mut()? = prost_compatible_type;
   }
 

@@ -71,8 +71,14 @@ pub fn generate_message_validator<T: Borrow<FieldData>>(
                 quote! { self.#ident.as_ref() }
               }
             }
-            RustType::Box(_) => quote! { &(*self.#ident) },
-            _ => quote! {  Some(&self.#ident)  },
+            RustType::Box(_) => quote! { self.#ident.as_deref() },
+            _ => {
+              if let ProtoField::Single(ProtoType::Message(MessageInfo { .. })) = proto_field {
+                quote! { self.#ident.as_ref() }
+              } else {
+                quote! {  Some(&self.#ident)  }
+              }
+            }
           }
         };
 
