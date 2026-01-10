@@ -57,7 +57,7 @@ impl FieldDataKind {
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error> {
-  let field_span = field.span();
+  let field_span = field.ident()?.span();
 
   let mut validator: Option<(ClosureOrExpr, Span)> = None;
   let mut tag: Option<i32> = None;

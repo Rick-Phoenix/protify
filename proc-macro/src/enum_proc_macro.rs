@@ -60,7 +60,7 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
 
       manually_set_tags.push(ManuallySetTag {
         tag: num,
-        field_span: variant.span(),
+        field_span: variant.ident.span(),
       });
     }
   }

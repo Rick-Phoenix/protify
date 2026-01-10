@@ -38,7 +38,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> Result<TokenStream2, 
   let mut fields_data: Vec<FieldData> = Vec::new();
 
   for field in fields {
-    let field_span = field.span();
+    let field_span = field.ident.span();
     let ident = field.require_ident()?;
     let ident_str = ident.to_string();
 

@@ -131,7 +131,7 @@ pub(crate) fn oneof_shadow_proc_macro(
         if let Some(tag) = data.tag {
           manually_set_tags.push(ManuallySetTag {
             tag,
-            field_span: src_variant.span(),
+            field_span: src_variant.ident.span(),
           });
         }
       }
