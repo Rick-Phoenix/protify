@@ -134,13 +134,13 @@ pub fn message_macro_shadow(
         if let Some(tag) = data.tag {
           manually_set_tags.push(ManuallySetTag {
             tag,
-            field_span: field.span(),
+            field_span: data.span,
           });
         } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
           for tag in tags.iter().copied() {
             manually_set_tags.push(ManuallySetTag {
               tag,
-              field_span: field.span(),
+              field_span: data.span,
             });
           }
         }
@@ -289,13 +289,13 @@ pub fn message_macro_direct(
       if let Some(tag) = data.tag {
         manually_set_tags.push(ManuallySetTag {
           tag,
-          field_span: field.span(),
+          field_span: data.span,
         });
       } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
         for tag in tags.iter().copied() {
           manually_set_tags.push(ManuallySetTag {
             tag,
-            field_span: field.span(),
+            field_span: data.span,
           });
         }
       }

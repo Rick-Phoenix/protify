@@ -1,5 +1,3 @@
-mod package_attributes;
-pub use package_attributes::*;
 mod extension_field_attributes;
 pub use extension_field_attributes::*;
 mod enum_attributes;

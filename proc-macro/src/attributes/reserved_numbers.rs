@@ -28,9 +28,10 @@ pub struct ManuallySetTag {
 
 impl ToTokens for ManuallySetTag {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
-    let tag = self.tag;
+    let mut literal = proc_macro2::Literal::i32_unsuffixed(self.tag);
+    literal.set_span(self.field_span);
 
-    tokens.extend(quote_spanned! (self.field_span=> #tag));
+    tokens.extend(literal.to_token_stream());
   }
 }
 
@@ -151,7 +152,7 @@ impl Parse for ReservedNumbers {
           }
         } else {
           return Err(input.error(
-            "Reserved ranges cannot be open. Use MAX to reserve up to the maximum protobuf range",
+            "Reserved ranges cannot be open-ended. Use MAX to reserve up to the maximum protobuf range",
           ));
         };
 

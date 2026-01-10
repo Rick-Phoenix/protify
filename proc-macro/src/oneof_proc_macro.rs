@@ -215,7 +215,7 @@ pub(crate) fn oneof_direct_proc_macro(
       if let Some(tag) = data.tag {
         manually_set_tags.push(ManuallySetTag {
           tag,
-          field_span: variant.span(),
+          field_span: variant.ident.span(),
         });
       }
 

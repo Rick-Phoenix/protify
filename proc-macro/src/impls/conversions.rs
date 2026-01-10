@@ -14,23 +14,23 @@ pub enum FieldConversionKind<'a> {
 impl FieldConversionKind<'_> {
   pub fn base_ident(&self) -> TokenStream2 {
     match self {
-      Self::StructField { ident } => quote! { value.#ident },
+      Self::StructField { ident } => quote_spanned! {ident.span()=> value.#ident },
       // With enums, we always pattern match first so we always
       // have the same ident to process
-      Self::EnumVariant { .. } => quote! { v },
+      Self::EnumVariant { variant_ident, .. } => quote_spanned! {variant_ident.span()=> v },
     }
   }
 
   pub fn conversion_from_source_to_target(&self, conversion_expr: &TokenStream2) -> TokenStream2 {
     match self {
-      Self::StructField { ident } => quote! {
+      Self::StructField { ident } => quote_spanned! {ident.span()=>
         #ident: #conversion_expr,
       },
       Self::EnumVariant {
         variant_ident,
         source_enum_ident,
         target_enum_ident,
-      } => quote! {
+      } => quote_spanned! {variant_ident.span()=>
         #source_enum_ident::#variant_ident(v) => #target_enum_ident::#variant_ident(#conversion_expr),
       },
     }
@@ -38,14 +38,14 @@ impl FieldConversionKind<'_> {
 
   pub fn conversion_from_target_to_source(&self, conversion_expr: &TokenStream2) -> TokenStream2 {
     match self {
-      Self::StructField { ident } => quote! {
+      Self::StructField { ident } => quote_spanned! {ident.span()=>
         #ident: #conversion_expr,
       },
       Self::EnumVariant {
         variant_ident,
         source_enum_ident,
         target_enum_ident,
-      } => quote! {
+      } => quote_spanned! {variant_ident.span()=>
         #target_enum_ident::#variant_ident(v) => #source_enum_ident::#variant_ident(#conversion_expr),
       },
     }
@@ -56,7 +56,7 @@ fn process_custom_expression(expr: &PathOrClosure, base_ident: &TokenStream2) ->
   match expr {
     PathOrClosure::Path(path) => quote! { #path(#base_ident) },
     PathOrClosure::Closure(closure) => {
-      quote! {
+      quote_spanned! {closure.span()=>
         ::prelude::apply(#base_ident, #closure)
       }
     }
