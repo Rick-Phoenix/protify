@@ -1,5 +1,59 @@
 use crate::*;
 
+pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
+  let FieldData {
+    tag,
+    validator,
+    options,
+    proto_name,
+    proto_field,
+    deprecated,
+    span,
+    ..
+  } = data;
+
+  if let ProtoField::Oneof(OneofInfo { path, required, .. }) = proto_field {
+    if options.is_default() {
+      quote_spanned! {*span=>
+        ::prelude::MessageEntry::Oneof {
+          oneof: <#path as ::prelude::ProtoOneof>::proto_schema(),
+          required: #required
+        }
+      }
+    } else {
+      quote_spanned! {*span=>
+        ::prelude::MessageEntry::Oneof {
+          oneof: <#path as ::prelude::ProtoOneof>::proto_schema().with_options(#options),
+          required: #required
+        }
+      }
+    }
+  } else {
+    let field_type_tokens = proto_field.field_proto_type_tokens(*span);
+
+    let validator_schema_tokens = validator
+      .as_ref()
+      // For default validators (messages only) we skip the schema generation
+      .filter(|v| !v.is_fallback)
+      .map_or_else(
+        || quote_spanned! {*span=> None },
+        |e| quote_spanned! {*span=> Some(#e.into_schema()) },
+      );
+
+    let options_tokens = options_tokens(*span, options, *deprecated);
+
+    quote_spanned! {*span=>
+      ::prelude::Field {
+        name: #proto_name,
+        tag: #tag,
+        options: #options_tokens.into_iter().collect(),
+        type_: #field_type_tokens,
+        validator: #validator_schema_tokens,
+      }
+    }
+  }
+}
+
 impl MessageCtx<'_> {
   pub fn generate_schema_impls(&self) -> TokenStream2 {
     let MessageAttrs {
@@ -21,56 +75,14 @@ impl MessageCtx<'_> {
         .iter()
         .filter_map(|d| d.as_normal())
         .map(|data| {
-          let FieldData {
-            tag,
-            validator,
-            options,
-            proto_name,
-            proto_field,
-            deprecated,
-            span,
-            ..
-          } = data;
+          let field = field_schema_tokens(data);
 
-          if let ProtoField::Oneof(OneofInfo { path, required, .. }) = proto_field {
-            if options.is_default() {
-              quote_spanned! {*span=>
-                ::prelude::MessageEntry::Oneof {
-                  oneof: <#path as ::prelude::ProtoOneof>::proto_schema(),
-                  required: #required
-                }
-              }
-            } else {
-              quote_spanned! {*span=>
-                ::prelude::MessageEntry::Oneof {
-                  oneof: <#path as ::prelude::ProtoOneof>::proto_schema().with_options(#options),
-                  required: #required
-                }
-              }
-            }
+          if data.proto_field.is_oneof() {
+            field
           } else {
-            let field_type_tokens = proto_field.field_proto_type_tokens(*span);
-
-            let validator_schema_tokens = validator
-              .as_ref()
-              // For default validators (messages only) we skip the schema generation
-              .filter(|v| !v.is_fallback)
-              .map_or_else(
-                || quote_spanned! {*span=> None },
-                |e| quote_spanned! {*span=> Some(#e.into_schema()) },
-              );
-
-            let options_tokens = options_tokens(*span, options, *deprecated);
-
-            quote_spanned! {*span=>
+            quote_spanned! {data.span=>
               ::prelude::MessageEntry::Field(
-                ::prelude::Field {
-                  name: #proto_name,
-                  tag: #tag,
-                  options: #options_tokens.into_iter().collect(),
-                  type_: #field_type_tokens,
-                  validator: #validator_schema_tokens,
-                }
+                #field
               )
             }
           }
