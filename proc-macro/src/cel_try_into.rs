@@ -3,8 +3,12 @@ use crate::*;
 pub fn get_conversion_tokens(type_info: &TypeInfo, val_tokens: &TokenStream2) -> TokenStream2 {
   match type_info.type_.as_ref() {
     RustType::Box(_) => quote! { (*#val_tokens).try_into_cel_recursive(depth + 1)? },
-    RustType::Bytes => quote! { #val_tokens.to_vec().into() },
-    RustType::Float(_) | RustType::Uint(_) | RustType::Int(_) | RustType::Bool => {
+    RustType::Float(_)
+    | RustType::Uint(_)
+    | RustType::Int(_)
+    | RustType::Bool
+    | RustType::Bytes
+    | RustType::String => {
       quote! { #val_tokens.into() }
     }
     _ => {
@@ -47,9 +51,7 @@ pub fn derive_cel_value_oneof(item: &ItemEnum) -> Result<TokenStream2, Error> {
   }
 
   // We cannot rely on the try_into impl as is here, because we need to know
-  // the name of the specific oneof variant being used, so we need this helper here.
-  // In the future we might skip this and just use the name of the oneof, to mirror
-  // the rust side of things more accurately
+  // the name of the specific oneof variant being used
   Ok(quote! {
     impl ::prelude::CelOneof for #enum_ident {
       #[doc(hidden)]
@@ -79,10 +81,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
   let fields = if let syn::Fields::Named(fields) = &item.fields {
     &fields.named
   } else {
-    bail!(
-      item,
-      "This derive macro only works on structs with named fields"
-    );
+    bail_call_site!("This derive macro only works on structs with named fields");
   };
 
   let mut tokens = TokenStream2::new();
@@ -91,7 +90,6 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
     let field_ident = field.ident.as_ref().unwrap();
     let span = field_ident.span();
     let field_name = field_ident.to_string();
-    let field_type = &field.ty;
     let mut is_oneof = false;
 
     for attr in &field.attrs {
@@ -107,13 +105,13 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
 
     if is_oneof {
       tokens.extend(quote_spanned! {span=>
-        if let Some(oneof) = value.#field_ident {
+        if let Some(oneof) = self.#field_ident {
           let (oneof_field_name, cel_val) = ::prelude::CelOneof::try_into_cel_recursive(oneof, depth + 1)?;
           fields.insert(oneof_field_name.into(), cel_val);
         }
       });
     } else {
-      let outer_type = TypeInfo::from_type(field_type)?;
+      let outer_type = TypeInfo::from_type(&field.ty)?;
 
       let val_tokens = quote_spanned! {span=> val };
 
@@ -122,7 +120,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
           let conversion_tokens = get_conversion_tokens(inner, &val_tokens);
 
           tokens.extend(quote_spanned! {span=>
-            if let Some(val) = value.#field_ident {
+            if let Some(val) = self.#field_ident {
               fields.insert(#field_name.into(), #conversion_tokens);
             } else {
               fields.insert(#field_name.into(), ::prelude::cel::Value::Null);
@@ -134,7 +132,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
 
           tokens.extend(quote_spanned! {span=>
             let mut converted: Vec<::prelude::cel::Value> = Vec::new();
-            for val in value.#field_ident {
+            for val in self.#field_ident {
               converted.push(#conversion_tokens);
             }
 
@@ -149,7 +147,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
           tokens.extend(quote_spanned! {span=>
             let mut field_map: ::std::collections::HashMap<::prelude::cel::objects::Key, ::prelude::cel::Value> = ::std::collections::HashMap::new();
 
-            for (key, val) in value.#field_ident {
+            for (key, val) in self.#field_ident {
               field_map.insert(#keys_conversion_tokens, #values_conversion_tokens);
             }
 
@@ -157,7 +155,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
           });
         }
         _ => {
-          let val_tokens = quote_spanned! {span=> value.#field_ident };
+          let val_tokens = quote_spanned! {span=> self.#field_ident };
           let conversion_tokens = get_conversion_tokens(&outer_type, &val_tokens);
 
           tokens.extend(quote_spanned! {span=>
@@ -177,7 +175,6 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
         }
 
         let mut fields: ::std::collections::HashMap<::prelude::cel::objects::Key, ::prelude::cel::Value> = std::collections::HashMap::new();
-        let value = self;
 
         #tokens
 

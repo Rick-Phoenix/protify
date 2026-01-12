@@ -14,29 +14,7 @@ pub fn process_extension_derive(
 
     match ident.as_str() {
       "target" => {
-        let target_ident = meta.parse_value::<Ident>()?;
-
-        let ident_str = target_ident.to_string();
-
-        let known_targets = [
-          "FileOptions",
-          "MessageOptions",
-          "FieldOptions",
-          "OneofOptions",
-          "EnumOptions",
-          "EnumValueOptions",
-          "ServiceOptions",
-          "MethodOptions",
-        ];
-
-        if !known_targets.contains(&ident_str.as_str()) {
-          bail!(
-            ident,
-            "Unknown protobuf extension target. Allowed values are: {known_targets:?}"
-          );
-        }
-
-        target = Some(target_ident);
+        target = Some(meta.parse_value::<Ident>()?);
       }
       _ => return Err(meta.error("Unknown attribute")),
     };

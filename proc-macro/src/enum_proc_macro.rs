@@ -10,18 +10,15 @@ struct EnumVariantCtx {
 }
 
 pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
-  let schema_impls = match enum_schema_impls(&mut item) {
-    Ok(impls) => impls,
-    Err(e) => {
-      let err = e.into_compile_error();
-      let fallback_impls = fallback_schema_impl(&item.ident);
+  let schema_impls = enum_schema_impls(&mut item).unwrap_or_else(|e| {
+    let err = e.into_compile_error();
+    let fallback_impls = fallback_schema_impl(&item.ident);
 
-      quote! {
-        #fallback_impls
-        #err
-      }
+    quote! {
+      #fallback_impls
+      #err
     }
-  };
+  });
 
   quote! {
     #[repr(i32)]
@@ -210,6 +207,7 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
     impl TryFrom<i32> for #enum_ident {
       type Error = ::prost::UnknownEnumValue;
 
+      #[inline]
       fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
           #(#try_from_impl,)*
@@ -219,12 +217,14 @@ fn enum_schema_impls(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
     }
 
     impl Default for #enum_ident {
+      #[inline]
       fn default() -> Self {
         #enum_ident::#first_variant_ident
       }
     }
 
     impl From<#enum_ident> for i32 {
+      #[inline]
       fn from(value: #enum_ident) -> i32 {
         value as i32
       }
@@ -317,12 +317,10 @@ fn fallback_schema_impl(enum_name: &Ident) -> TokenStream2 {
         unimplemented!()
       }
 
-      #[inline]
       fn as_proto_name(&self) -> &'static str {
         unimplemented!()
       }
 
-      #[inline]
       fn from_proto_name(name: &str) -> Option<Self> {
         unimplemented!()
       }

@@ -48,11 +48,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
     };
 
     for field in fields {
-      let field_ident = field
-        .ident
-        .as_ref()
-        .ok_or_else(|| error!(field, "Expected a named field"))?
-        .to_string();
+      let field_ident = field.require_ident()?.to_string();
 
       let field_type = match &field.ty {
         Type::Path(type_path) => &type_path.path,
@@ -117,7 +113,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
     ::prelude::inventory::submit! {
       ::prelude::RegistryService {
         package: __PROTO_FILE.package,
-        service: || #ident::as_proto_service()
+        service: || <#ident as ::prelude::ProtoService>::as_proto_service()
       }
     }
 

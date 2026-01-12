@@ -1,12 +1,8 @@
 use crate::*;
-use ::proto_types::protovalidate::FieldRules;
-use ::proto_types::protovalidate::Ignore;
-use ::proto_types::protovalidate::MessageRules;
-use ::proto_types::protovalidate::OneofRules;
-use ::proto_types::protovalidate::Rule;
-use ::proto_types::protovalidate::field_rules::Type as RulesType;
-use prost_reflect::prost::Message;
-use prost_reflect::{Value as ProstValue, *};
+use ::proto_types::protovalidate::{
+  FieldRules, Ignore, MessageRules, OneofRules, Rule, field_rules::Type as RulesType,
+};
+use prost_reflect::{Value as ProstValue, prost::Message, *};
 mod pool_loader;
 pub use pool_loader::*;
 mod numeric_rules;

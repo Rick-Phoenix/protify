@@ -176,7 +176,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
 
         fn type_url() -> &'static str {
           static URL: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-            format!("/{}.{}", #proto_struct::PACKAGE, #proto_struct::proto_name())
+            format!("/{}.{}", <#proto_struct as ::prelude::ProtoMessage>::PACKAGE, <#proto_struct as ::prelude::ProtoMessage>::proto_name())
           });
 
           &*URL
@@ -184,7 +184,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
 
         fn full_name() -> &'static str {
           static NAME: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-            format!("{}.{}", #proto_struct::PACKAGE, #proto_struct::proto_name())
+            format!("{}.{}", <#proto_struct as ::prelude::ProtoMessage>::PACKAGE, <#proto_struct as ::prelude::ProtoMessage>::proto_name())
           });
 
           &*NAME
@@ -192,7 +192,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
 
         fn proto_path() -> ::prelude::ProtoPath {
           ::prelude::ProtoPath {
-            name: Self::proto_name(),
+            name: <Self as ::prelude::ProtoMessage>::proto_name(),
             file: __PROTO_FILE.name,
             package: __PROTO_FILE.package,
           }
@@ -205,7 +205,7 @@ impl<T: Borrow<FieldData>> MessageCtx<'_, T> {
         fn proto_schema() -> ::prelude::Message {
           ::prelude::Message {
             short_name: #proto_name,
-            name: Self::proto_name(),
+            name: <Self as ::prelude::ProtoMessage>::proto_name(),
             file: __PROTO_FILE.name,
             package: __PROTO_FILE.package,
             reserved_names: vec![ #(#reserved_names),* ],

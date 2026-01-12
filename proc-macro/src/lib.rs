@@ -103,34 +103,7 @@ pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
 pub fn enum_derive(input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
 
-  let impl_tokens = match enum_derive::named_enum_derive(&item) {
-    Ok(t) => t,
-    Err(e) => {
-      let err = e.into_compile_error();
-      let ident = &item.ident;
-
-      quote! {
-        impl ::prelude::ProtoEnum for #ident {
-          fn proto_name() -> &'static str {
-            unimplemented!()
-          }
-        }
-
-        impl ::prelude::ProtoValidator for #ident {
-          #[doc(hidden)]
-          type Target = i32;
-          #[doc(hidden)]
-          type Validator = ::prelude::EnumValidator<#ident>;
-          #[doc(hidden)]
-          type Builder = ::prelude::EnumValidatorBuilder<#ident>;
-        }
-
-        #err
-      }
-    }
-  };
-
-  impl_tokens.into()
+  enum_derive::named_enum_derive(&item).into()
 }
 
 #[cfg(feature = "reflection")]
@@ -189,7 +162,7 @@ pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
 
   let extra_tokens = match process_extension_derive(args.into(), &mut item) {
     Ok(output) => output,
-    Err(e) => return e.to_compile_error().into(),
+    Err(e) => e.to_compile_error(),
   };
 
   quote! {
