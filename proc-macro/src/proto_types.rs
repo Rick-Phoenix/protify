@@ -246,27 +246,29 @@ impl ProtoType {
 
   pub fn validator_name(&self, span: Span) -> TokenStream2 {
     match self {
-      Self::String => quote_spanned! {span=> StringValidator },
-      Self::Bool => quote_spanned! {span=> BoolValidator },
-      Self::Bytes => quote_spanned! {span=> BytesValidator },
-      Self::Enum(path) => quote_spanned! {span=> EnumValidator<#path> },
-      Self::Message(MessageInfo { path, .. }) => quote_spanned! {span=> MessageValidator<#path> },
-      Self::Int32 => quote_spanned! {span=> IntValidator<i32> },
-      Self::Sint32 => quote_spanned! {span=> IntValidator<::prelude::Sint32> },
-      Self::Duration => quote_spanned! {span=> DurationValidator },
-      Self::Timestamp => quote_spanned! {span=> TimestampValidator },
-      Self::Uint32 => quote_spanned! {span=> IntValidator<u32> },
-      Self::Float => quote_spanned! {span=> FloatValidator<f32> },
-      Self::Double => quote_spanned! {span=> FloatValidator<f64> },
-      Self::Int64 => quote_spanned! {span=> IntValidator<i64> },
-      Self::Uint64 => quote_spanned! {span=> IntValidator<u64> },
-      Self::Sint64 => quote_spanned! {span=> IntValidator<prelude::Sint64>  },
-      Self::Fixed32 => quote_spanned! {span=> IntValidator<prelude::Fixed32>  },
-      Self::Fixed64 => quote_spanned! {span=> IntValidator<prelude::Fixed64>  },
-      Self::Sfixed32 => quote_spanned! {span=> IntValidator<prelude::Sfixed32>  },
-      Self::Sfixed64 => quote_spanned! {span=> IntValidator<prelude::Sfixed64>  },
-      Self::Any => quote_spanned! {span=> AnyValidator },
-      Self::FieldMask => quote_spanned! {span=> FieldMaskValidator },
+      Self::String => quote_spanned! {span=> ::prelude::StringValidator },
+      Self::Bool => quote_spanned! {span=> ::prelude::BoolValidator },
+      Self::Bytes => quote_spanned! {span=> ::prelude::BytesValidator },
+      Self::Enum(path) => quote_spanned! {span=> ::prelude::EnumValidator<#path> },
+      Self::Message(MessageInfo { path, .. }) => {
+        quote_spanned! {span=> ::prelude::MessageValidator<#path> }
+      }
+      Self::Int32 => quote_spanned! {span=> ::prelude::IntValidator<i32> },
+      Self::Sint32 => quote_spanned! {span=> ::prelude::IntValidator<::prelude::Sint32> },
+      Self::Duration => quote_spanned! {span=> ::prelude::DurationValidator },
+      Self::Timestamp => quote_spanned! {span=> ::prelude::TimestampValidator },
+      Self::Uint32 => quote_spanned! {span=> ::prelude::IntValidator<u32> },
+      Self::Float => quote_spanned! {span=> ::prelude::FloatValidator<f32> },
+      Self::Double => quote_spanned! {span=> ::prelude::FloatValidator<f64> },
+      Self::Int64 => quote_spanned! {span=> ::prelude::IntValidator<i64> },
+      Self::Uint64 => quote_spanned! {span=> ::prelude::IntValidator<u64> },
+      Self::Sint64 => quote_spanned! {span=> ::prelude::IntValidator<prelude::Sint64>  },
+      Self::Fixed32 => quote_spanned! {span=> ::prelude::IntValidator<prelude::Fixed32>  },
+      Self::Fixed64 => quote_spanned! {span=> ::prelude::IntValidator<prelude::Fixed64>  },
+      Self::Sfixed32 => quote_spanned! {span=> ::prelude::IntValidator<prelude::Sfixed32>  },
+      Self::Sfixed64 => quote_spanned! {span=> ::prelude::IntValidator<prelude::Sfixed64>  },
+      Self::Any => quote_spanned! {span=> ::prelude::AnyValidator },
+      Self::FieldMask => quote_spanned! {span=> ::prelude::FieldMaskValidator },
     }
   }
 

@@ -2,6 +2,96 @@ use crate::*;
 
 bool_enum!(pub UseFallback);
 
+pub fn field_validator_tokens(
+  field_data: &FieldData,
+  item_kind: InputItemKind,
+) -> Option<TokenStream2> {
+  let FieldData {
+    ident,
+    ident_str,
+    tag,
+    validator,
+    proto_name,
+    proto_field,
+    span,
+    type_info,
+    ..
+  } = field_data;
+
+  if let ProtoField::Oneof(OneofInfo { required, .. }) = proto_field {
+    Some(if *required {
+      quote_spanned! {*span=>
+        match self.#ident.as_ref() {
+          Some(oneof) => ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations),
+          None => violations.add_required_oneof_violation(parent_elements)
+        };
+      }
+    } else {
+      quote_spanned! {*span=>
+        if let Some(oneof) = self.#ident.as_ref() {
+          ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations);
+        }
+      }
+    })
+  } else {
+    validator.as_ref().map(|validator| {
+      let ValidatorTokens {
+        expr: validator_expr,
+        span,
+        ..
+      } = validator;
+
+      let validator_static_ident = format_ident!("{}_VALIDATOR", to_upper_snake_case(ident_str));
+      let validator_name = field_data.validator_name();
+      let field_type = field_data.descriptor_type_tokens();
+
+      let argument = match item_kind {
+        InputItemKind::Oneof => quote! { Some(v) },
+        InputItemKind::Message => match type_info.type_.as_ref() {
+          RustType::Option(inner) => {
+            if inner.is_box() {
+              quote_spanned! (*span=> self.#ident.as_deref())
+            } else {
+              quote_spanned! (*span=> self.#ident.as_ref())
+            }
+          }
+          RustType::Box(_) => quote_spanned! (*span=> self.#ident.as_deref()),
+          _ => {
+            if let ProtoField::Single(ProtoType::Message(MessageInfo { .. })) = proto_field {
+              quote_spanned! (*span=> self.#ident.as_ref())
+            } else {
+              quote_spanned! (*span=> Some(&self.#ident))
+            }
+          }
+        },
+      };
+
+      quote_spanned! {*span=>
+        static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
+          #validator_expr
+        });
+
+        #validator_static_ident.validate(
+          &mut ::prelude::ValidationCtx {
+            field_context: ::prelude::FieldContext {
+              proto_name: #proto_name,
+              tag: #tag,
+              field_type: #field_type,
+              map_key_type: None,
+              map_value_type: None,
+              subscript: None,
+              field_kind: Default::default(),
+            },
+            parent_elements,
+            violations
+          },
+          #argument
+        );
+      }
+    })
+  }
+}
+
 pub fn generate_message_validator(
   use_fallback: UseFallback,
   target_ident: &Ident,
@@ -11,94 +101,10 @@ pub fn generate_message_validator(
   let validators_tokens = if *use_fallback {
     quote! { unimplemented!(); }
   } else {
-    let tokens = fields.iter().filter_map(|d| d.as_normal()).filter_map(|data| {
-    let FieldData {
-      ident,
-      type_info,
-      ident_str,
-      tag,
-      validator,
-      proto_name,
-      proto_field,
-      span,
-      ..
-    } = data;
-
-    if let ProtoField::Oneof(OneofInfo { required, .. }) = proto_field {
-      Some(if *required {
-        quote_spanned! {*span=>
-          match self.#ident.as_ref() {
-            Some(oneof) => ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations),
-            None => violations.add_required_oneof_violation(parent_elements)
-          };
-        }
-      } else {
-        quote_spanned! {*span=>
-          if let Some(oneof) = self.#ident.as_ref() {
-            ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations);
-          }
-        }
-      })
-    } else {
-      if let Some(ValidatorTokens {
-        expr: validator_expr,
-        span,
-        ..
-      }) = validator.as_ref()
-      {
-        let validator_static_ident = format_ident!("{}_VALIDATOR", to_upper_snake_case(ident_str));
-
-        let validator_name = data.validator_name();
-
-        let field_type = data.descriptor_type_tokens();
-
-        let argument = {
-          match type_info.type_.as_ref() {
-            RustType::Option(inner) => {
-              if inner.is_box() {
-                quote_spanned! (*span=> self.#ident.as_deref())
-              } else {
-                quote_spanned! (*span=> self.#ident.as_ref())
-              }
-            }
-            RustType::Box(_) => quote_spanned! (*span=> self.#ident.as_deref()),
-            _ => {
-              if let ProtoField::Single(ProtoType::Message(MessageInfo { .. })) = proto_field {
-                quote_spanned! (*span=> self.#ident.as_ref())
-              } else {
-                quote_spanned! (*span=> Some(&self.#ident))
-              }
-            }
-          }
-        };
-
-        Some(quote_spanned! {*span=>
-          static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
-            #validator_expr
-          });
-
-          #validator_static_ident.validate(
-            &mut ::prelude::ValidationCtx {
-              field_context: ::prelude::FieldContext {
-                proto_name: #proto_name,
-                tag: #tag,
-                field_type: #field_type,
-                map_key_type: None,
-                map_value_type: None,
-                subscript: None,
-                field_kind: Default::default(),
-              },
-              parent_elements,
-              violations
-            },
-            #argument
-          );
-        })
-      } else {
-        None
-      }
-    }
-  });
+    let tokens = fields
+      .iter()
+      .filter_map(|d| d.as_normal())
+      .filter_map(|data| field_validator_tokens(data, InputItemKind::Message));
 
     quote! { #(#tokens)* }
   };

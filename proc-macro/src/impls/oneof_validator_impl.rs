@@ -12,55 +12,15 @@ pub fn generate_oneof_validator(
       .iter()
       .filter_map(|d| d.as_normal())
       .filter_map(|data| {
-        let FieldData {
-          ident,
-          ident_str,
-          tag,
-          validator,
-          proto_name,
-          ..
-        } = data;
+        field_validator_tokens(data, InputItemKind::Oneof).map(|inner| {
+          let ident = &data.ident;
 
-        if let Some(ValidatorTokens {
-          expr: validator_expr,
-          span,
-          ..
-        }) = validator.as_ref()
-        {
-          let validator_static_ident =
-            format_ident!("{}_VALIDATOR", to_upper_snake_case(ident_str));
-
-          let validator_name = data.validator_name();
-
-          let field_type = data.descriptor_type_tokens();
-
-          Some(quote_spanned! {*span=>
+          quote_spanned! {data.span=>
             Self::#ident(v) => {
-              static #validator_static_ident: LazyLock<#validator_name> = LazyLock::new(|| {
-                #validator_expr
-              });
-
-              #validator_static_ident.validate(
-                &mut ::prelude::ValidationCtx {
-                  field_context: ::prelude::FieldContext {
-                    proto_name: #proto_name,
-                    tag: #tag,
-                    field_type: #field_type,
-                    map_key_type: None,
-                    map_value_type: None,
-                    subscript: None,
-                    field_kind: Default::default(),
-                  },
-                  parent_elements,
-                  violations
-                },
-                Some(v)
-              );
+              #inner
             }
-          })
-        } else {
-          None
-        }
+          }
+        })
       });
 
     quote! {

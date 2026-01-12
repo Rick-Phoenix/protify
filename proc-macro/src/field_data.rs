@@ -63,13 +63,13 @@ impl FieldData {
           .validator_target_type(self.span);
         let values = map.values.validator_target_type(self.span);
 
-        quote_spanned! {self.span=> MapValidator<#keys, #values> }
+        quote_spanned! {self.span=> ::prelude::MapValidator<#keys, #values> }
       }
       ProtoField::Oneof { .. } => quote! {},
       ProtoField::Repeated(proto_type) => {
         let inner = proto_type.validator_target_type(self.span);
 
-        quote_spanned! {self.span=> RepeatedValidator<#inner> }
+        quote_spanned! {self.span=> ::prelude::RepeatedValidator<#inner> }
       }
       ProtoField::Optional(proto_type) | ProtoField::Single(proto_type) => {
         proto_type.validator_name(self.span)
