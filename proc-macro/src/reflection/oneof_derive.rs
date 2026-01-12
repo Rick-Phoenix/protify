@@ -1,6 +1,12 @@
 use super::*;
 
-pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Error> {
+#[derive(Default)]
+pub struct OneofDataReflection {
+  pub no_auto_test: bool,
+  pub fields_data: Vec<FieldDataKind>,
+}
+
+pub fn extract_oneof_data_reflection(item: &mut ItemEnum) -> Result<OneofDataReflection, Error> {
   let ItemEnum { variants, .. } = item;
 
   let mut parent_message: Option<String> = None;
@@ -36,7 +42,7 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
     }
   };
 
-  let mut fields_data: Vec<FieldData> = Vec::new();
+  let mut fields_data: Vec<FieldDataKind> = Vec::new();
 
   for variant in variants {
     let variant_span = variant.ident.span();
@@ -107,7 +113,7 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
       continue;
     };
 
-    fields_data.push(FieldData {
+    fields_data.push(FieldDataKind::Normal(FieldData {
       span: variant_span,
       ident: ident.clone(),
       type_info,
@@ -122,15 +128,33 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> Result<TokenStream2, Erro
       from_proto: None,
       into_proto: None,
       deprecated: false,
-    });
+    }));
   }
+
+  Ok(OneofDataReflection {
+    no_auto_test,
+    fields_data,
+  })
+}
+
+pub fn reflection_oneof_derive(item: &mut ItemEnum) -> TokenStream2 {
+  let mut errors: Vec<Error> = Vec::new();
+
+  let OneofDataReflection {
+    no_auto_test,
+    fields_data,
+  } = extract_oneof_data_reflection(item).unwrap_or_default_and_push_error(&mut errors);
 
   let validator_impl = wrap_with_imports(&[generate_oneof_validator(&item.ident, &fields_data)]);
   let consistency_checks =
     generate_oneof_consistency_checks(&item.ident, &fields_data, no_auto_test);
 
-  Ok(quote! {
+  let errors = errors.iter().map(|e| e.to_compile_error());
+
+  quote! {
     #validator_impl
     #consistency_checks
-  })
+
+    #(#errors)*
+  }
 }

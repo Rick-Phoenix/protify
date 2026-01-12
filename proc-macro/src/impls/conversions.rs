@@ -79,10 +79,6 @@ pub struct ProtoConversionImpl<'a> {
 }
 
 impl ProtoConversionImpl<'_> {
-  pub const fn has_custom_impls(&self) -> bool {
-    self.into_proto.has_custom_impl() && self.from_proto.has_custom_impl()
-  }
-
   pub fn generate_conversion_impls(&mut self, fields_data: &[FieldDataKind]) -> TokenStream2 {
     for data in fields_data {
       self.handle_field_conversions(data);

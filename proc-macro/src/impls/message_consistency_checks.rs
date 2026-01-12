@@ -7,10 +7,7 @@ pub fn generate_message_consistency_checks(
   skip_oneof_tags_check: bool,
   message_name: &str,
 ) -> TokenStream2 {
-  let consistency_checks = if fields_data.is_empty() {
-    quote! { unimplemented!() }
-  } else {
-    let tokens = fields_data.iter().filter_map(|d| d.as_normal()).filter_map(|data| {
+  let consistency_checks =  fields_data.iter().filter_map(|d| d.as_normal()).filter_map(|data| {
     let FieldData {
       ident_str,
       validator,
@@ -48,9 +45,6 @@ pub fn generate_message_consistency_checks(
     }
   });
 
-    quote! { #(#tokens)* }
-  };
-
   let auto_test_fn = (!skip_auto_test).then(|| {
     let test_fn_ident = format_ident!(
       "{}_validators_consistency",
@@ -80,7 +74,7 @@ pub fn generate_message_consistency_checks(
         let mut field_errors: Vec<::prelude::FieldError> = Vec::new();
         let mut cel_errors: Vec<::prelude::CelError> = Vec::new();
 
-        #consistency_checks
+        #(#consistency_checks)*
 
         let top_level_programs = Self::cel_rules();
 

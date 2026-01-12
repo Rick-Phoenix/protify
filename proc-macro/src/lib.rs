@@ -4,13 +4,10 @@
   clippy::collapsible_else_if
 )]
 
-use std::{
-  borrow::{Borrow, Cow},
-  fmt::Display,
-  ops::Range,
-};
+use std::{borrow::Cow, fmt::Display, ops::Range};
 
 use attributes::*;
+use bool_enum::boolean_enum;
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, format_ident, quote, quote_spanned};
@@ -82,20 +79,7 @@ pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
 pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemEnum);
 
-  let validator_impl = match reflection::reflection_oneof_derive(&mut item) {
-    Ok(imp) => imp,
-    Err(e) => {
-      let err = e.into_compile_error();
-      let fallback_impl = fallback_oneof_validator(&item.ident);
-
-      quote! {
-        #fallback_impl
-        #err
-      }
-    }
-  };
-
-  validator_impl.into()
+  reflection::reflection_oneof_derive(&mut item).into()
 }
 
 #[cfg(feature = "reflection")]

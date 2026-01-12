@@ -77,7 +77,7 @@ impl FieldData {
     }
   }
 
-  pub fn output_proto_type(&self, is_oneof: bool) -> Type {
+  pub fn output_proto_type(&self, item_kind: InputItemKind) -> Type {
     match &self.proto_field {
       ProtoField::Map(map) => {
         let keys = map.keys.into_type().output_proto_type(self.span);
@@ -101,7 +101,7 @@ impl FieldData {
       ProtoField::Single(inner) => {
         let output_type = inner.output_proto_type(self.span);
 
-        if inner.is_message() && !is_oneof {
+        if inner.is_message() && item_kind.is_message() {
           parse_quote_spanned! {self.span=> Option<#output_type> }
         } else {
           parse_quote_spanned! {self.span=> #output_type }

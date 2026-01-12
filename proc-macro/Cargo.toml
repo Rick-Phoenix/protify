@@ -23,6 +23,7 @@ syn-utils = { path = "../../syn-utils/" }
 prost-reflect = { version = "0.16", optional = true }
 paste = "1"
 bytes = "1"
+bool-enum = { workspace = true }
 
 [features]
 default = ["cel"]

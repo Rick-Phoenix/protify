@@ -17,7 +17,14 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
   let FieldsCtx {
     mut fields_data,
     mut manually_set_tags,
-  } = extract_fields_data(&mut item.fields).unwrap_or_default_and_push_error(&mut errors);
+  } = extract_fields_data(
+    item.fields.len(),
+    item
+      .fields
+      .iter_mut()
+      .map(|f| FieldOrVariant::Field(f)),
+  )
+  .unwrap_or_default_and_push_error(&mut errors);
 
   let used_ranges =
     build_unavailable_ranges(&message_attrs.reserved_numbers, &mut manually_set_tags)
@@ -31,15 +38,18 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
     ImplKind::Direct
   };
 
+  let struct_to_process = proxy_struct.as_mut().unwrap_or(&mut item);
+
   second_processing(
     impl_kind,
-    proxy_struct
-      .as_mut()
-      .map(|ps| &mut ps.fields)
-      .unwrap_or(&mut item.fields),
+    struct_to_process
+      .fields
+      .iter_mut()
+      .map(|f| FieldOrVariant::Field(f)),
     &mut fields_data,
-    &mut tag_allocator,
-    &message_attrs,
+    Some(&mut tag_allocator),
+    ContainerAttrs::Message(&message_attrs),
+    InputItemKind::Message,
   )
   .unwrap_or_default_and_push_error(&mut errors);
 
@@ -119,14 +129,22 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
     message_attrs: &message_attrs,
   };
 
-  let consistency_checks_impl = message_ctx.generate_consistency_checks();
-  let validator_impl = message_ctx.generate_validator();
+  if errors.is_empty() {
+    output.extend(message_ctx.generate_consistency_checks());
+  }
+
+  let use_fallback = if errors.is_empty() {
+    UseFallback::No
+  } else {
+    UseFallback::Yes
+  };
+
+  let validator_impl = message_ctx.generate_validator(use_fallback);
   let schema_impls = message_ctx.generate_schema_impls();
 
   let wrapped_items = wrap_with_imports(&[schema_impls, validator_impl]);
 
   output.extend(wrapped_items);
-  output.extend(consistency_checks_impl);
 
   output.extend(errors.iter().map(|e| e.to_compile_error()));
 
@@ -163,64 +181,77 @@ pub enum ImplKind {
 }
 
 impl ImplKind {
-  /// Returns `true` if the impl kind is [`Direct`].
-  ///
-  /// [`Direct`]: ImplKind::Direct
-  #[must_use]
-  pub fn is_direct(&self) -> bool {
-    matches!(self, Self::Direct)
-  }
-
   /// Returns `true` if the impl kind is [`Shadow`].
   ///
   /// [`Shadow`]: ImplKind::Shadow
   #[must_use]
-  pub fn is_shadow(&self) -> bool {
+  pub const fn is_shadow(self) -> bool {
     matches!(self, Self::Shadow)
   }
 }
 
-pub fn second_processing(
+#[derive(Clone, Copy)]
+pub enum ContainerAttrs<'a> {
+  Message(&'a MessageAttrs),
+  Oneof(&'a OneofAttrs),
+}
+
+impl ContainerAttrs<'_> {
+  pub fn has_custom_conversions(&self) -> bool {
+    match self {
+      ContainerAttrs::Message(message_attrs) => message_attrs.has_custom_conversions(),
+      ContainerAttrs::Oneof(oneof_attrs) => {
+        oneof_attrs.from_proto.is_some() && oneof_attrs.into_proto.is_some()
+      }
+    }
+  }
+}
+
+pub fn second_processing<'a, I>(
   impl_kind: ImplKind,
-  fields: &mut Fields,
+  fields: I,
   fields_data: &mut [FieldDataKind],
-  tag_allocator: &mut TagAllocator,
-  message_attrs: &MessageAttrs,
-) -> syn::Result<()> {
-  for (dst_field, field_data) in fields.iter_mut().zip(fields_data.iter_mut()) {
+  mut tag_allocator: Option<&mut TagAllocator>,
+  container_attrs: ContainerAttrs,
+  item_kind: InputItemKind,
+) -> syn::Result<()>
+where
+  I: IntoIterator<Item = FieldOrVariant<'a>>,
+{
+  for (mut dst_field, field_data) in fields.into_iter().zip(fields_data.iter_mut()) {
     // Skipping ignored fields
     let FieldDataKind::Normal(field_data) = field_data else {
       if impl_kind.is_shadow() {
         continue;
       } else {
-        bail!(
-          dst_field.require_ident()?,
-          "Cannot ignore fields in a direct impl"
-        );
+        bail!(dst_field.ident()?, "Cannot ignore fields in a direct impl");
       }
     };
 
     if !field_data.proto_field.is_oneof() && field_data.tag.is_none() {
-      let new_tag = tag_allocator.next_tag(field_data.span)?;
+      if let Some(tag_allocator) = tag_allocator.as_mut() {
+        let new_tag = tag_allocator.next_tag(field_data.span)?;
 
-      field_data.tag = Some(ParsedNum {
-        num: new_tag,
-        span: field_data.span,
-      });
+        field_data.tag = Some(ParsedNum {
+          num: new_tag,
+          span: field_data.span,
+        });
+      } else {
+        bail!(field_data.ident, "Field tag is missing");
+      }
     };
 
     let prost_attr = field_data.as_prost_attr();
-    dst_field.attrs.push(prost_attr);
+    dst_field.attributes_mut().push(prost_attr);
 
-    // Proxy impl errors
     if impl_kind.is_shadow() {
-      let prost_compatible_type = field_data.output_proto_type(false);
-      dst_field.ty = prost_compatible_type;
+      let prost_compatible_type = field_data.output_proto_type(item_kind);
+      *dst_field.type_mut()? = prost_compatible_type;
 
       if let ProtoField::Oneof(OneofInfo { default: false, .. }) = &field_data.proto_field
         && !field_data.type_info.is_option()
         && !field_data.has_custom_conversions()
-        && !message_attrs.has_custom_conversions()
+        && !container_attrs.has_custom_conversions()
       {
         bail!(
           &field_data.type_info,
@@ -228,11 +259,12 @@ pub fn second_processing(
         );
       }
 
-      if let Some(ProtoType::Message(MessageInfo { default: false, .. })) =
-        field_data.proto_field.inner()
+      if item_kind.is_message()
+        && let Some(ProtoType::Message(MessageInfo { default: false, .. })) =
+          field_data.proto_field.inner()
         && !field_data.type_info.is_option()
         && !field_data.has_custom_conversions()
-        && !message_attrs.has_custom_conversions()
+        && !container_attrs.has_custom_conversions()
       {
         bail!(
           &field_data.type_info,
@@ -255,32 +287,37 @@ pub fn second_processing(
         )
       }
 
-      match field_data.type_info.type_.as_ref() {
-        RustType::Box(inner) if field_data.proto_field.is_message() => {
-          bail!(inner, "Boxed messages must be optional in a direct impl")
-        }
-        RustType::Other(inner) => {
-          if field_data.proto_field.is_message() {
-            bail!(
-              &inner.path,
-              "Messages must be wrapped in Option in direct impls"
-            );
+      if item_kind.is_message() {
+        match field_data.type_info.type_.as_ref() {
+          RustType::Box(inner) if field_data.proto_field.is_message() => {
+            bail!(inner, "Boxed messages must be optional in a direct impl")
           }
-        }
-        _ => {}
-      };
+          RustType::Other(inner) => {
+            if field_data.proto_field.is_message() {
+              bail!(
+                &inner.path,
+                "Messages must be wrapped in Option in direct impls"
+              );
+            }
+          }
+          _ => {}
+        };
+      }
     }
   }
 
   Ok(())
 }
 
-pub fn extract_fields_data(fields: &mut Fields) -> syn::Result<FieldsCtx> {
-  let mut fields_data: Vec<FieldDataKind> = Vec::with_capacity(fields.len());
-  let mut manually_set_tags: Vec<ParsedNum> = Vec::with_capacity(fields.len());
+pub fn extract_fields_data<'a, I>(len: usize, fields: I) -> syn::Result<FieldsCtx>
+where
+  I: IntoIterator<Item = FieldOrVariant<'a>>,
+{
+  let mut fields_data: Vec<FieldDataKind> = Vec::with_capacity(len);
+  let mut manually_set_tags: Vec<ParsedNum> = Vec::with_capacity(len);
 
-  for field in fields.iter_mut() {
-    let field_data_kind = process_field_data(FieldOrVariant::Field(field))?;
+  for field in fields {
+    let field_data_kind = process_field_data(field)?;
 
     if let FieldDataKind::Normal(data) = &field_data_kind {
       if let Some(tag) = data.tag {
@@ -300,233 +337,3 @@ pub fn extract_fields_data(fields: &mut Fields) -> syn::Result<FieldsCtx> {
     manually_set_tags,
   })
 }
-
-// pub fn message_macro_shadow(
-//   orig_struct: &mut ItemStruct,
-//   shadow_struct: &mut ItemStruct,
-//   message_attrs: &MessageAttrs,
-// ) -> Result<TokenStream2, Error> {
-//   let orig_struct_ident = &orig_struct.ident;
-//   let shadow_struct_ident = &shadow_struct.ident;
-//
-//   let mut ignored_fields: Vec<Ident> = Vec::new();
-//
-//   let mut proto_conversion_data = ProtoConversionImpl {
-//     source_ident: orig_struct_ident,
-//     target_ident: shadow_struct_ident,
-//     kind: InputItemKind::Message,
-//     into_proto: ConversionData::new(message_attrs.into_proto.as_ref()),
-//     from_proto: ConversionData::new(message_attrs.from_proto.as_ref()),
-//   };
-//
-//   let mut fields_data: Vec<FieldDataKind> = Vec::new();
-//   let mut manually_set_tags: Vec<ParsedNum> = Vec::new();
-//
-//   for field in orig_struct.fields.iter_mut() {
-//     let field_data_kind = process_field_data(FieldOrVariant::Field(field))?;
-//
-//     proto_conversion_data.handle_field_conversions(&field_data_kind);
-//
-//     match &field_data_kind {
-//       FieldDataKind::Ignored { .. } => {
-//         ignored_fields.push(field.require_ident()?.clone());
-//       }
-//
-//       FieldDataKind::Normal(data) => {
-//         if let Some(tag) = data.tag {
-//           manually_set_tags.push(tag);
-//         } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
-//           for tag in tags.iter().copied() {
-//             manually_set_tags.push(tag);
-//           }
-//         }
-//       }
-//     };
-//
-//     fields_data.push(field_data_kind);
-//   }
-//
-//   let used_ranges =
-//     build_unavailable_ranges(&message_attrs.reserved_numbers, &mut manually_set_tags)?;
-//
-//   let mut tag_allocator = TagAllocator::new(&used_ranges);
-//
-//   for (dst_field, field_data) in shadow_struct
-//     .fields
-//     .iter_mut()
-//     .zip(fields_data.iter_mut())
-//   {
-//     // Skipping ignored fields
-//     let FieldDataKind::Normal(field_data) = field_data else {
-//       continue;
-//     };
-//
-//     if let ProtoField::Oneof(OneofInfo { default: false, .. }) = &field_data.proto_field
-//       && !field_data.type_info.is_option()
-//       && !field_data.has_custom_conversions()
-//       && !proto_conversion_data.has_custom_impls()
-//     {
-//       bail!(
-//         &field_data.type_info,
-//         "A oneof must be wrapped in `Option` unless a custom to/from proto implementation is provided or the `default` attribute is used"
-//       );
-//     }
-//
-//     if let Some(ProtoType::Message(MessageInfo { default: false, .. })) =
-//       field_data.proto_field.inner()
-//       && !field_data.type_info.is_option()
-//       && !field_data.has_custom_conversions()
-//       && !proto_conversion_data.has_custom_impls()
-//     {
-//       bail!(
-//         &field_data.type_info,
-//         "A message must be wrapped in `Option` unless a custom to/from proto implementation is provided or the `default` attribute is used"
-//       );
-//     }
-//
-//     if !field_data.proto_field.is_oneof() && field_data.tag.is_none() {
-//       let new_tag = tag_allocator.next_tag(field_data.span)?;
-//
-//       field_data.tag = Some(ParsedNum {
-//         num: new_tag,
-//         span: field_data.span,
-//       });
-//     };
-//
-//     let prost_attr = field_data.as_prost_attr();
-//     dst_field.attrs.push(prost_attr);
-//
-//     let prost_compatible_type = field_data.output_proto_type(false);
-//     dst_field.ty = prost_compatible_type;
-//   }
-//
-//   // We strip away the ignored fields from the shadow struct
-//   if let Fields::Named(fields) = &mut shadow_struct.fields {
-//     let old_fields = std::mem::take(&mut fields.named);
-//
-//     fields.named = old_fields
-//       .into_iter()
-//       .filter(|f| !ignored_fields.contains(f.ident.as_ref().unwrap()))
-//       .collect();
-//   }
-//
-//   // Into/From proto impls
-//   let proto_conversion_impls = proto_conversion_data.generate_conversion_impls();
-//
-//   let non_ignored_fields: Vec<&FieldData> = fields_data
-//     .iter()
-//     .filter_map(|f| f.as_normal())
-//     .collect();
-//
-//   let message_ctx = MessageCtx {
-//     orig_struct_ident,
-//     shadow_struct_ident: Some(shadow_struct_ident),
-//     non_ignored_fields,
-//     message_attrs,
-//   };
-//
-//   let consistency_checks_impl = message_ctx.generate_consistency_checks();
-//   let validator_impl = message_ctx.generate_validator();
-//   let schema_impls = message_ctx.generate_schema_impls();
-//
-//   let wrapped_items = wrap_with_imports(&[schema_impls, proto_conversion_impls, validator_impl]);
-//
-//   Ok(quote! {
-//     #wrapped_items
-//     #consistency_checks_impl
-//   })
-// }
-//
-// pub fn message_macro_direct(
-//   item: &mut ItemStruct,
-//   message_attrs: &MessageAttrs,
-// ) -> Result<TokenStream2, Error> {
-//   let mut fields_data: Vec<FieldData> = Vec::new();
-//   let mut manually_set_tags: Vec<ParsedNum> = Vec::new();
-//
-//   for field in item.fields.iter_mut() {
-//     let field_data_kind = process_field_data(FieldOrVariant::Field(field))?;
-//
-//     if let FieldDataKind::Normal(data) = field_data_kind {
-//       if data.proto_field.is_enum() && !data.type_info.inner().is_int() {
-//         bail!(&data.type_info, "Enums must use `i32` in direct impls")
-//       }
-//
-//       if data.proto_field.is_oneof() && !data.type_info.is_option() {
-//         bail!(
-//           &data.type_info,
-//           "Oneofs must be wrapped in `Option` in a direct impl"
-//         )
-//       }
-//
-//       match data.type_info.type_.as_ref() {
-//         RustType::Box(inner) if data.proto_field.is_message() => {
-//           bail!(inner, "Boxed messages must be optional in a direct impl")
-//         }
-//         RustType::Other(inner) => {
-//           if data.proto_field.is_message() {
-//             bail!(
-//               &inner.path,
-//               "Messages must be wrapped in Option in direct impls"
-//             );
-//           }
-//         }
-//         _ => {}
-//       };
-//
-//       if let Some(tag) = data.tag {
-//         manually_set_tags.push(tag);
-//       } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
-//         for tag in tags.iter().copied() {
-//           manually_set_tags.push(tag);
-//         }
-//       }
-//
-//       fields_data.push(data);
-//     } else {
-//       bail!(
-//         field.require_ident()?,
-//         "Cannot use `ignore` in a direct impl. Use a proxied impl instead"
-//       );
-//     }
-//   }
-//
-//   let used_ranges =
-//     build_unavailable_ranges(&message_attrs.reserved_numbers, &mut manually_set_tags)?;
-//
-//   let mut tag_allocator = TagAllocator::new(&used_ranges);
-//
-//   for (field, field_data) in item.fields.iter_mut().zip(fields_data.iter_mut()) {
-//     if !field_data.proto_field.is_oneof() && field_data.tag.is_none() {
-//       let new_tag = tag_allocator.next_tag(field_data.span)?;
-//
-//       field_data.tag = Some(ParsedNum {
-//         num: new_tag,
-//         span: field_data.span,
-//       });
-//     };
-//
-//     let prost_attr = field_data.as_prost_attr();
-//     field.attrs.push(prost_attr);
-//   }
-//
-//   let message_ctx = MessageCtx {
-//     orig_struct_ident: &item.ident,
-//     shadow_struct_ident: None,
-//     non_ignored_fields: fields_data,
-//     message_attrs,
-//   };
-//
-//   let consistency_checks_impl = message_ctx.generate_consistency_checks();
-//   let schema_impls = message_ctx.generate_schema_impls();
-//   let validator_impl = message_ctx.generate_validator();
-//
-//   let wrapped_items = wrap_with_imports(&[schema_impls, validator_impl]);
-//
-//   let output_tokens = quote! {
-//     #wrapped_items
-//     #consistency_checks_impl
-//   };
-//
-//   Ok(output_tokens)
-// }

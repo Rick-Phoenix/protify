@@ -1,12 +1,15 @@
 use crate::*;
 
+boolean_enum!(pub UseFallback);
+
 pub fn generate_message_validator(
+  use_fallback: UseFallback,
   target_ident: &Ident,
   fields: &[FieldDataKind],
   top_level_cel_rules: &IterTokensOr<TokenStream2>,
 ) -> TokenStream2 {
-  let validators_tokens = if fields.is_empty() {
-    quote! { unimplemented!() }
+  let validators_tokens = if *use_fallback {
+    quote! { unimplemented!(); }
   } else {
     let tokens = fields.iter().filter_map(|d| d.as_normal()).filter_map(|data| {
     let FieldData {
@@ -172,10 +175,11 @@ pub fn generate_message_validator(
 }
 
 impl MessageCtx<'_> {
-  pub fn generate_validator(&self) -> TokenStream2 {
+  pub fn generate_validator(&self, use_fallback: UseFallback) -> TokenStream2 {
     let target_ident = self.proto_struct_ident();
 
     generate_message_validator(
+      use_fallback,
       target_ident,
       &self.fields_data,
       &self.message_attrs.cel_rules,

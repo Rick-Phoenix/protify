@@ -1,33 +1,36 @@
 use crate::*;
 
-pub fn generate_oneof_consistency_checks<T: Borrow<FieldData>>(
+pub fn generate_oneof_consistency_checks(
   oneof_ident: &Ident,
-  variants: &[T],
+  variants: &[FieldDataKind],
   no_auto_test: bool,
 ) -> TokenStream2 {
-  let consistency_checks = variants.iter().filter_map(|data| {
-    let FieldData {
-      ident_str,
-      validator,
-      span,
-      ..
-    } = data.borrow();
+  let consistency_checks = variants
+    .iter()
+    .filter_map(|d| d.as_normal())
+    .filter_map(|data| {
+      let FieldData {
+        ident_str,
+        validator,
+        span,
+        ..
+      } = data;
 
-    validator
-      .as_ref()
-      // Useless to check consistency for default validators
-      .filter(|v| !v.is_fallback)
-      .map(|validator| {
-        quote_spanned! {*span=>
-          if let Err(errs) = ::prelude::Validator::check_consistency(&#validator) {
-            errors.push(::prelude::FieldError {
-              field: #ident_str,
-              errors: errs
-            });
+      validator
+        .as_ref()
+        // Useless to check consistency for default validators
+        .filter(|v| !v.is_fallback)
+        .map(|validator| {
+          quote_spanned! {*span=>
+            if let Err(errs) = ::prelude::Validator::check_consistency(&#validator) {
+              errors.push(::prelude::FieldError {
+                field: #ident_str,
+                errors: errs
+              });
+            }
           }
-        }
-      })
-  });
+        })
+    });
 
   let auto_test_fn = (!no_auto_test).then(|| {
     let test_fn_ident = format_ident!(
@@ -74,11 +77,11 @@ pub fn generate_oneof_consistency_checks<T: Borrow<FieldData>>(
   }
 }
 
-impl<T: Borrow<FieldData>> OneofCtx<'_, T> {
+impl OneofCtx<'_> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
     generate_oneof_consistency_checks(
       self.proto_enum_ident(),
-      &self.non_ignored_variants,
+      &self.variants,
       self.oneof_attrs.no_auto_test,
     )
   }

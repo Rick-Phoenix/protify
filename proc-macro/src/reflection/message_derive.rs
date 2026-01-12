@@ -230,13 +230,22 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
     msg_name,
   } = extract_fields_data_reflection(item).unwrap_or_default_and_push_error(&mut errors);
 
+  let use_fallback = if errors.is_empty() {
+    UseFallback::No
+  } else {
+    UseFallback::Yes
+  };
+
   let validator_impl = wrap_with_imports(&[generate_message_validator(
+    use_fallback,
     &item.ident,
     &fields_data,
     &cel_rules,
   )]);
-  let consistency_checks =
-    generate_message_consistency_checks(&item.ident, &fields_data, no_auto_test, true, &msg_name);
+
+  let consistency_checks = errors.is_empty().then(|| {
+    generate_message_consistency_checks(&item.ident, &fields_data, no_auto_test, true, &msg_name)
+  });
 
   let errors = errors.iter().map(|e| e.to_compile_error());
 

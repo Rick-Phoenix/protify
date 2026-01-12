@@ -1,5 +1,6 @@
 use crate::*;
 
+#[derive(Default)]
 pub struct OneofAttrs {
   pub options: TokensOr<TokenStream2>,
   pub name: String,
@@ -10,32 +11,47 @@ pub struct OneofAttrs {
   pub no_auto_test: bool,
 }
 
+#[derive(Default)]
+pub struct OneofMacroAttrs {
+  pub is_proxied: bool,
+  pub no_auto_test: bool,
+}
+
+impl OneofMacroAttrs {
+  pub fn parse(macro_attrs: TokenStream2) -> syn::Result<Self> {
+    let mut is_proxied = false;
+    let mut no_auto_test = false;
+
+    let macro_attrs_parser = syn::meta::parser(|meta| {
+      let ident_str = meta.ident_str()?;
+
+      match ident_str.as_str() {
+        "proxied" => {
+          is_proxied = true;
+        }
+        "no_auto_test" => {
+          no_auto_test = true;
+        }
+        _ => return Err(meta.error("Unknown attribute")),
+      };
+
+      Ok(())
+    });
+
+    macro_attrs_parser.parse2(macro_attrs)?;
+
+    Ok(Self {
+      is_proxied,
+      no_auto_test,
+    })
+  }
+}
+
 pub fn process_oneof_attrs(
   enum_ident: &Ident,
-  macro_attrs: TokenStream2,
+  macro_attrs: OneofMacroAttrs,
   attrs: &[Attribute],
 ) -> Result<OneofAttrs, Error> {
-  let mut is_proxied = false;
-  let mut no_auto_test = false;
-
-  let macro_attrs_parser = syn::meta::parser(|meta| {
-    let ident_str = meta.ident_str()?;
-
-    match ident_str.as_str() {
-      "proxied" => {
-        is_proxied = true;
-      }
-      "no_auto_test" => {
-        no_auto_test = true;
-      }
-      _ => return Err(meta.error("Unknown attribute")),
-    };
-
-    Ok(())
-  });
-
-  macro_attrs_parser.parse2(macro_attrs)?;
-
   let mut options = TokensOr::<TokenStream2>::vec();
   let mut name: Option<String> = None;
   let mut from_proto: Option<PathOrClosure> = None;
@@ -74,7 +90,7 @@ pub fn process_oneof_attrs(
     from_proto,
     into_proto,
     shadow_derives,
-    is_proxied,
-    no_auto_test,
+    is_proxied: macro_attrs.is_proxied,
+    no_auto_test: macro_attrs.no_auto_test,
   })
 }
