@@ -1,10 +1,12 @@
 use crate::*;
 
+boolean_enum!(pub SkipOneofTagsCheck);
+
 pub fn generate_message_consistency_checks(
   item_ident: &Ident,
   fields_data: &[FieldDataKind],
-  skip_auto_test: bool,
-  skip_oneof_tags_check: bool,
+  skip_auto_test: SkipAutoTest,
+  skip_oneof_tags_check: SkipOneofTagsCheck,
   message_name: &str,
 ) -> TokenStream2 {
   let consistency_checks =  fields_data.iter().filter_map(|d| d.as_normal()).filter_map(|data| {
@@ -17,7 +19,7 @@ pub fn generate_message_consistency_checks(
     } = data;
 
     if let ProtoField::Oneof(OneofInfo { path, tags, .. }) = proto_field
-      && !skip_oneof_tags_check
+      && !*skip_oneof_tags_check
     {
       Some(quote_spanned! {*span=>
         if let Err(err) = <#path as ::prelude::ProtoOneof>::check_tags(#ident_str, &mut [ #(#tags),* ]) {
@@ -45,7 +47,7 @@ pub fn generate_message_consistency_checks(
     }
   });
 
-  let auto_test_fn = (!skip_auto_test).then(|| {
+  let auto_test_fn = (!*skip_auto_test).then(|| {
     let test_fn_ident = format_ident!(
       "{}_validators_consistency",
       to_snake_case(&item_ident.to_string())
@@ -107,7 +109,7 @@ impl MessageCtx<'_> {
       item_ident,
       &self.fields_data,
       self.message_attrs.no_auto_test,
-      false,
+      SkipOneofTagsCheck::No,
       &self.message_attrs.name,
     )
   }

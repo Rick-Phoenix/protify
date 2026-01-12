@@ -34,10 +34,6 @@ impl ProtoType {
     )
   }
 
-  pub const fn is_boxed_message(&self) -> bool {
-    matches!(self, Self::Message(MessageInfo { boxed: true, .. }))
-  }
-
   /// Returns `true` if the proto type is [`Enum`].
   ///
   /// [`Enum`]: ProtoType::Enum

@@ -175,11 +175,13 @@ pub fn generate_message_validator(
 }
 
 impl MessageCtx<'_> {
-  pub fn generate_validator(&self, use_fallback: UseFallback) -> TokenStream2 {
+  pub fn generate_validator(&self) -> TokenStream2 {
     let target_ident = self.proto_struct_ident();
 
+    // For non-reflection implementations we don't skip fields if they don't have
+    // validators, so empty fields = an error occurred
     generate_message_validator(
-      use_fallback,
+      self.fields_data.is_empty().into(),
       target_ident,
       &self.fields_data,
       &self.message_attrs.cel_rules,

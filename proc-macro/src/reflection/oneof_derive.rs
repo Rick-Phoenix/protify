@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Default)]
 pub struct OneofDataReflection {
-  pub no_auto_test: bool,
+  pub no_auto_test: SkipAutoTest,
   pub fields_data: Vec<FieldDataKind>,
 }
 
@@ -10,7 +10,7 @@ pub fn extract_oneof_data_reflection(item: &mut ItemEnum) -> Result<OneofDataRef
   let ItemEnum { variants, .. } = item;
 
   let mut parent_message: Option<String> = None;
-  let mut no_auto_test = false;
+  let mut no_auto_test = SkipAutoTest::No;
 
   for attr in &item.attrs {
     if attr.path().is_ident("proto") {
@@ -22,7 +22,7 @@ pub fn extract_oneof_data_reflection(item: &mut ItemEnum) -> Result<OneofDataRef
             parent_message = Some(meta.parse_value::<LitStr>()?.value());
           }
           "no_auto_test" => {
-            no_auto_test = true;
+            no_auto_test = true.into();
           }
           _ => return Err(meta.error("Unknown attribute")),
         };
@@ -145,9 +145,21 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> TokenStream2 {
     fields_data,
   } = extract_oneof_data_reflection(item).unwrap_or_default_and_push_error(&mut errors);
 
-  let validator_impl = wrap_with_imports(&[generate_oneof_validator(&item.ident, &fields_data)]);
-  let consistency_checks =
-    generate_oneof_consistency_checks(&item.ident, &fields_data, no_auto_test);
+  let use_fallback = if errors.is_empty() {
+    UseFallback::No
+  } else {
+    UseFallback::Yes
+  };
+
+  let validator_impl = wrap_with_imports(&[generate_oneof_validator(
+    use_fallback,
+    &item.ident,
+    &fields_data,
+  )]);
+
+  let consistency_checks = errors
+    .is_empty()
+    .then(|| generate_oneof_consistency_checks(&item.ident, &fields_data, no_auto_test));
 
   let errors = errors.iter().map(|e| e.to_compile_error());
 

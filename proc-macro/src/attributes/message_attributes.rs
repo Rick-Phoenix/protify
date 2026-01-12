@@ -15,13 +15,13 @@ pub struct MessageAttrs {
   pub shadow_derives: Option<MetaList>,
   pub cel_rules: IterTokensOr<TokenStream2>,
   pub is_proxied: bool,
-  pub no_auto_test: bool,
+  pub no_auto_test: SkipAutoTest,
   pub extern_path: Option<ParsedStr>,
   pub deprecated: bool,
 }
 
 impl MessageAttrs {
-  pub fn has_custom_conversions(&self) -> bool {
+  pub const fn has_custom_conversions(&self) -> bool {
     self.from_proto.is_some() && self.into_proto.is_some()
   }
 }
@@ -29,7 +29,7 @@ impl MessageAttrs {
 #[derive(Default)]
 pub struct MessageMacroArgs {
   pub is_proxied: bool,
-  pub no_auto_test: bool,
+  pub no_auto_test: SkipAutoTest,
   pub extern_path: Option<ParsedStr>,
 }
 
@@ -58,7 +58,7 @@ impl MessageMacroArgs {
 
     Ok(Self {
       is_proxied,
-      no_auto_test,
+      no_auto_test: no_auto_test.into(),
       extern_path,
     })
   }

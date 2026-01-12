@@ -4,7 +4,7 @@ use super::*;
 pub struct ReflectionMsgData {
   pub fields_data: Vec<FieldDataKind>,
   pub top_level_rules: IterTokensOr<TokenStream2>,
-  pub no_auto_test: bool,
+  pub no_auto_test: SkipAutoTest,
   pub msg_name: String,
 }
 
@@ -12,7 +12,7 @@ pub fn extract_fields_data_reflection(item: &mut ItemStruct) -> Result<Reflectio
   let ItemStruct { fields, .. } = item;
 
   let mut msg_name: Option<String> = None;
-  let mut no_auto_test = false;
+  let mut no_auto_test = SkipAutoTest::No;
 
   for attr in &item.attrs {
     if attr.path().is_ident("proto") {
@@ -24,7 +24,7 @@ pub fn extract_fields_data_reflection(item: &mut ItemStruct) -> Result<Reflectio
             msg_name = Some(meta.parse_value::<LitStr>()?.value());
           }
           "no_auto_test" => {
-            no_auto_test = true;
+            no_auto_test = true.into();
           }
           _ => drain_token_stream!(meta.input),
         };
@@ -244,7 +244,13 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
   )]);
 
   let consistency_checks = errors.is_empty().then(|| {
-    generate_message_consistency_checks(&item.ident, &fields_data, no_auto_test, true, &msg_name)
+    generate_message_consistency_checks(
+      &item.ident,
+      &fields_data,
+      no_auto_test,
+      SkipOneofTagsCheck::Yes,
+      &msg_name,
+    )
   });
 
   let errors = errors.iter().map(|e| e.to_compile_error());

@@ -1,5 +1,7 @@
 use crate::*;
 
+boolean_enum!(pub SkipAutoTest);
+
 #[derive(Default)]
 pub struct OneofAttrs {
   pub options: TokensOr<TokenStream2>,
@@ -8,13 +10,13 @@ pub struct OneofAttrs {
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
   pub is_proxied: bool,
-  pub no_auto_test: bool,
+  pub no_auto_test: SkipAutoTest,
 }
 
 #[derive(Default)]
 pub struct OneofMacroAttrs {
   pub is_proxied: bool,
-  pub no_auto_test: bool,
+  pub no_auto_test: SkipAutoTest,
 }
 
 impl OneofMacroAttrs {
@@ -42,11 +44,12 @@ impl OneofMacroAttrs {
 
     Ok(Self {
       is_proxied,
-      no_auto_test,
+      no_auto_test: no_auto_test.into(),
     })
   }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn process_oneof_attrs(
   enum_ident: &Ident,
   macro_attrs: OneofMacroAttrs,

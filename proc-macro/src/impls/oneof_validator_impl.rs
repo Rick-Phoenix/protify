@@ -1,7 +1,11 @@
 use crate::*;
 
-pub fn generate_oneof_validator(oneof_ident: &Ident, variants: &[FieldDataKind]) -> TokenStream2 {
-  let validators_tokens = if variants.is_empty() {
+pub fn generate_oneof_validator(
+  use_fallback: UseFallback,
+  oneof_ident: &Ident,
+  variants: &[FieldDataKind],
+) -> TokenStream2 {
+  let validators_tokens = if *use_fallback {
     quote! { unimplemented!() }
   } else {
     let tokens = variants
@@ -79,6 +83,9 @@ pub fn generate_oneof_validator(oneof_ident: &Ident, variants: &[FieldDataKind])
 impl OneofCtx<'_> {
   pub fn generate_validator(&self) -> TokenStream2 {
     let oneof_ident = self.proto_enum_ident();
-    generate_oneof_validator(oneof_ident, &self.variants)
+
+    // For non-reflection implementations we don't skip fields if they don't have
+    // validators, so empty fields = an error occurred
+    generate_oneof_validator(self.variants.is_empty().into(), oneof_ident, &self.variants)
   }
 }

@@ -250,12 +250,6 @@ impl ProtoField {
       .is_some_and(|inner| inner.is_message())
   }
 
-  pub fn is_boxed_message(&self) -> bool {
-    self
-      .inner()
-      .is_some_and(|inner| inner.is_boxed_message())
-  }
-
   pub const fn is_oneof(&self) -> bool {
     matches!(self, Self::Oneof(..))
   }

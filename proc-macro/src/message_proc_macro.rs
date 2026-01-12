@@ -121,7 +121,6 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
     });
   }
 
-  // Consistency, validator, schema
   let message_ctx = MessageCtx {
     orig_struct_ident: item.ident.clone(),
     shadow_struct_ident: proxy_struct.as_ref().map(|ps| ps.ident.clone()),
@@ -133,13 +132,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
     output.extend(message_ctx.generate_consistency_checks());
   }
 
-  let use_fallback = if errors.is_empty() {
-    UseFallback::No
-  } else {
-    UseFallback::Yes
-  };
-
-  let validator_impl = message_ctx.generate_validator(use_fallback);
+  let validator_impl = message_ctx.generate_validator();
   let schema_impls = message_ctx.generate_schema_impls();
 
   let wrapped_items = wrap_with_imports(&[schema_impls, validator_impl]);
@@ -190,14 +183,13 @@ impl ImplKind {
   }
 }
 
-#[derive(Clone, Copy)]
 pub enum ContainerAttrs<'a> {
   Message(&'a MessageAttrs),
   Oneof(&'a OneofAttrs),
 }
 
 impl ContainerAttrs<'_> {
-  pub fn has_custom_conversions(&self) -> bool {
+  pub const fn has_custom_conversions(&self) -> bool {
     match self {
       ContainerAttrs::Message(message_attrs) => message_attrs.has_custom_conversions(),
       ContainerAttrs::Oneof(oneof_attrs) => {
@@ -207,6 +199,7 @@ impl ContainerAttrs<'_> {
   }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn second_processing<'a, I>(
   impl_kind: ImplKind,
   fields: I,
