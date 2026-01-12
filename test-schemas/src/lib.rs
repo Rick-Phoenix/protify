@@ -35,6 +35,15 @@ fn bad_rule() -> CelProgram {
   cel_program!(id = "abc", msg = "hi", expr = "hi")
 }
 
+#[allow(clippy::use_self)]
+#[proto_message(no_auto_test)]
+pub struct BoxedMsg {
+  #[proto(message)]
+  pub msg: Option<Box<BoxedMsg>>,
+  #[proto(validate = |v| v.const_(1))]
+  pub id: i32,
+}
+
 #[proto_message(no_auto_test)]
 pub struct BadFieldRules {
   #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]

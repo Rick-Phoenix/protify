@@ -1,6 +1,34 @@
 use super::*;
 
 #[test]
+fn recursive_message() {
+  let valid_msg = BoxedMsg { msg: None, id: 1 };
+
+  let mut msg = BoxedMsg {
+    msg: Some(valid_msg.clone().into()),
+    id: 1,
+  };
+  let baseline = msg.clone();
+
+  assert!(msg.validate().is_ok(), "basic validation");
+
+  macro_rules! assert_violation {
+    ($violation:expr, $error:expr) => {
+      assert_violation_id(&msg, $violation, $error);
+      msg = baseline.clone();
+    };
+  }
+
+  msg.id = 2;
+  let invalid = msg.clone();
+
+  assert_violation!("int32.const", "outer rule");
+
+  msg.msg = Some(Box::new(invalid));
+  assert_violation!("int32.const", "inner rule");
+}
+
+#[test]
 fn direct_default_validator() {
   let mut msg = DefaultValidatorTest2 {
     msg_with_default_validator: Some(DefaultValidatorTest {
