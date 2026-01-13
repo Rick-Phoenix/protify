@@ -7,11 +7,11 @@ use super::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CelRule {
   /// The id of this specific rule.
-  pub id: Arc<str>,
+  pub id: SharedStr,
   /// The error message to display in case the rule fails validation.
-  pub message: Arc<str>,
+  pub message: SharedStr,
   /// The CEL expression that must be used to perform the validation check.
-  pub expression: Arc<str>,
+  pub expression: SharedStr,
 }
 
 impl From<CelRule> for CelProgram {
@@ -24,7 +24,7 @@ impl From<CelRule> for CelProgram {
 impl From<CelRule> for ProtoOption {
   fn from(value: CelRule) -> Self {
     Self {
-      name: CEL.clone(),
+      name: "cel".into(),
       value: value.into(),
     }
   }
@@ -34,9 +34,12 @@ impl From<CelRule> for OptionValue {
   fn from(value: CelRule) -> Self {
     Self::Message(
       [
-        (ID.clone(), Self::String(value.id)),
-        (MESSAGE.clone(), Self::String(value.message)),
-        (EXPRESSION.clone(), Self::String(value.expression)),
+        (SharedStr::Static("id"), Self::String(value.id)),
+        (SharedStr::Static("message"), Self::String(value.message)),
+        (
+          SharedStr::Static("expression"),
+          Self::String(value.expression),
+        ),
       ]
       .into_iter()
       .collect(),
@@ -129,13 +132,16 @@ mod cel_impls {
   #[derive(Debug, Clone, Error)]
   pub enum CelError {
     #[error("Expected CEL program with id `{rule_id}` to return a boolean result, got `{value:?}`")]
-    NonBooleanResult { rule_id: Arc<str>, value: ValueType },
+    NonBooleanResult {
+      rule_id: SharedStr,
+      value: ValueType,
+    },
     // SHould use FieldPath here to at least get the context of the value
     #[error("Failed to inject value in CEL program: {0}")]
     ConversionError(String),
     #[error("Failed to execute CEL program with id `{rule_id}`: {source}")]
     ExecutionError {
-      rule_id: Arc<str>,
+      rule_id: SharedStr,
       source: ExecutionError,
     },
   }

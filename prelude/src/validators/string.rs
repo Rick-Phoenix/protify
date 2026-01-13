@@ -516,17 +516,14 @@ impl From<StringValidator> for ProtoOption {
 
     macro_rules! set_options {
       ($($name:ident),*) => {
-        paste::paste! {
-          rules
-          $(
-            .maybe_set(&[< $name:upper >], validator.$name)
-          )*
-        }
+        rules
+        $(
+          .maybe_set(stringify!($name), validator.$name)
+        )*
       };
     }
 
     set_options!(
-      const_,
       min_len,
       max_len,
       len,
@@ -539,23 +536,22 @@ impl From<StringValidator> for ProtoOption {
       not_contains
     );
 
+    rules.maybe_set("const", validator.const_);
+
     #[cfg(feature = "regex")]
     if let Some(pattern) = validator.pattern {
-      rules.set(
-        PATTERN.clone(),
-        OptionValue::String(pattern.as_str().into()),
-      );
+      rules.set("pattern", OptionValue::String(pattern.to_string().into()));
     }
 
     rules
       .maybe_set(
-        &IN_,
+        "in",
         validator
           .in_
           .map(|list| OptionValue::new_list(list.items)),
       )
       .maybe_set(
-        &NOT_IN,
+        "not_in",
         validator
           .not_in
           .map(|list| OptionValue::new_list(list.items)),
@@ -565,14 +561,14 @@ impl From<StringValidator> for ProtoOption {
       let (name, value, is_strict) = well_known.to_option();
 
       rules.set(name, value);
-      rules.set_boolean(&STRICT, is_strict);
+      rules.set_boolean("strict", is_strict);
     }
 
     // This is the outer rule grouping, "(buf.validate.field)"
     let mut outer_rules = OptionMessageBuilder::new();
 
     // (buf.validate.field).string .et_cetera...
-    outer_rules.set(STRING.clone(), OptionValue::Message(rules.into()));
+    outer_rules.set("string", OptionValue::Message(rules.into()));
 
     // These must be added on the outer grouping, as they are generic rules
     // It's (buf.validate.field).required, NOT (buf.validate.field).string.required
@@ -582,7 +578,7 @@ impl From<StringValidator> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }

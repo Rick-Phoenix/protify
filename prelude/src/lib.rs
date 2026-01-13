@@ -4,6 +4,7 @@ pub use ::cel;
 #[macro_use]
 mod decl_macros;
 
+use ::bytes::Bytes;
 use std::borrow::Borrow;
 use std::fmt::{Debug, Display};
 

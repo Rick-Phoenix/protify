@@ -289,26 +289,26 @@ where
     let mut rules = OptionMessageBuilder::new();
 
     rules
-      .set_boolean(&UNIQUE, validator.unique)
-      .maybe_set(&MIN_ITEMS, validator.min_items)
-      .maybe_set(&MAX_ITEMS, validator.max_items);
+      .set_boolean("unique", validator.unique)
+      .maybe_set("min_items", validator.min_items)
+      .maybe_set("max_items", validator.max_items);
 
     if let Some(items_option) = validator.items {
       let items_schema: Self = items_option.into();
 
-      rules.set(ITEMS.clone(), items_schema.value);
+      rules.set("items", items_schema.value);
     }
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(REPEATED.clone(), OptionValue::Message(rules.into()));
+    outer_rules.set("repeated", OptionValue::Message(rules.into()));
 
     outer_rules
       .add_cel_options(validator.cel)
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }

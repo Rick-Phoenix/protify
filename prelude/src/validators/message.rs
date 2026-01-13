@@ -149,7 +149,7 @@ impl<T: ValidatedMessage> From<MessageValidator<T>> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(rules.into()),
     }
   }

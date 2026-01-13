@@ -399,7 +399,7 @@ impl<S: State> BytesValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn not_in<I>(
+  pub fn not_in(
     self,
     list: impl IntoIterator<Item = impl IntoBytes>,
   ) -> BytesValidatorBuilder<SetNotIn<S>>

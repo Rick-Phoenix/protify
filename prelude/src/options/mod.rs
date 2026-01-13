@@ -15,7 +15,7 @@ use crate::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProtoOption {
-  pub name: Arc<str>,
+  pub name: SharedStr,
   pub value: OptionValue,
 }
 
@@ -27,11 +27,11 @@ pub enum OptionValue {
   Int(i64),
   Uint(u64),
   Float(f64),
-  String(Arc<str>),
+  String(SharedStr),
   Bytes(Bytes),
   List(OptionList),
   Message(OptionMessage),
-  Enum(Arc<str>),
+  Enum(SharedStr),
   Duration(Duration),
   Timestamp(Timestamp),
 }
@@ -94,18 +94,18 @@ pub struct OptionMessageBuilder {
 impl OptionMessageBuilder {
   pub(crate) fn maybe_set(
     &mut self,
-    name: &Arc<str>,
+    name: impl Into<SharedStr>,
     value: Option<impl Into<OptionValue>>,
   ) -> &mut Self {
     if let Some(value) = value {
-      self.set(name.clone(), value);
+      self.set(name.into(), value);
     }
     self
   }
 
-  pub(crate) fn set_boolean(&mut self, name: &Arc<str>, boolean: bool) -> &mut Self {
+  pub(crate) fn set_boolean(&mut self, name: impl Into<SharedStr>, boolean: bool) -> &mut Self {
     if boolean {
-      self.set(name.clone(), OptionValue::Bool(true));
+      self.set(name.into(), OptionValue::Bool(true));
     }
     self
   }
@@ -116,7 +116,7 @@ impl OptionMessageBuilder {
         .into_iter()
         .map(|program| program.rule.into())
         .collect();
-      self.set(CEL.clone(), OptionValue::List(rule_options.into()));
+      self.set("cel", OptionValue::List(rule_options.into()));
     }
     self
   }
@@ -128,7 +128,7 @@ impl OptionMessageBuilder {
   }
 
   #[inline]
-  pub fn set(&mut self, name: impl Into<Arc<str>>, value: impl Into<OptionValue>) -> &mut Self {
+  pub fn set(&mut self, name: impl Into<SharedStr>, value: impl Into<OptionValue>) -> &mut Self {
     self.inner.push(ProtoOption {
       name: name.into(),
       value: value.into(),
@@ -144,7 +144,7 @@ impl OptionMessageBuilder {
 
   pub(crate) fn set_required(&mut self, required: bool) -> &mut Self {
     if required {
-      self.set(REQUIRED.clone(), OptionValue::Bool(true));
+      self.set("required", OptionValue::Bool(true));
     }
     self
   }
@@ -152,7 +152,7 @@ impl OptionMessageBuilder {
   pub(crate) fn set_ignore(&mut self, ignore: Ignore) -> &mut Self {
     if !matches!(ignore, Ignore::Unspecified) {
       // The long conversion is necessary here to avoid issues with the i32 representation
-      self.set(IGNORE.clone(), <Ignore as Into<OptionValue>>::into(ignore));
+      self.set("ignore", <Ignore as Into<OptionValue>>::into(ignore));
     }
     self
   }
@@ -173,7 +173,7 @@ impl OptionMessageBuilder {
 
 impl<N, V> From<(N, V)> for ProtoOption
 where
-  N: Into<Arc<str>>,
+  N: Into<SharedStr>,
   V: Into<OptionValue>,
 {
   fn from(value: (N, V)) -> Self {
@@ -208,7 +208,7 @@ where
 
 impl<N, V> From<Vec<(N, V)>> for OptionValue
 where
-  N: Into<Arc<str>>,
+  N: Into<SharedStr>,
   V: Into<Self>,
 {
   fn from(value: Vec<(N, V)>) -> Self {
@@ -224,7 +224,7 @@ impl From<Vec<ProtoOption>> for OptionValue {
 
 impl<N, V> From<HashMap<N, V>> for OptionMessage
 where
-  N: Into<Arc<str>>,
+  N: Into<SharedStr>,
   V: Into<OptionValue>,
 {
   fn from(value: HashMap<N, V>) -> Self {
@@ -240,7 +240,7 @@ where
 
 impl<N, V> From<HashMap<N, V>> for OptionValue
 where
-  N: Into<Arc<str>>,
+  N: Into<SharedStr>,
   V: Into<Self>,
 {
   fn from(value: HashMap<N, V>) -> Self {
@@ -250,7 +250,7 @@ where
 
 impl<N, V> From<BTreeMap<N, V>> for OptionMessage
 where
-  N: Into<Arc<str>>,
+  N: Into<SharedStr>,
   V: Into<OptionValue>,
 {
   fn from(value: BTreeMap<N, V>) -> Self {
@@ -266,7 +266,7 @@ where
 
 impl<N, V> From<BTreeMap<N, V>> for OptionValue
 where
-  N: Into<Arc<str>>,
+  N: Into<SharedStr>,
   V: Into<Self>,
 {
   fn from(value: BTreeMap<N, V>) -> Self {
@@ -476,8 +476,8 @@ impl<T: Into<Self>> From<Vec<T>> for OptionValue {
   }
 }
 
-impl From<&str> for OptionValue {
-  fn from(value: &str) -> Self {
+impl From<&'static str> for OptionValue {
+  fn from(value: &'static str) -> Self {
     Self::String(value.into())
   }
 }
@@ -497,12 +497,12 @@ impl From<std::time::Duration> for OptionValue {
 impl From<Ignore> for OptionValue {
   fn from(value: Ignore) -> Self {
     let name = match value {
-      Ignore::Unspecified => IGNORE_UNSPECIFIED.clone(),
-      Ignore::IfZeroValue => IGNORE_IF_ZERO_VALUE.clone(),
-      Ignore::Always => IGNORE_ALWAYS.clone(),
+      Ignore::Unspecified => "IGNORE_UNSPECIFIED",
+      Ignore::IfZeroValue => "IGNORE_IF_ZERO_VALUE",
+      Ignore::Always => "IGNORE_ALWAYS",
     };
 
-    Self::Enum(name)
+    Self::Enum(name.into())
   }
 }
 
@@ -515,15 +515,6 @@ impl From<&'static [u8]> for OptionValue {
 impl<'a, const S: usize> From<&'a [u8; S]> for OptionValue {
   fn from(value: &'a [u8; S]) -> Self {
     Self::Bytes(value.to_vec().into())
-  }
-}
-
-impl From<SharedStr> for OptionValue {
-  fn from(value: SharedStr) -> Self {
-    match value {
-      SharedStr::Static(s) => Self::String(s.into()),
-      SharedStr::Shared(s) => Self::String(s.into()),
-    }
   }
 }
 
@@ -550,4 +541,4 @@ option_value_conversion!(f32, Float, as f64);
 option_value_conversion!(Bytes, Bytes);
 option_value_conversion!(OptionMessage, Message);
 option_value_conversion!(OptionList, List);
-option_value_conversion!(Arc<str>, String);
+option_value_conversion!(SharedStr, String);

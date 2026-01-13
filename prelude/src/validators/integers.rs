@@ -216,26 +216,25 @@ where
 
     macro_rules! set_options {
       ($($name:ident),*) => {
-        paste::paste! {
-          rules
-          $(
-            .maybe_set(&[< $name:upper >], validator.$name)
-          )*
-        }
+        rules
+        $(
+          .maybe_set(stringify!($name), validator.$name)
+        )*
       };
     }
 
-    set_options!(const_, lt, lte, gt, gte);
+    set_options!(lt, lte, gt, gte);
 
     rules
+      .maybe_set("const", validator.const_)
       .maybe_set(
-        &IN_,
+        "in",
         validator
           .in_
           .map(|list| OptionValue::new_list(list.items)),
       )
       .maybe_set(
-        &NOT_IN,
+        "not_in",
         validator
           .not_in
           .map(|list| OptionValue::new_list(list.items)),
@@ -251,7 +250,7 @@ where
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }
@@ -285,7 +284,7 @@ pub trait IntWrapper: AsProtoType + Default {
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
-  fn type_name() -> Arc<str>;
+  fn type_name() -> &'static str;
 }
 
 macro_rules! impl_int_wrapper {
@@ -303,8 +302,8 @@ macro_rules! impl_int_wrapper {
         #[allow(private_interfaces)]
         const SEALED: Sealed = Sealed;
 
-        fn type_name() -> Arc<str> {
-          $proto_type.clone()
+        fn type_name() -> &'static str {
+          stringify!([< $proto_type:lower >])
         }
       }
     }

@@ -1,10 +1,9 @@
 use crate::*;
 
-reusable_string!(PROTO_DEPRECATED, "deprecated");
-
+#[must_use]
 pub fn proto_deprecated() -> ProtoOption {
   ProtoOption {
-    name: PROTO_DEPRECATED.clone(),
+    name: "deprecated".into(),
     value: OptionValue::Bool(true),
   }
 }

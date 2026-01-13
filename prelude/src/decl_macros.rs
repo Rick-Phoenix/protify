@@ -107,20 +107,6 @@ macro_rules! cel_program {
   };
 }
 
-macro_rules! reusable_string {
-  ($name:ident) => {
-    $crate::paste! {
-      pub(crate) static $name: std::sync::LazyLock<std::sync::Arc<str>> =
-      std::sync::LazyLock::new(|| stringify!([< $name:lower >]).into());
-    }
-  };
-
-  ($name:ident, $string:literal) => {
-    pub(crate) static $name: std::sync::LazyLock<std::sync::Arc<str>> =
-      std::sync::LazyLock::new(|| $string.into());
-  };
-}
-
 macro_rules! impl_validator {
   ($validator:ident, $rust_type:ty) => {
     $crate::paste! {

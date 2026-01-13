@@ -173,21 +173,21 @@ impl From<DurationValidator> for ProtoOption {
   fn from(validator: DurationValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 
-    rules.maybe_set(&CONST_, validator.const_);
+    rules.maybe_set("const", validator.const_);
 
     rules
-      .maybe_set(&LT, validator.lt)
-      .maybe_set(&LTE, validator.lte)
-      .maybe_set(&GT, validator.gt)
-      .maybe_set(&GTE, validator.gte)
+      .maybe_set("lt", validator.lt)
+      .maybe_set("lte", validator.lte)
+      .maybe_set("gt", validator.gt)
+      .maybe_set("gte", validator.gte)
       .maybe_set(
-        &IN_,
+        "in",
         validator
           .in_
           .map(|list| OptionValue::new_list(list.items)),
       )
       .maybe_set(
-        &NOT_IN,
+        "not_in",
         validator
           .not_in
           .map(|list| OptionValue::new_list(list.items)),
@@ -195,7 +195,7 @@ impl From<DurationValidator> for ProtoOption {
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(DURATION.clone(), OptionValue::Message(rules.build()));
+    outer_rules.set("duration", OptionValue::Message(rules.build()));
 
     outer_rules
       .add_cel_options(validator.cel)
@@ -203,7 +203,7 @@ impl From<DurationValidator> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.build()),
     }
   }

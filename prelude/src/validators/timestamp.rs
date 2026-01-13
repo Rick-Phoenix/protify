@@ -198,24 +198,23 @@ impl From<TimestampValidator> for ProtoOption {
 
     macro_rules! set_options {
       ($($name:ident),*) => {
-        paste::paste! {
-          rules
-          $(
-            .maybe_set(&[< $name:upper >], validator.$name)
-          )*
-        }
+        rules
+        $(
+          .maybe_set(stringify!($name), validator.$name)
+        )*
       };
     }
 
-    set_options!(const_, lt, lte, gt, gte, within);
+    set_options!(lt, lte, gt, gte, within);
 
     rules
-      .set_boolean(&LT_NOW, validator.lt_now)
-      .set_boolean(&GT_NOW, validator.gt_now);
+      .maybe_set("const", validator.const_)
+      .set_boolean("lt_now", validator.lt_now)
+      .set_boolean("gt_now", validator.gt_now);
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(TIMESTAMP.clone(), OptionValue::Message(rules.into()));
+    outer_rules.set("timestamp", OptionValue::Message(rules.into()));
 
     outer_rules
       .add_cel_options(validator.cel)
@@ -223,7 +222,7 @@ impl From<TimestampValidator> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }

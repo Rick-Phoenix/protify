@@ -292,28 +292,25 @@ impl From<BytesValidator> for ProtoOption {
 
     macro_rules! set_options {
       ($($name:ident),*) => {
-        paste::paste! {
-          rules
-          $(
-            .maybe_set(&[< $name:upper >], validator.$name)
-          )*
-        }
+        rules
+        $(
+          .maybe_set(stringify!($name), validator.$name)
+        )*
       };
     }
 
-    set_options!(const_, min_len, max_len, len, contains, prefix, suffix);
+    set_options!(min_len, max_len, len, contains, prefix, suffix);
+
+    rules.maybe_set("const", validator.const_);
 
     #[cfg(feature = "regex")]
     if let Some(pattern) = validator.pattern {
-      rules.set(
-        PATTERN.clone(),
-        OptionValue::String(pattern.as_str().into()),
-      );
+      rules.set("pattern", OptionValue::String(pattern.to_string().into()));
     }
 
     rules
       .maybe_set(
-        &IN_,
+        "in",
         validator.in_.map(|list| {
           OptionValue::List(
             list
@@ -325,7 +322,7 @@ impl From<BytesValidator> for ProtoOption {
         }),
       )
       .maybe_set(
-        &NOT_IN,
+        "not_in",
         validator.not_in.map(|list| {
           OptionValue::List(
             list
@@ -344,7 +341,7 @@ impl From<BytesValidator> for ProtoOption {
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(BYTES.clone(), OptionValue::Message(rules.into()));
+    outer_rules.set("bytes", OptionValue::Message(rules.into()));
 
     outer_rules
       .add_cel_options(validator.cel)
@@ -352,7 +349,7 @@ impl From<BytesValidator> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }
@@ -368,15 +365,15 @@ pub enum WellKnownBytes {
 }
 
 impl WellKnownBytes {
-  pub(crate) fn to_option(self) -> (Arc<str>, OptionValue) {
+  pub(crate) fn to_option(self) -> (SharedStr, OptionValue) {
     let name = match self {
-      Self::Uuid => UUID.clone(),
-      Self::Ip => IP.clone(),
-      Self::Ipv4 => IPV4.clone(),
-      Self::Ipv6 => IPV6.clone(),
+      Self::Uuid => "uuid",
+      Self::Ip => "ip",
+      Self::Ipv4 => "ipv4",
+      Self::Ipv6 => "ipv6",
     };
 
-    (name, OptionValue::Bool(true))
+    (name.into(), OptionValue::Bool(true))
   }
 }
 

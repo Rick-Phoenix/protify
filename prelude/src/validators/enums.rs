@@ -148,18 +148,18 @@ impl<T: ProtoEnum> From<EnumValidator<T>> for ProtoOption {
   fn from(validator: EnumValidator<T>) -> Self {
     let mut rules = OptionMessageBuilder::new();
 
-    rules.maybe_set(&CONST_, validator.const_);
+    rules.maybe_set("const", validator.const_);
 
     rules
-      .set_boolean(&DEFINED_ONLY, validator.defined_only)
+      .set_boolean("defined_only", validator.defined_only)
       .maybe_set(
-        &IN_,
+        "in",
         validator
           .in_
           .map(|list| OptionValue::new_list(list.items)),
       )
       .maybe_set(
-        &NOT_IN,
+        "not_in",
         validator
           .not_in
           .map(|list| OptionValue::new_list(list.items)),
@@ -167,7 +167,7 @@ impl<T: ProtoEnum> From<EnumValidator<T>> for ProtoOption {
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(ENUM.clone(), OptionValue::Message(rules.into()));
+    outer_rules.set("enum", OptionValue::Message(rules.into()));
 
     outer_rules
       .add_cel_options(validator.cel)
@@ -175,7 +175,7 @@ impl<T: ProtoEnum> From<EnumValidator<T>> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }

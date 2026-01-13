@@ -314,31 +314,31 @@ where
     let mut rules = OptionMessageBuilder::new();
 
     rules
-      .maybe_set(&MIN_PAIRS, validator.min_pairs)
-      .maybe_set(&MAX_PAIRS, validator.max_pairs);
+      .maybe_set("min_pairs", validator.min_pairs)
+      .maybe_set("max_pairs", validator.max_pairs);
 
     if let Some(keys_option) = validator.keys {
       let keys_schema: Self = keys_option.into();
 
-      rules.set(KEYS.clone(), keys_schema.value);
+      rules.set("keys", keys_schema.value);
     }
 
     if let Some(values_option) = validator.values {
       let values_schema: Self = values_option.into();
 
-      rules.set(VALUES.clone(), values_schema.value);
+      rules.set("values", values_schema.value);
     }
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(MAP.clone(), OptionValue::Message(rules.into()));
+    outer_rules.set("map", OptionValue::Message(rules.into()));
 
     outer_rules
       .add_cel_options(validator.cel)
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }

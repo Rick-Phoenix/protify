@@ -1,4 +1,4 @@
-use std::{collections::hash_map::Entry, fs::File, path::Path, sync::Arc};
+use std::{collections::hash_map::Entry, fs::File, path::Path};
 
 use crate::*;
 
@@ -110,8 +110,8 @@ impl Package {
   }
 
   pub fn check_unique_cel_rules(self) -> Result<(), String> {
-    let mut rules: FxHashMap<Arc<str>, CelRule> = FxHashMap::default();
-    let mut duplicates: FxHashMap<Arc<str>, Vec<CelRule>> = FxHashMap::default();
+    let mut rules: FxHashMap<SharedStr, CelRule> = FxHashMap::default();
+    let mut duplicates: FxHashMap<SharedStr, Vec<CelRule>> = FxHashMap::default();
 
     for rule in self
       .files

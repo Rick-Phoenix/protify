@@ -110,13 +110,13 @@ impl From<AnyValidator> for ProtoOption {
 
     rules
       .maybe_set(
-        &IN_,
+        "in",
         validator
           .in_
           .map(|list| OptionValue::new_list(list.items)),
       )
       .maybe_set(
-        &NOT_IN,
+        "not_in",
         validator
           .not_in
           .map(|list| OptionValue::new_list(list.items)),
@@ -124,7 +124,7 @@ impl From<AnyValidator> for ProtoOption {
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(ANY.clone(), OptionValue::Message(rules.build()));
+    outer_rules.set("any", OptionValue::Message(rules.build()));
 
     outer_rules
       .add_cel_options(validator.cel)
@@ -132,7 +132,7 @@ impl From<AnyValidator> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.build()),
     }
   }

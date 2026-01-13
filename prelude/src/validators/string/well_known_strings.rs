@@ -35,58 +35,58 @@ pub enum WellKnownStrings {
 }
 
 impl WellKnownStrings {
-  pub(crate) fn to_option(self) -> (Arc<str>, OptionValue, bool) {
+  pub(crate) fn to_option(self) -> (SharedStr, OptionValue, bool) {
     let mut is_strict = false;
 
     let name = match self {
       #[cfg(feature = "regex")]
-      Self::Ulid => ULID.clone(),
+      Self::Ulid => "ulid",
       #[cfg(feature = "regex")]
-      Self::Email => EMAIL.clone(),
-      Self::Hostname => HOSTNAME.clone(),
-      Self::Ip => IP.clone(),
-      Self::Ipv4 => IPV4.clone(),
-      Self::Ipv6 => IPV6.clone(),
-      Self::Uri => URI.clone(),
-      Self::UriRef => URI_REF.clone(),
-      Self::Address => ADDRESS.clone(),
+      Self::Email => "email",
+      Self::Hostname => "hostname",
+      Self::Ip => "ip",
+      Self::Ipv4 => "ipv4",
+      Self::Ipv6 => "ipv6",
+      Self::Uri => "uri",
+      Self::UriRef => "uri_ref",
+      Self::Address => "address",
       #[cfg(feature = "regex")]
-      Self::Uuid => UUID.clone(),
+      Self::Uuid => "uuid",
       #[cfg(feature = "regex")]
-      Self::Tuuid => TUUID.clone(),
-      Self::IpWithPrefixlen => IP_WITH_PREFIXLEN.clone(),
-      Self::Ipv4WithPrefixlen => IPV4_WITH_PREFIXLEN.clone(),
-      Self::Ipv6WithPrefixlen => IPV6_WITH_PREFIXLEN.clone(),
-      Self::IpPrefix => IP_PREFIX.clone(),
-      Self::Ipv4Prefix => IPV4_PREFIX.clone(),
-      Self::Ipv6Prefix => IPV6_PREFIX.clone(),
-      Self::HostAndPort => HOST_AND_PORT.clone(),
+      Self::Tuuid => "tuuid",
+      Self::IpWithPrefixlen => "ip_with_prefixlen",
+      Self::Ipv4WithPrefixlen => "ipv4_with_prefixlen",
+      Self::Ipv6WithPrefixlen => "ipv6_with_prefixlen",
+      Self::IpPrefix => "ip_prefix",
+      Self::Ipv4Prefix => "ipv4_prefix",
+      Self::Ipv6Prefix => "ipv6_prefix",
+      Self::HostAndPort => "host_and_port",
       #[cfg(feature = "regex")]
       Self::HeaderNameLoose
       | Self::HeaderNameStrict
       | Self::HeaderValueLoose
-      | Self::HeaderValueStrict => WELL_KNOWN_REGEX.clone(),
+      | Self::HeaderValueStrict => "well_known_regex",
     };
 
     let value = match self {
       #[cfg(feature = "regex")]
-      Self::HeaderNameLoose => OptionValue::Enum(KNOWN_REGEX_HTTP_HEADER_NAME.clone()),
+      Self::HeaderNameLoose => OptionValue::Enum("KNOWN_REGEX_HTTP_HEADER_NAME".into()),
       #[cfg(feature = "regex")]
       Self::HeaderNameStrict => {
         is_strict = true;
-        OptionValue::Enum(KNOWN_REGEX_HTTP_HEADER_NAME.clone())
+        OptionValue::Enum("KNOWN_REGEX_HTTP_HEADER_NAME".into())
       }
       #[cfg(feature = "regex")]
-      Self::HeaderValueLoose => OptionValue::Enum(KNOWN_REGEX_HTTP_HEADER_VALUE.clone()),
+      Self::HeaderValueLoose => OptionValue::Enum("KNOWN_REGEX_HTTP_HEADER_VALUE".into()),
       #[cfg(feature = "regex")]
       Self::HeaderValueStrict => {
         is_strict = true;
-        OptionValue::Enum(KNOWN_REGEX_HTTP_HEADER_VALUE.clone())
+        OptionValue::Enum("KNOWN_REGEX_HTTP_HEADER_VALUE".into())
       }
       _ => OptionValue::Bool(true),
     };
 
-    (name, value, is_strict)
+    (name.into(), value, is_strict)
   }
 }
 

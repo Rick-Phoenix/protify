@@ -69,19 +69,19 @@ impl From<BoolValidator> for ProtoOption {
     let mut rules = OptionMessageBuilder::new();
 
     if let Some(value) = validator.const_ {
-      rules.set(CONST_.clone(), OptionValue::Bool(value));
+      rules.set("const", OptionValue::Bool(value));
     }
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(BOOL.clone(), OptionValue::Message(rules.build()));
+    outer_rules.set("bool", OptionValue::Message(rules.build()));
 
     outer_rules
       .set_required(validator.required)
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.build()),
     }
   }

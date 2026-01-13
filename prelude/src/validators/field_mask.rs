@@ -203,20 +203,20 @@ impl From<FieldMaskValidator> for ProtoOption {
     if let Some(const_val) = validator.const_ {
       let mut msg_val = OptionMessageBuilder::new();
 
-      msg_val.set(PATHS.clone(), OptionValue::new_list(const_val.items));
+      msg_val.set("paths", OptionValue::new_list(const_val.items));
 
-      rules.set(CONST_.clone(), OptionValue::Message(msg_val.into()));
+      rules.set("const", OptionValue::Message(msg_val.into()));
     }
 
     rules
       .maybe_set(
-        &IN_,
+        "in",
         validator
           .in_
           .map(|list| OptionValue::new_list(list.items)),
       )
       .maybe_set(
-        &NOT_IN,
+        "not_in",
         validator
           .not_in
           .map(|list| OptionValue::new_list(list.items)),
@@ -224,7 +224,7 @@ impl From<FieldMaskValidator> for ProtoOption {
 
     let mut outer_rules = OptionMessageBuilder::new();
 
-    outer_rules.set(FIELD_MASK.clone(), OptionValue::Message(rules.into()));
+    outer_rules.set("field_mask", OptionValue::Message(rules.into()));
 
     outer_rules
       .add_cel_options(validator.cel)
@@ -232,7 +232,7 @@ impl From<FieldMaskValidator> for ProtoOption {
       .set_ignore(validator.ignore);
 
     Self {
-      name: BUF_VALIDATE_FIELD.clone(),
+      name: BUF_VALIDATE_FIELD.into(),
       value: OptionValue::Message(outer_rules.into()),
     }
   }
