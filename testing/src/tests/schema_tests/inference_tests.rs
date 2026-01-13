@@ -209,3 +209,145 @@ fn proxied_inference() {
     FieldType::Normal(ProtoType::Message(ProxiedMsgProto::proto_path()))
   );
 }
+
+#[proto_message(no_auto_test)]
+struct IntWrappers {
+  #[proto(sint32)]
+  sint32: i32,
+  #[proto(sint64)]
+  sint64: i64,
+  #[proto(sfixed32)]
+  sfixed32: i32,
+  #[proto(sfixed64)]
+  sfixed64: i64,
+  #[proto(fixed32)]
+  fixed32: u32,
+  #[proto(fixed64)]
+  fixed64: u64,
+}
+
+#[test]
+fn int_wrappers() {
+  let schema = IntWrappers::proto_schema();
+
+  let exp_types = vec![
+    ProtoType::Scalar(ProtoScalar::Sint32),
+    ProtoType::Scalar(ProtoScalar::Sint64),
+    ProtoType::Scalar(ProtoScalar::Sfixed32),
+    ProtoType::Scalar(ProtoScalar::Sfixed64),
+    ProtoType::Scalar(ProtoScalar::Fixed32),
+    ProtoType::Scalar(ProtoScalar::Fixed64),
+  ];
+
+  for (field, exp_type) in schema.fields().zip(exp_types) {
+    assert_eq_pretty!(field.type_, FieldType::Normal(exp_type))
+  }
+}
+
+#[proto_message(no_auto_test)]
+struct OptionalIntWrappers {
+  #[proto(sint32)]
+  sint32: Option<i32>,
+  #[proto(sint64)]
+  sint64: Option<i64>,
+  #[proto(sfixed32)]
+  sfixed32: Option<i32>,
+  #[proto(sfixed64)]
+  sfixed64: Option<i64>,
+  #[proto(fixed32)]
+  fixed32: Option<u32>,
+  #[proto(fixed64)]
+  fixed64: Option<u64>,
+}
+
+#[test]
+fn optional_int_wrappers() {
+  let schema = OptionalIntWrappers::proto_schema();
+
+  let exp_types = vec![
+    ProtoType::Scalar(ProtoScalar::Sint32),
+    ProtoType::Scalar(ProtoScalar::Sint64),
+    ProtoType::Scalar(ProtoScalar::Sfixed32),
+    ProtoType::Scalar(ProtoScalar::Sfixed64),
+    ProtoType::Scalar(ProtoScalar::Fixed32),
+    ProtoType::Scalar(ProtoScalar::Fixed64),
+  ];
+
+  for (field, exp_type) in schema.fields().zip(exp_types) {
+    assert_eq_pretty!(field.type_, FieldType::Optional(exp_type))
+  }
+}
+
+#[proto_message(no_auto_test)]
+struct RepeatedIntWrappers {
+  #[proto(sint32)]
+  sint32: Vec<i32>,
+  #[proto(sint64)]
+  sint64: Vec<i64>,
+  #[proto(sfixed32)]
+  sfixed32: Vec<i32>,
+  #[proto(sfixed64)]
+  sfixed64: Vec<i64>,
+  #[proto(fixed32)]
+  fixed32: Vec<u32>,
+  #[proto(fixed64)]
+  fixed64: Vec<u64>,
+}
+
+#[test]
+fn repeated_int_wrappers() {
+  let schema = RepeatedIntWrappers::proto_schema();
+
+  let exp_types = vec![
+    ProtoType::Scalar(ProtoScalar::Sint32),
+    ProtoType::Scalar(ProtoScalar::Sint64),
+    ProtoType::Scalar(ProtoScalar::Sfixed32),
+    ProtoType::Scalar(ProtoScalar::Sfixed64),
+    ProtoType::Scalar(ProtoScalar::Fixed32),
+    ProtoType::Scalar(ProtoScalar::Fixed64),
+  ];
+
+  for (field, exp_type) in schema.fields().zip(exp_types) {
+    assert_eq_pretty!(field.type_, FieldType::Repeated(exp_type))
+  }
+}
+
+#[proto_message(no_auto_test)]
+struct MapIntWrappers {
+  #[proto(map(sint32, sint32))]
+  sint32: HashMap<i32, i32>,
+  #[proto(map(sint64, sint64))]
+  sint64: HashMap<i64, i64>,
+  #[proto(map(sfixed32, sfixed32))]
+  sfixed32: HashMap<i32, i32>,
+  #[proto(map(sfixed64, sfixed64))]
+  sfixed64: HashMap<i64, i64>,
+  #[proto(map(fixed32, fixed32))]
+  fixed32: HashMap<u32, u32>,
+  #[proto(map(fixed64, fixed64))]
+  fixed64: HashMap<u64, u64>,
+}
+
+#[test]
+fn map_int_wrappers() {
+  let schema = MapIntWrappers::proto_schema();
+
+  macro_rules! create_exp_types {
+    ($($types:ident),*) => {
+      vec![
+        $(
+          FieldType::Map {
+            keys: ProtoMapKey::$types,
+            values: ProtoType::Scalar(ProtoScalar::$types)
+          }
+        ),*
+      ]
+    };
+  }
+
+  let exp_types = create_exp_types![Sint32, Sint64, Sfixed32, Sfixed64, Fixed32, Fixed64];
+
+  for (field, exp_type) in schema.fields().zip(exp_types) {
+    assert_eq_pretty!(field.type_, exp_type)
+  }
+}
