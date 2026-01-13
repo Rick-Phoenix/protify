@@ -68,7 +68,10 @@ impl ProtoConversions<'_> {
     } else if fields.is_empty() {
       quote! { unimplemented!() }
     } else {
-      let tokens = fields.iter().map(|d| {
+      let tokens = fields.iter()
+        // For oneofs, ignored variants do not map to the original enum
+        .filter(|d| !(d.is_ignored() && kind.is_oneof()))
+        .map(|d| {
       let field_ident = d.ident();
         let span = field_ident.span();
 
@@ -158,29 +161,45 @@ impl ProtoConversions<'_> {
     } else {
       let tokens = fields
         .iter()
-        .filter_map(|d| d.as_normal())
-        .map(|d| {
-          let field_ident = &d.ident;
-          let span = field_ident.span();
+        .filter(|d| !(d.is_ignored() && kind.is_message()))
+        .map(|d| match d {
+          // This is only for ignored oneof variants
+          FieldDataKind::Ignored {
+            ident, into_proto, ..
+          } => {
+            if let Some(expr) = into_proto {
+              let conversion = process_custom_expression(expr, &quote_spanned! {ident.span()=> v });
 
-          let base_ident = match kind {
-            ItemKind::Oneof => quote_spanned! {span=> v },
-            ItemKind::Message => {
-              quote_spanned! {span=> value.#field_ident }
+              quote_spanned! {ident.span()=> #proxy_ident::#ident(v) => #conversion }
+            } else {
+              quote_spanned! {ident.span()=> #proxy_ident::#ident(..) => #proto_ident::default() }
             }
-          };
+          }
+          FieldDataKind::Normal(field_data) => {
+            let field_ident = &field_data.ident;
+            let span = field_ident.span();
 
-          let conversion_logic = if let Some(expr) = d.into_proto.as_ref() {
-            process_custom_expression(expr, &base_ident)
-          } else {
-            d.proto_field.default_into_proto(&base_ident)
-          };
+            let base_ident = match kind {
+              ItemKind::Oneof => quote_spanned! {span=> v },
+              ItemKind::Message => {
+                quote_spanned! {span=> value.#field_ident }
+              }
+            };
 
-          match kind {
-            ItemKind::Oneof => quote_spanned! {span=>
-              #proxy_ident::#field_ident(v) => #proto_ident::#field_ident(#conversion_logic)
-            },
-            ItemKind::Message => quote_spanned! {span=> #field_ident: #conversion_logic },
+            let conversion_logic = if let Some(expr) = field_data.into_proto.as_ref() {
+              process_custom_expression(expr, &base_ident)
+            } else {
+              field_data
+                .proto_field
+                .default_into_proto(&base_ident)
+            };
+
+            match kind {
+              ItemKind::Oneof => quote_spanned! {span=>
+                #proxy_ident::#field_ident(v) => #proto_ident::#field_ident(#conversion_logic)
+              },
+              ItemKind::Message => quote_spanned! {span=> #field_ident: #conversion_logic },
+            }
           }
         });
 
@@ -224,5 +243,13 @@ impl ItemKind {
   #[must_use]
   pub const fn is_message(self) -> bool {
     matches!(self, Self::Message)
+  }
+
+  /// Returns `true` if the item kind is [`Oneof`].
+  ///
+  /// [`Oneof`]: ItemKind::Oneof
+  #[must_use]
+  pub const fn is_oneof(self) -> bool {
+    matches!(self, Self::Oneof)
   }
 }

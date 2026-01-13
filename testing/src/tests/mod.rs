@@ -1,4 +1,8 @@
-#![allow(clippy::struct_field_names, clippy::use_self)]
+#![allow(
+  clippy::needless_pass_by_value,
+  clippy::struct_field_names,
+  clippy::use_self
+)]
 
 mod cel_tests;
 mod oneof_tags_tests;

@@ -405,3 +405,139 @@ struct DefaultMsgWithCustomImpl {
   #[proto(into_proto = |_| Some(DirectMsg::default()))]
   normal: DirectMsg,
 }
+
+impl Default for OneofIgnoredFieldDefaultConversionProto {
+  fn default() -> Self {
+    Self::B(1)
+  }
+}
+
+#[proto_oneof(proxied, no_auto_test)]
+enum OneofIgnoredFieldDefaultConversion {
+  // This will use Default
+  #[allow(unused)]
+  #[proto(ignore)]
+  A(String),
+  #[proto(tag = 1)]
+  B(i32),
+  #[proto(tag = 2)]
+  C(bool),
+}
+
+#[test]
+fn oneof_ignored_field_default_conversion() {
+  let proxy = OneofIgnoredFieldDefaultConversion::A("abc".to_string());
+
+  let oneof = proxy.into_oneof();
+
+  matches!(oneof, OneofIgnoredFieldDefaultConversionProto::B(1));
+}
+
+#[proto_oneof(proxied, no_auto_test)]
+enum OneofIgnoredFieldCustomConversion {
+  #[allow(unused)]
+  #[proto(ignore)]
+  #[proto(into_proto = |_| OneofIgnoredFieldCustomConversionProto::B(1))]
+  A(String),
+  #[proto(tag = 1)]
+  B(i32),
+  #[proto(tag = 2)]
+  C(bool),
+}
+
+#[test]
+fn oneof_ignored_field_custom_conversion() {
+  let proxy = OneofIgnoredFieldCustomConversion::A("abc".to_string());
+
+  let oneof = proxy.into_oneof();
+
+  matches!(oneof, OneofIgnoredFieldCustomConversionProto::B(1));
+}
+
+fn custom_global_conv(
+  input: OneofIgnoredGlobalCustomConversion,
+) -> OneofIgnoredGlobalCustomConversionProto {
+  match input {
+    OneofIgnoredGlobalCustomConversion::A(_) | OneofIgnoredGlobalCustomConversion::B(_) => {
+      OneofIgnoredGlobalCustomConversionProto::B(1)
+    }
+    OneofIgnoredGlobalCustomConversion::C(_) => OneofIgnoredGlobalCustomConversionProto::C(false),
+  }
+}
+
+#[allow(unused)]
+#[proto_oneof(proxied, no_auto_test)]
+#[proto(into_proto = custom_global_conv)]
+enum OneofIgnoredGlobalCustomConversion {
+  #[allow(unused)]
+  #[proto(ignore)]
+  #[proto(into_proto = |_| OneofIgnoredFieldCustomConversionProto::B(1))]
+  A(String),
+  #[proto(tag = 1)]
+  B(i32),
+  #[proto(tag = 2)]
+  C(bool),
+}
+
+#[test]
+fn oneof_ignored_global_custom_conversion() {
+  let proxy = OneofIgnoredGlobalCustomConversion::A("abc".to_string());
+
+  let oneof = proxy.into_oneof();
+
+  matches!(oneof, OneofIgnoredGlobalCustomConversionProto::B(1));
+}
+
+#[proto_message(proxied, no_auto_test)]
+struct MessageIgnoredFieldDefault {
+  #[proto(ignore)]
+  #[allow(unused)]
+  ignored: i32,
+  other: u32,
+}
+
+#[test]
+fn message_ignored_field_default() {
+  let msg = MessageIgnoredFieldDefaultProto { other: 1 };
+
+  let proxy: MessageIgnoredFieldDefault = msg.into();
+
+  assert_eq_pretty!(proxy.ignored, 0);
+}
+
+#[proto_message(proxied, no_auto_test)]
+struct MessageIgnoredFieldCustom {
+  #[proto(ignore)]
+  #[proto(from_proto = Default::default)]
+  #[allow(unused)]
+  ignored: i32,
+  other: u32,
+}
+
+#[test]
+fn message_ignored_field_custom() {
+  let msg = MessageIgnoredFieldCustomProto { other: 1 };
+
+  let proxy: MessageIgnoredFieldCustom = msg.into();
+
+  assert_eq_pretty!(proxy.ignored, 0);
+}
+
+#[proto_message(proxied, no_auto_test)]
+#[proto(from_proto = |v| MessageIgnoredFieldCustomGlobal { other: v.other, ignored: 1 })]
+struct MessageIgnoredFieldCustomGlobal {
+  #[proto(ignore)]
+  #[allow(unused)]
+  ignored: i32,
+  other: u32,
+}
+
+#[test]
+fn message_ignored_field_global() {
+  let msg = MessageIgnoredFieldCustomGlobalProto { other: 1 };
+
+  let proxy: MessageIgnoredFieldCustomGlobal = msg.into();
+
+  assert_eq_pretty!(proxy.ignored, 1);
+  assert_eq_pretty!(proxy.other, 1);
+}

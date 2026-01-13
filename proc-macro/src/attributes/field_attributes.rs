@@ -41,6 +41,9 @@ pub enum FieldDataKind {
   Ignored {
     ident: Ident,
     from_proto: Option<PathOrClosure>,
+    // This is only for converting oneof variants
+    // that are ignored in the proto enum
+    into_proto: Option<PathOrClosure>,
   },
   Normal(FieldData),
 }
@@ -59,6 +62,14 @@ impl FieldDataKind {
     } else {
       None
     }
+  }
+
+  /// Returns `true` if the field data kind is [`Ignored`].
+  ///
+  /// [`Ignored`]: FieldDataKind::Ignored
+  #[must_use]
+  pub const fn is_ignored(&self) -> bool {
+    matches!(self, Self::Ignored { .. })
   }
 }
 
@@ -138,6 +149,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     return Ok(FieldDataKind::Ignored {
       from_proto,
       ident: field_ident,
+      into_proto,
     });
   }
 
