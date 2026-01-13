@@ -46,10 +46,10 @@ pub struct BytesValidator {
   pub contains: Option<Bytes>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<&'static [u8]>>,
+  pub in_: Option<StaticLookup<Bytes>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<&'static [u8]>>,
+  pub not_in: Option<StaticLookup<Bytes>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Bytes>,
@@ -227,7 +227,7 @@ impl Validator<Bytes> for BytesValidator {
       }
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(&val.as_ref())
+        && !allowed_list.items.contains(val.as_ref())
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
@@ -235,7 +235,7 @@ impl Validator<Bytes> for BytesValidator {
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.items.contains(&val.as_ref())
+        && forbidden_list.items.contains(val.as_ref())
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 

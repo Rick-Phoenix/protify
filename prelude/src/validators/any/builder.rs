@@ -17,10 +17,10 @@ pub struct AnyValidatorBuilder<S: State = Empty> {
   required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<&'static str>>,
+  in_: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<&'static str>>,
+  not_in: Option<StaticLookup<SharedStr>>,
 }
 
 impl<S: State> Default for AnyValidatorBuilder<S> {
@@ -98,7 +98,10 @@ impl<S: State> AnyValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(self, list: impl IntoIterator<Item = &'static str>) -> AnyValidatorBuilder<SetIn<S>>
+  pub fn in_(
+    self,
+    list: impl IntoIterator<Item = impl Into<SharedStr>>,
+  ) -> AnyValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -107,7 +110,9 @@ impl<S: State> AnyValidatorBuilder<S> {
       cel: self.cel,
       ignore: self.ignore,
       required: self.required,
-      in_: Some(StaticLookup::new(list)),
+      in_: Some(StaticLookup::new(
+        list.into_iter().map(Into::<SharedStr>::into),
+      )),
       not_in: self.not_in,
     }
   }
@@ -115,7 +120,7 @@ impl<S: State> AnyValidatorBuilder<S> {
   #[inline]
   pub fn not_in(
     self,
-    list: impl IntoIterator<Item = &'static str>,
+    list: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> AnyValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -125,7 +130,9 @@ impl<S: State> AnyValidatorBuilder<S> {
       cel: self.cel,
       ignore: self.ignore,
       required: self.required,
-      not_in: Some(StaticLookup::new(list)),
+      not_in: Some(StaticLookup::new(
+        list.into_iter().map(Into::<SharedStr>::into),
+      )),
       in_: self.in_,
     }
   }

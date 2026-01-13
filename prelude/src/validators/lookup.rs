@@ -257,7 +257,7 @@ where
 
 #[derive(Debug, Clone)]
 pub struct SortedList<T: Ord> {
-  items: Box<[T]>,
+  pub(crate) items: Arc<[T]>,
 }
 
 impl<T> SortedList<T>
@@ -270,7 +270,7 @@ where
     items.sort();
 
     Self {
-      items: items.into_boxed_slice(),
+      items: items.into(),
     }
   }
 
@@ -279,8 +279,15 @@ where
     &self.items
   }
 
-  pub fn contains(&self, item: &T) -> bool {
-    self.items.binary_search(item).is_ok()
+  pub fn contains<B>(&self, item: &B) -> bool
+  where
+    T: Borrow<B>,
+    B: Ord + ?Sized,
+  {
+    self
+      .items
+      .binary_search_by(|probe| probe.borrow().cmp(item))
+      .is_ok()
   }
 
   pub fn iter(&self) -> std::slice::Iter<'_, T> {
@@ -305,15 +312,6 @@ impl<T: Ord> Deref for SortedList<T> {
 impl<T: Ord> AsRef<[T]> for SortedList<T> {
   fn as_ref(&self) -> &[T] {
     &self.items
-  }
-}
-
-impl<T: Ord> IntoIterator for SortedList<T> {
-  type Item = T;
-  type IntoIter = std::vec::IntoIter<T>;
-
-  fn into_iter(self) -> Self::IntoIter {
-    self.items.into_vec().into_iter()
   }
 }
 
@@ -350,6 +348,38 @@ impl<T: ordered_float::FloatCore + Debug> ListFormatter for OrderedFloat<T> {
   }
 }
 
+impl ListFormatter for ::bytes::Bytes {
+  fn format_list(items: &[Self]) -> String {
+    let total_bytes: usize = items.iter().map(|v| v.len()).sum();
+
+    // Worst case: every byte becomes "\xNN" (4 chars)
+    let data_est = total_bytes * 4;
+    let quotes_len = items.len() * 2;
+    let sep_len = (items.len() - 1) * 2;
+    let brackets = 2;
+
+    let capacity = data_est + quotes_len + sep_len + brackets;
+
+    let mut acc = String::with_capacity(capacity);
+    acc.push('[');
+
+    for (i, item) in items.iter().enumerate() {
+      if i > 0 {
+        acc.push_str(", ");
+      }
+
+      acc.push('"');
+      write!(&mut acc, "{}", item.escape_ascii()).unwrap();
+      acc.push('"');
+    }
+
+    acc.push(']');
+
+    acc.shrink_to_fit();
+    acc
+  }
+}
+
 impl ListFormatter for &[u8] {
   fn format_list(items: &[Self]) -> String {
     let total_bytes: usize = items.iter().map(|v| v.len()).sum();
@@ -372,6 +402,35 @@ impl ListFormatter for &[u8] {
 
       acc.push('"');
       write!(&mut acc, "{}", item.escape_ascii()).unwrap();
+      acc.push('"');
+    }
+
+    acc.push(']');
+
+    acc.shrink_to_fit();
+    acc
+  }
+}
+
+impl ListFormatter for SharedStr {
+  fn format_list(items: &[Self]) -> String {
+    let data_len: usize = items.iter().map(|s| s.len()).sum();
+
+    let quotes_len = items.len() * 2;
+    let sep_len = (items.len() - 1) * 2;
+    let brackets = 2;
+
+    let capacity = data_len + quotes_len + sep_len + brackets;
+
+    let mut acc = String::with_capacity(capacity);
+    acc.push('[');
+
+    for (i, item) in items.iter().enumerate() {
+      if i > 0 {
+        acc.push_str(", ");
+      }
+      acc.push('"');
+      acc.push_str(item);
       acc.push('"');
     }
 

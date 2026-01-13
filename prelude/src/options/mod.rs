@@ -362,6 +362,10 @@ impl OptionValue {
   {
     Self::List(items.into())
   }
+
+  pub fn new_bytes(bytes: impl IntoBytes) -> Self {
+    Self::Bytes(bytes.into_bytes())
+  }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -409,13 +413,16 @@ impl<T: Into<OptionValue>> From<Vec<T>> for OptionList {
   }
 }
 
-impl<T: Into<OptionValue> + Ord> From<SortedList<T>> for OptionList {
+impl<T: Into<OptionValue> + Ord + Clone> From<SortedList<T>> for OptionList {
   fn from(value: SortedList<T>) -> Self {
-    value.into_iter().collect()
+    let inner: Vec<OptionValue> = value.iter().cloned().map(|v| v.into()).collect();
+    Self {
+      inner: inner.into(),
+    }
   }
 }
 
-impl<T: Into<Self> + Ord> From<SortedList<T>> for OptionValue {
+impl<T: Into<Self> + Ord + Clone> From<SortedList<T>> for OptionValue {
   fn from(value: SortedList<T>) -> Self {
     Self::List(value.into())
   }
@@ -508,6 +515,15 @@ impl From<&'static [u8]> for OptionValue {
 impl<'a, const S: usize> From<&'a [u8; S]> for OptionValue {
   fn from(value: &'a [u8; S]) -> Self {
     Self::Bytes(value.to_vec().into())
+  }
+}
+
+impl From<SharedStr> for OptionValue {
+  fn from(value: SharedStr) -> Self {
+    match value {
+      SharedStr::Static(s) => Self::String(s.into()),
+      SharedStr::Shared(s) => Self::String(s.into()),
+    }
   }
 }
 

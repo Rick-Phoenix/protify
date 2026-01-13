@@ -43,25 +43,25 @@ pub struct StringValidatorBuilder<S: State = Empty> {
   pattern: Option<Regex>,
 
   /// Specifies the prefix that this field's value should contain in order to be considered valid.
-  prefix: Option<Arc<str>>,
+  prefix: Option<SharedStr>,
 
   /// Specifies the suffix that this field's value should contain in order to be considered valid.
-  suffix: Option<Arc<str>>,
+  suffix: Option<SharedStr>,
 
   /// Specifies a substring that this field's value should contain in order to be considered valid.
-  contains: Option<Arc<str>>,
+  contains: Option<SharedStr>,
 
   /// Specifies a substring that this field's value must not contain in order to be considered valid.
-  not_contains: Option<Arc<str>>,
+  not_contains: Option<SharedStr>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<&'static str>>,
+  in_: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<&'static str>>,
+  not_in: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<Arc<str>>,
+  const_: Option<SharedStr>,
 }
 
 impl_validator!(StringValidator, String);
@@ -433,7 +433,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn prefix<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetPrefix<S>>
+  pub fn prefix<T: Into<SharedStr>>(self, val: T) -> StringValidatorBuilder<SetPrefix<S>>
   where
     S::Prefix: IsUnset,
   {
@@ -462,7 +462,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn suffix<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetSuffix<S>>
+  pub fn suffix<T: Into<SharedStr>>(self, val: T) -> StringValidatorBuilder<SetSuffix<S>>
   where
     S::Suffix: IsUnset,
   {
@@ -491,7 +491,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn contains<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetContains<S>>
+  pub fn contains<T: Into<SharedStr>>(self, val: T) -> StringValidatorBuilder<SetContains<S>>
   where
     S::Contains: IsUnset,
   {
@@ -520,7 +520,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn not_contains<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetNotContains<S>>
+  pub fn not_contains<T: Into<SharedStr>>(self, val: T) -> StringValidatorBuilder<SetNotContains<S>>
   where
     S::NotContains: IsUnset,
   {
@@ -549,7 +549,10 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(self, val: impl IntoIterator<Item = &'static str>) -> StringValidatorBuilder<SetIn<S>>
+  pub fn in_(
+    self,
+    val: impl IntoIterator<Item = impl Into<SharedStr>>,
+  ) -> StringValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -571,7 +574,11 @@ impl<S: State> StringValidatorBuilder<S> {
       suffix: self.suffix,
       contains: self.contains,
       not_contains: self.not_contains,
-      in_: Some(StaticLookup::new(val)),
+      in_: Some(StaticLookup::new(
+        val
+          .into_iter()
+          .map(|v| Into::<SharedStr>::into(v)),
+      )),
       not_in: self.not_in,
       const_: self.const_,
     }
@@ -580,7 +587,7 @@ impl<S: State> StringValidatorBuilder<S> {
   #[inline]
   pub fn not_in(
     self,
-    val: impl IntoIterator<Item = &'static str>,
+    val: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> StringValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -604,13 +611,17 @@ impl<S: State> StringValidatorBuilder<S> {
       contains: self.contains,
       not_contains: self.not_contains,
       in_: self.in_,
-      not_in: Some(StaticLookup::new(val)),
+      not_in: Some(StaticLookup::new(
+        val
+          .into_iter()
+          .map(|v| Into::<SharedStr>::into(v)),
+      )),
       const_: self.const_,
     }
   }
 
   #[inline]
-  pub fn const_<T: Into<Arc<str>>>(self, val: T) -> StringValidatorBuilder<SetConst<S>>
+  pub fn const_<T: Into<SharedStr>>(self, val: T) -> StringValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {

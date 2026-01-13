@@ -15,13 +15,13 @@ pub struct FieldMaskValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<&'static str>>,
+  pub in_: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<&'static str>>,
+  pub not_in: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<StaticLookup<&'static str>>,
+  pub const_: Option<StaticLookup<SharedStr>>,
 }
 
 impl ProtoValidator for FieldMask {
@@ -104,7 +104,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
       if let Some(allowed_paths) = &self.in_ {
         for path in &val.paths {
-          if !allowed_paths.items.contains(&path.as_str()) {
+          if !allowed_paths.items.contains(path.as_str()) {
             let err = ["can only contain these paths: ", &allowed_paths.items_str].concat();
 
             ctx.add_violation(&FIELD_MASK_IN_VIOLATION, &err);
@@ -116,7 +116,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
       if let Some(forbidden_paths) = &self.not_in {
         for path in &val.paths {
-          if forbidden_paths.items.contains(&path.as_str()) {
+          if forbidden_paths.items.contains(path.as_str()) {
             let err = [
               "cannot contain one of these paths: ",
               &forbidden_paths.items_str,
@@ -150,11 +150,11 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
 impl FieldMaskValidator {
   #[inline]
-  fn validate_exact_small(const_val: &SortedList<&'static str>, input_paths: &[String]) -> bool {
+  fn validate_exact_small(const_val: &SortedList<SharedStr>, input_paths: &[String]) -> bool {
     let mut visited_mask: u64 = 0;
 
     for path in input_paths {
-      match const_val.binary_search(&path.as_str()) {
+      match const_val.binary_search_by(|probe| probe.as_str().cmp(path)) {
         Ok(idx) => {
           let bit = 1 << idx;
           // Check if bit is already 1 (Duplicate input)
@@ -174,7 +174,7 @@ impl FieldMaskValidator {
   // Only used in the rare case that a FieldMask has more than 64 paths in it
   #[inline]
   fn validate_exact_large(
-    const_val: &SortedList<&'static str>,
+    const_val: &SortedList<SharedStr>,
     input_paths: &[String],
     len: usize,
   ) -> bool {
@@ -182,7 +182,7 @@ impl FieldMaskValidator {
     let mut visited = vec![false; len];
 
     for path in input_paths {
-      match const_val.binary_search(&path.as_str()) {
+      match const_val.binary_search_by(|probe| probe.as_str().cmp(path)) {
         Ok(idx) => {
           if visited[idx] {
             return false;

@@ -4,6 +4,7 @@ pub use ::cel;
 #[macro_use]
 mod decl_macros;
 
+use std::borrow::Borrow;
 use std::fmt::{Debug, Display};
 
 use askama::Template;
@@ -57,4 +58,53 @@ where
   F: FnOnce(I) -> O,
 {
   f(input)
+}
+
+#[doc(hidden)]
+#[allow(clippy::wrong_self_convention)]
+pub trait IntoBytes {
+  #[allow(private_interfaces)]
+  const SEALED: Sealed;
+
+  fn into_bytes(self) -> Bytes;
+}
+
+impl<const N: usize> IntoBytes for &'static [u8; N] {
+  #[allow(private_interfaces)]
+  const SEALED: Sealed = Sealed;
+
+  #[inline]
+  fn into_bytes(self) -> Bytes {
+    Bytes::from_static(self)
+  }
+}
+
+impl IntoBytes for &'static [u8] {
+  #[allow(private_interfaces)]
+  const SEALED: Sealed = Sealed;
+
+  #[inline]
+  fn into_bytes(self) -> Bytes {
+    Bytes::from_static(self)
+  }
+}
+
+impl IntoBytes for Bytes {
+  #[allow(private_interfaces)]
+  const SEALED: Sealed = Sealed;
+
+  #[inline]
+  fn into_bytes(self) -> Bytes {
+    self
+  }
+}
+
+impl IntoBytes for &Bytes {
+  #[allow(private_interfaces)]
+  const SEALED: Sealed = Sealed;
+
+  #[inline]
+  fn into_bytes(self) -> Bytes {
+    self.clone()
+  }
 }

@@ -44,10 +44,10 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
   contains: Option<Bytes>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<&'static [u8]>>,
+  in_: Option<StaticLookup<Bytes>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<&'static [u8]>>,
+  not_in: Option<StaticLookup<Bytes>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   const_: Option<Bytes>,
@@ -399,11 +399,12 @@ impl<S: State> BytesValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn not_in<I>(self, list: I) -> BytesValidatorBuilder<SetNotIn<S>>
+  pub fn not_in<I>(
+    self,
+    list: impl IntoIterator<Item = impl IntoBytes>,
+  ) -> BytesValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
-    I: IntoIterator,
-    I::Item: AsStaticByteSlice,
   {
     BytesValidatorBuilder {
       _state: PhantomData,
@@ -420,19 +421,18 @@ impl<S: State> BytesValidatorBuilder<S> {
       suffix: self.suffix,
       contains: self.contains,
       in_: self.in_,
-      not_in: Some(StaticLookup::new(
-        list.into_iter().map(|b| b.as_static_slice()),
-      )),
+      not_in: Some(StaticLookup::new(list.into_iter().map(|b| b.into_bytes()))),
       const_: self.const_,
     }
   }
 
   #[inline]
-  pub fn in_<I>(self, list: I) -> BytesValidatorBuilder<SetIn<S>>
+  pub fn in_(
+    self,
+    list: impl IntoIterator<Item = impl IntoBytes>,
+  ) -> BytesValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
-    I: IntoIterator,
-    I::Item: AsStaticByteSlice,
   {
     BytesValidatorBuilder {
       _state: PhantomData,
@@ -448,9 +448,7 @@ impl<S: State> BytesValidatorBuilder<S> {
       prefix: self.prefix,
       suffix: self.suffix,
       contains: self.contains,
-      in_: Some(StaticLookup::new(
-        list.into_iter().map(|b| b.as_static_slice()),
-      )),
+      in_: Some(StaticLookup::new(list.into_iter().map(|b| b.into_bytes()))),
       not_in: self.not_in,
       const_: self.const_,
     }
@@ -525,34 +523,5 @@ impl<S: State> BytesValidatorBuilder<S> {
       not_in: self.not_in,
       const_: self.const_,
     }
-  }
-}
-
-#[doc(hidden)]
-#[allow(clippy::wrong_self_convention)]
-pub trait AsStaticByteSlice {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed;
-
-  fn as_static_slice(self) -> &'static [u8];
-}
-
-impl<const N: usize> AsStaticByteSlice for &'static [u8; N] {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed = Sealed;
-
-  #[inline]
-  fn as_static_slice(self) -> &'static [u8] {
-    self
-  }
-}
-
-impl AsStaticByteSlice for &'static [u8] {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed = Sealed;
-
-  #[inline]
-  fn as_static_slice(self) -> &'static [u8] {
-    self
   }
 }

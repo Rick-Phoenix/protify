@@ -16,10 +16,10 @@ pub struct AnyValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<&'static str>>,
+  pub in_: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<&'static str>>,
+  pub not_in: Option<StaticLookup<SharedStr>>,
 }
 
 impl Validator<Any> for AnyValidator {
@@ -61,9 +61,7 @@ impl Validator<Any> for AnyValidator {
 
     if let Some(val) = val {
       if let Some(allowed_list) = &self.in_
-        && !allowed_list
-          .items
-          .contains(&val.type_url.as_str())
+        && !allowed_list.items.contains(val.type_url.as_str())
       {
         let err = [
           "must have one of these type URLs: ",
@@ -77,7 +75,7 @@ impl Validator<Any> for AnyValidator {
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list
           .items
-          .contains(&val.type_url.as_str())
+          .contains(val.type_url.as_str())
       {
         let err = [
           "cannot have one of these type URLs: ",

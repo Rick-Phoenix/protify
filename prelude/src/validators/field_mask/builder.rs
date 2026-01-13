@@ -17,13 +17,13 @@ pub struct FieldMaskValidatorBuilder<S: State = Empty> {
   required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<&'static str>>,
+  in_: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<&'static str>>,
+  not_in: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<StaticLookup<&'static str>>,
+  const_: Option<StaticLookup<SharedStr>>,
 }
 
 impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
@@ -122,7 +122,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn in_(
     self,
-    val: impl IntoIterator<Item = &'static str>,
+    val: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> FieldMaskValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
@@ -132,7 +132,9 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
       cel: self.cel,
       ignore: self.ignore,
       required: self.required,
-      in_: Some(StaticLookup::new(val)),
+      in_: Some(StaticLookup::new(
+        val.into_iter().map(Into::<SharedStr>::into),
+      )),
       not_in: self.not_in,
       const_: self.const_,
     }
@@ -141,7 +143,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn not_in(
     self,
-    val: impl IntoIterator<Item = &'static str>,
+    val: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> FieldMaskValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -152,7 +154,9 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
       ignore: self.ignore,
       required: self.required,
       in_: self.in_,
-      not_in: Some(StaticLookup::new(val)),
+      not_in: Some(StaticLookup::new(
+        val.into_iter().map(Into::<SharedStr>::into),
+      )),
       const_: self.const_,
     }
   }
@@ -160,7 +164,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn const_(
     self,
-    val: impl IntoIterator<Item = &'static str>,
+    val: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> FieldMaskValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
@@ -172,7 +176,9 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
       required: self.required,
       in_: self.in_,
       not_in: self.not_in,
-      const_: Some(StaticLookup::new(val)),
+      const_: Some(StaticLookup::new(
+        val.into_iter().map(Into::<SharedStr>::into),
+      )),
     }
   }
 

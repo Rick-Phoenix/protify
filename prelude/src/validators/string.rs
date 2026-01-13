@@ -8,6 +8,75 @@ use regex::Regex;
 
 use super::*;
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum SharedStr {
+  Static(&'static str),
+  Shared(Arc<str>),
+}
+
+impl SharedStr {
+  #[must_use]
+  pub fn as_str(&self) -> &str {
+    match self {
+      Self::Static(s) => s,
+      Self::Shared(s) => s,
+    }
+  }
+}
+
+impl Borrow<str> for SharedStr {
+  fn borrow(&self) -> &str {
+    self
+  }
+}
+
+impl AsRef<str> for SharedStr {
+  fn as_ref(&self) -> &str {
+    self
+  }
+}
+
+impl<'a> PartialEq<&'a str> for SharedStr {
+  fn eq(&self, other: &&'a str) -> bool {
+    **other == **self
+  }
+}
+
+impl Display for SharedStr {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.as_str())
+  }
+}
+
+impl core::ops::Deref for SharedStr {
+  type Target = str;
+
+  fn deref(&self) -> &Self::Target {
+    match self {
+      Self::Static(str) => str,
+      Self::Shared(arc) => arc,
+    }
+  }
+}
+
+impl From<&'static str> for SharedStr {
+  fn from(value: &'static str) -> Self {
+    Self::Static(value)
+  }
+}
+
+impl From<String> for SharedStr {
+  fn from(value: String) -> Self {
+    Self::Shared(value.into())
+  }
+}
+
+impl From<Arc<str>> for SharedStr {
+  fn from(value: Arc<str>) -> Self {
+    Self::Shared(value)
+  }
+}
+
 #[derive(Clone, Debug)]
 pub struct StringValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
@@ -43,25 +112,25 @@ pub struct StringValidator {
   pub pattern: Option<Regex>,
 
   /// Specifies the prefix that this field's value should contain in order to be considered valid.
-  pub prefix: Option<Arc<str>>,
+  pub prefix: Option<SharedStr>,
 
   /// Specifies the suffix that this field's value should contain in order to be considered valid.
-  pub suffix: Option<Arc<str>>,
+  pub suffix: Option<SharedStr>,
 
   /// Specifies a substring that this field's value should contain in order to be considered valid.
-  pub contains: Option<Arc<str>>,
+  pub contains: Option<SharedStr>,
 
   /// Specifies a substring that this field's value must not contain in order to be considered valid.
-  pub not_contains: Option<Arc<str>>,
+  pub not_contains: Option<SharedStr>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<&'static str>>,
+  pub in_: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<&'static str>>,
+  pub not_in: Option<StaticLookup<SharedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Arc<str>>,
+  pub const_: Option<SharedStr>,
 }
 
 impl StringValidator {
@@ -253,7 +322,7 @@ impl Validator<String> for StringValidator {
       }
 
       if let Some(prefix) = &self.prefix
-        && !val.starts_with(prefix.as_ref())
+        && !val.starts_with(&**prefix)
       {
         ctx.add_violation(
           &STRING_PREFIX_VIOLATION,
@@ -262,7 +331,7 @@ impl Validator<String> for StringValidator {
       }
 
       if let Some(suffix) = &self.suffix
-        && !val.ends_with(suffix.as_ref())
+        && !val.ends_with(&**suffix)
       {
         ctx.add_violation(&STRING_SUFFIX_VIOLATION, &format!("must end with {suffix}"));
       }
@@ -286,7 +355,7 @@ impl Validator<String> for StringValidator {
       }
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(&val.as_str())
+        && !allowed_list.items.contains(val.as_str())
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
@@ -294,7 +363,7 @@ impl Validator<String> for StringValidator {
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.items.contains(&val.as_str())
+        && forbidden_list.items.contains(val.as_str())
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
