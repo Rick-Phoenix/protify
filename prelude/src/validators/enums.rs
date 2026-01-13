@@ -148,9 +148,8 @@ impl<T: ProtoEnum> From<EnumValidator<T>> for ProtoOption {
   fn from(validator: EnumValidator<T>) -> Self {
     let mut rules = OptionMessageBuilder::new();
 
-    rules.maybe_set("const", validator.const_);
-
     rules
+      .maybe_set("const", validator.const_)
       .set_boolean("defined_only", validator.defined_only)
       .maybe_set(
         "in",

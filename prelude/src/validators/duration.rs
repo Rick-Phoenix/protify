@@ -173,9 +173,8 @@ impl From<DurationValidator> for ProtoOption {
   fn from(validator: DurationValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 
-    rules.maybe_set("const", validator.const_);
-
     rules
+      .maybe_set("const", validator.const_)
       .maybe_set("lt", validator.lt)
       .maybe_set("lte", validator.lte)
       .maybe_set("gt", validator.gt)

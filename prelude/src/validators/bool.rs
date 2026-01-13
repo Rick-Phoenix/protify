@@ -68,9 +68,7 @@ impl From<BoolValidator> for ProtoOption {
   fn from(validator: BoolValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 
-    if let Some(value) = validator.const_ {
-      rules.set("const", OptionValue::Bool(value));
-    }
+    rules.maybe_set("const", validator.const_);
 
     let mut outer_rules = OptionMessageBuilder::new();
 

@@ -301,14 +301,13 @@ impl From<BytesValidator> for ProtoOption {
 
     set_options!(min_len, max_len, len, contains, prefix, suffix);
 
-    rules.maybe_set("const", validator.const_);
-
     #[cfg(feature = "regex")]
     if let Some(pattern) = validator.pattern {
       rules.set("pattern", OptionValue::String(pattern.to_string().into()));
     }
 
     rules
+      .maybe_set("const", validator.const_)
       .maybe_set(
         "in",
         validator.in_.map(|list| {
