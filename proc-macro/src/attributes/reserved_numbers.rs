@@ -178,7 +178,7 @@ impl Parse for ReservedNumbers {
       let _: Token![,] = input.parse()?;
     }
 
-    ranges.sort_by_key(|range| range.start);
+    ranges.sort_unstable_by_key(|range| range.start);
 
     Ok(Self {
       ranges,

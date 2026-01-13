@@ -267,7 +267,7 @@ where
   pub fn new<I: IntoIterator<Item = T>>(iter: I) -> Self {
     let mut items: Vec<T> = iter.into_iter().collect();
 
-    items.sort();
+    items.sort_unstable();
 
     Self {
       items: items.into(),
