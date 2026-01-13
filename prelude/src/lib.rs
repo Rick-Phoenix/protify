@@ -5,8 +5,9 @@ pub use ::cel;
 mod decl_macros;
 
 use ::bytes::Bytes;
-use std::borrow::Borrow;
+use std::borrow::{Borrow, Cow};
 use std::fmt::{Debug, Display};
+use std::sync::Arc;
 
 use askama::Template;
 use float_eq::{FloatEq, float_eq};
@@ -108,4 +109,70 @@ impl IntoBytes for &Bytes {
   fn into_bytes(self) -> Bytes {
     self.clone()
   }
+}
+
+#[cfg(feature = "regex")]
+pub use regex_impls::*;
+
+#[cfg(feature = "regex")]
+mod regex_impls {
+  use super::*;
+
+  use regex::Regex;
+  use regex::bytes::Regex as BytesRegex;
+
+  macro_rules! impl_into_regex {
+    ($(( $trait:ident, $path:ident )),*) => {
+      $(
+        pub trait $trait {
+          #[allow(private_interfaces)]
+          const SEALED: Sealed;
+
+          fn into_regex(self) -> Cow<'static, $path>;
+        }
+
+        impl $trait for &str {
+          #[allow(private_interfaces)]
+          const SEALED: Sealed = Sealed;
+
+          #[inline]
+          fn into_regex(self) -> Cow<'static, $path> {
+            Cow::Owned($path::new(self).unwrap())
+          }
+        }
+
+        impl $trait for Arc<str> {
+          #[allow(private_interfaces)]
+          const SEALED: Sealed = Sealed;
+
+          #[inline]
+          fn into_regex(self) -> Cow<'static, $path> {
+            Cow::Owned($path::new(&self).unwrap())
+          }
+        }
+
+        impl $trait for $path {
+          #[allow(private_interfaces)]
+          const SEALED: Sealed = Sealed;
+
+          #[inline]
+          fn into_regex(self) -> Cow<'static, $path> {
+            Cow::Owned(self)
+          }
+        }
+
+        impl $trait for &'static $path {
+          #[allow(private_interfaces)]
+          const SEALED: Sealed = Sealed;
+
+          #[inline]
+          fn into_regex(self) -> Cow<'static, $path> {
+            Cow::Borrowed(self)
+          }
+        }
+      )*
+    };
+  }
+
+  impl_into_regex!((IntoRegex, Regex), (IntoBytesRegex, BytesRegex));
 }

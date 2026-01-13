@@ -32,7 +32,7 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
 
   #[cfg(feature = "regex")]
   /// Specifies a regex pattern that must be matches by the value to pass validation.
-  pattern: Option<Regex>,
+  pattern: Option<Cow<'static, Regex>>,
 
   /// Specifies a prefix that the value must start with in order to pass validation.
   prefix: Option<Bytes>,
@@ -300,7 +300,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 
   #[cfg(feature = "regex")]
   #[inline]
-  pub fn pattern(self, val: &str) -> BytesValidatorBuilder<SetPattern<S>>
+  pub fn pattern(self, val: impl IntoBytesRegex) -> BytesValidatorBuilder<SetPattern<S>>
   where
     S::Pattern: IsUnset,
   {
@@ -313,7 +313,7 @@ impl<S: State> BytesValidatorBuilder<S> {
       len: self.len,
       min_len: self.min_len,
       max_len: self.max_len,
-      pattern: Some(Regex::new(val).unwrap()),
+      pattern: Some(val.into_regex()),
       prefix: self.prefix,
       suffix: self.suffix,
       contains: self.contains,
