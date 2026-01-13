@@ -64,19 +64,20 @@ impl ProtoConversions<'_> {
     let custom_from_proto = container_attrs.custom_from_proto_expr();
 
     let conversion_body = if let Some(from_proto) = custom_from_proto {
-      process_custom_expression(from_proto, &quote! { value })
+      process_custom_expression(from_proto, &quote_spanned! {from_proto.span()=> value })
     } else if fields.is_empty() {
       quote! { unimplemented!() }
     } else {
       let tokens = fields.iter().map(|d| {
       let field_ident = d.ident();
+        let span = field_ident.span();
 
       let conversion_logic = match d {
         FieldDataKind::Ignored { from_proto, .. } => {
           if let Some(expr) = from_proto {
             match expr {
               // Field is ignored, so we don't pass any args here
-              PathOrClosure::Path(path) => quote! { #path() },
+              PathOrClosure::Path(path) => quote_spanned! {span=> #path() },
               PathOrClosure::Closure(closure) => {
                 let error = error!(closure, "Cannot use a closure for ignored fields");
 
@@ -84,14 +85,14 @@ impl ProtoConversions<'_> {
               }
             }
           } else {
-            quote! { Default::default() }
+            quote_spanned! {span=> Default::default() }
           }
         }
         FieldDataKind::Normal(field_data) => {
           let base_ident = match kind {
-            ItemKind::Oneof => quote! { v },
+            ItemKind::Oneof => quote_spanned! {span=> v },
             ItemKind::Message => {
-              quote! { value.#field_ident }
+              quote_spanned! {span=> value.#field_ident }
             }
           };
 
@@ -107,9 +108,9 @@ impl ProtoConversions<'_> {
 
       match kind {
         ItemKind::Oneof => {
-          quote! { #proto_ident::#field_ident(v) => #proxy_ident::#field_ident(#conversion_logic) }
+          quote_spanned! {span=> #proto_ident::#field_ident(v) => #proxy_ident::#field_ident(#conversion_logic) }
         }
-        ItemKind::Message => quote! { #field_ident: #conversion_logic },
+        ItemKind::Message => quote_spanned! {span=> #field_ident: #conversion_logic },
       }
     });
 
@@ -151,34 +152,37 @@ impl ProtoConversions<'_> {
     let custom_into_proto = container_attrs.custom_into_proto_expr();
 
     let conversion_body = if let Some(into_proto) = custom_into_proto {
-      process_custom_expression(into_proto, &quote! { value })
+      process_custom_expression(into_proto, &quote_spanned! {into_proto.span()=> value })
     } else if fields.is_empty() {
       quote! { unimplemented!() }
     } else {
       let tokens = fields
-      .iter()
-      .filter_map(|d| d.as_normal())
-      .map(|d| {
-        let field_ident = &d.ident;
+        .iter()
+        .filter_map(|d| d.as_normal())
+        .map(|d| {
+          let field_ident = &d.ident;
+          let span = field_ident.span();
 
-        let base_ident = match kind {
-          ItemKind::Oneof => quote! { v },
-          ItemKind::Message => {
-            quote! { value.#field_ident }
+          let base_ident = match kind {
+            ItemKind::Oneof => quote_spanned! {span=> v },
+            ItemKind::Message => {
+              quote_spanned! {span=> value.#field_ident }
+            }
+          };
+
+          let conversion_logic = if let Some(expr) = d.into_proto.as_ref() {
+            process_custom_expression(expr, &base_ident)
+          } else {
+            d.proto_field.default_into_proto(&base_ident)
+          };
+
+          match kind {
+            ItemKind::Oneof => quote_spanned! {span=>
+              #proxy_ident::#field_ident(v) => #proto_ident::#field_ident(#conversion_logic)
+            },
+            ItemKind::Message => quote_spanned! {span=> #field_ident: #conversion_logic },
           }
-        };
-
-        let conversion_logic = if let Some(expr) = d.into_proto.as_ref() {
-          process_custom_expression(expr, &base_ident)
-        } else {
-          d.proto_field.default_into_proto(&base_ident)
-        };
-
-        match kind {
-          ItemKind::Oneof => quote! { #proxy_ident::#field_ident(v) => #proto_ident::#field_ident(#conversion_logic) },
-          ItemKind::Message => quote! { #field_ident: #conversion_logic },
-        }
-      });
+        });
 
       match kind {
         ItemKind::Oneof => quote! {
