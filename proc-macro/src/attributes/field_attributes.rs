@@ -46,6 +46,13 @@ pub enum FieldDataKind {
 }
 
 impl FieldDataKind {
+  pub const fn ident(&self) -> &Ident {
+    match self {
+      Self::Ignored { ident, .. } => ident,
+      Self::Normal(field_data) => &field_data.ident,
+    }
+  }
+
   pub const fn as_normal(&self) -> Option<&FieldData> {
     if let Self::Normal(v) = self {
       Some(v)

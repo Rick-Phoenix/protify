@@ -12,7 +12,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
 
   let is_proxied = message_attrs.is_proxied;
 
-  let mut proxy_struct = is_proxied.then(|| create_shadow_struct(&item));
+  let mut proto_struct = is_proxied.then(|| create_shadow_struct(&item));
 
   let FieldsCtx {
     mut fields_data,
@@ -38,7 +38,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
     ImplKind::Direct
   };
 
-  let struct_to_process = proxy_struct.as_mut().unwrap_or(&mut item);
+  let struct_to_process = proto_struct.as_mut().unwrap_or(&mut item);
 
   second_processing(
     impl_kind,
@@ -57,7 +57,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
   let proto_derives = if !errors.is_empty() {
     FallbackImpls {
       orig_ident: &item.ident,
-      shadow_ident: proxy_struct.as_ref().map(|ps| &ps.ident),
+      shadow_ident: proto_struct.as_ref().map(|ps| &ps.ident),
       kind: ItemKind::Message,
     }
     .fallback_derive_impls()
@@ -78,8 +78,8 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
     fields_data.clear();
   }
 
-  if let Some(proxy_struct) = &mut proxy_struct {
-    if let Fields::Named(fields) = &mut proxy_struct.fields {
+  if let Some(proto_struct) = &mut proto_struct {
+    if let Fields::Named(fields) = &mut proto_struct.fields {
       let old_fields = std::mem::take(&mut fields.named);
 
       fields.named = old_fields
@@ -94,14 +94,14 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
       .as_ref()
       .map(|list| quote! { #[#list] });
 
-    let conversions = ProtoConversionImpl {
-      source_ident: item.ident.clone(),
-      target_ident: proxy_struct.ident.clone(),
+    let conversions = ProtoConversions {
+      proxy_ident: &item.ident,
+      proto_ident: &proto_struct.ident,
       kind: ItemKind::Message,
-      into_proto: ConversionData::new(message_attrs.into_proto.as_ref()),
-      from_proto: ConversionData::new(message_attrs.from_proto.as_ref()),
+      container_attrs: ContainerAttrs::Message(&message_attrs),
+      fields: &fields_data,
     }
-    .generate_conversion_impls(&fields_data);
+    .generate_proto_conversions();
 
     output.extend(quote! {
       #[derive(::prelude::macros::Message)]
@@ -110,7 +110,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
       #proto_derives
       #shadow_struct_derives
       #[allow(clippy::use_self)]
-      #proxy_struct
+      #proto_struct
 
       #conversions
     });
@@ -124,7 +124,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
 
   let message_ctx = MessageCtx {
     orig_struct_ident: item.ident.clone(),
-    shadow_struct_ident: proxy_struct.as_ref().map(|ps| ps.ident.clone()),
+    shadow_struct_ident: proto_struct.as_ref().map(|ps| ps.ident.clone()),
     fields_data,
     message_attrs: &message_attrs,
   };
@@ -184,12 +184,27 @@ impl ImplKind {
   }
 }
 
+#[derive(Clone, Copy)]
 pub enum ContainerAttrs<'a> {
   Message(&'a MessageAttrs),
   Oneof(&'a OneofAttrs),
 }
 
 impl ContainerAttrs<'_> {
+  pub const fn custom_from_proto_expr(&self) -> Option<&PathOrClosure> {
+    match self {
+      ContainerAttrs::Message(message_attrs) => message_attrs.from_proto.as_ref(),
+      ContainerAttrs::Oneof(oneof_attrs) => oneof_attrs.from_proto.as_ref(),
+    }
+  }
+
+  pub const fn custom_into_proto_expr(&self) -> Option<&PathOrClosure> {
+    match self {
+      ContainerAttrs::Message(message_attrs) => message_attrs.into_proto.as_ref(),
+      ContainerAttrs::Oneof(oneof_attrs) => oneof_attrs.into_proto.as_ref(),
+    }
+  }
+
   pub const fn has_custom_conversions(&self) -> bool {
     match self {
       ContainerAttrs::Message(message_attrs) => message_attrs.has_custom_conversions(),

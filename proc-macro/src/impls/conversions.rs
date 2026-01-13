@@ -1,57 +1,5 @@
 use crate::*;
 
-pub enum FieldConversionKind<'a> {
-  StructField {
-    ident: &'a Ident,
-  },
-  EnumVariant {
-    variant_ident: &'a Ident,
-    source_enum_ident: &'a Ident,
-    target_enum_ident: &'a Ident,
-  },
-}
-
-impl FieldConversionKind<'_> {
-  pub fn base_ident(&self) -> TokenStream2 {
-    match self {
-      Self::StructField { ident } => quote_spanned! {ident.span()=> value.#ident },
-      // With enums, we always pattern match first so we always
-      // have the same ident to process
-      Self::EnumVariant { variant_ident, .. } => quote_spanned! {variant_ident.span()=> v },
-    }
-  }
-
-  pub fn conversion_from_source_to_target(&self, conversion_expr: &TokenStream2) -> TokenStream2 {
-    match self {
-      Self::StructField { ident } => quote_spanned! {ident.span()=>
-        #ident: #conversion_expr,
-      },
-      Self::EnumVariant {
-        variant_ident,
-        source_enum_ident,
-        target_enum_ident,
-      } => quote_spanned! {variant_ident.span()=>
-        #source_enum_ident::#variant_ident(v) => #target_enum_ident::#variant_ident(#conversion_expr),
-      },
-    }
-  }
-
-  pub fn conversion_from_target_to_source(&self, conversion_expr: &TokenStream2) -> TokenStream2 {
-    match self {
-      Self::StructField { ident } => quote_spanned! {ident.span()=>
-        #ident: #conversion_expr,
-      },
-      Self::EnumVariant {
-        variant_ident,
-        source_enum_ident,
-        target_enum_ident,
-      } => quote_spanned! {variant_ident.span()=>
-        #target_enum_ident::#variant_ident(v) => #source_enum_ident::#variant_ident(#conversion_expr),
-      },
-    }
-  }
-}
-
 fn process_custom_expression(expr: &PathOrClosure, base_ident: &TokenStream2) -> TokenStream2 {
   match expr {
     PathOrClosure::Path(path) => quote! { #path(#base_ident) },
@@ -63,209 +11,198 @@ fn process_custom_expression(expr: &PathOrClosure, base_ident: &TokenStream2) ->
   }
 }
 
-pub struct FromImpl<'a> {
-  pub source_ident: &'a Ident,
-  pub target_ident: &'a Ident,
+pub struct ProtoConversions<'a> {
+  pub proxy_ident: &'a Ident,
+  pub proto_ident: &'a Ident,
   pub kind: ItemKind,
-  pub conversion_data: &'a ConversionData<'a>,
+  pub container_attrs: ContainerAttrs<'a>,
+  pub fields: &'a [FieldDataKind],
 }
 
-pub struct ProtoConversionImpl<'a> {
-  pub source_ident: Ident,
-  pub target_ident: Ident,
-  pub kind: ItemKind,
-  pub into_proto: ConversionData<'a>,
-  pub from_proto: ConversionData<'a>,
-}
-
-impl ProtoConversionImpl<'_> {
-  pub fn generate_conversion_impls(&mut self, fields_data: &[FieldDataKind]) -> TokenStream2 {
-    for data in fields_data {
-      self.handle_field_conversions(data);
-    }
-
-    let mut tokens = TokenStream2::new();
-
-    tokens.extend(self.create_into_proto_impl());
-    tokens.extend(self.create_from_proto_impl());
-
+impl ProtoConversions<'_> {
+  pub fn generate_proto_conversions(&self) -> TokenStream2 {
     let Self {
-      source_ident,
-      target_ident,
+      proxy_ident,
+      proto_ident,
       kind,
       ..
     } = self;
 
-    if kind.is_message() {
-      tokens.extend(quote! {
-        impl ::prelude::MessageProxy for #source_ident {
-          type Message = #target_ident;
+    let from_proto = self.create_from_proto_impl();
+    let into_proto = self.create_into_proto_impl();
+
+    let proxy_trait_impl = if kind.is_message() {
+      quote! {
+        impl ::prelude::MessageProxy for #proxy_ident {
+          type Message = #proto_ident;
         }
-      });
+      }
     } else {
-      tokens.extend(quote! {
-        impl ::prelude::OneofProxy for #source_ident {
-          type Oneof = #target_ident;
+      quote! {
+        impl ::prelude::OneofProxy for #proxy_ident {
+          type Oneof = #proto_ident;
         }
-      });
+      }
+    };
+
+    quote! {
+      #from_proto
+      #into_proto
+      #proxy_trait_impl
     }
-
-    tokens
-  }
-
-  fn create_into_proto_impl(&self) -> TokenStream2 {
-    let Self {
-      source_ident,
-      target_ident,
-      kind,
-      into_proto,
-      ..
-    } = self;
-
-    create_from_impl(&FromImpl {
-      source_ident,
-      target_ident,
-      kind: *kind,
-      conversion_data: into_proto,
-    })
   }
 
   fn create_from_proto_impl(&self) -> TokenStream2 {
     let Self {
-      source_ident,
-      target_ident,
+      proxy_ident,
+      proto_ident,
       kind,
-      from_proto,
-      ..
+      container_attrs,
+      fields,
     } = self;
 
-    let switched = FromImpl {
-      // Note: source and target are switched here
-      source_ident: target_ident,
-      target_ident: source_ident,
-      kind: *kind,
-      conversion_data: from_proto,
-    };
+    let custom_from_proto = container_attrs.custom_from_proto_expr();
 
-    create_from_impl(&switched)
-  }
+    let conversion_body = if let Some(from_proto) = custom_from_proto {
+      process_custom_expression(from_proto, &quote! { value })
+    } else if fields.is_empty() {
+      quote! { unimplemented!() }
+    } else {
+      let tokens = fields.iter().map(|d| {
+      let field_ident = d.ident();
 
-  fn handle_field_conversions(&mut self, field_attr_data: &FieldDataKind) {
-    match field_attr_data {
-      FieldDataKind::Ignored { from_proto, ident } => {
-        if !self.from_proto.has_custom_impl() {
-          self.add_field_from_proto_impl(from_proto.as_ref(), None, ident);
+      let conversion_logic = match d {
+        FieldDataKind::Ignored { from_proto, .. } => {
+          if let Some(expr) = from_proto {
+            match expr {
+              // Field is ignored, so we don't pass any args here
+              PathOrClosure::Path(path) => quote! { #path() },
+              PathOrClosure::Closure(closure) => {
+                let error = error!(closure, "Cannot use a closure for ignored fields");
+
+                error.into_compile_error()
+              }
+            }
+          } else {
+            quote! { Default::default() }
+          }
+        }
+        FieldDataKind::Normal(field_data) => {
+          let base_ident = match kind {
+            ItemKind::Oneof => quote! { v },
+            ItemKind::Message => {
+              quote! { value.#field_ident }
+            }
+          };
+
+          if let Some(expr) = field_data.from_proto.as_ref() {
+            process_custom_expression(expr, &base_ident)
+          } else {
+            field_data
+              .proto_field
+              .default_from_proto(&base_ident)
+          }
+        }
+      };
+
+      match kind {
+        ItemKind::Oneof => {
+          quote! { #proto_ident::#field_ident(v) => #proxy_ident::#field_ident(#conversion_logic) }
+        }
+        ItemKind::Message => quote! { #field_ident: #conversion_logic },
+      }
+    });
+
+      match kind {
+        ItemKind::Oneof => quote! {
+          match value {
+            #(#tokens),*
+          }
+        },
+        ItemKind::Message => {
+          quote! {
+            Self {
+              #(#tokens),*
+            }
+          }
         }
       }
-      FieldDataKind::Normal(field_attrs) => {
-        if !self.from_proto.has_custom_impl() {
-          self.add_field_from_proto_impl(
-            field_attrs.from_proto.as_ref(),
-            Some(&field_attrs.proto_field),
-            &field_attrs.ident,
-          );
-        }
+    };
 
-        if !self.into_proto.has_custom_impl() {
-          self.add_field_into_proto_impl(
-            field_attrs.into_proto.as_ref(),
-            &field_attrs.proto_field,
-            &field_attrs.ident,
-          );
+    quote! {
+      #[allow(clippy::useless_conversion)]
+      impl From<#proto_ident> for #proxy_ident {
+        fn from(value: #proto_ident) -> Self {
+          #conversion_body
         }
       }
     }
   }
 
-  fn add_field_into_proto_impl(
-    &mut self,
-    custom_expression: Option<&PathOrClosure>,
-    proto_field: &ProtoField,
-    field_ident: &Ident,
-  ) {
-    let field_conversion_kind = match &self.kind {
-      ItemKind::Oneof => FieldConversionKind::EnumVariant {
-        variant_ident: field_ident,
-        source_enum_ident: &self.source_ident,
-        target_enum_ident: &self.target_ident,
-      },
-      ItemKind::Message => FieldConversionKind::StructField { ident: field_ident },
-    };
+  fn create_into_proto_impl(&self) -> TokenStream2 {
+    let Self {
+      proxy_ident,
+      proto_ident,
+      kind,
+      container_attrs,
+      fields,
+    } = self;
 
-    let base_ident = field_conversion_kind.base_ident();
+    let custom_into_proto = container_attrs.custom_into_proto_expr();
 
-    let conversion_expr = if let Some(expr) = custom_expression {
-      process_custom_expression(expr, &base_ident)
+    let conversion_body = if let Some(into_proto) = custom_into_proto {
+      process_custom_expression(into_proto, &quote! { value })
+    } else if fields.is_empty() {
+      quote! { unimplemented!() }
     } else {
-      proto_field.default_into_proto(&base_ident)
-    };
+      let tokens = fields
+      .iter()
+      .filter_map(|d| d.as_normal())
+      .map(|d| {
+        let field_ident = &d.ident;
 
-    let conversion = field_conversion_kind.conversion_from_source_to_target(&conversion_expr);
+        let base_ident = match kind {
+          ItemKind::Oneof => quote! { v },
+          ItemKind::Message => {
+            quote! { value.#field_ident }
+          }
+        };
 
-    self.into_proto.tokens.extend(conversion);
-  }
+        let conversion_logic = if let Some(expr) = d.into_proto.as_ref() {
+          process_custom_expression(expr, &base_ident)
+        } else {
+          d.proto_field.default_into_proto(&base_ident)
+        };
 
-  fn add_field_from_proto_impl(
-    &mut self,
-    custom_expression: Option<&PathOrClosure>,
-    proto_field: Option<&ProtoField>,
-    field_ident: &Ident,
-  ) {
-    let field_conversion_kind = match &self.kind {
-      ItemKind::Oneof => FieldConversionKind::EnumVariant {
-        variant_ident: field_ident,
-        source_enum_ident: &self.source_ident,
-        target_enum_ident: &self.target_ident,
-      },
-      ItemKind::Message => FieldConversionKind::StructField { ident: field_ident },
-    };
+        match kind {
+          ItemKind::Oneof => quote! { #proxy_ident::#field_ident(v) => #proto_ident::#field_ident(#conversion_logic) },
+          ItemKind::Message => quote! { #field_ident: #conversion_logic },
+        }
+      });
 
-    let conversion_expr = if let Some(proto_field) = proto_field {
-      let base_ident = field_conversion_kind.base_ident();
-
-      if let Some(expr) = custom_expression {
-        process_custom_expression(expr, &base_ident)
-      } else {
-        proto_field.default_from_proto(&base_ident)
-      }
-    } else {
-      if let Some(expr) = custom_expression {
-        match expr {
-          // Field is ignored, so we don't pass any args here
-          PathOrClosure::Path(path) => quote! { #path() },
-          PathOrClosure::Closure(closure) => {
-            let error = error!(closure, "Cannot use a closure for ignored fields");
-
-            error.into_compile_error()
+      match kind {
+        ItemKind::Oneof => quote! {
+          match value {
+            #(#tokens),*
+          }
+        },
+        ItemKind::Message => {
+          quote! {
+            Self {
+              #(#tokens),*
+            }
           }
         }
-      } else {
-        quote! { Default::default() }
       }
     };
 
-    let conversion = field_conversion_kind.conversion_from_target_to_source(&conversion_expr);
-
-    self.from_proto.tokens.extend(conversion);
-  }
-}
-
-// This is used as a wrapper to store the custom expression that was given
-// (if there was one) or provide the implementation tokens (if there wasn't one)
-pub struct ConversionData<'a> {
-  pub custom_expression: Option<&'a PathOrClosure>,
-  pub tokens: TokenStream2,
-}
-
-impl<'a> ConversionData<'a> {
-  pub const fn has_custom_impl(&self) -> bool {
-    self.custom_expression.is_some()
-  }
-
-  pub fn new(custom_expression: Option<&'a PathOrClosure>) -> Self {
-    Self {
-      custom_expression,
-      tokens: TokenStream2::new(),
+    quote! {
+      #[allow(clippy::useless_conversion)]
+      impl From<#proxy_ident> for #proto_ident {
+        fn from(value: #proxy_ident) -> Self {
+          #conversion_body
+        }
+      }
     }
   }
 }
@@ -283,48 +220,5 @@ impl ItemKind {
   #[must_use]
   pub const fn is_message(self) -> bool {
     matches!(self, Self::Message)
-  }
-}
-
-fn create_from_impl(info: &FromImpl) -> TokenStream2 {
-  let FromImpl {
-    source_ident,
-    target_ident,
-    kind,
-    conversion_data:
-      ConversionData {
-        custom_expression,
-        tokens: conversion_tokens,
-      },
-  } = info;
-
-  let conversion_body = if let Some(expr) = custom_expression {
-    let base_ident = quote! { value };
-
-    process_custom_expression(expr, &base_ident)
-  } else if conversion_tokens.is_empty() {
-    quote! { unimplemented!() }
-  } else {
-    match kind {
-      ItemKind::Oneof => quote! {
-        match value {
-          #conversion_tokens
-        }
-      },
-      ItemKind::Message => quote! {
-        Self {
-          #conversion_tokens
-        }
-      },
-    }
-  };
-
-  quote! {
-    #[allow(clippy::useless_conversion)]
-    impl From<#source_ident> for #target_ident {
-      fn from(value: #source_ident) -> Self {
-        #conversion_body
-      }
-    }
   }
 }

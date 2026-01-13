@@ -29,7 +29,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
 
   let is_proxied = oneof_attrs.is_proxied;
 
-  let mut shadow_enum = is_proxied.then(|| create_shadow_enum(&item));
+  let mut proto_enum = is_proxied.then(|| create_shadow_enum(&item));
 
   let FieldsCtx {
     mut fields_data,
@@ -53,7 +53,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
     ImplKind::Direct
   };
 
-  let enum_to_process = shadow_enum.as_mut().unwrap_or(&mut item);
+  let enum_to_process = proto_enum.as_mut().unwrap_or(&mut item);
 
   second_processing(
     impl_kind,
@@ -72,7 +72,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
   let proto_derives = if !errors.is_empty() {
     FallbackImpls {
       orig_ident: &item.ident,
-      shadow_ident: shadow_enum.as_ref().map(|se| &se.ident),
+      shadow_ident: proto_enum.as_ref().map(|se| &se.ident),
       kind: ItemKind::Oneof,
     }
     .fallback_derive_impls()
@@ -92,10 +92,10 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
     fields_data.clear();
   }
 
-  if let Some(shadow_enum) = &mut shadow_enum {
+  if let Some(proto_enum) = &mut proto_enum {
     // We strip away the ignored variants from the shadow enum
-    let shadow_variants = std::mem::take(&mut shadow_enum.variants);
-    shadow_enum.variants = shadow_variants
+    let shadow_variants = std::mem::take(&mut proto_enum.variants);
+    proto_enum.variants = shadow_variants
       .into_iter()
       .zip(fields_data.iter())
       .filter_map(|(variant, data)| matches!(data, FieldDataKind::Normal(_)).then_some(variant))
@@ -106,14 +106,14 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
       .as_ref()
       .map(|list| quote! { #[#list] });
 
-    let conversions = ProtoConversionImpl {
-      source_ident: item.ident.clone(),
-      target_ident: shadow_enum.ident.clone(),
+    let conversions = ProtoConversions {
+      proxy_ident: &item.ident,
+      proto_ident: &proto_enum.ident,
       kind: ItemKind::Oneof,
-      into_proto: ConversionData::new(oneof_attrs.into_proto.as_ref()),
-      from_proto: ConversionData::new(oneof_attrs.from_proto.as_ref()),
+      container_attrs: ContainerAttrs::Oneof(&oneof_attrs),
+      fields: &fields_data,
     }
-    .generate_conversion_impls(&fields_data);
+    .generate_proto_conversions();
 
     output.extend(quote! {
       #[derive(::prelude::macros::Oneof)]
@@ -122,7 +122,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
       #proto_derives
       #shadow_enum_derives
       #[allow(clippy::use_self)]
-      #shadow_enum
+      #proto_enum
 
       #conversions
     });
@@ -137,7 +137,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
   let oneof_ctx = OneofCtx {
     oneof_attrs: &oneof_attrs,
     orig_enum_ident: &item.ident,
-    shadow_enum_ident: shadow_enum.as_ref().map(|se| &se.ident),
+    shadow_enum_ident: proto_enum.as_ref().map(|se| &se.ident),
     variants: fields_data,
     tags: manually_set_tags,
   };
