@@ -496,7 +496,7 @@ impl ListFormatter for Duration {
 #[derive(Debug, Clone)]
 pub struct StaticLookup<T: Ord + ListFormatter> {
   pub items: SortedList<T>,
-  pub items_str: String,
+  pub items_str: Arc<str>,
 }
 
 impl<T: Ord + ListFormatter> StaticLookup<T> {
@@ -508,6 +508,9 @@ impl<T: Ord + ListFormatter> StaticLookup<T> {
 
     let items_str = T::format_list(&items);
 
-    Self { items, items_str }
+    Self {
+      items,
+      items_str: items_str.into(),
+    }
   }
 }
