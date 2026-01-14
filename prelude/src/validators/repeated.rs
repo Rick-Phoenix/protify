@@ -5,6 +5,7 @@ use proto_types::protovalidate::field_path_element::Subscript;
 
 use super::*;
 
+#[non_exhaustive]
 #[derive(Debug)]
 pub struct RepeatedValidator<T>
 where

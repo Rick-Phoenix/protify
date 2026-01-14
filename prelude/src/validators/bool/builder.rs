@@ -6,11 +6,7 @@ pub(crate) use state::*;
 #[derive(Clone, Debug)]
 pub struct BoolValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
-  /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<bool>,
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
-  ignore: Ignore,
+  data: BoolValidator,
 }
 
 impl_validator!(BoolValidator, bool);
@@ -20,9 +16,7 @@ impl<S: State> Default for BoolValidatorBuilder<S> {
   fn default() -> Self {
     Self {
       _state: PhantomData,
-      const_: Default::default(),
-      required: Default::default(),
-      ignore: Default::default(),
+      data: BoolValidator::default(),
     }
   }
 }
@@ -48,63 +42,59 @@ impl<S: State> From<BoolValidatorBuilder<S>> for ProtoOption {
 )]
 impl<S: State> BoolValidatorBuilder<S> {
   #[inline]
-  pub const fn ignore_always(self) -> BoolValidatorBuilder<SetIgnore<S>>
+  pub const fn ignore_always(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     BoolValidatorBuilder {
       _state: PhantomData,
-      const_: self.const_,
-      required: self.required,
-      ignore: Ignore::Always,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub const fn ignore_if_zero_value(self) -> BoolValidatorBuilder<SetIgnore<S>>
+  pub const fn ignore_if_zero_value(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::IfZeroValue;
+
     BoolValidatorBuilder {
       _state: PhantomData,
-      const_: self.const_,
-      required: self.required,
-      ignore: Ignore::IfZeroValue,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub const fn required(self) -> BoolValidatorBuilder<SetRequired<S>>
+  pub const fn required(mut self) -> BoolValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     BoolValidatorBuilder {
       _state: PhantomData,
-      const_: self.const_,
-      required: true,
-      ignore: self.ignore,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub const fn const_(self, val: bool) -> BoolValidatorBuilder<SetConst<S>>
+  pub const fn const_(mut self, val: bool) -> BoolValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {
+    self.data.const_ = Some(val);
+
     BoolValidatorBuilder {
       _state: PhantomData,
-      const_: Some(val),
-      required: self.required,
-      ignore: self.ignore,
+      data: self.data,
     }
   }
 
   #[inline]
   pub const fn build(self) -> BoolValidator {
-    BoolValidator {
-      const_: self.const_,
-      required: self.required,
-      ignore: self.ignore,
-    }
+    self.data
   }
 }

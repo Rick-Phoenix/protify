@@ -7,15 +7,7 @@ pub(crate) use state::*;
 pub struct MessageValidatorBuilder<T: ValidatedMessage, S: State = Empty> {
   _state: PhantomData<S>,
 
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<CelProgram>,
-
-  ignore: Ignore,
-
-  _message: PhantomData<T>,
-
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
+  data: MessageValidator<T>,
 }
 
 impl<T: ValidatedMessage, S: State> Default for MessageValidatorBuilder<T, S> {
@@ -23,10 +15,7 @@ impl<T: ValidatedMessage, S: State> Default for MessageValidatorBuilder<T, S> {
   fn default() -> Self {
     Self {
       _state: PhantomData,
-      cel: Default::default(),
-      ignore: Default::default(),
-      _message: PhantomData,
-      required: Default::default(),
+      data: MessageValidator::default(),
     }
   }
 }
@@ -53,52 +42,42 @@ impl<T: ValidatedMessage, S: State> From<MessageValidatorBuilder<T, S>> for Prot
 impl<T: ValidatedMessage, S: State> MessageValidatorBuilder<T, S> {
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> MessageValidatorBuilder<T, S> {
-    self.cel.push(program);
+    self.data.cel.push(program);
 
     MessageValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      _message: self._message,
-      required: self.required,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_always(self) -> MessageValidatorBuilder<T, SetIgnore<S>>
+  pub fn ignore_always(mut self) -> MessageValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     MessageValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: Ignore::Always,
-      _message: self._message,
-      required: self.required,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn required(self) -> MessageValidatorBuilder<T, SetRequired<S>>
+  pub fn required(mut self) -> MessageValidatorBuilder<T, SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     MessageValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      _message: self._message,
-      required: true,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn build(self) -> MessageValidator<T> {
-    MessageValidator {
-      cel: self.cel,
-      ignore: self.ignore,
-      _message: self._message,
-      required: self.required,
-    }
+    self.data
   }
 }

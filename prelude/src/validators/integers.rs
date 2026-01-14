@@ -6,7 +6,8 @@ use proto_types::protovalidate::violations_data::*;
 
 use super::*;
 
-#[derive(Clone, Debug)]
+#[non_exhaustive]
+#[derive(Clone, Debug, Default)]
 pub struct IntValidator<Num>
 where
   Num: IntWrapper,

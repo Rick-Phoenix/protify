@@ -6,7 +6,8 @@ use float_eq::float_eq;
 
 use super::*;
 
-#[derive(Clone, Debug)]
+#[non_exhaustive]
+#[derive(Clone, Debug, Default)]
 pub struct FloatValidator<Num>
 where
   Num: FloatWrapper,

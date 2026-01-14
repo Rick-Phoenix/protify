@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, Copy)]
+#[non_exhaustive]
 pub enum WellKnownStrings {
   #[cfg(feature = "regex")]
   Email,

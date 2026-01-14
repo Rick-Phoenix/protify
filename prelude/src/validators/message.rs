@@ -127,6 +127,7 @@ where
   }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone, Default)]
 pub struct MessageValidator<T: ValidatedMessage> {
   /// Adds custom validation using one or more [`CelRule`]s to this field.

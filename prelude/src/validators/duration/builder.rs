@@ -5,56 +5,21 @@ pub(crate) use state::*;
 
 use proto_types::Duration;
 
+impl_validator!(DurationValidator, Duration);
+
 #[derive(Clone, Debug)]
 pub struct DurationValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<CelProgram>,
 
-  ignore: Ignore,
-
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
-
-  /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<Duration>>,
-
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<Duration>>,
-
-  /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<Duration>,
-
-  /// Specifies that the value must be smaller than the indicated amount in order to pass validation.
-  lt: Option<Duration>,
-
-  /// Specifies that the value must be equal to or smaller than the indicated amount in order to pass validation.
-  lte: Option<Duration>,
-
-  /// Specifies that the value must be greater than the indicated amount in order to pass validation.
-  gt: Option<Duration>,
-
-  /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
-  gte: Option<Duration>,
+  data: DurationValidator,
 }
-
-impl_validator!(DurationValidator, Duration);
 
 impl<S: State> Default for DurationValidatorBuilder<S> {
   #[inline]
   fn default() -> Self {
     Self {
       _state: PhantomData,
-      cel: Default::default(),
-      ignore: Default::default(),
-      required: Default::default(),
-      in_: Default::default(),
-      not_in: Default::default(),
-      const_: Default::default(),
-      lt: Default::default(),
-      lte: Default::default(),
-      gt: Default::default(),
-      gte: Default::default(),
+      data: DurationValidator::default(),
     }
   }
 }
@@ -81,219 +46,139 @@ impl<S: State> From<DurationValidatorBuilder<S>> for ProtoOption {
 impl<S: State> DurationValidatorBuilder<S> {
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> DurationValidatorBuilder<S> {
-    self.cel.push(program);
+    self.data.cel.push(program);
 
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_always(self) -> DurationValidatorBuilder<SetIgnore<S>>
+  pub fn ignore_always(mut self) -> DurationValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: Ignore::Always,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn required(self) -> DurationValidatorBuilder<SetRequired<S>>
+  pub fn required(mut self) -> DurationValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: true,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn in_(self, val: impl IntoIterator<Item = Duration>) -> DurationValidatorBuilder<SetIn<S>>
+  pub fn in_(
+    mut self,
+    val: impl IntoIterator<Item = Duration>,
+  ) -> DurationValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
+    self.data.in_ = Some(StaticLookup::new(val));
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: Some(StaticLookup::new(val)),
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn not_in(
-    self,
+    mut self,
     val: impl IntoIterator<Item = Duration>,
   ) -> DurationValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
+    self.data.not_in = Some(StaticLookup::new(val));
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: Some(StaticLookup::new(val)),
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn const_(self, val: Duration) -> DurationValidatorBuilder<SetConst<S>>
+  pub fn const_(mut self, val: Duration) -> DurationValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {
+    self.data.const_ = Some(val);
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: Some(val),
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn lt(self, val: Duration) -> DurationValidatorBuilder<SetLt<S>>
+  pub fn lt(mut self, val: Duration) -> DurationValidatorBuilder<SetLt<S>>
   where
     S::Lt: IsUnset,
   {
+    self.data.lt = Some(val);
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: Some(val),
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn lte(self, val: Duration) -> DurationValidatorBuilder<SetLte<S>>
+  pub fn lte(mut self, val: Duration) -> DurationValidatorBuilder<SetLte<S>>
   where
     S::Lte: IsUnset,
   {
+    self.data.lte = Some(val);
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: Some(val),
-      gt: self.gt,
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn gt(self, val: Duration) -> DurationValidatorBuilder<SetGt<S>>
+  pub fn gt(mut self, val: Duration) -> DurationValidatorBuilder<SetGt<S>>
   where
     S::Gt: IsUnset,
   {
+    self.data.gt = Some(val);
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: Some(val),
-      gte: self.gte,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn gte(self, val: Duration) -> DurationValidatorBuilder<SetGte<S>>
+  pub fn gte(mut self, val: Duration) -> DurationValidatorBuilder<SetGte<S>>
   where
     S::Gte: IsUnset,
   {
+    self.data.gte = Some(val);
+
     DurationValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: Some(val),
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn build(self) -> DurationValidator {
-    DurationValidator {
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-    }
+    self.data
   }
 }

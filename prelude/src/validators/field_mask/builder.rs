@@ -8,33 +8,7 @@ pub(crate) use state::*;
 pub struct FieldMaskValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<CelProgram>,
-
-  ignore: Ignore,
-
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
-
-  /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<SharedStr>>,
-
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<SharedStr>>,
-
-  /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<StaticLookup<SharedStr>>,
-}
-
-impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
-  type Target = FieldMask;
-  type Validator = FieldMaskValidator;
-
-  #[inline]
-  #[doc(hidden)]
-  fn build_validator(self) -> Self::Validator {
-    self.build()
-  }
+  data: FieldMaskValidator,
 }
 
 impl<S: State> Default for FieldMaskValidatorBuilder<S> {
@@ -42,13 +16,17 @@ impl<S: State> Default for FieldMaskValidatorBuilder<S> {
   fn default() -> Self {
     Self {
       _state: PhantomData,
-      cel: Default::default(),
-      ignore: Default::default(),
-      required: Default::default(),
-      in_: Default::default(),
-      not_in: Default::default(),
-      const_: Default::default(),
+      data: FieldMaskValidator::default(),
     }
+  }
+}
+
+impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
+  type Target = FieldMask;
+  type Validator = FieldMaskValidator;
+  #[inline]
+  fn build_validator(self) -> FieldMaskValidator {
+    self.build()
   }
 }
 
@@ -74,134 +52,97 @@ impl FieldMaskValidator {
 impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> FieldMaskValidatorBuilder<S> {
-    self.cel.push(program);
+    self.data.cel.push(program);
 
     FieldMaskValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_always(self) -> FieldMaskValidatorBuilder<SetIgnore<S>>
+  pub fn ignore_always(mut self) -> FieldMaskValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     FieldMaskValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: Ignore::Always,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn required(self) -> FieldMaskValidatorBuilder<SetRequired<S>>
+  pub fn required(mut self) -> FieldMaskValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     FieldMaskValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: true,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn in_(
-    self,
+    mut self,
     val: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> FieldMaskValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
+    self.data.in_ = Some(StaticLookup::new(
+      val.into_iter().map(Into::<SharedStr>::into),
+    ));
+
     FieldMaskValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: Some(StaticLookup::new(
-        val.into_iter().map(Into::<SharedStr>::into),
-      )),
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn not_in(
-    self,
+    mut self,
     val: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> FieldMaskValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
+    self.data.not_in = Some(StaticLookup::new(
+      val.into_iter().map(Into::<SharedStr>::into),
+    ));
+
     FieldMaskValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: Some(StaticLookup::new(
-        val.into_iter().map(Into::<SharedStr>::into),
-      )),
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn const_(
-    self,
+    mut self,
     val: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> FieldMaskValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {
+    self.data.const_ = Some(StaticLookup::new(
+      val.into_iter().map(Into::<SharedStr>::into),
+    ));
+
     FieldMaskValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: Some(StaticLookup::new(
-        val.into_iter().map(Into::<SharedStr>::into),
-      )),
+      data: self.data,
     }
   }
 
   #[inline]
   #[must_use]
   pub fn build(self) -> FieldMaskValidator {
-    let Self {
-      cel,
-      ignore,
-      required,
-      in_,
-      not_in,
-      const_,
-      ..
-    } = self;
-
-    FieldMaskValidator {
-      cel,
-      ignore,
-      required,
-      in_,
-      not_in,
-      const_,
-    }
+    self.data
   }
 }

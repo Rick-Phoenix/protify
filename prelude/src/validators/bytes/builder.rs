@@ -4,53 +4,11 @@ use crate::validators::*;
 pub(crate) use state::*;
 
 use ::bytes::Bytes;
-#[cfg(feature = "regex")]
-use regex::bytes::Regex;
 
 #[derive(Clone, Debug)]
 pub struct BytesValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
-
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<CelProgram>,
-
-  ignore: Ignore,
-
-  well_known: Option<WellKnownBytes>,
-
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
-
-  /// Specifies that the given `bytes` field must be of this exact length.
-  len: Option<usize>,
-
-  /// Specifies that the given `bytes` field must have a length that is equal to or higher than the given value.
-  min_len: Option<usize>,
-
-  /// Specifies that the given `bytes` field must have a length that is equal to or lower than the given value.
-  max_len: Option<usize>,
-
-  #[cfg(feature = "regex")]
-  /// Specifies a regex pattern that must be matches by the value to pass validation.
-  pattern: Option<Cow<'static, Regex>>,
-
-  /// Specifies a prefix that the value must start with in order to pass validation.
-  prefix: Option<Bytes>,
-
-  /// Specifies a suffix that the value must end with in order to pass validation.
-  suffix: Option<Bytes>,
-
-  /// Specifies a subset of bytes that the value must contain in order to pass validation.
-  contains: Option<Bytes>,
-
-  /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<Bytes>>,
-
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<Bytes>>,
-
-  /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<Bytes>,
+  data: BytesValidator,
 }
 
 impl_validator!(BytesValidator, Bytes);
@@ -60,21 +18,7 @@ impl<S: State> Default for BytesValidatorBuilder<S> {
   fn default() -> Self {
     Self {
       _state: PhantomData,
-      cel: Default::default(),
-      ignore: Default::default(),
-      well_known: Default::default(),
-      required: Default::default(),
-      len: Default::default(),
-      min_len: Default::default(),
-      max_len: Default::default(),
-      #[cfg(feature = "regex")]
-      pattern: Default::default(),
-      prefix: Default::default(),
-      suffix: Default::default(),
-      contains: Default::default(),
-      in_: Default::default(),
-      not_in: Default::default(),
-      const_: Default::default(),
+      data: BytesValidator::default(),
     }
   }
 }
@@ -98,27 +42,15 @@ macro_rules! well_known_impl {
     paste::paste! {
       #[inline]
       #[doc = $doc]
-      pub fn [< $name:snake >](self) -> BytesValidatorBuilder<SetWellKnown<S>>
+      pub fn [< $name:snake >](mut self) -> BytesValidatorBuilder<SetWellKnown<S>>
         where
           S::WellKnown: IsUnset,
         {
+          self.data.well_known = Some(WellKnownBytes::$name);
+
           BytesValidatorBuilder {
             _state: PhantomData,
-            cel: self.cel,
-            ignore: self.ignore,
-            well_known: Some(WellKnownBytes::$name),
-            required: self.required,
-            len: self.len,
-            min_len: self.min_len,
-            max_len: self.max_len,
-            #[cfg(feature = "regex")]
-            pattern: self.pattern,
-            prefix: self.prefix,
-            suffix: self.suffix,
-            contains: self.contains,
-            in_: self.in_,
-            not_in: self.not_in,
-            const_: self.const_,
+            data: self.data
           }
         }
     }
@@ -152,378 +84,194 @@ impl<S: State> BytesValidatorBuilder<S> {
 )]
 impl<S: State> BytesValidatorBuilder<S> {
   #[inline]
-  pub fn ignore_always(self) -> BytesValidatorBuilder<SetIgnore<S>>
+  pub fn ignore_always(mut self) -> BytesValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: Ignore::Always,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_if_zero_value(self) -> BytesValidatorBuilder<SetIgnore<S>>
+  pub fn ignore_if_zero_value(mut self) -> BytesValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::IfZeroValue;
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: Ignore::IfZeroValue,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> BytesValidatorBuilder<S> {
-    self.cel.push(program);
+    self.data.cel.push(program);
 
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn len(self, val: usize) -> BytesValidatorBuilder<SetLen<S>>
+  pub fn len(mut self, val: usize) -> BytesValidatorBuilder<SetLen<S>>
   where
     S::Len: IsUnset,
   {
+    self.data.len = Some(val);
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: Some(val),
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn min_len(self, val: usize) -> BytesValidatorBuilder<SetMinLen<S>>
+  pub fn min_len(mut self, val: usize) -> BytesValidatorBuilder<SetMinLen<S>>
   where
     S::MinLen: IsUnset,
   {
+    self.data.min_len = Some(val);
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: Some(val),
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn max_len(self, val: usize) -> BytesValidatorBuilder<SetMaxLen<S>>
+  pub fn max_len(mut self, val: usize) -> BytesValidatorBuilder<SetMaxLen<S>>
   where
     S::MaxLen: IsUnset,
   {
+    self.data.max_len = Some(val);
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: Some(val),
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[cfg(feature = "regex")]
   #[inline]
-  pub fn pattern(self, val: impl IntoBytesRegex) -> BytesValidatorBuilder<SetPattern<S>>
+  pub fn pattern(mut self, val: impl IntoBytesRegex) -> BytesValidatorBuilder<SetPattern<S>>
   where
     S::Pattern: IsUnset,
   {
+    self.data.pattern = Some(val.into_regex());
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      pattern: Some(val.into_regex()),
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn prefix(self, val: &'static [u8]) -> BytesValidatorBuilder<SetPrefix<S>>
+  pub fn prefix(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetPrefix<S>>
   where
     S::Prefix: IsUnset,
   {
+    self.data.prefix = Some(val.into_bytes());
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: Some(val.into()),
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn suffix(self, val: &'static [u8]) -> BytesValidatorBuilder<SetSuffix<S>>
+  pub fn suffix(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetSuffix<S>>
   where
     S::Suffix: IsUnset,
   {
+    self.data.suffix = Some(val.into_bytes());
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: Some(val.into()),
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn contains(self, val: &'static [u8]) -> BytesValidatorBuilder<SetContains<S>>
+  pub fn contains(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetContains<S>>
   where
     S::Contains: IsUnset,
   {
+    self.data.contains = Some(val.into_bytes());
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: Some(val.into()),
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn not_in(
-    self,
+    mut self,
     list: impl IntoIterator<Item = impl IntoBytes>,
   ) -> BytesValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
+    self.data.not_in = Some(StaticLookup::new(list.into_iter().map(|b| b.into_bytes())));
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: Some(StaticLookup::new(list.into_iter().map(|b| b.into_bytes()))),
-      const_: self.const_,
+
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn in_(
-    self,
+    mut self,
     list: impl IntoIterator<Item = impl IntoBytes>,
   ) -> BytesValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
+    self.data.in_ = Some(StaticLookup::new(list.into_iter().map(|b| b.into_bytes())));
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: Some(StaticLookup::new(list.into_iter().map(|b| b.into_bytes()))),
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn const_(self, val: &'static [u8]) -> BytesValidatorBuilder<SetConst<S>>
+  pub fn const_(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {
+    self.data.const_ = Some(val.into_bytes());
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: Some(val.into()),
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn required(self) -> BytesValidatorBuilder<SetRequired<S>>
+  pub fn required(mut self) -> BytesValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     BytesValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: true,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn build(self) -> BytesValidator {
-    BytesValidator {
-      cel: self.cel,
-      ignore: self.ignore,
-      well_known: self.well_known,
-      required: self.required,
-      len: self.len,
-      min_len: self.min_len,
-      max_len: self.max_len,
-      #[cfg(feature = "regex")]
-      pattern: self.pattern,
-      prefix: self.prefix,
-      suffix: self.suffix,
-      contains: self.contains,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-    }
+    self.data
   }
 }

@@ -11,7 +11,8 @@ use super::*;
 impl_proto_type!(Bytes, Bytes);
 impl_proto_type!(Vec<u8>, Bytes);
 
-#[derive(Clone, Debug)]
+#[non_exhaustive]
+#[derive(Clone, Debug, Default)]
 pub struct BytesValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
@@ -355,6 +356,7 @@ impl From<BytesValidator> for ProtoOption {
 }
 
 #[doc(hidden)]
+#[non_exhaustive]
 #[derive(Clone, Debug, Copy)]
 pub enum WellKnownBytes {
   #[cfg(feature = "regex")]

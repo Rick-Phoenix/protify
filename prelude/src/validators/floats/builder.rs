@@ -12,43 +12,7 @@ where
   _wrapper: PhantomData<Num>,
   _state: PhantomData<S>,
 
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<CelProgram>,
-
-  ignore: Ignore,
-
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
-
-  /// The absolute tolerance to use for equality operations
-  abs_tolerance: Num::RustType,
-
-  /// The relative tolerance to use for equality operations, scaled to the precision of the number being validated
-  rel_tolerance: Num::RustType,
-
-  /// Specifies that this field must be finite (i.e. it can't represent Infinity or NaN)
-  finite: bool,
-
-  /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<Num::RustType>,
-
-  /// Specifies that this field's value will be valid only if it is smaller than the specified amount
-  lt: Option<Num::RustType>,
-
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
-  lte: Option<Num::RustType>,
-
-  /// Specifies that this field's value will be valid only if it is greater than the specified amount
-  gt: Option<Num::RustType>,
-
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
-  gte: Option<Num::RustType>,
-
-  /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
-
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
+  data: FloatValidator<Num>,
 }
 
 impl<Num, S> Default for FloatValidatorBuilder<Num, S>
@@ -61,19 +25,7 @@ where
     Self {
       _wrapper: PhantomData,
       _state: PhantomData,
-      cel: Default::default(),
-      ignore: Default::default(),
-      required: Default::default(),
-      abs_tolerance: Default::default(),
-      rel_tolerance: Default::default(),
-      finite: Default::default(),
-      const_: Default::default(),
-      lt: Default::default(),
-      lte: Default::default(),
-      gt: Default::default(),
-      gte: Default::default(),
-      in_: Default::default(),
-      not_in: Default::default(),
+      data: FloatValidator::default(),
     }
   }
 }
@@ -84,364 +36,213 @@ where
   Num: FloatWrapper,
 {
   #[inline]
-  pub fn ignore_always(self) -> FloatValidatorBuilder<Num, SetIgnore<S>>
+  pub fn ignore_always(mut self) -> FloatValidatorBuilder<Num, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: Ignore::Always,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_if_zero_value(self) -> FloatValidatorBuilder<Num, SetIgnore<S>>
+  pub fn ignore_if_zero_value(mut self) -> FloatValidatorBuilder<Num, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::IfZeroValue;
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: Ignore::IfZeroValue,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
   #[allow(clippy::use_self, clippy::return_self_not_must_use)]
   pub fn cel(mut self, program: CelProgram) -> FloatValidatorBuilder<Num, S> {
-    self.cel.push(program);
+    self.data.cel.push(program);
 
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn required(self) -> FloatValidatorBuilder<Num, SetRequired<S>>
+  pub fn required(mut self) -> FloatValidatorBuilder<Num, SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: true,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn abs_tolerance(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetAbsTolerance<S>>
+  pub fn abs_tolerance(
+    mut self,
+    val: Num::RustType,
+  ) -> FloatValidatorBuilder<Num, SetAbsTolerance<S>>
   where
     S::AbsTolerance: IsUnset,
   {
+    self.data.abs_tolerance = val;
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: val,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn rel_tolerance(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetRelTolerance<S>>
+  pub fn rel_tolerance(
+    mut self,
+    val: Num::RustType,
+  ) -> FloatValidatorBuilder<Num, SetRelTolerance<S>>
   where
     S::RelTolerance: IsUnset,
   {
+    self.data.rel_tolerance = val;
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: val,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn finite(self) -> FloatValidatorBuilder<Num, SetFinite<S>>
+  pub fn finite(mut self) -> FloatValidatorBuilder<Num, SetFinite<S>>
   where
     S::Finite: IsUnset,
   {
+    self.data.finite = true;
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: true,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn const_(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetConst<S>>
+  pub fn const_(mut self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetConst<S>>
   where
     S::Const: IsUnset,
   {
+    self.data.const_ = Some(val);
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: Some(val),
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn lt(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetLt<S>>
+  pub fn lt(mut self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetLt<S>>
   where
     S::Lt: IsUnset,
   {
+    self.data.lt = Some(val);
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: Some(val),
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn lte(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetLte<S>>
+  pub fn lte(mut self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetLte<S>>
   where
     S::Lte: IsUnset,
   {
+    self.data.lte = Some(val);
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: Some(val),
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn gt(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetGt<S>>
+  pub fn gt(mut self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetGt<S>>
   where
     S::Gt: IsUnset,
   {
+    self.data.gt = Some(val);
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: Some(val),
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn gte(self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetGte<S>>
+  pub fn gte(mut self, val: Num::RustType) -> FloatValidatorBuilder<Num, SetGte<S>>
   where
     S::Gte: IsUnset,
   {
+    self.data.gte = Some(val);
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: Some(val),
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn not_in(
-    self,
+    mut self,
     list: impl IntoIterator<Item = Num::RustType>,
   ) -> FloatValidatorBuilder<Num, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
+    self.data.not_in = Some(StaticLookup::new(list.into_iter().map(OrderedFloat)));
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      not_in: Some(StaticLookup::new(list.into_iter().map(OrderedFloat))),
-      in_: self.in_,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn in_(
-    self,
+    mut self,
     list: impl IntoIterator<Item = Num::RustType>,
   ) -> FloatValidatorBuilder<Num, SetIn<S>>
   where
     S::In: IsUnset,
   {
+    self.data.in_ = Some(StaticLookup::new(list.into_iter().map(OrderedFloat)));
+
     FloatValidatorBuilder {
       _state: PhantomData,
       _wrapper: self._wrapper,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: Some(StaticLookup::new(list.into_iter().map(OrderedFloat))),
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn build(self) -> FloatValidator<Num> {
-    FloatValidator {
-      cel: self.cel,
-      ignore: self.ignore,
-      _wrapper: self._wrapper,
-      required: self.required,
-      abs_tolerance: self.abs_tolerance,
-      rel_tolerance: self.rel_tolerance,
-      finite: self.finite,
-      const_: self.const_,
-      lt: self.lt,
-      lte: self.lte,
-      gt: self.gt,
-      gte: self.gte,
-      in_: self.in_,
-      not_in: self.not_in,
-    }
+    self.data
   }
 }

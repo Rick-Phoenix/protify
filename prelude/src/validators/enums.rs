@@ -3,6 +3,7 @@ pub use builder::EnumValidatorBuilder;
 
 use super::*;
 
+#[non_exhaustive]
 #[derive(Clone, Debug)]
 pub struct EnumValidator<T: ProtoEnum> {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
@@ -26,6 +27,22 @@ pub struct EnumValidator<T: ProtoEnum> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
+}
+
+impl<T: ProtoEnum> Default for EnumValidator<T> {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      cel: Default::default(),
+      ignore: Default::default(),
+      _enum: PhantomData,
+      defined_only: Default::default(),
+      required: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      const_: Default::default(),
+    }
+  }
 }
 
 impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {

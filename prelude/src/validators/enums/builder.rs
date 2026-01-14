@@ -6,35 +6,13 @@ pub(crate) use state::*;
 #[derive(Clone, Debug)]
 pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
   _state: PhantomData<S>,
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<CelProgram>,
-
-  ignore: Ignore,
-
-  _enum: PhantomData<T>,
-
-  /// Marks that this field will only accept values that are defined in the enum that it's referring to.
-  defined_only: bool,
-
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
-
-  /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<i32>>,
-
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<i32>>,
-
-  /// Specifies that only this specific value will be considered valid for this field.
-  const_: Option<i32>,
+  data: EnumValidator<T>,
 }
 
 impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, S> {
   type Target = i32;
   type Validator = EnumValidator<T>;
 
-  #[inline]
-  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -45,14 +23,7 @@ impl<T: ProtoEnum, S: State> Default for EnumValidatorBuilder<T, S> {
   fn default() -> Self {
     Self {
       _state: PhantomData,
-      cel: Default::default(),
-      ignore: Default::default(),
-      _enum: Default::default(),
-      defined_only: Default::default(),
-      required: Default::default(),
-      in_: Default::default(),
-      not_in: Default::default(),
-      const_: Default::default(),
+      data: EnumValidator::default(),
     }
   }
 }
@@ -79,158 +50,110 @@ impl<T: ProtoEnum, S: State> From<EnumValidatorBuilder<T, S>> for ProtoOption {
 impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> EnumValidatorBuilder<T, S> {
-    self.cel.push(program);
+    self.data.cel.push(program);
 
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: self.ignore,
-      defined_only: self.defined_only,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_always(self) -> EnumValidatorBuilder<T, SetIgnore<S>>
+  pub fn ignore_always(mut self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: Ignore::Always,
-      defined_only: self.defined_only,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_if_zero_value(self) -> EnumValidatorBuilder<T, SetIgnore<S>>
+  pub fn ignore_if_zero_value(mut self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::IfZeroValue;
+
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: Ignore::IfZeroValue,
-      defined_only: self.defined_only,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn defined_only(self) -> EnumValidatorBuilder<T, SetDefinedOnly<S>>
+  pub fn defined_only(mut self) -> EnumValidatorBuilder<T, SetDefinedOnly<S>>
   where
     S::DefinedOnly: IsUnset,
   {
+    self.data.defined_only = true;
+
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: self.ignore,
-      defined_only: true,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn required(self) -> EnumValidatorBuilder<T, SetRequired<S>>
+  pub fn required(mut self) -> EnumValidatorBuilder<T, SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: self.ignore,
-      defined_only: self.defined_only,
-      required: true,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn in_(self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetIn<S>>
+  pub fn in_(mut self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetIn<S>>
   where
     S::In: IsUnset,
   {
+    self.data.in_ = Some(StaticLookup::new(val));
+
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: self.ignore,
-      defined_only: self.defined_only,
-      required: self.required,
-      in_: Some(StaticLookup::new(val)),
-      not_in: self.not_in,
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn not_in(self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetNotIn<S>>
+  pub fn not_in(
+    mut self,
+    val: impl IntoIterator<Item = i32>,
+  ) -> EnumValidatorBuilder<T, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
+    self.data.not_in = Some(StaticLookup::new(val));
+
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: self.ignore,
-      defined_only: self.defined_only,
-      required: self.required,
-      in_: self.in_,
-      not_in: Some(StaticLookup::new(val)),
-      const_: self.const_,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn const_(self, val: i32) -> EnumValidatorBuilder<T, SetConst<S>>
+  pub fn const_(mut self, val: i32) -> EnumValidatorBuilder<T, SetConst<S>>
   where
     S::Const: IsUnset,
   {
+    self.data.const_ = Some(val);
+
     EnumValidatorBuilder {
       _state: PhantomData,
-      _enum: self._enum,
-      cel: self.cel,
-      ignore: self.ignore,
-      defined_only: self.defined_only,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: Some(val),
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn build(self) -> EnumValidator<T> {
-    EnumValidator {
-      cel: self.cel,
-      ignore: self.ignore,
-      _enum: self._enum,
-      defined_only: self.defined_only,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-      const_: self.const_,
-    }
+    self.data
   }
 }

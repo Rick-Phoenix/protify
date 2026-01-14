@@ -8,19 +8,7 @@ pub(crate) use state::*;
 pub struct AnyValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  cel: Vec<CelProgram>,
-
-  ignore: Ignore,
-
-  /// Specifies that the field must be set in order to be valid.
-  required: bool,
-
-  /// Specifies that only the values in this list will be considered valid for this field.
-  in_: Option<StaticLookup<SharedStr>>,
-
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  not_in: Option<StaticLookup<SharedStr>>,
+  data: AnyValidator,
 }
 
 impl<S: State> Default for AnyValidatorBuilder<S> {
@@ -28,11 +16,7 @@ impl<S: State> Default for AnyValidatorBuilder<S> {
   fn default() -> Self {
     Self {
       _state: PhantomData,
-      cel: Default::default(),
-      ignore: Default::default(),
-      required: Default::default(),
-      in_: Default::default(),
-      not_in: Default::default(),
+      data: AnyValidator::default(),
     }
   }
 }
@@ -55,98 +39,80 @@ impl_validator!(AnyValidator, Any);
 impl<S: State> AnyValidatorBuilder<S> {
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> AnyValidatorBuilder<S> {
-    self.cel.push(program);
+    self.data.cel.push(program);
 
     AnyValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn ignore_always(self) -> AnyValidatorBuilder<SetIgnore<S>>
+  pub fn ignore_always(mut self) -> AnyValidatorBuilder<SetIgnore<S>>
   where
     S::Ignore: IsUnset,
   {
+    self.data.ignore = Ignore::Always;
+
     AnyValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: Ignore::Always,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
-  pub fn required(self) -> AnyValidatorBuilder<SetRequired<S>>
+  pub fn required(mut self) -> AnyValidatorBuilder<SetRequired<S>>
   where
     S::Required: IsUnset,
   {
+    self.data.required = true;
+
     AnyValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: true,
-      in_: self.in_,
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn in_(
-    self,
+    mut self,
     list: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> AnyValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
+    self.data.in_ = Some(StaticLookup::new(
+      list.into_iter().map(Into::<SharedStr>::into),
+    ));
+
     AnyValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: Some(StaticLookup::new(
-        list.into_iter().map(Into::<SharedStr>::into),
-      )),
-      not_in: self.not_in,
+      data: self.data,
     }
   }
 
   #[inline]
   pub fn not_in(
-    self,
+    mut self,
     list: impl IntoIterator<Item = impl Into<SharedStr>>,
   ) -> AnyValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
+    self.data.not_in = Some(StaticLookup::new(
+      list.into_iter().map(Into::<SharedStr>::into),
+    ));
+
     AnyValidatorBuilder {
       _state: PhantomData,
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      not_in: Some(StaticLookup::new(
-        list.into_iter().map(Into::<SharedStr>::into),
-      )),
-      in_: self.in_,
+      data: self.data,
     }
   }
 
   #[must_use]
   #[inline]
   pub fn build(self) -> AnyValidator {
-    AnyValidator {
-      cel: self.cel,
-      ignore: self.ignore,
-      required: self.required,
-      in_: self.in_,
-      not_in: self.not_in,
-    }
+    self.data
   }
 }
 

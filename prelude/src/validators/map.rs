@@ -49,6 +49,7 @@ where
   }
 }
 
+#[non_exhaustive]
 #[derive(Debug)]
 pub struct MapValidator<K, V>
 where
