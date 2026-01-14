@@ -33,6 +33,10 @@ proc-macro-impls = { path = "../proc-macro/" }
 ipnetwork = "0.21"
 fluent-uri = "0.4"
 hashbrown = "0.16"
+once_cell = { version = "1.21", default-features = false, features = [
+  "alloc",
+  "race",
+] }
 
 [features]
 default = ["std", "regex", "cel"]

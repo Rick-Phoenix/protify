@@ -272,13 +272,13 @@ pub trait IntWrapper: AsProtoType + Default {
     + ListFormatter
     + AsProtoMapKey
     + 'static;
-  const LT_VIOLATION: &'static LazyLock<ViolationData>;
-  const LTE_VIOLATION: &'static LazyLock<ViolationData>;
-  const GT_VIOLATION: &'static LazyLock<ViolationData>;
-  const GTE_VIOLATION: &'static LazyLock<ViolationData>;
-  const IN_VIOLATION: &'static LazyLock<ViolationData>;
-  const NOT_IN_VIOLATION: &'static LazyLock<ViolationData>;
-  const CONST_VIOLATION: &'static LazyLock<ViolationData>;
+  const LT_VIOLATION: ViolationData;
+  const LTE_VIOLATION: ViolationData;
+  const GT_VIOLATION: ViolationData;
+  const GTE_VIOLATION: ViolationData;
+  const IN_VIOLATION: ViolationData;
+  const NOT_IN_VIOLATION: ViolationData;
+  const CONST_VIOLATION: ViolationData;
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
@@ -290,13 +290,13 @@ macro_rules! impl_int_wrapper {
     paste::paste! {
       impl IntWrapper for $wrapper {
         type RustType = $target_type;
-        const LT_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _LT_VIOLATION >];
-        const LTE_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _LTE_VIOLATION >];
-        const GT_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _GT_VIOLATION >];
-        const GTE_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _GTE_VIOLATION >];
-        const IN_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _IN_VIOLATION >];
-        const NOT_IN_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _NOT_IN_VIOLATION >];
-        const CONST_VIOLATION: &'static LazyLock<ViolationData> = &[< $proto_type _CONST_VIOLATION >];
+        const LT_VIOLATION: ViolationData = [< $proto_type _LT_VIOLATION >];
+        const LTE_VIOLATION: ViolationData = [< $proto_type _LTE_VIOLATION >];
+        const GT_VIOLATION: ViolationData = [< $proto_type _GT_VIOLATION >];
+        const GTE_VIOLATION: ViolationData = [< $proto_type _GTE_VIOLATION >];
+        const IN_VIOLATION: ViolationData = [< $proto_type _IN_VIOLATION >];
+        const NOT_IN_VIOLATION: ViolationData = [< $proto_type _NOT_IN_VIOLATION >];
+        const CONST_VIOLATION: ViolationData = [< $proto_type _CONST_VIOLATION >];
         #[allow(private_interfaces)]
         const SEALED: Sealed = Sealed;
 

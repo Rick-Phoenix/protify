@@ -248,7 +248,7 @@ impl Validator<String> for StringValidator {
       if let Some(const_val) = &self.const_ {
         if val != const_val.as_ref() {
           ctx.add_violation(
-            &STRING_CONST_VIOLATION,
+            STRING_CONST_VIOLATION,
             &format!("must be equal to {const_val}",),
           );
         }
@@ -261,7 +261,7 @@ impl Validator<String> for StringValidator {
         && val.chars().count() != len
       {
         ctx.add_violation(
-          &STRING_LEN_VIOLATION,
+          STRING_LEN_VIOLATION,
           &format!("must be exactly {len} characters long"),
         );
       }
@@ -270,7 +270,7 @@ impl Validator<String> for StringValidator {
         && val.chars().count() < min_len
       {
         ctx.add_violation(
-          &STRING_MIN_LEN_VIOLATION,
+          STRING_MIN_LEN_VIOLATION,
           &format!("must be at least {min_len} characters long"),
         );
       }
@@ -279,7 +279,7 @@ impl Validator<String> for StringValidator {
         && val.chars().count() > max_len
       {
         ctx.add_violation(
-          &STRING_MAX_LEN_VIOLATION,
+          STRING_MAX_LEN_VIOLATION,
           &format!("cannot be longer than {max_len} characters"),
         );
       }
@@ -288,7 +288,7 @@ impl Validator<String> for StringValidator {
         && val.len() != len_bytes
       {
         ctx.add_violation(
-          &STRING_LEN_BYTES_VIOLATION,
+          STRING_LEN_BYTES_VIOLATION,
           &format!("must be exactly {len_bytes} bytes long"),
         );
       }
@@ -297,7 +297,7 @@ impl Validator<String> for StringValidator {
         && val.len() < min_bytes
       {
         ctx.add_violation(
-          &STRING_MIN_BYTES_VIOLATION,
+          STRING_MIN_BYTES_VIOLATION,
           &format!("must be at least {min_bytes} bytes long"),
         );
       }
@@ -306,7 +306,7 @@ impl Validator<String> for StringValidator {
         && val.len() > max_bytes
       {
         ctx.add_violation(
-          &STRING_MAX_BYTES_VIOLATION,
+          STRING_MAX_BYTES_VIOLATION,
           &format!("cannot be longer than {max_bytes} bytes"),
         );
       }
@@ -316,7 +316,7 @@ impl Validator<String> for StringValidator {
         && !pattern.is_match(val)
       {
         ctx.add_violation(
-          &STRING_PATTERN_VIOLATION,
+          STRING_PATTERN_VIOLATION,
           &format!("must match the pattern `{pattern}`"),
         );
       }
@@ -325,7 +325,7 @@ impl Validator<String> for StringValidator {
         && !val.starts_with(&**prefix)
       {
         ctx.add_violation(
-          &STRING_PREFIX_VIOLATION,
+          STRING_PREFIX_VIOLATION,
           &format!("must start with {prefix}"),
         );
       }
@@ -333,14 +333,14 @@ impl Validator<String> for StringValidator {
       if let Some(suffix) = &self.suffix
         && !val.ends_with(&**suffix)
       {
-        ctx.add_violation(&STRING_SUFFIX_VIOLATION, &format!("must end with {suffix}"));
+        ctx.add_violation(STRING_SUFFIX_VIOLATION, &format!("must end with {suffix}"));
       }
 
       if let Some(substring) = &self.contains
         && !val.contains(substring.as_ref())
       {
         ctx.add_violation(
-          &STRING_CONTAINS_VIOLATION,
+          STRING_CONTAINS_VIOLATION,
           &format!("must contain {substring}"),
         );
       }
@@ -349,7 +349,7 @@ impl Validator<String> for StringValidator {
         && val.contains(substring.as_ref())
       {
         ctx.add_violation(
-          &STRING_NOT_CONTAINS_VIOLATION,
+          STRING_NOT_CONTAINS_VIOLATION,
           &format!("cannot contain {substring}"),
         );
       }
@@ -359,7 +359,7 @@ impl Validator<String> for StringValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        ctx.add_violation(&STRING_IN_VIOLATION, &err);
+        ctx.add_violation(STRING_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -367,7 +367,7 @@ impl Validator<String> for StringValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        ctx.add_violation(&STRING_NOT_IN_VIOLATION, &err);
+        ctx.add_violation(STRING_NOT_IN_VIOLATION, &err);
       }
 
       macro_rules! impl_well_known_check {
@@ -375,7 +375,7 @@ impl Validator<String> for StringValidator {
           paste::paste! {
             if !$check(val.as_ref()) {
               ctx.add_violation(
-                &[< STRING_ $violation _VIOLATION >],
+                [< STRING_ $violation _VIOLATION >],
                 concat!("must be a valid ", $msg),
               );
             }
@@ -459,7 +459,7 @@ impl Validator<String> for StringValidator {
           WellKnownStrings::HeaderNameLoose => {
             if !is_valid_http_header_name(val.as_ref(), false) {
               ctx.add_violation(
-                &STRING_WELL_KNOWN_REGEX_VIOLATION,
+                STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header name",
               );
             }
@@ -468,7 +468,7 @@ impl Validator<String> for StringValidator {
           WellKnownStrings::HeaderNameStrict => {
             if !is_valid_http_header_name(val.as_ref(), true) {
               ctx.add_violation(
-                &STRING_WELL_KNOWN_REGEX_VIOLATION,
+                STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header name",
               );
             }
@@ -477,7 +477,7 @@ impl Validator<String> for StringValidator {
           WellKnownStrings::HeaderValueLoose => {
             if !is_valid_http_header_value(val.as_ref(), false) {
               ctx.add_violation(
-                &STRING_WELL_KNOWN_REGEX_VIOLATION,
+                STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header value",
               );
             }
@@ -486,7 +486,7 @@ impl Validator<String> for StringValidator {
           WellKnownStrings::HeaderValueStrict => {
             if !is_valid_http_header_value(val.as_ref(), true) {
               ctx.add_violation(
-                &STRING_WELL_KNOWN_REGEX_VIOLATION,
+                STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header value",
               );
             }

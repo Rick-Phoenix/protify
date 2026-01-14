@@ -3,7 +3,7 @@ use crate::*;
 pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut const_ident: Option<Ident> = None;
   let mut pkg_name: Option<String> = None;
-  let mut include_cel_test = true;
+  let mut include_cel_test = cfg!(feature = "cel");
 
   let parser = syn::meta::parser(|meta| {
     let ident = meta.ident_str()?;

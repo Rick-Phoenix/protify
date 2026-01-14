@@ -66,7 +66,7 @@ pub struct ValidationCtx<'a> {
 
 impl ValidationCtx<'_> {
   #[inline]
-  pub fn add_violation(&mut self, violation_data: &ViolationData, error_message: &str) {
+  pub fn add_violation(&mut self, violation_data: ViolationData, error_message: &str) {
     let violation = new_violation(
       &self.field_context,
       self.parent_elements,
@@ -81,7 +81,7 @@ impl ValidationCtx<'_> {
   pub fn add_violation_with_custom_id(
     &mut self,
     rule_id: &str,
-    violation_data: &ViolationData,
+    violation_data: ViolationData,
     error_message: &str,
   ) {
     let violation = new_violation_with_custom_id(
@@ -111,7 +111,7 @@ impl ValidationCtx<'_> {
 
   #[inline]
   pub fn add_required_violation(&mut self) {
-    self.add_violation(&REQUIRED_VIOLATION, "is required")
+    self.add_violation(REQUIRED_VIOLATION, "is required")
   }
 }
 
@@ -171,7 +171,7 @@ impl ViolationsAcc {
       ONEOF_REQUIRED_VIOLATION.name,
       None,
       parent_elements,
-      &ONEOF_REQUIRED_VIOLATION,
+      ONEOF_REQUIRED_VIOLATION,
       "at least one value must be set",
     );
 
@@ -189,7 +189,7 @@ impl ViolationsAcc {
       &rule.id,
       field_context,
       parent_elements,
-      &CEL_VIOLATION,
+      CEL_VIOLATION,
       &rule.message,
     );
 
@@ -242,7 +242,7 @@ pub(crate) fn create_violation_core(
   custom_rule_id: Option<&str>,
   field_context: Option<&FieldContext>,
   parent_elements: &[FieldPathElement],
-  violation_data: &ViolationData,
+  violation_data: ViolationData,
   error_message: &str,
 ) -> Violation {
   let mut field_elements: Option<Vec<FieldPathElement>> = None;
@@ -270,15 +270,15 @@ pub(crate) fn create_violation_core(
     match &field_context.field_kind {
       FieldKind::MapKey => {
         is_for_key = true;
-        rule_elements.extend(MAP_KEY_VIOLATION.elements.to_vec());
+        rule_elements.extend(MAP_KEYS_VIOLATION.elements_iter());
       }
-      FieldKind::MapValue => rule_elements.extend(MAP_VALUE_VIOLATION.elements.to_vec()),
-      FieldKind::RepeatedItem => rule_elements.extend(REPEATED_ITEM_VIOLATION.elements.to_vec()),
+      FieldKind::MapValue => rule_elements.extend(MAP_VALUES_VIOLATION.elements_iter()),
+      FieldKind::RepeatedItem => rule_elements.extend(REPEATED_ITEMS_VIOLATION.elements_iter()),
       _ => {}
     };
   }
 
-  rule_elements.extend(violation_data.elements.to_vec());
+  rule_elements.extend(violation_data.elements_iter());
 
   Violation {
     rule_id: Some(
@@ -297,7 +297,7 @@ pub(crate) fn create_violation_core(
 pub(crate) fn new_violation(
   field_context: &FieldContext,
   parent_elements: &[FieldPathElement],
-  violation_data: &ViolationData,
+  violation_data: ViolationData,
   error_message: &str,
 ) -> Violation {
   create_violation_core(
@@ -314,7 +314,7 @@ pub(crate) fn new_violation_with_custom_id(
   rule_id: &str,
   field_context: Option<&FieldContext>,
   parent_elements: &[FieldPathElement],
-  violation_data: &ViolationData,
+  violation_data: ViolationData,
   error_message: &str,
 ) -> Violation {
   create_violation_core(

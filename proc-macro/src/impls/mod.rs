@@ -13,6 +13,10 @@ pub use message_validator_impl::*;
 mod oneof_consistency_checks;
 pub use oneof_consistency_checks::*;
 
+pub const fn is_no_std() -> bool {
+  cfg!(not(feature = "std"))
+}
+
 pub fn wrap_with_imports(tokens: &[TokenStream2]) -> TokenStream2 {
   quote! {
     const _: () = {

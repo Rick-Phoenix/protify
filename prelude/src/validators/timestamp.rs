@@ -115,7 +115,7 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(const_val) = self.const_ {
         if val != const_val {
           ctx.add_violation(
-            &TIMESTAMP_CONST_VIOLATION,
+            TIMESTAMP_CONST_VIOLATION,
             &format!("must be equal to {const_val}"),
           );
         }
@@ -125,18 +125,18 @@ impl Validator<Timestamp> for TimestampValidator {
       }
 
       if self.gt_now && !(val + self.now_tolerance).is_future() {
-        ctx.add_violation(&TIMESTAMP_GT_NOW_VIOLATION, "must be in the future");
+        ctx.add_violation(TIMESTAMP_GT_NOW_VIOLATION, "must be in the future");
       }
 
       if self.lt_now && !val.is_past() {
-        ctx.add_violation(&TIMESTAMP_LT_NOW_VIOLATION, "must be in the past");
+        ctx.add_violation(TIMESTAMP_LT_NOW_VIOLATION, "must be in the past");
       }
 
       if let Some(range) = self.within
         && !val.is_within_range_from_now(range)
       {
         ctx.add_violation(
-          &TIMESTAMP_WITHIN_VIOLATION,
+          TIMESTAMP_WITHIN_VIOLATION,
           &format!("must be within {range} from now"),
         );
       }
@@ -144,14 +144,14 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(gt) = self.gt
         && val <= gt
       {
-        ctx.add_violation(&TIMESTAMP_GT_VIOLATION, &format!("must be later than {gt}"));
+        ctx.add_violation(TIMESTAMP_GT_VIOLATION, &format!("must be later than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
         ctx.add_violation(
-          &TIMESTAMP_GTE_VIOLATION,
+          TIMESTAMP_GTE_VIOLATION,
           &format!("must be later than or equal to {gte}"),
         );
       }
@@ -160,7 +160,7 @@ impl Validator<Timestamp> for TimestampValidator {
         && val >= lt
       {
         ctx.add_violation(
-          &TIMESTAMP_LT_VIOLATION,
+          TIMESTAMP_LT_VIOLATION,
           &format!("must be earlier than {lt}"),
         );
       }
@@ -169,7 +169,7 @@ impl Validator<Timestamp> for TimestampValidator {
         && val > lte
       {
         ctx.add_violation(
-          &TIMESTAMP_LTE_VIOLATION,
+          TIMESTAMP_LTE_VIOLATION,
           &format!("must be earlier than or equal to {lte}"),
         );
       }

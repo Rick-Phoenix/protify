@@ -151,7 +151,7 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(const_val) = &self.const_ {
         if *val != const_val {
           ctx.add_violation(
-            &BYTES_CONST_VIOLATION,
+            BYTES_CONST_VIOLATION,
             &format!("must be equal to {}", const_val.escape_ascii()),
           );
         }
@@ -164,7 +164,7 @@ impl Validator<Bytes> for BytesValidator {
         && val.len() != len
       {
         ctx.add_violation(
-          &BYTES_LEN_VIOLATION,
+          BYTES_LEN_VIOLATION,
           &format!("must be exactly {len} bytes long"),
         );
       }
@@ -173,7 +173,7 @@ impl Validator<Bytes> for BytesValidator {
         && val.len() < min_len
       {
         ctx.add_violation(
-          &BYTES_MIN_LEN_VIOLATION,
+          BYTES_MIN_LEN_VIOLATION,
           &format!("must be at least {min_len} bytes long"),
         );
       }
@@ -182,7 +182,7 @@ impl Validator<Bytes> for BytesValidator {
         && val.len() > max_len
       {
         ctx.add_violation(
-          &BYTES_MAX_LEN_VIOLATION,
+          BYTES_MAX_LEN_VIOLATION,
           &format!("cannot be longer than {max_len} bytes"),
         );
       }
@@ -192,7 +192,7 @@ impl Validator<Bytes> for BytesValidator {
         && !pattern.is_match(val)
       {
         ctx.add_violation(
-          &BYTES_PATTERN_VIOLATION,
+          BYTES_PATTERN_VIOLATION,
           &format!("must match the pattern `{pattern}`"),
         );
       }
@@ -201,7 +201,7 @@ impl Validator<Bytes> for BytesValidator {
         && !val.starts_with(prefix)
       {
         ctx.add_violation(
-          &BYTES_PREFIX_VIOLATION,
+          BYTES_PREFIX_VIOLATION,
           &format!("must start with {}", prefix.escape_ascii()),
         );
       }
@@ -210,7 +210,7 @@ impl Validator<Bytes> for BytesValidator {
         && !val.ends_with(suffix)
       {
         ctx.add_violation(
-          &BYTES_SUFFIX_VIOLATION,
+          BYTES_SUFFIX_VIOLATION,
           &format!("must end with {}", suffix.escape_ascii()),
         );
       }
@@ -221,7 +221,7 @@ impl Validator<Bytes> for BytesValidator {
           .any(|slice| slice == substring)
       {
         ctx.add_violation(
-          &BYTES_CONTAINS_VIOLATION,
+          BYTES_CONTAINS_VIOLATION,
           &format!("must contain {}", substring.escape_ascii()),
         );
       }
@@ -231,7 +231,7 @@ impl Validator<Bytes> for BytesValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        ctx.add_violation(&BYTES_IN_VIOLATION, &err);
+        ctx.add_violation(BYTES_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -239,7 +239,7 @@ impl Validator<Bytes> for BytesValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        ctx.add_violation(&BYTES_IN_VIOLATION, &err);
+        ctx.add_violation(BYTES_IN_VIOLATION, &err);
       }
 
       if let Some(well_known) = &self.well_known {
@@ -249,22 +249,22 @@ impl Validator<Bytes> for BytesValidator {
           #[cfg(feature = "regex")]
           WellKnownBytes::Uuid => {
             if !is_valid_uuid(byte_str) {
-              ctx.add_violation(&BYTES_UUID_VIOLATION, "must be a valid UUID");
+              ctx.add_violation(BYTES_UUID_VIOLATION, "must be a valid UUID");
             }
           }
           WellKnownBytes::Ip => {
             if !is_valid_ip(byte_str) {
-              ctx.add_violation(&BYTES_IP_VIOLATION, "must be a valid ip address");
+              ctx.add_violation(BYTES_IP_VIOLATION, "must be a valid ip address");
             }
           }
           WellKnownBytes::Ipv4 => {
             if !is_valid_ipv4(byte_str) {
-              ctx.add_violation(&BYTES_IPV4_VIOLATION, "must be a valid ipv4 address");
+              ctx.add_violation(BYTES_IPV4_VIOLATION, "must be a valid ipv4 address");
             }
           }
           WellKnownBytes::Ipv6 => {
             if !is_valid_ipv6(byte_str) {
-              ctx.add_violation(&BYTES_IPV6_VIOLATION, "must be a valid ipv6 address");
+              ctx.add_violation(BYTES_IPV6_VIOLATION, "must be a valid ipv6 address");
             }
           }
         };

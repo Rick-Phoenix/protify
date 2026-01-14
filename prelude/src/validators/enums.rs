@@ -99,7 +99,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       if let Some(const_val) = self.const_ {
         if val != const_val {
           ctx.add_violation(
-            &ENUM_CONST_VIOLATION,
+            ENUM_CONST_VIOLATION,
             &format!("must be equal to {const_val}"),
           );
         }
@@ -113,7 +113,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        ctx.add_violation(&ENUM_IN_VIOLATION, &err);
+        ctx.add_violation(ENUM_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -121,11 +121,11 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        ctx.add_violation(&ENUM_NOT_IN_VIOLATION, &err);
+        ctx.add_violation(ENUM_NOT_IN_VIOLATION, &err);
       }
 
       if self.defined_only && T::try_from(val).is_err() {
-        ctx.add_violation(&ENUM_DEFINED_ONLY_VIOLATION, "must be a known enum value");
+        ctx.add_violation(ENUM_DEFINED_ONLY_VIOLATION, "must be a known enum value");
       }
 
       #[cfg(feature = "cel")]

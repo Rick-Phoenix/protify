@@ -123,7 +123,7 @@ mod cel_impls {
         self.rule_id(),
         field_context,
         parent_elements,
-        &CEL_VIOLATION,
+        CEL_VIOLATION,
         "internal server error",
       )
     }

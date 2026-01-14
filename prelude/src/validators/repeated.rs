@@ -218,7 +218,7 @@ where
         && val.len() < *min
       {
         ctx.add_violation(
-          &REPEATED_MIN_ITEMS_VIOLATION,
+          REPEATED_MIN_ITEMS_VIOLATION,
           &format!("must contain at least {min} items"),
         );
       }
@@ -227,7 +227,7 @@ where
         && val.len() > *max
       {
         ctx.add_violation(
-          &REPEATED_MAX_ITEMS_VIOLATION,
+          REPEATED_MAX_ITEMS_VIOLATION,
           &format!("cannot contain more than {max} items"),
         );
       }
@@ -275,7 +275,7 @@ where
       }
 
       if !has_unique_values_so_far {
-        ctx.add_violation(&REPEATED_UNIQUE_VIOLATION, "must contain unique values");
+        ctx.add_violation(REPEATED_UNIQUE_VIOLATION, "must contain unique values");
       }
     }
   }

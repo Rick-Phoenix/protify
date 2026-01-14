@@ -1,4 +1,4 @@
-// no_std support is planned at a certain point
+// no_std support is planned at a certain point, but not yet implemented
 #![no_std]
 #![deny(clippy::alloc_instead_of_core)]
 #![deny(clippy::std_instead_of_alloc)]
@@ -61,7 +61,7 @@ use thiserror::Error;
 mod oneof;
 mod options;
 pub mod validators;
-use std::{collections::HashSet, sync::LazyLock};
+use std::collections::HashSet;
 mod field;
 mod file;
 mod package;
@@ -90,6 +90,13 @@ mod registry;
 pub use registry::*;
 mod extension;
 pub use extension::*;
+#[cfg(not(feature = "std"))]
+mod lazy;
+#[cfg(not(feature = "std"))]
+pub use lazy::Lazy;
+
+#[cfg(feature = "std")]
+pub use std::sync::LazyLock as Lazy;
 
 #[doc(hidden)]
 pub fn apply<I, O, F>(input: I, f: F) -> O

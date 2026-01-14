@@ -110,6 +110,7 @@ impl Package {
     self.files.extend(files);
   }
 
+  #[cfg(feature = "cel")]
   pub fn check_unique_cel_rules(self) -> Result<(), String> {
     let mut rules: HashMap<SharedStr, CelRule> = HashMap::default();
     let mut duplicates: HashMap<SharedStr, Vec<CelRule>> = HashMap::default();

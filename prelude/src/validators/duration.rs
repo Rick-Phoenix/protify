@@ -93,7 +93,7 @@ impl Validator<Duration> for DurationValidator {
       if let Some(const_val) = self.const_ {
         if val != const_val {
           ctx.add_violation(
-            &DURATION_CONST_VIOLATION,
+            DURATION_CONST_VIOLATION,
             &format!("must be equal to {const_val}"),
           );
         }
@@ -105,14 +105,14 @@ impl Validator<Duration> for DurationValidator {
       if let Some(gt) = self.gt
         && val <= gt
       {
-        ctx.add_violation(&DURATION_GT_VIOLATION, &format!("must be longer than {gt}"));
+        ctx.add_violation(DURATION_GT_VIOLATION, &format!("must be longer than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
         ctx.add_violation(
-          &DURATION_GTE_VIOLATION,
+          DURATION_GTE_VIOLATION,
           &format!("must be longer than or equal to {gte}"),
         );
       }
@@ -120,17 +120,14 @@ impl Validator<Duration> for DurationValidator {
       if let Some(lt) = self.lt
         && val >= lt
       {
-        ctx.add_violation(
-          &DURATION_LT_VIOLATION,
-          &format!("must be shorter than {lt}"),
-        );
+        ctx.add_violation(DURATION_LT_VIOLATION, &format!("must be shorter than {lt}"));
       }
 
       if let Some(lte) = self.lte
         && val > lte
       {
         ctx.add_violation(
-          &DURATION_LTE_VIOLATION,
+          DURATION_LTE_VIOLATION,
           &format!("must be shorter than or equal to {lte}"),
         );
       }
@@ -140,7 +137,7 @@ impl Validator<Duration> for DurationValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        ctx.add_violation(&DURATION_IN_VIOLATION, &err);
+        ctx.add_violation(DURATION_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -148,7 +145,7 @@ impl Validator<Duration> for DurationValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        ctx.add_violation(&DURATION_NOT_IN_VIOLATION, &err);
+        ctx.add_violation(DURATION_NOT_IN_VIOLATION, &err);
       }
 
       #[cfg(feature = "cel")]

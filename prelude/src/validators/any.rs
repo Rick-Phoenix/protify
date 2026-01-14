@@ -69,7 +69,7 @@ impl Validator<Any> for AnyValidator {
         ]
         .concat();
 
-        ctx.add_violation(&ANY_IN_VIOLATION, &err);
+        ctx.add_violation(ANY_IN_VIOLATION, &err);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -83,7 +83,7 @@ impl Validator<Any> for AnyValidator {
         ]
         .concat();
 
-        ctx.add_violation(&ANY_NOT_IN_VIOLATION, &err);
+        ctx.add_violation(ANY_NOT_IN_VIOLATION, &err);
       }
 
       #[cfg(feature = "cel")]

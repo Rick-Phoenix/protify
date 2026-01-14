@@ -1035,6 +1035,7 @@ dependencies = [
  "inventory",
  "ipnetwork",
  "log",
+ "once_cell",
  "ordered-float",
  "ordermap",
  "owo-colors",
