@@ -195,7 +195,7 @@ impl MessageCtx<'_> {
             messages: vec![],
             enums: vec![],
             entries: vec![ #entries_tokens ],
-            cel_rules: #proto_struct::cel_rules().iter().map(|prog| prog.rule.clone()).collect(),
+            cel_rules: <#proto_struct as ::prelude::ValidatedMessage>::cel_rules().iter().map(|prog| prog.rule.clone()).collect(),
             rust_path: #rust_path_field
           }
         }

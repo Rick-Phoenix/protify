@@ -175,7 +175,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut package: Option<Path> = None;
   let mut options = TokenStreamOr::new(|_| quote! { ::prelude::vec![] });
   let mut extern_path =
-    TokensOr::<LitStr>::new(|span| quote_spanned! (span=> core::module_path!()));
+    TokensOr::<LitStr>::new(|span| quote_spanned! (span=> ::core::module_path!()));
   let mut imports = TokenStreamOr::new(|_| quote! { [] });
   let mut extensions = IterTokensOr::<Path>::new(
     |_| quote! { ::prelude::vec![] },

@@ -81,7 +81,7 @@ macro_rules! impl_float_methods {
     }
   };
 
-  () => {
+  (int) => {
     fn finite(&self) -> bool {
       false
     }
@@ -89,7 +89,7 @@ macro_rules! impl_float_methods {
 }
 
 macro_rules! impl_numeric_rules {
-  ($name:ident, $unit:ty, $wrapper:ty $(, $float:ident)?) => {
+  ($name:ident, $unit:ty, $wrapper:ty, $num_type:ident, $type_path:path) => {
     paste::paste! {
       impl NumericRules for [< $name Rules >] {
         type Unit = $unit;
@@ -105,7 +105,7 @@ macro_rules! impl_numeric_rules {
         }
 
         fn type_tokens(span: Span) -> TokenStream2 {
-          quote_spanned! {span=> $wrapper }
+          quote_spanned! {span=> $type_path }
         }
 
         fn const_(&self) -> Option<Self::Unit> {
@@ -148,21 +148,34 @@ macro_rules! impl_numeric_rules {
           &self.not_in
         }
 
-        impl_float_methods!($($float)?);
+        impl_float_methods!($num_type);
       }
     }
   };
 }
 
-impl_numeric_rules!(Int64, i64, i64);
-impl_numeric_rules!(SInt64, i64, Sint64);
-impl_numeric_rules!(SFixed64, i64, Sfixed64);
-impl_numeric_rules!(Int32, i32, i32);
-impl_numeric_rules!(SInt32, i32, Sint32);
-impl_numeric_rules!(SFixed32, i32, Sfixed32);
-impl_numeric_rules!(UInt64, u64, u64);
-impl_numeric_rules!(Fixed64, u64, Fixed64);
-impl_numeric_rules!(UInt32, u32, u32);
-impl_numeric_rules!(Fixed32, u32, Fixed32);
-impl_numeric_rules!(Float, f32, f32, float);
-impl_numeric_rules!(Double, f64, f64, float);
+macro_rules! impl_primitive {
+  ($name:ident, $typ:ty, $num_type:ident) => {
+    impl_numeric_rules!($name, $typ, $typ, $num_type, $typ);
+  };
+}
+
+macro_rules! impl_wrapper {
+  ($name:ident, $unit:ty, $wrapper:ident) => {
+    impl_numeric_rules!($name, $unit, $wrapper, int, ::prelude::$wrapper);
+  };
+}
+
+impl_primitive!(Int64, i64, int);
+impl_primitive!(Int32, i32, int);
+impl_primitive!(UInt64, u64, int);
+impl_primitive!(UInt32, u32, int);
+impl_primitive!(Float, f32, float);
+impl_primitive!(Double, f64, float);
+
+impl_wrapper!(SInt64, i64, Sint64);
+impl_wrapper!(SFixed64, i64, Sfixed64);
+impl_wrapper!(SInt32, i32, Sint32);
+impl_wrapper!(SFixed32, i32, Sfixed32);
+impl_wrapper!(Fixed64, u64, Fixed64);
+impl_wrapper!(Fixed32, u32, Fixed32);

@@ -60,7 +60,7 @@ pub fn generate_message_consistency_checks(
 
   let cel_programs_check = has_cel_feature().then(|| {
     quote! {
-      let top_level_programs = Self::cel_rules();
+      let top_level_programs = <Self as ::prelude::ValidatedMessage>::cel_rules();
 
       if !top_level_programs.is_empty() {
         if let Err(errs) = ::prelude::test_programs(top_level_programs, Self::default()) {
@@ -77,8 +77,6 @@ pub fn generate_message_consistency_checks(
     impl #item_ident {
       #[track_caller]
       pub fn check_validators_consistency() -> Result<(), ::prelude::MessageTestError> {
-        use ::prelude::*;
-
         let mut field_errors: Vec<::prelude::FieldError> = Vec::new();
         let mut cel_errors: Vec<::prelude::CelError> = Vec::new();
 

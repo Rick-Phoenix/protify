@@ -20,12 +20,8 @@ pub const fn has_cel_feature() -> bool {
 pub fn wrap_with_imports(tokens: &TokenStream2) -> TokenStream2 {
   quote! {
     const _: () = {
-      use ::prelude::*;
+      use ::prelude::{Validator as ___Validator};
       use ::prelude::alloc::{vec, vec::Vec, format, string::String};
-      use ::prelude::proto_types::{
-        protovalidate::{Violations, FieldPathElement},
-        field_descriptor_proto::Type,
-      };
 
       #tokens
     };

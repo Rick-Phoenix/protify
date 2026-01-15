@@ -40,8 +40,6 @@ pub fn generate_oneof_consistency_checks(
     impl #oneof_ident {
       #[track_caller]
       pub fn check_validators_consistency() -> Result<(), ::prelude::OneofErrors> {
-        use ::prelude::*;
-
         let mut field_errors: Vec<::prelude::FieldError> = Vec::new();
 
         #consistency_checks_tokens
