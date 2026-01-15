@@ -133,7 +133,7 @@ impl RulesCtx {
   }
 }
 
-pub fn rust_ident_to_proto_name(rust_ident: &str) -> &str {
+fn rust_ident_to_proto_name(rust_ident: &str) -> &str {
   rust_ident
     .strip_prefix("r#")
     .unwrap_or(rust_ident.strip_suffix("_").unwrap_or(rust_ident))

@@ -240,11 +240,19 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     proto_field.default_validator_expr(field_span)
   };
 
+  let proto_name = name.unwrap_or_else(|| {
+    if field.is_variant() {
+      to_snake_case(&field_ident.to_string())
+    } else {
+      rust_ident_to_proto_name(&field_ident)
+    }
+  });
+
   Ok(FieldDataKind::Normal(FieldData {
     validator,
     tag,
     options,
-    proto_name: name.unwrap_or_else(|| to_snake_case(&field_ident.to_string())),
+    proto_name,
     proto_field,
     from_proto,
     into_proto,
@@ -254,4 +262,17 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     type_info,
     deprecated,
   }))
+}
+
+pub fn rust_ident_to_proto_name(rust_ident: &Ident) -> String {
+  let str = rust_ident.to_string();
+
+  if let Some(escaped) = str
+    .strip_prefix("r#")
+    .or_else(|| str.strip_suffix("_"))
+  {
+    escaped.to_string()
+  } else {
+    str
+  }
 }

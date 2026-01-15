@@ -80,7 +80,7 @@ pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttr
   Ok(ExtensionFieldAttrs {
     tag,
     options,
-    proto_name: name.unwrap_or_else(|| to_snake_case(&field_ident.to_string())),
+    proto_name: name.unwrap_or_else(|| rust_ident_to_proto_name(&field_ident)),
     proto_field,
   })
 }

@@ -23,6 +23,80 @@ define_proto_file!(
   package = TEST_SCHEMAS
 );
 
+// Placing it here so I can check if reflection for these works fine
+#[proto_message(no_auto_test)]
+pub struct RustKeywords {
+  pub r#as: String,
+  pub r#break: String,
+  pub r#const: String,
+  pub r#continue: String,
+  pub r#else: String,
+  pub r#enum: String,
+  pub r#false: String,
+  pub r#fn: String,
+  pub r#for: String,
+  pub r#if: String,
+  pub r#impl: String,
+  pub r#in: String,
+  pub r#let: String,
+  pub r#loop: String,
+  pub r#match: String,
+  pub r#mod: String,
+  pub r#move: String,
+  pub r#mut: String,
+  pub r#pub: String,
+  pub r#ref: String,
+  pub r#return: String,
+  pub r#static: String,
+  pub r#struct: String,
+  pub r#trait: String,
+  pub r#true: String,
+  pub r#type: String,
+  pub r#unsafe: String,
+  pub r#use: String,
+  pub r#where: String,
+  pub r#while: String,
+  pub r#abstract: String,
+  pub r#become: String,
+  pub r#box: String,
+  pub r#do: String,
+  pub r#final: String,
+  pub r#macro: String,
+  pub r#override: String,
+  pub r#priv: String,
+  pub r#typeof: String,
+  pub r#unsized: String,
+  pub r#virtual: String,
+  pub r#yield: String,
+  pub r#try: String,
+  pub r#async: String,
+  pub r#await: String,
+}
+
+#[cfg(test)]
+mod test {
+  use prelude::ProtoMessage;
+
+  use crate::RustKeywords;
+
+  #[test]
+  fn test_keywords() {
+    let schema = RustKeywords::proto_schema();
+
+    let keywords = [
+      "as", "break", "const", "continue", "else", "enum", "false", "fn", "for", "if", "impl", "in",
+      "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "static", "struct",
+      "trait", "true", "type", "unsafe", "use", "where", "while", "abstract", "become", "box",
+      "do", "final", "macro", "override", "priv", "typeof", "unsized", "virtual", "yield", "try",
+      "async", "await",
+    ];
+
+    for (field, exp_name) in schema.fields().zip(keywords) {
+      assert_eq!(field.name, exp_name);
+    }
+  }
+}
+
 #[proto_message(no_auto_test)]
 pub struct BTreeMapTest {
   #[proto(map(int32, int32), validate = |v| v.min_pairs(1).max_pairs(2))]
