@@ -1,3 +1,17 @@
+#[cfg(feature = "inventory")]
+#[macro_export]
+macro_rules! register_proto_data {
+  ($($tokens:tt)*) => {
+    $crate::inventory::submit! { $($tokens)* }
+  };
+}
+
+#[cfg(not(feature = "inventory"))]
+#[macro_export]
+macro_rules! register_proto_data {
+  ($($tokens:tt)*) => {};
+}
+
 #[macro_export]
 macro_rules! package_schema {
   ($name:expr, files = $files:expr) => {

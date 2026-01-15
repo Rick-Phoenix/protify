@@ -17,10 +17,6 @@ pub const fn has_cel_feature() -> bool {
   cfg!(feature = "cel")
 }
 
-pub const fn has_inventory_feat() -> bool {
-  cfg!(feature = "inventory")
-}
-
 pub fn wrap_with_imports(tokens: &TokenStream2) -> TokenStream2 {
   quote! {
     const _: () = {

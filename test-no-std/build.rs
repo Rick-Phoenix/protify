@@ -6,10 +6,10 @@ use prost_build::Config;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("cargo:rerun-if-changed=../no-std-models/");
 
-  // no_std_models::NO_STD_PKG
-  //   .get_package()
-  //   .render_files(concat!(env!("CARGO_MANIFEST_DIR"), "/proto"))
-  //   .unwrap();
+  no_std_models::NO_STD_PKG
+    .get_package()
+    .render_files(concat!(env!("CARGO_MANIFEST_DIR"), "/proto"))
+    .unwrap();
 
   let out_dir = env::var("OUT_DIR")
     .map(PathBuf::from)

@@ -81,9 +81,7 @@ pub use proto_type::*;
 use rendering_utils::*;
 pub use service::*;
 pub use validators::*;
-#[cfg(feature = "inventory")]
 mod registry;
-#[cfg(feature = "inventory")]
 pub use registry::*;
 mod extension;
 pub use extension::*;

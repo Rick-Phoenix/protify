@@ -106,22 +106,16 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 
   let options_tokens = options_tokens(Span::call_site(), &service_options, deprecated);
 
-  let inventory_call = has_inventory_feat().then(|| {
-    quote! {
-      ::prelude::inventory::submit! {
-        ::prelude::RegistryService {
-          package: __PROTO_FILE.package,
-          service: || <#ident as ::prelude::ProtoService>::as_proto_service()
-        }
-      }
-    }
-  });
-
   Ok(quote! {
     #[derive(::prelude::macros::Service)]
     #vis struct #ident;
 
-    #inventory_call
+    ::prelude::register_proto_data! {
+      ::prelude::RegistryService {
+        package: __PROTO_FILE.package,
+        service: || <#ident as ::prelude::ProtoService>::as_proto_service()
+      }
+    }
 
     impl ::prelude::ProtoService for #ident {
       fn as_proto_service() -> ::prelude::Service {

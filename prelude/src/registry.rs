@@ -42,6 +42,7 @@ struct NestedItems {
   pub messages: Vec<&'static str>,
 }
 
+#[cfg(feature = "inventory")]
 #[must_use]
 pub(crate) fn collect_package(package: &'static str) -> Package {
   let mut messages: Map<&'static str, Message> = Map::default();
@@ -203,7 +204,11 @@ impl Into<ProtoFile> for &RegistryFile {
   }
 }
 
+#[cfg(feature = "inventory")]
 inventory::collect!(RegistryMessage);
+#[cfg(feature = "inventory")]
 inventory::collect!(RegistryEnum);
+#[cfg(feature = "inventory")]
 inventory::collect!(RegistryService);
+#[cfg(feature = "inventory")]
 inventory::collect!(RegistryFile);

@@ -134,20 +134,14 @@ impl MessageCtx<'_> {
 
     let options_tokens = options_tokens(Span::call_site(), message_options, *deprecated);
 
-    let inventory_call = has_inventory_feat().then(|| {
-      quote! {
-        ::prelude::inventory::submit! {
-          ::prelude::RegistryMessage {
-            package: __PROTO_FILE.package,
-            parent_message: #registry_parent_message,
-            message: || <#proto_struct as ::prelude::ProtoMessage>::proto_schema()
-          }
+    output.extend(quote! {
+      ::prelude::register_proto_data! {
+        ::prelude::RegistryMessage {
+          package: __PROTO_FILE.package,
+          parent_message: #registry_parent_message,
+          message: || <#proto_struct as ::prelude::ProtoMessage>::proto_schema()
         }
       }
-    });
-
-    output.extend(quote! {
-      #inventory_call
 
       impl ::prelude::AsProtoType for #proto_struct {
         fn proto_type() -> ::prelude::ProtoType {
