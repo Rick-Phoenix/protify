@@ -3,10 +3,6 @@ mod proto {
   include!(concat!(env!("OUT_DIR"), "/test_schemas.v1.rs"));
 }
 
-fn main() {
-  println!("Hello, world!");
-}
-
 #[allow(clippy::clone_on_copy, unused_assignments, clippy::redundant_clone)]
 #[cfg(test)]
 mod test {

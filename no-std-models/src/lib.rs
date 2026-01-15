@@ -30,7 +30,7 @@ pub struct TestMsg {
   #[proto(map(int32, int32), validate = |v| v.min_pairs(2))]
   pub map: BTreeMap<i32, i32>,
   #[proto(oneof(tags(1, 2)))]
-  pub oneof: Option<TestOneof>,
+  pub test_oneof: Option<TestOneof>,
   #[proto(enum_(TestEnum), validate = |v| v.defined_only())]
   pub enum_field: i32,
 }
@@ -69,7 +69,7 @@ pub struct ProxiedMsg {
   #[proto(map(int32, int32), validate = |v| v.min_pairs(2))]
   map: BTreeMap<i32, i32>,
   #[proto(oneof(default, proxied, tags(1, 2)))]
-  oneof: ProxiedOneofTest,
+  proxied_oneof_test: ProxiedOneofTest,
   #[proto(enum_(TestEnum), validate = |v| v.defined_only())]
   enum_field: i32,
   #[proto(message(proxied, default))]

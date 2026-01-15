@@ -1,6 +1,10 @@
 [working-directory(".")]
-test-all: test-shared-schemas test-schemas
+test-all: test-shared-schemas test-schemas test-no-std
     cargo test -p prelude -- --nocapture
+
+test-no-std:
+    cargo test --features reflection -p test-no-std -- --nocapture
+    cargo test -p test-no-std -- --nocapture
 
 test-schemas:
     cargo test -p testing -- --nocapture

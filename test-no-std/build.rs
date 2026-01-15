@@ -4,7 +4,7 @@ use builder::set_up_validators;
 use prost_build::Config;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-  println!("cargo:rerun-if-changed=../no-std-models/");
+  println!("cargo:rerun-if-changed=../no-std-models/src/lib.rs");
 
   no_std_models::NO_STD_PKG
     .get_package()
