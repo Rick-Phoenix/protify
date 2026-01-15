@@ -17,22 +17,12 @@ define_proto_file!(
   name = "rendering.proto",
   package = RENDERING_PKG,
   options = test_options(),
-  extensions(TestExtension),
+  extensions = [TestExtension],
+  imports = ["some_pkg/some_import.proto"]
 );
 
 #[test]
-fn file_schema_output() {
-  let pkg = RENDERING_PKG.get_package();
-
-  let file = pkg.files.first().unwrap();
-
-  assert_eq_pretty!(file.name, "rendering.proto");
-  assert_eq_pretty!(file.package, "rendering");
-  assert_eq_pretty!(file.options, test_options());
-}
-
-#[test]
-fn test_renders() {
+fn rendering_test() {
   let pkg = RENDERING_PKG.get_package();
 
   let output1 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/proto_test"));
@@ -45,7 +35,8 @@ fn test_renders() {
     extensions = [TestExtension],
     options = test_options(),
     services = [TestService],
-    enums = [TestEnum]
+    enums = [TestEnum],
+    imports = ["some_pkg/some_import.proto"]
   );
 
   let manual_pkg = package_schema!("rendering", files = [manual_file]);
@@ -57,6 +48,17 @@ fn test_renders() {
   let second_content = fs::read_to_string(output2.join("rendering.proto")).unwrap();
 
   assert_eq_pretty!(first_content, second_content);
+}
+
+#[test]
+fn file_schema_output() {
+  let pkg = RENDERING_PKG.get_package();
+
+  let file = pkg.files.first().unwrap();
+
+  assert_eq_pretty!(file.name, "rendering.proto");
+  assert_eq_pretty!(file.package, "rendering");
+  assert_eq_pretty!(file.options, test_options());
 }
 
 fn test_option() -> OptionMessage {

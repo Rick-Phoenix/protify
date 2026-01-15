@@ -108,6 +108,11 @@ impl Package {
   }
 
   #[must_use]
+  pub fn get_file(&self, name: &str) -> Option<&ProtoFile> {
+    self.files.iter().find(|f| f.name == name)
+  }
+
+  #[must_use]
   pub fn with_files(mut self, files: impl IntoIterator<Item = ProtoFile>) -> Self {
     self.files.extend(files.into_iter().map(|mut f| {
       f.package = self.name;
