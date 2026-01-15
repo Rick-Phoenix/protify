@@ -1,23 +1,32 @@
-#![no_std]
-
-#[cfg(any(test, feature = "std"))]
-extern crate std;
-
-use prelude::BTreeMap;
-
-use prelude::{ValidatedMessage, define_proto_file, proto_message, proto_package};
-
-proto_package!(PKG, name = "no_std_package");
-define_proto_file!(FILE, name = "file.proto", package = PKG);
-
-#[proto_message(no_auto_test)]
-pub struct TestMsg {
-  #[proto(map(int32, int32), validate = |v| v.min_pairs(2))]
-  map: BTreeMap<i32, i32>,
+fn main() {
+  println!("Hello, world!");
 }
 
-fn main() {
-  let msg = TestMsg::default();
+#[allow(clippy::redundant_clone)]
+#[cfg(test)]
+mod test {
+  use maplit::btreemap;
+  use prelude::ValidatedMessage;
 
-  assert!(msg.validate().is_err());
+  use no_std_models::*;
+
+  #[test]
+  fn name() {
+    let mut msg = TestMsg {
+      map: btreemap! { 1 => 1, 2 => 2 },
+      oneof: Some(TestOneof::A(1)),
+      enum_field: TestEnum::A.into(),
+    };
+    let baseline = msg.clone();
+
+    assert!(msg.validate().is_ok());
+
+    msg.map.clear();
+
+    assert!(msg.validate().is_err());
+    msg = baseline.clone();
+
+    msg.enum_field = 100;
+    assert!(msg.validate().is_err());
+  }
 }

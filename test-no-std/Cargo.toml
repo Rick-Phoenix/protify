@@ -8,13 +8,24 @@ repository.workspace = true
 keywords.workspace = true
 
 [dependencies]
-prelude = { path = "../prelude", default-features = false }
-proc-macro-impls = { path = "../proc-macro", default-features = false }
+prelude = { path = "../prelude", default-features = false, features = [
+  "reflection",
+] }
+no-std-models = { path = "../no-std-models" }
 prost = { version = "0.14", default-features = false }
+maplit = "1"
+
+[build-dependencies]
+prost-build = { workspace = true }
+# no-std-models = { path = "../no-std-models" }
+# prelude = { path = "../prelude", default-features = false, features = [
+#   "inventory",
+#   "std",
+# ] }
+builder = { path = "../builder", default-features = false }
 
 [features]
-default = []
-std = ["prelude/std", "prost/std"]
+reflection = []
 
 [lints]
 workspace = true
