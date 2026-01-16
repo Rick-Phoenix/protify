@@ -19,14 +19,14 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
     Some(if *required {
       quote_spanned! {*span=>
         match self.#ident.as_ref() {
-          Some(oneof) => ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations),
-          None => violations.add_required_oneof_violation(parent_elements)
+          Some(oneof) => ::prelude::ValidatedOneof::validate(oneof, ctx),
+          None => ctx.violations.add_required_oneof_violation(ctx.parent_elements)
         };
       }
     } else {
       quote_spanned! {*span=>
         if let Some(oneof) = self.#ident.as_ref() {
-          ::prelude::ValidatedOneof::validate(oneof, parent_elements, violations);
+          ::prelude::ValidatedOneof::validate(oneof, ctx);
         }
       }
     })
@@ -70,8 +70,8 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
         quote! {
           <#validator_name as ::prelude::Validator<#validator_target_type>>::validate(
             &#validator_static_ident,
-            &mut ::prelude::ValidationCtx {
-              field_context: ::prelude::FieldContext {
+            ctx.with_field_context(
+              ::prelude::FieldContext {
                 proto_name: #proto_name,
                 tag: #tag,
                 field_type: #field_type,
@@ -79,19 +79,16 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
                 map_value_type: None,
                 subscript: None,
                 field_kind: Default::default(),
-              },
-              parent_elements,
-              violations,
-              fail_fast: false
-            },
+              }
+            ),
             #argument
           );
         }
       } else {
         quote! {
           #validator_static_ident.validate(
-            &mut ::prelude::ValidationCtx {
-              field_context: ::prelude::FieldContext {
+            ctx.with_field_context(
+              ::prelude::FieldContext {
                 proto_name: #proto_name,
                 tag: #tag,
                 field_type: #field_type,
@@ -99,11 +96,8 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
                 map_value_type: None,
                 subscript: None,
                 field_kind: Default::default(),
-              },
-              parent_elements,
-              violations,
-              fail_fast: false
-            },
+              }
+            ),
             #argument
           );
         }
@@ -154,7 +148,7 @@ pub fn generate_message_validator(
 
   let cel_rules_call = has_cel_rules.then(|| {
     quote_spanned! {top_level_cel_rules.span()=>
-      ::prelude::ValidatedMessage::validate_cel(self, field_context, parent_elements, violations, true);
+      ::prelude::ValidatedMessage::validate_cel(self, ctx);
     }
   });
 
@@ -178,7 +172,7 @@ pub fn generate_message_validator(
       #[allow(clippy::ptr_arg)]
       impl #target_ident {
         #[doc(hidden)]
-        fn __validate_internal(&self, field_context: Option<&::prelude::FieldContext>, parent_elements: &mut Vec<::prelude::FieldPathElement>, violations: &mut ::prelude::ViolationsAcc) {
+        fn __validate_internal(&self, ctx: &mut ::prelude::ValidationCtx) {
           #cel_rules_call
 
           #validators_tokens
@@ -191,7 +185,14 @@ pub fn generate_message_validator(
         fn validate(&self) -> Result<(), ::prelude::Violations> {
           let mut violations = ::prelude::ViolationsAcc::new();
 
-          self.__validate_internal(None, &mut vec![], &mut violations);
+          let mut ctx = ::prelude::ValidationCtx {
+            field_context: None,
+            parent_elements: &mut vec![],
+            violations: &mut violations,
+            fail_fast: false
+          };
+
+          self.__validate_internal(&mut ctx);
 
           if violations.is_empty() {
             Ok(())
@@ -205,7 +206,7 @@ pub fn generate_message_validator(
         fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
           let prev_len = ctx.violations.len();
 
-          self.__validate_internal(Some(&ctx.field_context), ctx.parent_elements, ctx.violations);
+          self.__validate_internal(ctx);
 
           ctx.violations.len() == prev_len
         }

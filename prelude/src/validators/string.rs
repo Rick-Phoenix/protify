@@ -518,16 +518,13 @@ impl Validator<String> for StringValidator {
 
       #[cfg(feature = "cel")]
       if !self.cel.is_empty() {
-        let ctx = ProgramsExecutionCtx {
+        let cel_ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val.clone(),
-          violations: ctx.violations,
-          field_context: Some(&ctx.field_context),
-          parent_elements: ctx.parent_elements,
-          fail_fast: ctx.fail_fast,
+          ctx,
         };
 
-        is_valid = ctx.execute_programs();
+        is_valid = cel_ctx.execute_programs();
       }
     }
 

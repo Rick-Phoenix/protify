@@ -5,8 +5,8 @@ use proto_types::protovalidate::field_path_element::Subscript;
 
 /// The context for the field being validated.
 #[derive(Clone, Debug)]
-pub struct FieldContext<'a> {
-  pub proto_name: &'a str,
+pub struct FieldContext {
+  pub proto_name: &'static str,
   pub tag: i32,
   pub subscript: Option<Subscript>,
   pub map_key_type: Option<ProtoPrimitive>,
@@ -15,7 +15,7 @@ pub struct FieldContext<'a> {
   pub field_kind: FieldKind,
 }
 
-impl FieldContext<'_> {
+impl FieldContext {
   #[must_use]
   pub fn as_path_element(&self) -> FieldPathElement {
     FieldPathElement {
@@ -58,7 +58,7 @@ impl FieldKind {
 }
 
 pub struct ValidationCtx<'a> {
-  pub field_context: FieldContext<'a>,
+  pub field_context: Option<FieldContext>,
   pub parent_elements: &'a mut Vec<FieldPathElement>,
   pub violations: &'a mut ViolationsAcc,
   pub fail_fast: bool,
@@ -66,9 +66,16 @@ pub struct ValidationCtx<'a> {
 
 impl ValidationCtx<'_> {
   #[inline]
+  pub fn with_field_context(&mut self, field_context: FieldContext) -> &mut Self {
+    self.field_context = Some(field_context);
+    self
+  }
+
+  #[inline]
   pub fn add_violation(&mut self, violation_data: ViolationData, error_message: &str) {
-    let violation = new_violation(
-      &self.field_context,
+    let violation = create_violation_core(
+      None,
+      self.field_context.as_ref(),
       self.parent_elements,
       violation_data,
       error_message,
@@ -86,7 +93,7 @@ impl ValidationCtx<'_> {
   ) {
     let violation = new_violation_with_custom_id(
       rule_id,
-      Some(&self.field_context),
+      self.field_context.as_ref(),
       self.parent_elements,
       violation_data,
       error_message,
@@ -99,7 +106,7 @@ impl ValidationCtx<'_> {
   pub fn add_cel_violation(&mut self, rule: &CelRule) {
     self
       .violations
-      .add_cel_violation(rule, Some(&self.field_context), self.parent_elements);
+      .add_cel_violation(rule, self.field_context.as_ref(), self.parent_elements);
   }
 
   #[inline]
@@ -283,23 +290,6 @@ pub(crate) fn create_violation_core(
   }
 }
 
-#[inline]
-pub(crate) fn new_violation(
-  field_context: &FieldContext,
-  parent_elements: &[FieldPathElement],
-  violation_data: ViolationData,
-  error_message: &str,
-) -> Violation {
-  create_violation_core(
-    None,
-    Some(field_context),
-    parent_elements,
-    violation_data,
-    error_message,
-  )
-}
-
-#[inline]
 pub(crate) fn new_violation_with_custom_id(
   rule_id: &str,
   field_context: Option<&FieldContext>,

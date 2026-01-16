@@ -252,8 +252,14 @@ where
           }
 
           if let Some(validator) = items_validator {
-            ctx.field_context.subscript = Some(Subscript::Index(i as u64));
-            ctx.field_context.field_kind = FieldKind::RepeatedItem;
+            let _ = ctx
+              .field_context
+              .as_mut()
+              .map(|fc| fc.subscript = Some(Subscript::Index(i as u64)));
+            let _ = ctx
+              .field_context
+              .as_mut()
+              .map(|fc| fc.field_kind = FieldKind::RepeatedItem);
 
             is_valid = validator.validate(ctx, Some(value));
 
@@ -263,8 +269,14 @@ where
           }
         }
 
-        ctx.field_context.subscript = None;
-        ctx.field_context.field_kind = FieldKind::Repeated;
+        let _ = ctx
+          .field_context
+          .as_mut()
+          .map(|fc| fc.subscript = None);
+        let _ = ctx
+          .field_context
+          .as_mut()
+          .map(|fc| fc.field_kind = FieldKind::default());
       }
 
       if !has_unique_values_so_far {
@@ -276,21 +288,18 @@ where
       if !self.cel.is_empty() {
         match try_convert_to_cel(val.clone()) {
           Ok(cel_value) => {
-            let ctx = ProgramsExecutionCtx {
+            let cel_ctx = ProgramsExecutionCtx {
               programs: &self.cel,
               value: cel_value,
-              violations: ctx.violations,
-              field_context: Some(&ctx.field_context),
-              parent_elements: ctx.parent_elements,
-              fail_fast: ctx.fail_fast,
+              ctx,
             };
 
-            is_valid = ctx.execute_programs();
+            is_valid = cel_ctx.execute_programs();
           }
           Err(e) => {
             ctx
               .violations
-              .push(e.into_violation(Some(&ctx.field_context), ctx.parent_elements));
+              .push(e.into_violation(ctx.field_context.as_ref(), ctx.parent_elements));
             is_valid = false;
           }
         };

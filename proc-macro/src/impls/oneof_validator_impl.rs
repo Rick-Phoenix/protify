@@ -38,7 +38,7 @@ pub fn generate_oneof_validator(
   quote! {
     impl ::prelude::ValidatedOneof for #oneof_ident {
       #inline_only_if_empty
-      fn validate(&self, parent_elements: &mut Vec<::prelude::FieldPathElement>, violations: &mut ::prelude::ViolationsAcc) {
+      fn validate(&self, ctx: &mut ::prelude::ValidationCtx) {
         #validators_tokens
       }
     }

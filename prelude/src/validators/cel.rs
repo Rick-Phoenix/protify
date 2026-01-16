@@ -226,16 +226,13 @@ mod cel_impls {
     Ok(ctx)
   }
 
-  pub struct ProgramsExecutionCtx<'a, CelT> {
+  pub struct ProgramsExecutionCtx<'a, 'b, CelT> {
     pub programs: &'a [CelProgram],
     pub value: CelT,
-    pub violations: &'a mut ViolationsAcc,
-    pub field_context: Option<&'a FieldContext<'a>>,
-    pub parent_elements: &'a [FieldPathElement],
-    pub fail_fast: bool,
+    pub ctx: &'a mut ValidationCtx<'b>,
   }
 
-  impl<CelT> ProgramsExecutionCtx<'_, CelT>
+  impl<CelT> ProgramsExecutionCtx<'_, '_, CelT>
   where
     CelT: TryIntoCel,
   {
@@ -243,10 +240,13 @@ mod cel_impls {
       let Self {
         programs,
         value,
-        violations,
-        field_context,
-        parent_elements,
-        fail_fast,
+        ctx:
+          ValidationCtx {
+            field_context,
+            parent_elements,
+            violations,
+            fail_fast,
+          },
       } = self;
 
       let mut is_valid = true;
@@ -254,7 +254,7 @@ mod cel_impls {
       let ctx = match initialize_context(value) {
         Ok(ctx) => ctx,
         Err(e) => {
-          violations.push(e.into_violation(field_context, parent_elements));
+          violations.push(e.into_violation(field_context.as_ref(), parent_elements));
           return false;
         }
       };
@@ -263,16 +263,16 @@ mod cel_impls {
         match program.execute(&ctx) {
           Ok(was_successful) => {
             if !was_successful {
-              violations.add_cel_violation(&program.rule, field_context, parent_elements);
+              violations.add_cel_violation(&program.rule, field_context.as_ref(), parent_elements);
 
-              if fail_fast {
+              if *fail_fast {
                 return false;
               } else {
                 is_valid = false;
               }
             }
           }
-          Err(e) => violations.push(e.into_violation(field_context, parent_elements)),
+          Err(e) => violations.push(e.into_violation(field_context.as_ref(), parent_elements)),
         };
       }
 

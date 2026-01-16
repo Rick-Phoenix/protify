@@ -19,13 +19,7 @@ pub trait ValidatedMessage: Default {
 
   #[cfg(feature = "cel")]
   #[doc(hidden)]
-  fn validate_cel(
-    &self,
-    field_context: Option<&FieldContext>,
-    parent_elements: &[FieldPathElement],
-    violations: &mut ViolationsAcc,
-    fail_fast: bool,
-  ) -> bool
+  fn validate_cel(&self, ctx: &mut ValidationCtx) -> bool
   where
     Self: TryIntoCel,
   {
@@ -34,16 +28,13 @@ pub trait ValidatedMessage: Default {
     if top_level_programs.is_empty() {
       true
     } else {
-      let ctx = ProgramsExecutionCtx {
+      let cel_ctx = ProgramsExecutionCtx {
         programs: top_level_programs,
         value: self.clone(),
-        violations,
-        field_context,
-        parent_elements,
-        fail_fast,
+        ctx,
       };
 
-      ctx.execute_programs()
+      cel_ctx.execute_programs()
     }
   }
 
@@ -108,9 +99,11 @@ where
     let mut is_valid = true;
 
     if let Some(val) = val {
-      ctx
-        .parent_elements
-        .push(ctx.field_context.as_path_element());
+      if let Some(field_context) = &mut ctx.field_context {
+        ctx
+          .parent_elements
+          .push(field_context.as_path_element());
+      }
 
       is_valid = val.nested_validate(ctx);
       ctx.parent_elements.pop();
@@ -121,16 +114,13 @@ where
 
       #[cfg(feature = "cel")]
       if !self.cel.is_empty() {
-        let ctx = ProgramsExecutionCtx {
+        let cel_ctx = ProgramsExecutionCtx {
           programs: &self.cel,
           value: val.clone(),
-          violations: ctx.violations,
-          field_context: Some(&ctx.field_context),
-          parent_elements: ctx.parent_elements,
-          fail_fast: ctx.fail_fast,
+          ctx,
         };
 
-        is_valid = ctx.execute_programs();
+        is_valid = cel_ctx.execute_programs();
       }
     } else if self.required {
       ctx.add_required_violation();

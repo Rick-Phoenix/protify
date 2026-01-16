@@ -64,7 +64,7 @@ pub trait ProtoOneof {
 }
 
 pub trait ValidatedOneof {
-  fn validate(&self, parent_messages: &mut Vec<FieldPathElement>, violations: &mut ViolationsAcc);
+  fn validate(&self, ctx: &mut ValidationCtx);
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
