@@ -224,13 +224,16 @@ pub fn generate_message_validator(
     }
   };
 
-  let default_validator_call = if has_validators {
+  // The default impl will be used otherwise
+  let default_validator_method = has_validators.then(|| {
     quote! {
-      Some(::prelude::MessageValidator::default())
+      #[doc(hidden)]
+      #[inline]
+      fn default_validator() -> Option<Self::Validator> {
+        Some(::prelude::MessageValidator::default())
+      }
     }
-  } else {
-    quote! { None }
-  };
+  });
 
   quote! {
     #validator_impl
@@ -243,11 +246,7 @@ pub fn generate_message_validator(
       #[doc(hidden)]
       type Builder = ::prelude::MessageValidatorBuilder<Self>;
 
-      #[doc(hidden)]
-      #[inline]
-      fn default_validator() -> Option<Self::Validator> {
-        #default_validator_call
-      }
+      #default_validator_method
     }
   }
 }

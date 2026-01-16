@@ -28,6 +28,12 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
 
   let is_proxied = oneof_attrs.is_proxied;
 
+  if is_proxied && !matches!(item.vis, Visibility::Public(_)) {
+    item.vis = Visibility::Public(token::Pub::default());
+
+    errors.push(error!(item.vis, "Proxy enums must be public"));
+  }
+
   let mut proto_enum = is_proxied.then(|| create_shadow_enum(&item));
 
   let FieldsCtx {

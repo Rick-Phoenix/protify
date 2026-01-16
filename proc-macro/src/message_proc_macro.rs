@@ -11,6 +11,12 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
 
   let is_proxied = message_attrs.is_proxied;
 
+  if is_proxied && !matches!(item.vis, Visibility::Public(_)) {
+    item.vis = Visibility::Public(token::Pub::default());
+
+    errors.push(error!(item.vis, "Proxy structs must be public"));
+  }
+
   let mut proto_struct = is_proxied.then(|| create_shadow_struct(&item));
 
   let FieldsCtx {
