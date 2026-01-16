@@ -237,12 +237,15 @@ impl Validator<String> for StringValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
 
+    let mut is_valid = true;
+
     if self.required && val.is_none_or(|v| v.is_empty()) {
       ctx.add_required_violation();
+      return false;
     }
 
     if let Some(val) = val {
@@ -255,7 +258,7 @@ impl Validator<String> for StringValidator {
         }
 
         // Using `const` implies no other rules
-        return;
+        return false;
       }
 
       if let Some(len) = self.len
@@ -265,6 +268,7 @@ impl Validator<String> for StringValidator {
           STRING_LEN_VIOLATION,
           &format!("must be exactly {len} characters long"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(min_len) = self.min_len
@@ -274,6 +278,7 @@ impl Validator<String> for StringValidator {
           STRING_MIN_LEN_VIOLATION,
           &format!("must be at least {min_len} characters long"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(max_len) = self.max_len
@@ -283,6 +288,7 @@ impl Validator<String> for StringValidator {
           STRING_MAX_LEN_VIOLATION,
           &format!("cannot be longer than {max_len} characters"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(len_bytes) = self.len_bytes
@@ -292,6 +298,7 @@ impl Validator<String> for StringValidator {
           STRING_LEN_BYTES_VIOLATION,
           &format!("must be exactly {len_bytes} bytes long"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(min_bytes) = self.min_bytes
@@ -301,6 +308,7 @@ impl Validator<String> for StringValidator {
           STRING_MIN_BYTES_VIOLATION,
           &format!("must be at least {min_bytes} bytes long"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(max_bytes) = self.max_bytes
@@ -310,6 +318,7 @@ impl Validator<String> for StringValidator {
           STRING_MAX_BYTES_VIOLATION,
           &format!("cannot be longer than {max_bytes} bytes"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "regex")]
@@ -320,6 +329,7 @@ impl Validator<String> for StringValidator {
           STRING_PATTERN_VIOLATION,
           &format!("must match the pattern `{pattern}`"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(prefix) = &self.prefix
@@ -329,12 +339,14 @@ impl Validator<String> for StringValidator {
           STRING_PREFIX_VIOLATION,
           &format!("must start with {prefix}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(suffix) = &self.suffix
         && !val.ends_with(&**suffix)
       {
         ctx.add_violation(STRING_SUFFIX_VIOLATION, &format!("must end with {suffix}"));
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(substring) = &self.contains
@@ -344,6 +356,7 @@ impl Validator<String> for StringValidator {
           STRING_CONTAINS_VIOLATION,
           &format!("must contain {substring}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(substring) = &self.not_contains
@@ -353,6 +366,7 @@ impl Validator<String> for StringValidator {
           STRING_NOT_CONTAINS_VIOLATION,
           &format!("cannot contain {substring}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(allowed_list) = &self.in_
@@ -361,6 +375,7 @@ impl Validator<String> for StringValidator {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
         ctx.add_violation(STRING_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -369,6 +384,7 @@ impl Validator<String> for StringValidator {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
         ctx.add_violation(STRING_NOT_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       macro_rules! impl_well_known_check {
@@ -379,6 +395,7 @@ impl Validator<String> for StringValidator {
                 [< STRING_ $violation _VIOLATION >],
                 concat!("must be a valid ", $msg),
               );
+              handle_violation!(is_valid, ctx);
             }
           }
         };
@@ -463,6 +480,7 @@ impl Validator<String> for StringValidator {
                 STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header name",
               );
+              handle_violation!(is_valid, ctx);
             }
           }
           #[cfg(feature = "regex")]
@@ -472,6 +490,7 @@ impl Validator<String> for StringValidator {
                 STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header name",
               );
+              handle_violation!(is_valid, ctx);
             }
           }
           #[cfg(feature = "regex")]
@@ -481,6 +500,7 @@ impl Validator<String> for StringValidator {
                 STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header value",
               );
+              handle_violation!(is_valid, ctx);
             }
           }
           #[cfg(feature = "regex")]
@@ -490,6 +510,7 @@ impl Validator<String> for StringValidator {
                 STRING_WELL_KNOWN_REGEX_VIOLATION,
                 "must be a valid http header value",
               );
+              handle_violation!(is_valid, ctx);
             }
           }
         };
@@ -503,11 +524,14 @@ impl Validator<String> for StringValidator {
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     }
+
+    is_valid
   }
 }
 

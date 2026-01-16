@@ -1,3 +1,13 @@
+macro_rules! handle_violation {
+  ($is_valid:ident, $ctx:ident) => {
+    if $ctx.fail_fast {
+      return false;
+    } else {
+      $is_valid = false;
+    }
+  };
+}
+
 #[cfg(feature = "inventory")]
 #[macro_export]
 macro_rules! register_proto_data {
@@ -81,7 +91,7 @@ macro_rules! use_proto_file {
 macro_rules! handle_ignore_always {
   ($ignore:expr) => {
     if matches!($ignore, Ignore::Always) {
-      return;
+      return true;
     }
   };
 }
@@ -89,7 +99,7 @@ macro_rules! handle_ignore_always {
 macro_rules! handle_ignore_if_zero_value {
   ($ignore:expr, $condition:expr) => {
     if matches!($ignore, Ignore::IfZeroValue) && $condition {
-      return;
+      return true;
     }
   };
 }

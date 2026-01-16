@@ -39,19 +39,25 @@ impl Validator<bool> for BoolValidator {
     Ok(())
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
+
+    let mut is_valid = true;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_
         && val != const_val
       {
         ctx.add_violation(BOOL_CONST_VIOLATION, &format!("must be {const_val}"));
+        is_valid = false;
       }
     } else if self.required {
       ctx.add_required_violation();
+      is_valid = false;
     }
+
+    is_valid
   }
 }
 

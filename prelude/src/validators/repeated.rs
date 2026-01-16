@@ -190,31 +190,13 @@ where
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
 
+    let mut is_valid = true;
+
     if let Some(val) = val {
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        match try_convert_to_cel(val.clone()) {
-          Ok(cel_value) => {
-            let ctx = ProgramsExecutionCtx {
-              programs: &self.cel,
-              value: cel_value,
-              violations: ctx.violations,
-              field_context: Some(&ctx.field_context),
-              parent_elements: ctx.parent_elements,
-            };
-
-            ctx.execute_programs();
-          }
-          Err(e) => ctx
-            .violations
-            .push(e.into_violation(Some(&ctx.field_context), ctx.parent_elements)),
-        };
-      }
-
       if let Some(min) = &self.min_items
         && val.len() < *min
       {
@@ -222,6 +204,7 @@ where
           REPEATED_MIN_ITEMS_VIOLATION,
           &format!("must contain at least {min} items"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(max) = &self.max_items
@@ -231,6 +214,7 @@ where
           REPEATED_MAX_ITEMS_VIOLATION,
           &format!("cannot contain more than {max} items"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       let items_validator = self.items.as_ref();
@@ -261,13 +245,21 @@ where
             && has_unique_values_so_far
           {
             has_unique_values_so_far = unique_store.insert(value);
+
+            if !has_unique_values_so_far && ctx.fail_fast {
+              break;
+            }
           }
 
           if let Some(validator) = items_validator {
             ctx.field_context.subscript = Some(Subscript::Index(i as u64));
             ctx.field_context.field_kind = FieldKind::RepeatedItem;
 
-            validator.validate(ctx, Some(value));
+            is_valid = validator.validate(ctx, Some(value));
+
+            if !is_valid && ctx.fail_fast {
+              return false;
+            }
           }
         }
 
@@ -277,8 +269,35 @@ where
 
       if !has_unique_values_so_far {
         ctx.add_violation(REPEATED_UNIQUE_VIOLATION, "must contain unique values");
+        handle_violation!(is_valid, ctx);
+      }
+
+      #[cfg(feature = "cel")]
+      if !self.cel.is_empty() {
+        match try_convert_to_cel(val.clone()) {
+          Ok(cel_value) => {
+            let ctx = ProgramsExecutionCtx {
+              programs: &self.cel,
+              value: cel_value,
+              violations: ctx.violations,
+              field_context: Some(&ctx.field_context),
+              parent_elements: ctx.parent_elements,
+              fail_fast: ctx.fail_fast,
+            };
+
+            is_valid = ctx.execute_programs();
+          }
+          Err(e) => {
+            ctx
+              .violations
+              .push(e.into_violation(Some(&ctx.field_context), ctx.parent_elements));
+            is_valid = false;
+          }
+        };
       }
     }
+
+    is_valid
   }
 }
 

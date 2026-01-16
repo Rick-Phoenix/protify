@@ -104,12 +104,15 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
 
+    let mut is_valid = true;
+
     if self.required && val.is_none_or(|v| *v == 0) {
       ctx.add_required_violation();
+      return false;
     }
 
     if let Some(&val) = val {
@@ -122,7 +125,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
         }
 
         // Using `const` implies no other rules
-        return;
+        return false;
       }
 
       if let Some(allowed_list) = &self.in_
@@ -131,6 +134,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
         ctx.add_violation(ENUM_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -139,10 +143,12 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
         ctx.add_violation(ENUM_NOT_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       if self.defined_only && T::try_from(val).is_err() {
         ctx.add_violation(ENUM_DEFINED_ONLY_VIOLATION, "must be a known enum value");
+        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]
@@ -153,11 +159,14 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     }
+
+    is_valid
   }
 }
 

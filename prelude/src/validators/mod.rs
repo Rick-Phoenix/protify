@@ -33,7 +33,7 @@ pub trait Validator<T>: Into<ProtoOption> {
     self.check_cel_programs_with(Self::Target::default())
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>);
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool;
 }
 
 pub trait ValidatorBuilderFor<T>: Default {

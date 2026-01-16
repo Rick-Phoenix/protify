@@ -81,7 +81,8 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
                 field_kind: Default::default(),
               },
               parent_elements,
-              violations
+              violations,
+              fail_fast: false
             },
             #argument
           );
@@ -100,7 +101,8 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
                 field_kind: Default::default(),
               },
               parent_elements,
-              violations
+              violations,
+              fail_fast: false
             },
             #argument
           );
@@ -152,7 +154,7 @@ pub fn generate_message_validator(
 
   let cel_rules_call = has_cel_rules.then(|| {
     quote_spanned! {top_level_cel_rules.span()=>
-      ::prelude::ValidatedMessage::validate_cel(self, field_context, parent_elements, violations);
+      ::prelude::ValidatedMessage::validate_cel(self, field_context, parent_elements, violations, true);
     }
   });
 
@@ -166,7 +168,9 @@ pub fn generate_message_validator(
 
         #[doc(hidden)]
         #[inline]
-        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) {}
+        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
+          true
+        }
       }
     }
   } else {
@@ -198,8 +202,12 @@ pub fn generate_message_validator(
 
         #[doc(hidden)]
         #[inline]
-        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) {
-          self.__validate_internal(Some(&ctx.field_context), ctx.parent_elements, ctx.violations)
+        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
+          let prev_len = ctx.violations.len();
+
+          self.__validate_internal(Some(&ctx.field_context), ctx.parent_elements, ctx.violations);
+
+          ctx.violations.len() == prev_len
         }
       }
     }

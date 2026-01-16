@@ -74,8 +74,10 @@ impl Validator<FieldMask> for FieldMaskValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
+
+    let mut is_valid = true;
 
     if let Some(val) = val {
       if let Some(const_val) = &self.const_ {
@@ -100,7 +102,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
         }
 
         // Using `const` implies no other rules
-        return;
+        return false;
       }
 
       if let Some(allowed_paths) = &self.in_ {
@@ -110,7 +112,13 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
             ctx.add_violation(FIELD_MASK_IN_VIOLATION, &err);
 
-            break;
+            if ctx.fail_fast {
+              return false;
+            } else {
+              is_valid = false;
+
+              break;
+            }
           }
         }
       }
@@ -126,7 +134,13 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
             ctx.add_violation(FIELD_MASK_NOT_IN_VIOLATION, &err);
 
-            break;
+            if ctx.fail_fast {
+              return false;
+            } else {
+              is_valid = false;
+
+              break;
+            }
           }
         }
       }
@@ -139,13 +153,17 @@ impl Validator<FieldMask> for FieldMaskValidator {
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     } else if self.required {
       ctx.add_required_violation();
+      is_valid = false;
     }
+
+    is_valid
   }
 }
 

@@ -125,8 +125,10 @@ impl Validator<Timestamp> for TimestampValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
+
+    let mut is_valid = true;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_ {
@@ -138,17 +140,19 @@ impl Validator<Timestamp> for TimestampValidator {
         }
 
         // Using `const` implies no other rules
-        return;
+        return false;
       }
 
       #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
       {
         if self.gt_now && !(val + self.now_tolerance).is_future() {
           ctx.add_violation(TIMESTAMP_GT_NOW_VIOLATION, "must be in the future");
+          handle_violation!(is_valid, ctx);
         }
 
         if self.lt_now && !val.is_past() {
           ctx.add_violation(TIMESTAMP_LT_NOW_VIOLATION, "must be in the past");
+          handle_violation!(is_valid, ctx);
         }
 
         if let Some(range) = self.within
@@ -158,6 +162,7 @@ impl Validator<Timestamp> for TimestampValidator {
             TIMESTAMP_WITHIN_VIOLATION,
             &format!("must be within {range} from now"),
           );
+          handle_violation!(is_valid, ctx);
         }
       }
 
@@ -165,6 +170,7 @@ impl Validator<Timestamp> for TimestampValidator {
         && val <= gt
       {
         ctx.add_violation(TIMESTAMP_GT_VIOLATION, &format!("must be later than {gt}"));
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(gte) = self.gte
@@ -174,6 +180,7 @@ impl Validator<Timestamp> for TimestampValidator {
           TIMESTAMP_GTE_VIOLATION,
           &format!("must be later than or equal to {gte}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(lt) = self.lt
@@ -183,6 +190,7 @@ impl Validator<Timestamp> for TimestampValidator {
           TIMESTAMP_LT_VIOLATION,
           &format!("must be earlier than {lt}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(lte) = self.lte
@@ -192,6 +200,7 @@ impl Validator<Timestamp> for TimestampValidator {
           TIMESTAMP_LTE_VIOLATION,
           &format!("must be earlier than or equal to {lte}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]
@@ -202,13 +211,17 @@ impl Validator<Timestamp> for TimestampValidator {
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     } else if self.required {
       ctx.add_required_violation();
+      is_valid = false;
     }
+
+    is_valid
   }
 }
 

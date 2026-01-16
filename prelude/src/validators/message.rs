@@ -15,7 +15,7 @@ pub trait ValidatedMessage: Default {
   }
 
   #[doc(hidden)]
-  fn nested_validate(&self, ctx: &mut ValidationCtx);
+  fn nested_validate(&self, ctx: &mut ValidationCtx) -> bool;
 
   #[cfg(feature = "cel")]
   #[doc(hidden)]
@@ -24,21 +24,26 @@ pub trait ValidatedMessage: Default {
     field_context: Option<&FieldContext>,
     parent_elements: &[FieldPathElement],
     violations: &mut ViolationsAcc,
-  ) where
+    fail_fast: bool,
+  ) -> bool
+  where
     Self: TryIntoCel,
   {
     let top_level_programs = Self::cel_rules();
 
-    if !top_level_programs.is_empty() {
+    if top_level_programs.is_empty() {
+      true
+    } else {
       let ctx = ProgramsExecutionCtx {
         programs: top_level_programs,
         value: self.clone(),
         violations,
         field_context,
         parent_elements,
+        fail_fast,
       };
 
-      ctx.execute_programs();
+      ctx.execute_programs()
     }
   }
 
@@ -96,18 +101,23 @@ where
     LinearRefStore::default_with_capacity(cap)
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none());
+
+    let mut is_valid = true;
 
     if let Some(val) = val {
       ctx
         .parent_elements
         .push(ctx.field_context.as_path_element());
 
-      val.nested_validate(ctx);
-
+      is_valid = val.nested_validate(ctx);
       ctx.parent_elements.pop();
+
+      if !is_valid && ctx.fail_fast {
+        return false;
+      }
 
       #[cfg(feature = "cel")]
       if !self.cel.is_empty() {
@@ -117,13 +127,17 @@ where
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     } else if self.required {
       ctx.add_required_violation();
+      is_valid = false;
     }
+
+    is_valid
   }
 }
 

@@ -227,9 +227,11 @@ where
     Ok(())
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
+
+    let mut is_valid = true;
 
     if let Some(val) = val {
       if let Some(min_pairs) = self.min_pairs
@@ -239,6 +241,7 @@ where
           MAP_MIN_PAIRS_VIOLATION,
           &format!("must contain at least {min_pairs} pairs"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(max_pairs) = self.max_pairs
@@ -248,6 +251,7 @@ where
           MAP_MAX_PAIRS_VIOLATION,
           &format!("cannot contain more than {max_pairs} pairs"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       let keys_validator = self.keys.as_ref();
@@ -261,13 +265,21 @@ where
           if let Some(validator) = keys_validator {
             ctx.field_context.field_kind = FieldKind::MapKey;
 
-            validator.validate(ctx, Some(k));
+            is_valid = validator.validate(ctx, Some(k));
+
+            if !is_valid && ctx.fail_fast {
+              return false;
+            }
           }
 
           if let Some(validator) = values_validator {
             ctx.field_context.field_kind = FieldKind::MapValue;
 
-            validator.validate(ctx, Some(v));
+            is_valid = validator.validate(ctx, Some(v));
+
+            if !is_valid && ctx.fail_fast {
+              return false;
+            }
           }
         }
 
@@ -275,6 +287,8 @@ where
         ctx.field_context.field_kind = FieldKind::Map;
       }
     }
+
+    is_valid
   }
 }
 
@@ -381,31 +395,13 @@ where
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
 
+    let mut is_valid = true;
+
     if let Some(val) = val {
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        match try_convert_to_cel(val.clone()) {
-          Ok(cel_value) => {
-            let ctx = ProgramsExecutionCtx {
-              programs: &self.cel,
-              value: cel_value,
-              violations: ctx.violations,
-              field_context: Some(&ctx.field_context),
-              parent_elements: ctx.parent_elements,
-            };
-
-            ctx.execute_programs();
-          }
-          Err(e) => ctx
-            .violations
-            .push(e.into_violation(Some(&ctx.field_context), ctx.parent_elements)),
-        };
-      }
-
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {
@@ -413,6 +409,7 @@ where
           MAP_MIN_PAIRS_VIOLATION,
           &format!("must contain at least {min_pairs} pairs"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(max_pairs) = self.max_pairs
@@ -422,6 +419,7 @@ where
           MAP_MAX_PAIRS_VIOLATION,
           &format!("cannot contain more than {max_pairs} pairs"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       let keys_validator = self.keys.as_ref();
@@ -435,20 +433,55 @@ where
           if let Some(validator) = keys_validator {
             ctx.field_context.field_kind = FieldKind::MapKey;
 
-            validator.validate(ctx, Some(k));
+            is_valid = validator.validate(ctx, Some(k));
+
+            if !is_valid && ctx.fail_fast {
+              return false;
+            }
           }
 
           if let Some(validator) = values_validator {
             ctx.field_context.field_kind = FieldKind::MapValue;
 
-            validator.validate(ctx, Some(v));
+            is_valid = validator.validate(ctx, Some(v));
+
+            if !is_valid && ctx.fail_fast {
+              return false;
+            }
           }
         }
 
         ctx.field_context.subscript = None;
         ctx.field_context.field_kind = FieldKind::Map;
       }
+
+      #[cfg(feature = "cel")]
+      if !self.cel.is_empty() {
+        match try_convert_to_cel(val.clone()) {
+          Ok(cel_value) => {
+            let ctx = ProgramsExecutionCtx {
+              programs: &self.cel,
+              value: cel_value,
+              violations: ctx.violations,
+              field_context: Some(&ctx.field_context),
+              parent_elements: ctx.parent_elements,
+              fail_fast: ctx.fail_fast,
+            };
+
+            is_valid = ctx.execute_programs();
+          }
+          Err(e) => {
+            ctx
+              .violations
+              .push(e.into_violation(Some(&ctx.field_context), ctx.parent_elements));
+
+            is_valid = false;
+          }
+        };
+      }
     }
+
+    is_valid
   }
 }
 

@@ -112,12 +112,15 @@ where
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
 
+    let mut is_valid = true;
+
     if self.required && val.is_none_or(|v| v.is_default()) {
       ctx.add_required_violation();
+      return false;
     }
 
     if let Some(&val) = val {
@@ -130,13 +133,14 @@ where
         }
 
         // Using `const` implies no other rules
-        return;
+        return false;
       }
 
       if let Some(gt) = self.gt
         && val <= gt
       {
         ctx.add_violation(Num::GT_VIOLATION, &format!("must be greater than {gt}"));
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(gte) = self.gte
@@ -146,12 +150,14 @@ where
           Num::GTE_VIOLATION,
           &format!("must be greater than or equal to {gte}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(lt) = self.lt
         && val >= lt
       {
         ctx.add_violation(Num::LT_VIOLATION, &format!("must be smaller than {lt}"));
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(lte) = self.lte
@@ -161,6 +167,7 @@ where
           Num::LTE_VIOLATION,
           &format!("must be smaller than or equal to {lte}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(allowed_list) = &self.in_
@@ -169,6 +176,7 @@ where
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
         ctx.add_violation(Num::IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -177,6 +185,7 @@ where
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
         ctx.add_violation(Num::NOT_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]
@@ -187,11 +196,14 @@ where
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     }
+
+    is_valid
   }
 }
 

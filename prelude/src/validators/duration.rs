@@ -87,8 +87,10 @@ impl Validator<Duration> for DurationValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
+
+    let mut is_valid = true;
 
     if let Some(&val) = val {
       if let Some(const_val) = self.const_ {
@@ -100,13 +102,14 @@ impl Validator<Duration> for DurationValidator {
         }
 
         // Using `const` implies no other rules
-        return;
+        return false;
       }
 
       if let Some(gt) = self.gt
         && val <= gt
       {
         ctx.add_violation(DURATION_GT_VIOLATION, &format!("must be longer than {gt}"));
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(gte) = self.gte
@@ -116,12 +119,14 @@ impl Validator<Duration> for DurationValidator {
           DURATION_GTE_VIOLATION,
           &format!("must be longer than or equal to {gte}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(lt) = self.lt
         && val >= lt
       {
         ctx.add_violation(DURATION_LT_VIOLATION, &format!("must be shorter than {lt}"));
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(lte) = self.lte
@@ -131,6 +136,7 @@ impl Validator<Duration> for DurationValidator {
           DURATION_LTE_VIOLATION,
           &format!("must be shorter than or equal to {lte}"),
         );
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(allowed_list) = &self.in_
@@ -139,6 +145,7 @@ impl Validator<Duration> for DurationValidator {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
         ctx.add_violation(DURATION_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -147,6 +154,7 @@ impl Validator<Duration> for DurationValidator {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
         ctx.add_violation(DURATION_NOT_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]
@@ -157,13 +165,17 @@ impl Validator<Duration> for DurationValidator {
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     } else if self.required {
       ctx.add_required_violation();
+      is_valid = false;
     }
+
+    is_valid
   }
 }
 

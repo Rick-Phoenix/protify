@@ -56,9 +56,11 @@ impl Validator<Any> for AnyValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) {
+  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
+
+    let mut is_valid = true;
 
     if let Some(val) = val {
       if let Some(allowed_list) = &self.in_
@@ -71,6 +73,7 @@ impl Validator<Any> for AnyValidator {
         .concat();
 
         ctx.add_violation(ANY_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
@@ -85,6 +88,7 @@ impl Validator<Any> for AnyValidator {
         .concat();
 
         ctx.add_violation(ANY_NOT_IN_VIOLATION, &err);
+        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]
@@ -95,13 +99,17 @@ impl Validator<Any> for AnyValidator {
           violations: ctx.violations,
           field_context: Some(&ctx.field_context),
           parent_elements: ctx.parent_elements,
+          fail_fast: ctx.fail_fast,
         };
 
-        ctx.execute_programs();
+        is_valid = ctx.execute_programs();
       }
     } else if self.required {
       ctx.add_required_violation();
+      is_valid = false;
     }
+
+    is_valid
   }
 }
 

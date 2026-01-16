@@ -61,6 +61,7 @@ pub struct ValidationCtx<'a> {
   pub field_context: FieldContext<'a>,
   pub parent_elements: &'a mut Vec<FieldPathElement>,
   pub violations: &'a mut ViolationsAcc,
+  pub fail_fast: bool,
 }
 
 impl ValidationCtx<'_> {

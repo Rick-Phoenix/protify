@@ -232,26 +232,30 @@ mod cel_impls {
     pub violations: &'a mut ViolationsAcc,
     pub field_context: Option<&'a FieldContext<'a>>,
     pub parent_elements: &'a [FieldPathElement],
+    pub fail_fast: bool,
   }
 
   impl<CelT> ProgramsExecutionCtx<'_, CelT>
   where
     CelT: TryIntoCel,
   {
-    pub fn execute_programs(self) {
+    pub fn execute_programs(self) -> bool {
       let Self {
         programs,
         value,
         violations,
         field_context,
         parent_elements,
+        fail_fast,
       } = self;
+
+      let mut is_valid = true;
 
       let ctx = match initialize_context(value) {
         Ok(ctx) => ctx,
         Err(e) => {
           violations.push(e.into_violation(field_context, parent_elements));
-          return;
+          return false;
         }
       };
 
@@ -260,11 +264,19 @@ mod cel_impls {
           Ok(was_successful) => {
             if !was_successful {
               violations.add_cel_violation(&program.rule, field_context, parent_elements);
+
+              if fail_fast {
+                return false;
+              } else {
+                is_valid = false;
+              }
             }
           }
           Err(e) => violations.push(e.into_violation(field_context, parent_elements)),
         };
       }
+
+      is_valid
     }
   }
 
