@@ -86,6 +86,12 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       errors.push(e.into());
     }
 
+    if let Some(const_val) = &self.const_
+      && T::try_from(*const_val).is_err()
+    {
+      errors.push(ConsistencyError::ContradictoryInput(format!("The `const` value for the enum `{}` is {const_val} but this number is not among its variants.", T::proto_name())));
+    }
+
     if let Some(in_list) = &self.in_ {
       for num in in_list.items.iter() {
         if T::try_from(*num).is_err() {

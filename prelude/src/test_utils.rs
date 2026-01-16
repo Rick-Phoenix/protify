@@ -1,5 +1,6 @@
 use crate::*;
 
+#[non_exhaustive]
 #[derive(Debug, Error, PartialEq)]
 pub enum ConsistencyError {
   #[error("`const` cannot be used with other rules")]

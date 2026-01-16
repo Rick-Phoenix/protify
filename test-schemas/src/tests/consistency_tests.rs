@@ -421,3 +421,33 @@ fn string_errors() {
     )
   );
 }
+
+#[proto_message(no_auto_test)]
+pub struct ConstWithOtherRules {
+  #[proto(validate = |v| v.const_("abc").min_len(3))]
+  string: String,
+  #[proto(bytes, validate = |v| v.const_(b"abc").min_len(3))]
+  bytes: Bytes,
+  #[proto(validate = |v| v.const_(3).gt(2))]
+  int: i32,
+  #[proto(validate = |v| v.const_(3.0).gt(2.0))]
+  float: f32,
+  #[proto(duration, validate = |v| v.const_(Duration::new(1, 0)).gt(Duration::default()))]
+  duration: Option<Duration>,
+  #[proto(timestamp, validate = |v| v.const_(Timestamp::new(1, 0)).gt(Timestamp::default()))]
+  timestamp: Option<Timestamp>,
+  #[proto(field_mask, validate = |v| v.const_(["abc"]).in_(["abc"]))]
+  field_mask: Option<FieldMask>,
+  #[proto(enum_(TestEnum), validate = |v| v.const_(1).defined_only())]
+  enum_field: i32,
+}
+
+#[test]
+fn const_with_other_rules() {
+  let MessageTestError { field_errors, .. } =
+    ConstWithOtherRules::check_validators_consistency().unwrap_err();
+
+  for err in field_errors {
+    assert_eq_pretty!(err.errors[0], ConsistencyError::ConstWithOtherRules);
+  }
+}
