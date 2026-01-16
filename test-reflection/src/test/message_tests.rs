@@ -70,6 +70,7 @@ fn direct_default_validator() {
     test_oneof2: Some(TestOneof2::Number(1)),
     ..Default::default()
   });
+  inspect_violations(&msg);
   assert_violation_path!("repeated.items.cel", "default repeated validator cel rule");
 
   msg.msg_with_default_validator = Some(DefaultValidatorTest {

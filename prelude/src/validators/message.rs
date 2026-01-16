@@ -4,7 +4,30 @@ pub use builder::MessageValidatorBuilder;
 use super::*;
 
 pub trait ValidatedMessage: Default {
-  fn validate(&self) -> Result<(), Violations>;
+  #[inline]
+  fn validate(&self) -> Result<(), Violations> {
+    let mut violations = ViolationsAcc::new();
+
+    let mut ctx = ValidationCtx {
+      field_context: None,
+      parent_elements: &mut vec![],
+      violations: &mut violations,
+      fail_fast: false,
+    };
+
+    self.nested_validate(&mut ctx);
+
+    if violations.is_empty() {
+      Ok(())
+    } else {
+      Err(violations.to_vec())
+    }
+  }
+
+  #[inline]
+  fn is_valid(&self) -> bool {
+    self.validate().is_ok()
+  }
 
   #[inline]
   fn validated(self) -> Result<Self, Violations> {
@@ -106,7 +129,10 @@ where
       }
 
       is_valid = val.nested_validate(ctx);
-      ctx.parent_elements.pop();
+
+      if ctx.field_context.is_some() {
+        ctx.parent_elements.pop();
+      }
 
       if !is_valid && ctx.fail_fast {
         return false;

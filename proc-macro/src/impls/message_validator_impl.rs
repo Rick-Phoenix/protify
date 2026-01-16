@@ -19,14 +19,23 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
     Some(if *required {
       quote_spanned! {*span=>
         match self.#ident.as_ref() {
-          Some(oneof) => ::prelude::ValidatedOneof::validate(oneof, ctx),
-          None => ctx.violations.add_required_oneof_violation(ctx.parent_elements)
-        };
+          Some(oneof) => {
+            if !::prelude::ValidatedOneof::validate(oneof, ctx) {
+              is_valid = false;
+            }
+          },
+          None => {
+            ctx.violations.add_required_oneof_violation(ctx.parent_elements);
+            is_valid = false;
+          }
+        }
       }
     } else {
       quote_spanned! {*span=>
         if let Some(oneof) = self.#ident.as_ref() {
-          ::prelude::ValidatedOneof::validate(oneof, ctx);
+          if !::prelude::ValidatedOneof::validate(oneof, ctx) {
+            is_valid = false;
+          }
         }
       }
     })
@@ -82,7 +91,7 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
               }
             ),
             #argument
-          );
+          )
         }
       } else {
         quote! {
@@ -99,7 +108,7 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
               }
             ),
             #argument
-          );
+          )
         }
       };
 
@@ -126,7 +135,27 @@ pub fn generate_message_validator(
     let tokens = fields
       .iter()
       .filter_map(|d| d.as_normal())
-      .filter_map(|data| field_validator_tokens(data, ItemKind::Message));
+      .filter_map(|data| {
+        field_validator_tokens(data, ItemKind::Message).map(|validator| {
+          let check = if data.proto_field.is_oneof() {
+            validator
+          } else {
+            quote! {
+              if !{ #validator } {
+                is_valid = false;
+              }
+            }
+          };
+
+          quote! {
+            #check
+
+            if !is_valid && ctx.fail_fast {
+              return false;
+            }
+          }
+        })
+      });
 
     quote! { #(#tokens)* }
   };
@@ -169,46 +198,18 @@ pub fn generate_message_validator(
     }
   } else {
     quote! {
-      #[allow(clippy::ptr_arg)]
-      impl #target_ident {
-        #[doc(hidden)]
-        fn __validate_internal(&self, ctx: &mut ::prelude::ValidationCtx) {
-          #cel_rules_call
-
-          #validators_tokens
-        }
-      }
-
       impl ::prelude::ValidatedMessage for #target_ident {
         #cel_rules_method
 
-        fn validate(&self) -> Result<(), ::prelude::Violations> {
-          let mut violations = ::prelude::ViolationsAcc::new();
-
-          let mut ctx = ::prelude::ValidationCtx {
-            field_context: None,
-            parent_elements: &mut vec![],
-            violations: &mut violations,
-            fail_fast: false
-          };
-
-          self.__validate_internal(&mut ctx);
-
-          if violations.is_empty() {
-            Ok(())
-          } else {
-            Err(violations.to_vec())
-          }
-        }
-
         #[doc(hidden)]
-        #[inline]
         fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
-          let prev_len = ctx.violations.len();
+          let mut is_valid = true;
 
-          self.__validate_internal(ctx);
+          #cel_rules_call
 
-          ctx.violations.len() == prev_len
+          #validators_tokens
+
+          is_valid
         }
       }
     }

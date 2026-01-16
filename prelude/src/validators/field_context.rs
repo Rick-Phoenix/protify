@@ -66,6 +66,11 @@ pub struct ValidationCtx<'a> {
 
 impl ValidationCtx<'_> {
   #[inline]
+  pub fn reset_field_context(&mut self) {
+    self.field_context = None;
+  }
+
+  #[inline]
   pub fn with_field_context(&mut self, field_context: FieldContext) -> &mut Self {
     self.field_context = Some(field_context);
     self

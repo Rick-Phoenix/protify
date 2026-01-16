@@ -26,20 +26,26 @@ pub fn generate_oneof_validator(
     quote! {
       match self {
         #(#tokens,)*
-        _ => {}
+        _ => true
       }
     }
   };
 
-  let inline_only_if_empty = validators_tokens
-    .is_empty()
-    .then(|| quote! { #[inline] });
-
-  quote! {
-    impl ::prelude::ValidatedOneof for #oneof_ident {
-      #inline_only_if_empty
-      fn validate(&self, ctx: &mut ::prelude::ValidationCtx) {
-        #validators_tokens
+  if validators_tokens.is_empty() {
+    quote! {
+      impl ::prelude::ValidatedOneof for #oneof_ident {
+        #[inline]
+        fn validate(&self, _: &mut ::prelude::ValidationCtx) -> bool {
+          true
+        }
+      }
+    }
+  } else {
+    quote! {
+      impl ::prelude::ValidatedOneof for #oneof_ident {
+        fn validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
+          #validators_tokens
+        }
       }
     }
   }
