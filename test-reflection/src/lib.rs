@@ -8,23 +8,13 @@ mod proto {
 mod test {
   use maplit::hashmap;
   use prelude::ValidatedMessage;
+  use proto_types::protovalidate::Violation;
 
   #[cfg(feature = "reflection")]
   use crate::proto::*;
 
   #[cfg(not(feature = "reflection"))]
   use test_schemas::*;
-
-  #[cfg(feature = "reflection")]
-  use crate::proto::default_validator_test::TestOneof2;
-  #[cfg(not(feature = "reflection"))]
-  use test_schemas::TestOneof2;
-
-  #[cfg(feature = "reflection")]
-  use crate::proto::oneof_tests::TestOneof;
-
-  #[cfg(not(feature = "reflection"))]
-  use test_schemas::TestOneof;
 
   use prelude::proto_types::*;
 
@@ -36,6 +26,14 @@ mod test {
     let first = violations.first().unwrap();
 
     first.rule_path_str().unwrap()
+  }
+
+  #[allow(unused)]
+  #[track_caller]
+  pub(crate) fn first_violation<T: ValidatedMessage>(msg: &T) -> Violation {
+    let mut violations = msg.validate().unwrap_err();
+
+    violations.violations.remove(0)
   }
 
   #[allow(unused)]

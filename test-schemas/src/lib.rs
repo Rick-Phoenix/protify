@@ -163,14 +163,6 @@ pub struct BTreeMapTest {
   pub map: BTreeMap<i32, i32>,
 }
 
-#[proto_oneof(no_auto_test)]
-pub enum TestOneof2 {
-  #[proto(tag = 1)]
-  String(String),
-  #[proto(tag = 2, validate = |v| v.const_(1))]
-  Number(i32),
-}
-
 fn bad_rule() -> CelProgram {
   cel_program!(id = "abc", msg = "hi", expr = "hi")
 }
@@ -212,23 +204,55 @@ pub enum BadCelOneof {
   Name(String),
 }
 
+// This checks if the validator is registered even if there are no
+// validators explicitely defined, but a field is a message
 #[proto_message(no_auto_test)]
-pub struct DefaultValidatorTest2 {
+pub struct DefaultValidatorTestMsg {
   #[proto(message)]
-  pub msg_with_default_validator: Option<DefaultValidatorTest>,
+  pub msg_with_default_validator: Option<DefaultValidatorTestCel>,
 }
 
+// This checks if the default validator is registered
+// if a field is a oneof
+#[proto_message(no_auto_test)]
+pub struct DefaultValidatorTestOneof {
+  #[proto(oneof(required, tags(1, 2)))]
+  pub default_validator_oneof: Option<DefaultValidatorOneof>,
+}
+
+// This checks if the default validator is registered
+// if a variant is a message
+#[proto_oneof(no_auto_test)]
+pub enum DefaultValidatorOneof {
+  #[proto(message, tag = 1)]
+  A(SimpleMsg),
+  #[proto(tag = 2)]
+  B(u32),
+}
+
+// Checks if the default validator is registered if there is a
+// repeated message field
+#[proto_message(no_auto_test)]
+pub struct DefaultValidatorTestVec {
+  #[proto(repeated(message))]
+  pub repeated_test: Vec<DefaultValidatorTestCel>,
+}
+
+// Checks if the default validator is registered if there is a
+// map field with message values
+#[proto_message(no_auto_test)]
+pub struct DefaultValidatorTestMap {
+  #[proto(map(int32, message))]
+  pub map_test: HashMap<i32, DefaultValidatorTestCel>,
+}
+
+// This checks if the default validator is registered
+// if there are top level rules
 #[allow(clippy::use_self)]
 #[proto_message(no_auto_test)]
 #[proto(cel_rules(cel_program!(id = "id_is_1", msg = "abc", expr = "this.id == 1")))]
-pub struct DefaultValidatorTest {
+pub struct DefaultValidatorTestCel {
   pub id: i32,
-  #[proto(oneof(required, tags(1, 2)))]
-  pub test_oneof2: Option<TestOneof2>,
-  #[proto(repeated(message))]
-  pub repeated_test: Vec<DefaultValidatorTest>,
-  #[proto(map(int32, message))]
-  pub map_test: HashMap<i32, DefaultValidatorTest>,
 }
 
 #[proto_oneof(no_auto_test)]
@@ -237,8 +261,6 @@ pub enum TestOneof {
   String(String),
   #[proto(tag = 2, message(boxed), validate = |v| v.cel(cel_program!(id = "recursive_cel_rule", msg = "abc", expr = "this.string != 'c'")))]
   BoxedMsg(Box<OneofTests>),
-  #[proto(tag = 3, message)]
-  DefaultValidatorMsg(DefaultValidatorTest),
 }
 
 #[proto_message(no_auto_test)]
