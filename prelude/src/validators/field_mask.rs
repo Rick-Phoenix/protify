@@ -74,12 +74,17 @@ impl Validator<FieldMask> for FieldMaskValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
+  fn validate<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
     handle_ignore_always!(&self.ignore);
 
     let mut is_valid = true;
 
     if let Some(val) = val {
+      let val = val.borrow();
+
       if let Some(const_val) = &self.const_ {
         let const_val_len = const_val.items.len();
 

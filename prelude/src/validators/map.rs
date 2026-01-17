@@ -235,13 +235,18 @@ where
     Ok(())
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
+  fn validate<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
+  where
+    Val: Borrow<Self::Target> + ?Sized,
+  {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
 
     let mut is_valid = true;
 
     if let Some(val) = val {
+      let val = val.borrow();
+
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {
@@ -423,13 +428,18 @@ where
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
+  fn validate<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
+  where
+    Val: Borrow<Self::Target> + ?Sized,
+  {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
 
     let mut is_valid = true;
 
     if let Some(val) = val {
+      let val = val.borrow();
+
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {

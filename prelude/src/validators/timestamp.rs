@@ -125,12 +125,17 @@ impl Validator<Timestamp> for TimestampValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
+  fn validate<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
     handle_ignore_always!(&self.ignore);
 
     let mut is_valid = true;
 
-    if let Some(&val) = val {
+    if let Some(val) = val {
+      let val = *val.borrow();
+
       if let Some(const_val) = self.const_ {
         if val != const_val {
           ctx.add_violation(

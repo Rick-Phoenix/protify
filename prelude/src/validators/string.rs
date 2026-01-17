@@ -152,9 +152,9 @@ impl_proto_type!(String, String);
 impl_proto_map_key!(String, String);
 
 impl Validator<String> for StringValidator {
-  type Target = String;
+  type Target = str;
   type UniqueStore<'a>
-    = RefHybridStore<'a, String>
+    = RefHybridStore<'a, str>
   where
     Self: 'a;
 
@@ -163,7 +163,25 @@ impl Validator<String> for StringValidator {
     RefHybridStore::default_with_capacity(cap)
   }
 
-  impl_testing_methods!();
+  #[cfg(feature = "cel")]
+  fn check_cel_programs_with(
+    &self,
+    val: <Self::Target as ToOwned>::Owned,
+  ) -> Result<(), Vec<CelError>> {
+    if !self.cel.is_empty() {
+      test_programs(&self.cel, val)
+    } else {
+      Ok(())
+    }
+  }
+  #[cfg(feature = "cel")]
+  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+    self.check_cel_programs_with(String::new())
+  }
+  #[doc(hidden)]
+  fn cel_rules(&self) -> Vec<CelRule> {
+    self.cel.iter().map(|p| p.rule.clone()).collect()
+  }
 
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
@@ -237,18 +255,23 @@ impl Validator<String> for StringValidator {
     }
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
+  fn validate<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
 
     let mut is_valid = true;
 
-    if self.required && val.is_none_or(|v| v.is_empty()) {
+    if self.required && val.is_none_or(|v| v.borrow().is_empty()) {
       ctx.add_required_violation();
       return false;
     }
 
     if let Some(val) = val {
+      let val = val.borrow();
+
       if let Some(const_val) = &self.const_ {
         if val != const_val.as_ref() {
           ctx.add_violation(
@@ -372,7 +395,7 @@ impl Validator<String> for StringValidator {
       }
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(val.as_str())
+        && !allowed_list.items.contains(val)
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
@@ -381,7 +404,7 @@ impl Validator<String> for StringValidator {
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.items.contains(val.as_str())
+        && forbidden_list.items.contains(val)
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 

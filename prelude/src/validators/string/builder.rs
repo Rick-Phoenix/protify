@@ -11,7 +11,19 @@ pub struct StringValidatorBuilder<S: State = Empty> {
   data: StringValidator,
 }
 
-impl_validator!(StringValidator, String);
+impl ProtoValidator for String {
+  type Target = str;
+  type Validator = StringValidator;
+  type Builder = StringValidatorBuilder;
+}
+impl<S: State> ValidatorBuilderFor<String> for StringValidatorBuilder<S> {
+  type Target = str;
+  type Validator = StringValidator;
+  #[inline]
+  fn build_validator(self) -> StringValidator {
+    self.build()
+  }
+}
 
 impl<S: State> Default for StringValidatorBuilder<S> {
   #[inline]

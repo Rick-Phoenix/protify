@@ -34,7 +34,9 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
   #[cfg(feature = "cel")]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>>;
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool;
+  fn validate<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized;
 }
 
 pub trait ValidatorBuilderFor<T: ?Sized>: Default {
@@ -58,8 +60,11 @@ pub trait ProtoValidator {
   #[inline]
   fn validate_with(
     &self,
-    validator: &impl Validator<Self, Target = Self>,
-  ) -> Result<(), Violations> {
+    validator: &impl Validator<Self, Target = Self::Target>,
+  ) -> Result<(), Violations>
+  where
+    Self: Borrow<Self::Target>,
+  {
     let mut ctx = ValidationCtx {
       field_context: None,
       parent_elements: vec![],
@@ -67,7 +72,7 @@ pub trait ProtoValidator {
       fail_fast: false,
     };
 
-    validator.validate(&mut ctx, Some(self));
+    validator.validate(&mut ctx, Some(self.borrow()));
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -80,7 +85,8 @@ pub trait ProtoValidator {
   where
     F: FnOnce(Self::Builder) -> FinalBuilder,
     FinalBuilder: ValidatorBuilderFor<Self, Validator = V>,
-    V: Validator<Self, Target = Self>,
+    V: Validator<Self, Target = Self::Target>,
+    Self: Borrow<Self::Target>,
   {
     let initial_builder = Self::validator_builder();
 
@@ -93,7 +99,7 @@ pub trait ProtoValidator {
       fail_fast: false,
     };
 
-    validator.validate(&mut ctx, Some(self));
+    validator.validate(&mut ctx, Some(self.borrow()));
 
     if ctx.violations.is_empty() {
       Ok(())

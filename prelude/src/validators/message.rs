@@ -132,13 +132,18 @@ where
     LinearRefStore::default_with_capacity(cap)
   }
 
-  fn validate(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> bool {
+  fn validate<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none());
 
     let mut is_valid = true;
 
     if let Some(val) = val {
+      let val = val.borrow();
+
       if let Some(field_context) = &mut ctx.field_context {
         ctx
           .parent_elements
