@@ -56,7 +56,7 @@ impl Validator<Any> for AnyValidator {
     }
   }
 
-  fn validate_option_with_ctx<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
   where
     V: Borrow<Self::Target> + ?Sized,
   {

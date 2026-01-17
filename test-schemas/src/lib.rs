@@ -45,7 +45,7 @@ fn abc() {
   let validator = String::validator_builder().email().build();
 
   let _ = msg.name.validate_with(&validator);
-  let _ = validator.validate_option_with_ctx(&mut ValidationCtx::default(), Some("abc"));
+  let _ = validator.validate_core(&mut ValidationCtx::default(), Some("abc"));
 
   let _msg_v = msg.validate_with(&SimpleMsg::validator_builder().build());
 

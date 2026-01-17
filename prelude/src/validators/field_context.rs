@@ -271,14 +271,7 @@ pub(crate) fn create_violation_core(
 
     elements.extend(parent_elements.iter().cloned());
 
-    let current_elem = FieldPathElement {
-      field_type: Some(field_context.field_type as i32),
-      field_name: Some(field_context.proto_name.to_string()),
-      key_type: field_context.map_key_type.map(|t| t as i32),
-      value_type: field_context.map_value_type.map(|t| t as i32),
-      field_number: Some(field_context.tag),
-      subscript: field_context.subscript.clone(),
-    };
+    let current_elem = field_context.as_path_element();
 
     elements.push(current_elem);
 

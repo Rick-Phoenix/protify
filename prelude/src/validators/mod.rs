@@ -35,30 +35,70 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>>;
 
   #[inline]
-  fn validate<V>(&self, val: &V) -> bool
+  fn validate<V>(&self, val: &V) -> Result<(), Violations>
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    self.validate_option_with_ctx(&mut ValidationCtx::default(), Some(val))
+    let mut ctx = ValidationCtx::default();
+
+    self.validate_core(&mut ctx, Some(val));
+
+    if ctx.violations.is_empty() {
+      Ok(())
+    } else {
+      Err(ctx.violations.into_violations())
+    }
   }
 
   #[inline]
-  fn validate_option<V>(&self, val: Option<&V>) -> bool
+  fn validate_option<V>(&self, val: Option<&V>) -> Result<(), Violations>
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    self.validate_option_with_ctx(&mut ValidationCtx::default(), val)
+    let mut ctx = ValidationCtx::default();
+
+    self.validate_core(&mut ctx, val);
+
+    if ctx.violations.is_empty() {
+      Ok(())
+    } else {
+      Err(ctx.violations.into_violations())
+    }
   }
 
   #[inline]
-  fn validate_with_ctx<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_with_ctx<V>(&self, mut ctx: ValidationCtx, val: &V) -> Result<(), Violations>
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    self.validate_option_with_ctx(ctx, val)
+    self.validate_core(&mut ctx, Some(val));
+
+    if ctx.violations.is_empty() {
+      Ok(())
+    } else {
+      Err(ctx.violations.into_violations())
+    }
   }
 
-  fn validate_option_with_ctx<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  #[inline]
+  fn validate_option_with_ctx<V>(
+    &self,
+    mut ctx: ValidationCtx,
+    val: Option<&V>,
+  ) -> Result<(), Violations>
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    self.validate_core(&mut ctx, val);
+
+    if ctx.violations.is_empty() {
+      Ok(())
+    } else {
+      Err(ctx.violations.into_violations())
+    }
+  }
+
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
   where
     V: Borrow<Self::Target> + ?Sized;
 }
@@ -120,7 +160,7 @@ where
 
     let val_ref = self.as_ref().map(|v| v.borrow());
 
-    validator.validate_option_with_ctx(&mut ctx, val_ref);
+    validator.validate_core(&mut ctx, val_ref);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -139,7 +179,7 @@ impl ValidateWith for &str {
   {
     let mut ctx = ValidationCtx::default();
 
-    validator.validate_option_with_ctx(&mut ctx, Some(self));
+    validator.validate_core(&mut ctx, Some(self));
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -161,7 +201,7 @@ where
   {
     let mut ctx = ValidationCtx::default();
 
-    validator.validate_option_with_ctx(&mut ctx, Some(self.borrow()));
+    validator.validate_core(&mut ctx, Some(self.borrow()));
 
     if ctx.violations.is_empty() {
       Ok(())
