@@ -7,7 +7,10 @@
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-pub use alloc::{collections::BTreeMap, format, string::String, string::ToString, vec, vec::Vec};
+pub use alloc::{
+  boxed::Box, collections::BTreeMap, format, string::String, string::ToString, sync::Arc, vec,
+  vec::Vec,
+};
 
 #[doc(hidden)]
 pub extern crate alloc;
@@ -19,7 +22,7 @@ pub use ::cel;
 mod decl_macros;
 
 use ::bytes::Bytes;
-use alloc::{borrow::Cow, collections::BTreeSet, sync::Arc};
+use alloc::{borrow::Cow, collections::BTreeSet};
 use core::borrow::Borrow;
 use core::fmt::{Debug, Display};
 use core::{

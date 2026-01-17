@@ -177,12 +177,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut extern_path =
     TokensOr::<LitStr>::new(|span| quote_spanned! (span=> ::core::module_path!()));
   let mut imports = TokenStreamOr::new(|_| quote! { [] });
-  let mut extensions = IterTokensOr::<Path>::new(
-    |_| quote! { ::prelude::vec![] },
-    |_, items| {
-      quote! { ::prelude::vec![ #(<#items as ::prelude::ProtoExtension>::as_proto_extension()),* ] }
-    },
-  );
+  let mut extensions: Vec<Path> = Vec::new();
   let mut edition = TokenStreamOr::new(|_| quote! { ::prelude::Edition::Proto3 });
 
   let parser = syn::meta::parser(|meta| {
@@ -206,7 +201,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
         imports.set(meta.parse_value::<Expr>()?.into_token_stream());
       }
       "extensions" => {
-        extensions.set(parse_bracketed::<PathList>(meta.value()?)?.list);
+        extensions = parse_bracketed::<PathList>(meta.value()?)?.list;
       }
       "edition" => {
         edition.set(meta.parse_value::<Path>()?.into_token_stream());
@@ -246,7 +241,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
         edition: #edition,
         options: || #options.into_iter().collect(),
         imports: || #imports.into_iter().collect(),
-        extensions: || #extensions
+        extensions: || ::prelude::vec![ #(<#extensions as ::prelude::ProtoExtension>::as_proto_extension()),* ]
       }
     }
   })

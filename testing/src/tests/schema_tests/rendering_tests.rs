@@ -250,7 +250,7 @@ fn msg_rule() -> CelProgram {
 #[proto(reserved_numbers(1, 2, 3..9))]
 #[proto(reserved_names("abc", "bcd"))]
 #[proto(options = test_options())]
-#[proto(cel_rules(msg_rule(), msg_rule()))]
+#[proto(cel_rules = [ msg_rule(), msg_rule() ])]
 pub struct TestMessage {
   #[proto(tag = 9)]
   pub manual_tag_field: i32,

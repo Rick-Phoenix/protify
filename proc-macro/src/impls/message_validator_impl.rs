@@ -127,7 +127,7 @@ pub fn generate_message_validator(
   use_fallback: UseFallback,
   target_ident: &Ident,
   fields: &[FieldDataKind],
-  top_level_cel_rules: &IterTokensOr<TokenStream2>,
+  top_level_cel_rules: &TokenStream2,
 ) -> TokenStream2 {
   let validators_tokens = if *use_fallback {
     quote! { unimplemented!(); }
@@ -167,9 +167,11 @@ pub fn generate_message_validator(
   let cel_methods = if has_cel_rules {
     quote_spanned! {top_level_cel_rules.span()=>
       #[inline]
+      #[allow(clippy::iter_on_single_items)]
       fn cel_rules() -> &'static [::prelude::CelProgram] {
-        static PROGRAMS: ::prelude::Lazy<Vec<::prelude::CelProgram>> = ::prelude::Lazy::new(|| {
-          #top_level_cel_rules
+        static PROGRAMS: ::prelude::Lazy<::prelude::Box<[::prelude::CelProgram]>> = ::prelude::Lazy::new(|| {
+          let programs: ::prelude::Vec<::prelude::CelProgram> = #top_level_cel_rules.into_iter().collect();
+          programs.into_boxed_slice()
         });
 
         &PROGRAMS

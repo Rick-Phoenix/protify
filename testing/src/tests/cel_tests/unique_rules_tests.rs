@@ -29,7 +29,7 @@ fn field_duplicate_rules() {
 }
 
 #[proto_message(no_auto_test)]
-#[proto(cel_rules(rule_1(), rule_2()))]
+#[proto(cel_rules = [ rule_1(), rule_2() ])]
 struct MsgDuplicateRules {
   #[proto(tag = 1)]
   pub id: i32,
@@ -50,7 +50,7 @@ fn msg_duplicate_rules() {
 }
 
 #[proto_message(no_auto_test)]
-#[proto(cel_rules(rule_1()))]
+#[proto(cel_rules = [ rule_1() ])]
 struct MsgAndFieldDuplicateRules {
   #[proto(tag = 1, validate = |v| v.cel(rule_2()))]
   pub id: i32,
@@ -79,7 +79,7 @@ enum OneofWithRule {
 }
 
 #[proto_message(no_auto_test)]
-#[proto(cel_rules(rule_2()))]
+#[proto(cel_rules = [ rule_2() ])]
 struct MsgAndOneofDuplicateRules {
   #[proto(oneof(tags(1, 2)))]
   pub oneof: Option<OneofWithRule>,
@@ -152,7 +152,7 @@ fn oneof_duplicate_rules() {
 // This one should be okay because it's the same rule used twice, not
 // two different rules with the same ID
 #[proto_message(no_auto_test)]
-#[proto(cel_rules(rule_1()))]
+#[proto(cel_rules = [ rule_1() ])]
 struct BenignDuplicateRules {
   #[proto(tag = 1, validate = |v| v.cel(rule_1()))]
   pub id: i32,

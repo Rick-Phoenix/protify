@@ -3,7 +3,7 @@ use super::*;
 #[derive(Default)]
 struct ReflectionMsgData {
   pub fields_data: Vec<FieldDataKind>,
-  pub top_level_rules: IterTokensOr<TokenStream2>,
+  pub top_level_rules: TokenStream2,
   pub no_auto_test: SkipAutoTest,
   pub msg_name: String,
 }
@@ -170,7 +170,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
     }
   }
 
-  let mut cel_rules = IterTokensOr::<TokenStream2>::vec();
+  let mut cel_rules = TokenStream2::new();
 
   // Message Rules
   if let Some(message_rules) = get_message_rules(&message_desc) {
@@ -182,8 +182,12 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
       } = rule;
 
       cel_rules
-        .push(quote! { ::prelude::cel_program!(id = #id, msg = #message, expr = #expression) });
+        .extend(quote! { ::prelude::cel_program!(id = #id, msg = #message, expr = #expression), });
     }
+  }
+
+  if !cel_rules.is_empty() {
+    cel_rules = quote! { vec![ #cel_rules ] }
   }
 
   Ok(ReflectionMsgData {

@@ -1,5 +1,4 @@
 use syn::LitBool;
-use syn_utils::PunctuatedItems;
 
 use crate::*;
 
@@ -13,7 +12,7 @@ pub struct MessageAttrs {
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
-  pub cel_rules: IterTokensOr<TokenStream2>,
+  pub cel_rules: TokenStream2,
   pub is_proxied: bool,
   pub no_auto_test: SkipAutoTest,
   pub extern_path: Option<ParsedStr>,
@@ -76,7 +75,7 @@ pub fn process_message_attrs(
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Option<MetaList> = None;
-  let mut cel_rules = IterTokensOr::<TokenStream2>::vec();
+  let mut cel_rules = TokenStream2::new();
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;
 
@@ -102,12 +101,7 @@ pub fn process_message_attrs(
               deprecated = boolean.value();
             }
             "cel_rules" => {
-              cel_rules.span = meta.input.span();
-              cel_rules.set(
-                meta
-                  .parse_list::<PunctuatedItems<TokenStream2>>()?
-                  .list,
-              );
+              cel_rules = meta.parse_value::<Expr>()?.into_token_stream();
             }
             "reserved_names" => {
               let names = meta.parse_list::<StringList>()?;
