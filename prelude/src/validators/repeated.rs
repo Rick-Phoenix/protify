@@ -299,7 +299,7 @@ where
           Err(e) => {
             ctx
               .violations
-              .push(e.into_violation(ctx.field_context.as_ref(), ctx.parent_elements));
+              .push(e.into_violation(ctx.field_context.as_ref(), &ctx.parent_elements));
             is_valid = false;
           }
         };

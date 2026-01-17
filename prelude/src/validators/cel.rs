@@ -226,13 +226,13 @@ mod cel_impls {
     Ok(ctx)
   }
 
-  pub struct ProgramsExecutionCtx<'a, 'b, CelT> {
+  pub struct ProgramsExecutionCtx<'a, CelT> {
     pub programs: &'a [CelProgram],
     pub value: CelT,
-    pub ctx: &'a mut ValidationCtx<'b>,
+    pub ctx: &'a mut ValidationCtx,
   }
 
-  impl<CelT> ProgramsExecutionCtx<'_, '_, CelT>
+  impl<CelT> ProgramsExecutionCtx<'_, CelT>
   where
     CelT: TryIntoCel,
   {

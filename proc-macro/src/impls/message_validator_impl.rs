@@ -25,7 +25,7 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
             }
           },
           None => {
-            ctx.violations.add_required_oneof_violation(ctx.parent_elements);
+            ctx.violations.add_required_oneof_violation(&ctx.parent_elements);
             is_valid = false;
           }
         }

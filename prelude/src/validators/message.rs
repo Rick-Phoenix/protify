@@ -6,41 +6,32 @@ use super::*;
 pub trait ValidatedMessage: Default {
   #[inline]
   fn validate_all(&self) -> Result<(), Violations> {
-    let mut violations = ViolationsAcc::new();
-
     let mut ctx = ValidationCtx {
       field_context: None,
-      parent_elements: &mut vec![],
-      violations: &mut violations,
+      parent_elements: vec![],
+      violations: ViolationsAcc::new(),
       fail_fast: false,
     };
 
     self.nested_validate(&mut ctx);
 
-    if violations.is_empty() {
+    if ctx.violations.is_empty() {
       Ok(())
     } else {
-      Err(violations.into_violations())
+      Err(ctx.violations.into_violations())
     }
   }
 
   #[inline]
   fn validate(&self) -> Result<(), Violations> {
-    let mut violations = ViolationsAcc::new();
-
-    let mut ctx = ValidationCtx {
-      field_context: None,
-      parent_elements: &mut vec![],
-      violations: &mut violations,
-      fail_fast: true,
-    };
+    let mut ctx = ValidationCtx::default();
 
     self.nested_validate(&mut ctx);
 
-    if violations.is_empty() {
+    if ctx.violations.is_empty() {
       Ok(())
     } else {
-      Err(violations.into_violations())
+      Err(ctx.violations.into_violations())
     }
   }
 

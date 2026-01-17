@@ -57,14 +57,26 @@ impl FieldKind {
   }
 }
 
-pub struct ValidationCtx<'a> {
+pub struct ValidationCtx {
   pub field_context: Option<FieldContext>,
-  pub parent_elements: &'a mut Vec<FieldPathElement>,
-  pub violations: &'a mut ViolationsAcc,
+  pub parent_elements: Vec<FieldPathElement>,
+  pub violations: ViolationsAcc,
   pub fail_fast: bool,
 }
 
-impl ValidationCtx<'_> {
+impl Default for ValidationCtx {
+  #[inline]
+  fn default() -> Self {
+    Self {
+      field_context: None,
+      parent_elements: vec![],
+      violations: ViolationsAcc::new(),
+      fail_fast: true,
+    }
+  }
+}
+
+impl ValidationCtx {
   #[inline]
   pub fn reset_field_context(&mut self) {
     self.field_context = None;
@@ -81,7 +93,7 @@ impl ValidationCtx<'_> {
     let violation = create_violation_core(
       None,
       self.field_context.as_ref(),
-      self.parent_elements,
+      &self.parent_elements,
       violation_data,
       error_message,
     );
@@ -99,7 +111,7 @@ impl ValidationCtx<'_> {
     let violation = new_violation_with_custom_id(
       rule_id,
       self.field_context.as_ref(),
-      self.parent_elements,
+      &self.parent_elements,
       violation_data,
       error_message,
     );
@@ -111,14 +123,14 @@ impl ValidationCtx<'_> {
   pub fn add_cel_violation(&mut self, rule: &CelRule) {
     self
       .violations
-      .add_cel_violation(rule, self.field_context.as_ref(), self.parent_elements);
+      .add_cel_violation(rule, self.field_context.as_ref(), &self.parent_elements);
   }
 
   #[inline]
   pub fn add_required_oneof_violation(&mut self) {
     self
       .violations
-      .add_required_oneof_violation(self.parent_elements);
+      .add_required_oneof_violation(&self.parent_elements);
   }
 
   #[inline]
