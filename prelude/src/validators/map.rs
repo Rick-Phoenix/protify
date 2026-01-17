@@ -235,7 +235,7 @@ where
     Ok(())
   }
 
-  fn validate<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
+  fn validate_option_with_ctx<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
   where
     Val: Borrow<Self::Target> + ?Sized,
   {
@@ -284,7 +284,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapKey);
 
-            is_valid = validator.validate(ctx, Some(k));
+            is_valid = validator.validate_option_with_ctx(ctx, Some(k));
 
             if !is_valid && ctx.fail_fast {
               return false;
@@ -297,7 +297,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapValue);
 
-            is_valid = validator.validate(ctx, Some(v));
+            is_valid = validator.validate_option_with_ctx(ctx, Some(v));
 
             if !is_valid && ctx.fail_fast {
               return false;
@@ -428,7 +428,7 @@ where
     }
   }
 
-  fn validate<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
+  fn validate_option_with_ctx<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
   where
     Val: Borrow<Self::Target> + ?Sized,
   {
@@ -477,7 +477,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapKey);
 
-            is_valid = validator.validate(ctx, Some(k));
+            is_valid = validator.validate_option_with_ctx(ctx, Some(k));
 
             if !is_valid && ctx.fail_fast {
               return false;
@@ -490,7 +490,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapValue);
 
-            is_valid = validator.validate(ctx, Some(v));
+            is_valid = validator.validate_option_with_ctx(ctx, Some(v));
 
             if !is_valid && ctx.fail_fast {
               return false;

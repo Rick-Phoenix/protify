@@ -34,7 +34,31 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
   #[cfg(feature = "cel")]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>>;
 
-  fn validate<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  #[inline]
+  fn validate<V>(&self, val: &V) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    self.validate_option_with_ctx(&mut ValidationCtx::default(), Some(val))
+  }
+
+  #[inline]
+  fn validate_option<V>(&self, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    self.validate_option_with_ctx(&mut ValidationCtx::default(), val)
+  }
+
+  #[inline]
+  fn validate_with_ctx<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    self.validate_option_with_ctx(ctx, val)
+  }
+
+  fn validate_option_with_ctx<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
   where
     V: Borrow<Self::Target> + ?Sized;
 }
@@ -80,17 +104,6 @@ pub trait ValidateWith: Sized {
   fn validate_with<V, S>(&self, validator: &V) -> Result<(), Violations>
   where
     V: Validator<S, Target = <Self::Item as ProtoValidator>::Target>;
-
-  fn validate_with_closure<F, FinalBuilder>(&self, config: F) -> Result<(), Violations>
-  where
-    F: FnOnce(<Self::Item as ProtoValidator>::Builder) -> FinalBuilder,
-    FinalBuilder:
-      ValidatorBuilderFor<Self::Item, Validator = <Self::Item as ProtoValidator>::Validator>,
-  {
-    let builder = <Self::Item as ProtoValidator>::validator_builder();
-    let validator = config(builder).build_validator();
-    self.validate_with(&validator)
-  }
 }
 
 impl<T> ValidateWith for Option<T>
@@ -107,7 +120,7 @@ where
 
     let val_ref = self.as_ref().map(|v| v.borrow());
 
-    validator.validate(&mut ctx, val_ref);
+    validator.validate_option_with_ctx(&mut ctx, val_ref);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -126,7 +139,7 @@ impl ValidateWith for &str {
   {
     let mut ctx = ValidationCtx::default();
 
-    validator.validate(&mut ctx, Some(self));
+    validator.validate_option_with_ctx(&mut ctx, Some(self));
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -148,7 +161,7 @@ where
   {
     let mut ctx = ValidationCtx::default();
 
-    validator.validate(&mut ctx, Some(self.borrow()));
+    validator.validate_option_with_ctx(&mut ctx, Some(self.borrow()));
 
     if ctx.violations.is_empty() {
       Ok(())

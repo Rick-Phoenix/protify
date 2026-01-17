@@ -77,7 +77,7 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
         let validator_target_type = proto_field.validator_target_type(*span);
 
         quote_spanned! {*span=>
-          <#validator_name as ::prelude::Validator<#validator_target_type>>::validate(
+          <#validator_name as ::prelude::Validator<#validator_target_type>>::validate_option_with_ctx(
             &#validator_static_ident,
             ctx.with_field_context(
               ::prelude::FieldContext {

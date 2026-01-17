@@ -198,7 +198,7 @@ where
     }
   }
 
-  fn validate<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_option_with_ctx<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -274,7 +274,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::RepeatedItem);
 
-            is_valid = validator.validate(ctx, Some(value));
+            is_valid = validator.validate_option_with_ctx(ctx, Some(value));
 
             if !is_valid && ctx.fail_fast {
               return false;
