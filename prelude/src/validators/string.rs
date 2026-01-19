@@ -12,6 +12,7 @@ use super::*;
 pub enum SharedStr {
   Static(&'static str),
   Shared(Arc<str>),
+  Boxed(Box<str>),
 }
 
 impl SharedStr {
@@ -20,6 +21,7 @@ impl SharedStr {
     match self {
       Self::Static(s) => s,
       Self::Shared(s) => s,
+      Self::Boxed(s) => s,
     }
   }
 }
@@ -54,7 +56,8 @@ impl core::ops::Deref for SharedStr {
   fn deref(&self) -> &Self::Target {
     match self {
       Self::Static(str) => str,
-      Self::Shared(arc) => arc,
+      Self::Shared(str) => str,
+      Self::Boxed(str) => str,
     }
   }
 }
@@ -65,15 +68,27 @@ impl From<&'static str> for SharedStr {
   }
 }
 
+impl From<Box<str>> for SharedStr {
+  fn from(value: Box<str>) -> Self {
+    Self::Boxed(value)
+  }
+}
+
 impl From<String> for SharedStr {
   fn from(value: String) -> Self {
-    Self::Shared(value.into())
+    Self::Boxed(value.into_boxed_str())
   }
 }
 
 impl From<Arc<str>> for SharedStr {
   fn from(value: Arc<str>) -> Self {
     Self::Shared(value)
+  }
+}
+
+impl From<&Arc<str>> for SharedStr {
+  fn from(value: &Arc<str>) -> Self {
+    Self::Shared(value.clone())
   }
 }
 
