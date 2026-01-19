@@ -17,10 +17,10 @@ pub struct DurationValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<Duration>>,
+  pub in_: Option<SortedList<Duration>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<Duration>>,
+  pub not_in: Option<SortedList<Duration>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Duration>,
@@ -147,20 +147,28 @@ impl Validator<Duration> for DurationValidator {
       }
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(&val)
+        && !allowed_list.contains(&val)
       {
-        let err = ["must be one of these values: ", &allowed_list.items_str].concat();
-
-        ctx.add_duration_violation(DurationViolation::In, &err);
+        ctx.add_duration_violation(
+          DurationViolation::In,
+          &format!(
+            "must be one of these values: {}",
+            Duration::format_list(allowed_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list.items.contains(&val)
       {
-        let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
-
-        ctx.add_duration_violation(DurationViolation::NotIn, &err);
+        ctx.add_duration_violation(
+          DurationViolation::NotIn,
+          &format!(
+            "must be one of these values: {}",
+            Duration::format_list(forbidden_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
@@ -197,13 +205,13 @@ impl From<DurationValidator> for ProtoOption {
         "in",
         validator
           .in_
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       )
       .maybe_set(
         "not_in",
         validator
           .not_in
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       );
 
     let mut outer_rules = OptionMessageBuilder::new();

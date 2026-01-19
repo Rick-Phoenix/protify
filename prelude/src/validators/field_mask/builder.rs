@@ -87,16 +87,11 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(
-    mut self,
-    val: impl IntoIterator<Item = impl Into<SharedStr>>,
-  ) -> FieldMaskValidatorBuilder<SetIn<S>>
+  pub fn in_(mut self, val: impl IntoSortedList<SharedStr>) -> FieldMaskValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
-    self.data.in_ = Some(StaticLookup::new(
-      val.into_iter().map(Into::<SharedStr>::into),
-    ));
+    self.data.in_ = Some(val.into_sorted_list());
 
     FieldMaskValidatorBuilder {
       _state: PhantomData,
@@ -107,14 +102,12 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn not_in(
     mut self,
-    val: impl IntoIterator<Item = impl Into<SharedStr>>,
+    val: impl IntoSortedList<SharedStr>,
   ) -> FieldMaskValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
-    self.data.not_in = Some(StaticLookup::new(
-      val.into_iter().map(Into::<SharedStr>::into),
-    ));
+    self.data.not_in = Some(val.into_sorted_list());
 
     FieldMaskValidatorBuilder {
       _state: PhantomData,
@@ -125,14 +118,12 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn const_(
     mut self,
-    val: impl IntoIterator<Item = impl Into<SharedStr>>,
+    val: impl IntoSortedList<SharedStr>,
   ) -> FieldMaskValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {
-    self.data.const_ = Some(StaticLookup::new(
-      val.into_iter().map(Into::<SharedStr>::into),
-    ));
+    self.data.const_ = Some(val.into_sorted_list());
 
     FieldMaskValidatorBuilder {
       _state: PhantomData,

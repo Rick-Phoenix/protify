@@ -17,10 +17,10 @@ pub struct AnyValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<SharedStr>>,
+  pub in_: Option<SortedList<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<SharedStr>>,
+  pub not_in: Option<SortedList<SharedStr>>,
 }
 
 impl Validator<Any> for AnyValidator {
@@ -69,30 +69,28 @@ impl Validator<Any> for AnyValidator {
       let val = val.borrow();
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(val.type_url.as_str())
+        && !allowed_list.contains(val.type_url.as_str())
       {
-        let err = [
-          "must have one of these type URLs: ",
-          &allowed_list.items_str,
-        ]
-        .concat();
-
-        ctx.add_any_violation(AnyViolation::In, &err);
+        ctx.add_any_violation(
+          AnyViolation::In,
+          &format!(
+            "must have one of these type URLs: {}",
+            SharedStr::format_list(allowed_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && forbidden_list
-          .items
-          .contains(val.type_url.as_str())
+        && forbidden_list.contains(val.type_url.as_str())
       {
-        let err = [
-          "cannot have one of these type URLs: ",
-          &forbidden_list.items_str,
-        ]
-        .concat();
-
-        ctx.add_any_violation(AnyViolation::NotIn, &err);
+        ctx.add_any_violation(
+          AnyViolation::NotIn,
+          &format!(
+            "cannot have one of these type URLs: {}",
+            SharedStr::format_list(forbidden_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
@@ -124,13 +122,13 @@ impl From<AnyValidator> for ProtoOption {
         "in",
         validator
           .in_
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       )
       .maybe_set(
         "not_in",
         validator
           .not_in
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       );
 
     let mut outer_rules = OptionMessageBuilder::new();

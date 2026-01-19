@@ -81,14 +81,11 @@ impl<S: State> DurationValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(
-    mut self,
-    val: impl IntoIterator<Item = Duration>,
-  ) -> DurationValidatorBuilder<SetIn<S>>
+  pub fn in_(mut self, val: impl IntoSortedList<Duration>) -> DurationValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
-    self.data.in_ = Some(StaticLookup::new(val));
+    self.data.in_ = Some(val.into_sorted_list());
 
     DurationValidatorBuilder {
       _state: PhantomData,
@@ -99,12 +96,12 @@ impl<S: State> DurationValidatorBuilder<S> {
   #[inline]
   pub fn not_in(
     mut self,
-    val: impl IntoIterator<Item = Duration>,
+    val: impl IntoSortedList<Duration>,
   ) -> DurationValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
-    self.data.not_in = Some(StaticLookup::new(val));
+    self.data.not_in = Some(val.into_sorted_list());
 
     DurationValidatorBuilder {
       _state: PhantomData,

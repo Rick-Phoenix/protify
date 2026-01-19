@@ -174,8 +174,8 @@ where
 }
 
 pub(crate) fn check_list_rules<T>(
-  in_list: Option<&StaticLookup<T>>,
-  not_in_list: Option<&StaticLookup<T>>,
+  in_list: Option<&SortedList<T>>,
+  not_in_list: Option<&SortedList<T>>,
 ) -> Result<(), OverlappingListsError>
 where
   T: Debug + PartialEq + Eq + core::hash::Hash + Ord + Clone + ListFormatter,
@@ -185,7 +185,7 @@ where
   {
     let mut overlapping: Vec<T> = Vec::with_capacity(in_list.items.len());
 
-    for item in &in_list.items {
+    for item in in_list {
       let is_overlapping = not_in_list.items.contains(item);
 
       if is_overlapping {

@@ -210,12 +210,12 @@ where
   #[inline]
   pub fn not_in(
     mut self,
-    list: impl IntoIterator<Item = Num::RustType>,
+    list: impl IntoSortedList<OrderedFloat<Num::RustType>>,
   ) -> FloatValidatorBuilder<Num, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
-    self.data.not_in = Some(StaticLookup::new(list.into_iter().map(OrderedFloat)));
+    self.data.not_in = Some(list.into_sorted_list());
 
     FloatValidatorBuilder {
       _state: PhantomData,
@@ -227,12 +227,12 @@ where
   #[inline]
   pub fn in_(
     mut self,
-    list: impl IntoIterator<Item = Num::RustType>,
+    list: impl IntoSortedList<OrderedFloat<Num::RustType>>,
   ) -> FloatValidatorBuilder<Num, SetIn<S>>
   where
     S::In: IsUnset,
   {
-    self.data.in_ = Some(StaticLookup::new(list.into_iter().map(OrderedFloat)));
+    self.data.in_ = Some(list.into_sorted_list());
 
     FloatValidatorBuilder {
       _state: PhantomData,

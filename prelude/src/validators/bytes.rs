@@ -47,10 +47,10 @@ pub struct BytesValidator {
   pub contains: Option<Bytes>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<Bytes>>,
+  pub in_: Option<SortedList<Bytes>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<Bytes>>,
+  pub not_in: Option<SortedList<Bytes>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Bytes>,
@@ -250,20 +250,28 @@ impl Validator<Bytes> for BytesValidator {
       }
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(val.as_ref())
+        && !allowed_list.contains(val.as_ref())
       {
-        let err = ["must be one of these values: ", &allowed_list.items_str].concat();
-
-        ctx.add_bytes_violation(BytesViolation::In, &err);
+        ctx.add_bytes_violation(
+          BytesViolation::In,
+          &format!(
+            "must be one of these values: {}",
+            Bytes::format_list(allowed_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.items.contains(val.as_ref())
+        && forbidden_list.contains(val.as_ref())
       {
-        let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
-
-        ctx.add_bytes_violation(BytesViolation::NotIn, &err);
+        ctx.add_bytes_violation(
+          BytesViolation::NotIn,
+          &format!(
+            "cannot be one of these values: {}",
+            Bytes::format_list(forbidden_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 

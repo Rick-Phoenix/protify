@@ -16,13 +16,13 @@ pub struct FieldMaskValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<SharedStr>>,
+  pub in_: Option<SortedList<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<SharedStr>>,
+  pub not_in: Option<SortedList<SharedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<StaticLookup<SharedStr>>,
+  pub const_: Option<SortedList<SharedStr>>,
 }
 
 impl ProtoValidator for FieldMask {
@@ -91,9 +91,9 @@ impl Validator<FieldMask> for FieldMaskValidator {
         let is_valid = if const_val_len != val.paths.len() {
           false
         } else if const_val_len <= 64 {
-          Self::validate_exact_small(&const_val.items, &val.paths)
+          Self::validate_exact_small(const_val, &val.paths)
         } else {
-          Self::validate_exact_large(&const_val.items, &val.paths, const_val_len)
+          Self::validate_exact_large(const_val, &val.paths, const_val_len)
         };
 
         if !is_valid {
@@ -112,10 +112,14 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
       if let Some(allowed_paths) = &self.in_ {
         for path in &val.paths {
-          if !allowed_paths.items.contains(path.as_str()) {
-            let err = ["can only contain these paths: ", &allowed_paths.items_str].concat();
-
-            ctx.add_field_mask_violation(FieldMaskViolation::In, &err);
+          if !allowed_paths.contains(path.as_str()) {
+            ctx.add_field_mask_violation(
+              FieldMaskViolation::In,
+              &format!(
+                "can only contain these paths: {}",
+                SharedStr::format_list(allowed_paths)
+              ),
+            );
 
             if ctx.fail_fast {
               return false;
@@ -130,14 +134,14 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
       if let Some(forbidden_paths) = &self.not_in {
         for path in &val.paths {
-          if forbidden_paths.items.contains(path.as_str()) {
-            let err = [
-              "cannot contain one of these paths: ",
-              &forbidden_paths.items_str,
-            ]
-            .concat();
-
-            ctx.add_field_mask_violation(FieldMaskViolation::NotIn, &err);
+          if forbidden_paths.contains(path.as_str()) {
+            ctx.add_field_mask_violation(
+              FieldMaskViolation::NotIn,
+              &format!(
+                "cannot contain one of these paths: {}",
+                SharedStr::format_list(forbidden_paths)
+              ),
+            );
 
             if ctx.fail_fast {
               return false;
@@ -224,7 +228,7 @@ impl From<FieldMaskValidator> for ProtoOption {
     if let Some(const_val) = validator.const_ {
       let mut msg_val = OptionMessageBuilder::new();
 
-      msg_val.set("paths", OptionValue::new_list(const_val.items));
+      msg_val.set("paths", OptionValue::new_list(const_val));
 
       rules.set("const", OptionValue::Message(msg_val.into()));
     }
@@ -234,13 +238,13 @@ impl From<FieldMaskValidator> for ProtoOption {
         "in",
         validator
           .in_
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       )
       .maybe_set(
         "not_in",
         validator
           .not_in
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       );
 
     let mut outer_rules = OptionMessageBuilder::new();

@@ -111,11 +111,11 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
   }
 
   #[inline]
-  pub fn in_(mut self, val: impl IntoIterator<Item = i32>) -> EnumValidatorBuilder<T, SetIn<S>>
+  pub fn in_(mut self, val: impl IntoSortedList<i32>) -> EnumValidatorBuilder<T, SetIn<S>>
   where
     S::In: IsUnset,
   {
-    self.data.in_ = Some(StaticLookup::new(val));
+    self.data.in_ = Some(val.into_sorted_list());
 
     EnumValidatorBuilder {
       _state: PhantomData,
@@ -124,14 +124,11 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
   }
 
   #[inline]
-  pub fn not_in(
-    mut self,
-    val: impl IntoIterator<Item = i32>,
-  ) -> EnumValidatorBuilder<T, SetNotIn<S>>
+  pub fn not_in(mut self, val: impl IntoSortedList<i32>) -> EnumValidatorBuilder<T, SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
-    self.data.not_in = Some(StaticLookup::new(val));
+    self.data.not_in = Some(val.into_sorted_list());
 
     EnumValidatorBuilder {
       _state: PhantomData,

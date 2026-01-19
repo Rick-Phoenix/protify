@@ -140,10 +140,10 @@ pub struct StringValidator {
   pub not_contains: Option<SharedStr>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<SharedStr>>,
+  pub in_: Option<SortedList<SharedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<SharedStr>>,
+  pub not_in: Option<SortedList<SharedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<SharedStr>,
@@ -410,20 +410,28 @@ impl Validator<String> for StringValidator {
       }
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(val)
+        && !allowed_list.contains(val)
       {
-        let err = ["must be one of these values: ", &allowed_list.items_str].concat();
-
-        ctx.add_string_violation(StringViolation::In, &err);
+        ctx.add_string_violation(
+          StringViolation::In,
+          &format!(
+            "must be one of these values: {}",
+            SharedStr::format_list(allowed_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.items.contains(val)
+        && forbidden_list.contains(val)
       {
-        let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
-
-        ctx.add_string_violation(StringViolation::NotIn, &err);
+        ctx.add_string_violation(
+          StringViolation::NotIn,
+          &format!(
+            "cannot be one of these values: {}",
+            SharedStr::format_list(forbidden_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
@@ -607,13 +615,13 @@ impl From<StringValidator> for ProtoOption {
         "in",
         validator
           .in_
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       )
       .maybe_set(
         "not_in",
         validator
           .not_in
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       );
 
     if let Some(well_known) = validator.well_known {

@@ -259,6 +259,130 @@ pub struct SortedList<T: Ord> {
   pub(crate) items: Arc<[T]>,
 }
 
+pub trait IntoSortedList<T: Ord> {
+  fn into_sorted_list(self) -> SortedList<T>;
+}
+
+impl<T: Ord> IntoSortedList<T> for SortedList<T> {
+  #[allow(clippy::use_self)]
+  fn into_sorted_list(self) -> SortedList<T> {
+    self
+  }
+}
+
+impl<T: Ord + Clone> IntoSortedList<T> for &SortedList<T> {
+  fn into_sorted_list(self) -> SortedList<T> {
+    self.clone()
+  }
+}
+
+impl<T: Ord> IntoSortedList<T> for Vec<T> {
+  fn into_sorted_list(self) -> SortedList<T> {
+    SortedList::new(self)
+  }
+}
+
+impl<T: Ord, const N: usize> IntoSortedList<T> for [T; N] {
+  fn into_sorted_list(self) -> SortedList<T> {
+    SortedList::new(self)
+  }
+}
+
+impl<T: Ord + Copy> IntoSortedList<T> for &[T] {
+  fn into_sorted_list(self) -> SortedList<T> {
+    SortedList::new(self.iter().copied())
+  }
+}
+
+impl<const N: usize> IntoSortedList<Bytes> for Vec<&'static [u8; N]> {
+  fn into_sorted_list(self) -> SortedList<Bytes> {
+    SortedList::new(self.into_iter().map(|b| Bytes::from_static(b)))
+  }
+}
+
+impl IntoSortedList<Bytes> for &[&'static [u8]] {
+  fn into_sorted_list(self) -> SortedList<Bytes> {
+    SortedList::new(self.iter().map(|b| Bytes::from_static(b)))
+  }
+}
+
+impl<const B: usize, const L: usize> IntoSortedList<Bytes> for [&'static [u8; B]; L] {
+  fn into_sorted_list(self) -> SortedList<Bytes> {
+    SortedList::new(self.into_iter().map(|b| Bytes::from_static(b)))
+  }
+}
+
+macro_rules! impl_sorted_string_list {
+  ($($typ:ty),*) => {
+    $(
+      impl IntoSortedList<SharedStr> for Vec<$typ> {
+        fn into_sorted_list(self) -> SortedList<SharedStr> {
+          let iter = self.into_iter().map(Into::into);
+          SortedList::new(iter)
+        }
+      }
+
+      impl<const N: usize> IntoSortedList<SharedStr> for [$typ; N] {
+        fn into_sorted_list(self) -> SortedList<SharedStr> {
+          let iter = self.into_iter().map(Into::into);
+          SortedList::new(iter)
+        }
+      }
+    )*
+  };
+}
+
+impl_sorted_string_list!(String, Box<str>, &'static str, Arc<str>);
+
+impl IntoSortedList<SharedStr> for &[&'static str] {
+  fn into_sorted_list(self) -> SortedList<SharedStr> {
+    let iter = self.iter().copied().map(Into::into);
+    SortedList::new(iter)
+  }
+}
+
+impl IntoSortedList<SharedStr> for &[Arc<str>] {
+  fn into_sorted_list(self) -> SortedList<SharedStr> {
+    let iter = self.iter().cloned().map(Into::into);
+    SortedList::new(iter)
+  }
+}
+
+macro_rules! impl_sorted_float_list {
+  ($($typ:ty),*) => {
+    $(
+      impl IntoSortedList<OrderedFloat<$typ>> for Vec<$typ> {
+        fn into_sorted_list(self) -> SortedList<OrderedFloat<$typ>> {
+          let iter = self.into_iter().map(OrderedFloat);
+          SortedList::new(iter)
+        }
+      }
+
+      impl IntoSortedList<OrderedFloat<$typ>> for &[$typ] {
+        fn into_sorted_list(self) -> SortedList<OrderedFloat<$typ>> {
+          let iter = self.iter().copied().map(OrderedFloat);
+          SortedList::new(iter)
+        }
+      }
+
+      impl<const N: usize> IntoSortedList<OrderedFloat<$typ>> for [$typ; N] {
+        fn into_sorted_list(self) -> SortedList<OrderedFloat<$typ>> {
+          let iter = self.into_iter().map(OrderedFloat);
+          SortedList::new(iter)
+        }
+      }
+    )*
+  };
+}
+
+impl_sorted_float_list!(f32, f64);
+
+impl<T: Ord> FromIterator<T> for SortedList<T> {
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    Self::new(iter)
+  }
+}
+
 impl<T> SortedList<T>
 where
   T: Ord,
@@ -269,7 +393,7 @@ where
     items.sort_unstable();
 
     Self {
-      items: items.into(),
+      items: items.into_boxed_slice().into(),
     }
   }
 
@@ -488,28 +612,5 @@ impl ListFormatter for Duration {
 
     acc.push(']');
     acc
-  }
-}
-
-#[doc(hidden)]
-#[derive(Debug, Clone)]
-pub struct StaticLookup<T: Ord + ListFormatter> {
-  pub items: SortedList<T>,
-  pub items_str: Arc<str>,
-}
-
-impl<T: Ord + ListFormatter> StaticLookup<T> {
-  pub fn new<I>(iter: I) -> Self
-  where
-    I: IntoIterator<Item = T>,
-  {
-    let items = SortedList::new(iter);
-
-    let items_str = T::format_list(&items);
-
-    Self {
-      items,
-      items_str: items_str.into(),
-    }
   }
 }

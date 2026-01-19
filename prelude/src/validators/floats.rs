@@ -47,10 +47,10 @@ where
   pub gte: Option<Num::RustType>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
+  pub in_: Option<SortedList<OrderedFloat<Num::RustType>>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<OrderedFloat<Num::RustType>>>,
+  pub not_in: Option<SortedList<OrderedFloat<Num::RustType>>>,
 }
 
 pub(crate) fn float_in_list<T>(target: T, list: &[OrderedFloat<T>], abs_tol: T, r2nd_tol: T) -> bool
@@ -164,8 +164,8 @@ where
     }
 
     if let Err(e) = check_float_list_rules(
-      self.in_.as_ref().map(|l| l.items.as_slice()),
-      self.not_in.as_ref().map(|l| l.items.as_slice()),
+      self.in_.as_deref(),
+      self.not_in.as_deref(),
       self.abs_tolerance,
       self.rel_tolerance,
     ) {
@@ -254,30 +254,28 @@ where
       }
 
       if let Some(allowed_list) = &self.in_
-        && !float_in_list(
-          val,
-          &allowed_list.items,
-          self.abs_tolerance,
-          self.rel_tolerance,
-        )
+        && !float_in_list(val, allowed_list, self.abs_tolerance, self.rel_tolerance)
       {
-        let err = ["must be one of these values: ", &allowed_list.items_str].concat();
-
-        ctx.add_violation(Num::IN_VIOLATION, &err);
+        ctx.add_violation(
+          Num::IN_VIOLATION,
+          &format!(
+            "must be one of these values: {}",
+            OrderedFloat::<Num::RustType>::format_list(allowed_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && float_in_list(
-          val,
-          &forbidden_list.items,
-          self.abs_tolerance,
-          self.rel_tolerance,
-        )
+        && float_in_list(val, forbidden_list, self.abs_tolerance, self.rel_tolerance)
       {
-        let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
-
-        ctx.add_violation(Num::NOT_IN_VIOLATION, &err);
+        ctx.add_violation(
+          Num::NOT_IN_VIOLATION,
+          &format!(
+            "cannot be one of these values: {}",
+            OrderedFloat::<Num::RustType>::format_list(forbidden_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 

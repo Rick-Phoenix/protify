@@ -38,10 +38,10 @@ where
   pub gte: Option<Num::RustType>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<Num::RustType>>,
+  pub in_: Option<SortedList<Num::RustType>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<Num::RustType>>,
+  pub not_in: Option<SortedList<Num::RustType>>,
 }
 
 impl<S: builder::state::State, Num: IntWrapper> ValidatorBuilderFor<Num>
@@ -178,20 +178,28 @@ where
       }
 
       if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(&val)
+        && !allowed_list.contains(&val)
       {
-        let err = ["must be one of these values: ", &allowed_list.items_str].concat();
-
-        ctx.add_violation(Num::IN_VIOLATION, &err);
+        ctx.add_violation(
+          Num::IN_VIOLATION,
+          &format!(
+            "must be one of these values: {}",
+            Num::RustType::format_list(allowed_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.items.contains(&val)
+        && forbidden_list.contains(&val)
       {
-        let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
-
-        ctx.add_violation(Num::NOT_IN_VIOLATION, &err);
+        ctx.add_violation(
+          Num::NOT_IN_VIOLATION,
+          &format!(
+            "cannot be one of these values: {}",
+            Num::RustType::format_list(forbidden_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
@@ -246,13 +254,13 @@ where
         "in",
         validator
           .in_
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       )
       .maybe_set(
         "not_in",
         validator
           .not_in
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       );
 
     let mut outer_rules = OptionMessageBuilder::new();

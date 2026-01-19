@@ -253,18 +253,11 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(
-    mut self,
-    val: impl IntoIterator<Item = impl Into<SharedStr>>,
-  ) -> StringValidatorBuilder<SetIn<S>>
+  pub fn in_(mut self, val: impl IntoSortedList<SharedStr>) -> StringValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
-    self.data.in_ = Some(StaticLookup::new(
-      val
-        .into_iter()
-        .map(|v| Into::<SharedStr>::into(v)),
-    ));
+    self.data.in_ = Some(val.into_sorted_list());
 
     StringValidatorBuilder {
       _state: PhantomData,
@@ -275,16 +268,12 @@ impl<S: State> StringValidatorBuilder<S> {
   #[inline]
   pub fn not_in(
     mut self,
-    val: impl IntoIterator<Item = impl Into<SharedStr>>,
+    val: impl IntoSortedList<SharedStr>,
   ) -> StringValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
-    self.data.not_in = Some(StaticLookup::new(
-      val
-        .into_iter()
-        .map(|v| Into::<SharedStr>::into(v)),
-    ));
+    self.data.not_in = Some(val.into_sorted_list());
 
     StringValidatorBuilder {
       _state: PhantomData,

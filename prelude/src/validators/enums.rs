@@ -20,10 +20,10 @@ pub struct EnumValidator<T: ProtoEnum> {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<StaticLookup<i32>>,
+  pub in_: Option<SortedList<i32>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<StaticLookup<i32>>,
+  pub not_in: Option<SortedList<i32>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
@@ -149,18 +149,26 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       if let Some(allowed_list) = &self.in_
         && !allowed_list.items.contains(&val)
       {
-        let err = ["must be one of these values: ", &allowed_list.items_str].concat();
-
-        ctx.add_enum_violation(EnumViolation::In, &err);
+        ctx.add_enum_violation(
+          EnumViolation::In,
+          &format!(
+            "must be one of these values: {}",
+            i32::format_list(allowed_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list.items.contains(&val)
       {
-        let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
-
-        ctx.add_enum_violation(EnumViolation::NotIn, &err);
+        ctx.add_enum_violation(
+          EnumViolation::NotIn,
+          &format!(
+            "cannot be one of these values: {}",
+            i32::format_list(forbidden_list)
+          ),
+        );
         handle_violation!(is_valid, ctx);
       }
 
@@ -191,13 +199,13 @@ impl<T: ProtoEnum> From<EnumValidator<T>> for ProtoOption {
         "in",
         validator
           .in_
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       )
       .maybe_set(
         "not_in",
         validator
           .not_in
-          .map(|list| OptionValue::new_list(list.items)),
+          .map(|list| OptionValue::new_list(list)),
       );
 
     let mut outer_rules = OptionMessageBuilder::new();
