@@ -1779,6 +1779,8 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "env_logger",
+ "maplit",
+ "paste",
  "prelude",
  "prost",
  "regex",

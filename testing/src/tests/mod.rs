@@ -9,10 +9,12 @@ mod cel_tests;
 mod oneof_tags_tests;
 mod validation_tests;
 
+mod custom_errors_tests;
 mod schema_tests;
 mod tolerances_tests;
 
 use ::bytes::Bytes;
+use paste::paste;
 use prelude::{test_utils::*, *};
 use similar_asserts::assert_eq as assert_eq_pretty;
 use std::collections::HashMap;
@@ -37,4 +39,11 @@ pub struct DirectMsg {
 #[proto_message(proxied, no_auto_test)]
 pub struct ProxiedMsg {
   pub id: i32,
+}
+
+#[proto_enum]
+pub enum SimpleEnum {
+  Unspecified,
+  A,
+  B,
 }
