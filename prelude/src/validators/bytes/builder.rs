@@ -83,6 +83,8 @@ impl<S: State> BytesValidatorBuilder<S> {
   clippy::return_self_not_must_use
 )]
 impl<S: State> BytesValidatorBuilder<S> {
+  custom_error_messages_method!(Bytes);
+
   #[inline]
   pub fn ignore_always(mut self) -> BytesValidatorBuilder<SetIgnore<S>>
   where

@@ -12,5 +12,6 @@ builder_state_macro!(
   Gt,
   Gte,
   In,
-  NotIn
+  NotIn,
+  ErrorMessages
 );

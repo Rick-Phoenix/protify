@@ -1,3 +1,29 @@
+macro_rules! custom_error_messages_method {
+  ($kind:ident) => {
+    paste! {
+      pub fn with_error_messages(
+        mut self,
+        error_messages: impl IntoIterator<Item = ([< $kind Violation >], impl Into<SharedStr>)>,
+      ) -> [< $kind ValidatorBuilder >]<SetErrorMessages<S>>
+    where
+      S::ErrorMessages: IsUnset,
+      {
+        let map: BTreeMap<[< $kind Violation >], SharedStr> = error_messages
+        .into_iter()
+        .map(|(v, m)| (v, m.into()))
+        .collect();
+
+        self.data.error_messages = Some(Box::new(map));
+
+        [< $kind ValidatorBuilder >] {
+          _state: PhantomData,
+          data: self.data,
+        }
+      }
+    }
+  };
+}
+
 #[cfg(feature = "inventory")]
 #[macro_export]
 macro_rules! register_proto_data {

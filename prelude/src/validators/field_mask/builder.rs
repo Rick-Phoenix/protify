@@ -50,6 +50,8 @@ impl FieldMaskValidator {
   clippy::return_self_not_must_use
 )]
 impl<S: State> FieldMaskValidatorBuilder<S> {
+  custom_error_messages_method!(FieldMask);
+
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> FieldMaskValidatorBuilder<S> {
     self.data.cel.push(program);

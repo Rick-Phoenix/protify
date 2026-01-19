@@ -48,6 +48,25 @@ impl<T: ProtoEnum, S: State> From<EnumValidatorBuilder<T, S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
+  pub fn with_error_messages(
+    mut self,
+    error_messages: impl IntoIterator<Item = (EnumViolation, impl Into<SharedStr>)>,
+  ) -> EnumValidatorBuilder<T, SetErrorMessages<S>>
+  where
+    S::ErrorMessages: IsUnset,
+  {
+    let map: BTreeMap<EnumViolation, SharedStr> = error_messages
+      .into_iter()
+      .map(|(v, m)| (v, m.into()))
+      .collect();
+    self.data.error_messages = Some(Box::new(map));
+
+    EnumValidatorBuilder {
+      _state: PhantomData,
+      data: self.data,
+    }
+  }
+
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> EnumValidatorBuilder<T, S> {
     self.data.cel.push(program);

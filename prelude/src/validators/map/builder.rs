@@ -100,6 +100,32 @@ where
     }
   }
 
+  pub fn with_error_messages(
+    self,
+    error_messages: impl IntoIterator<Item = (MapViolation, impl Into<SharedStr>)>,
+  ) -> MapValidatorBuilder<K, V, SetErrorMessages<S>>
+  where
+    S::ErrorMessages: IsUnset,
+  {
+    let map: BTreeMap<MapViolation, SharedStr> = error_messages
+      .into_iter()
+      .map(|(v, m)| (v, m.into()))
+      .collect();
+
+    MapValidatorBuilder {
+      _state: PhantomData,
+      cel: self.cel,
+      keys: self.keys,
+      _key_type: self._key_type,
+      _value_type: self._value_type,
+      values: self.values,
+      min_pairs: self.min_pairs,
+      max_pairs: self.max_pairs,
+      ignore: self.ignore,
+      error_messages: Some(Box::new(map)),
+    }
+  }
+
   #[inline]
   #[must_use]
   pub fn cel(mut self, program: CelProgram) -> Self {

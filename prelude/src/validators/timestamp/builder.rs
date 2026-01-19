@@ -44,6 +44,8 @@ impl<S: State> From<TimestampValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> TimestampValidatorBuilder<S> {
+  custom_error_messages_method!(Timestamp);
+
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> TimestampValidatorBuilder<S> {
     self.data.cel.push(program);

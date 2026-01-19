@@ -37,6 +37,8 @@ impl_validator!(AnyValidator, Any);
   clippy::return_self_not_must_use
 )]
 impl<S: State> AnyValidatorBuilder<S> {
+  custom_error_messages_method!(Any);
+
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> AnyValidatorBuilder<S> {
     self.data.cel.push(program);

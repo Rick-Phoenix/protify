@@ -35,6 +35,26 @@ where
   S: State,
   Num: FloatWrapper,
 {
+  pub fn with_error_messages(
+    mut self,
+    error_messages: impl IntoIterator<Item = (Num::ViolationEnum, impl Into<SharedStr>)>,
+  ) -> FloatValidatorBuilder<Num, SetErrorMessages<S>>
+  where
+    S::ErrorMessages: IsUnset,
+  {
+    let map: BTreeMap<Num::ViolationEnum, SharedStr> = error_messages
+      .into_iter()
+      .map(|(v, m)| (v, m.into()))
+      .collect();
+    self.data.error_messages = Some(Box::new(map));
+
+    FloatValidatorBuilder {
+      _state: PhantomData,
+      _wrapper: self._wrapper,
+      data: self.data,
+    }
+  }
+
   #[inline]
   pub fn ignore_always(mut self) -> FloatValidatorBuilder<Num, SetIgnore<S>>
   where

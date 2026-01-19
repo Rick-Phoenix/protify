@@ -44,6 +44,8 @@ impl<S: State> From<DurationValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> DurationValidatorBuilder<S> {
+  custom_error_messages_method!(Duration);
+
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> DurationValidatorBuilder<S> {
     self.data.cel.push(program);

@@ -11,5 +11,6 @@ builder_state_macro!(
   Gt,
   Gte,
   Within,
-  NowTolerance
+  NowTolerance,
+  ErrorMessages
 );

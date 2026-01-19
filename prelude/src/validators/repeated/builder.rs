@@ -86,6 +86,31 @@ where
     }
   }
 
+  pub fn with_error_messages(
+    self,
+    error_messages: impl IntoIterator<Item = (RepeatedViolation, impl Into<SharedStr>)>,
+  ) -> RepeatedValidatorBuilder<T, SetErrorMessages<S>>
+  where
+    S::ErrorMessages: IsUnset,
+  {
+    let map: BTreeMap<RepeatedViolation, SharedStr> = error_messages
+      .into_iter()
+      .map(|(v, m)| (v, m.into()))
+      .collect();
+
+    RepeatedValidatorBuilder {
+      _state: PhantomData,
+      _inner_type: self._inner_type,
+      items: self.items,
+      cel: self.cel,
+      min_items: self.min_items,
+      max_items: self.max_items,
+      unique: self.unique,
+      ignore: self.ignore,
+      error_messages: Some(Box::new(map)),
+    }
+  }
+
   #[inline]
   #[must_use]
   pub fn cel(mut self, program: CelProgram) -> Self {
