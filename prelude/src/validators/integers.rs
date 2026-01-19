@@ -289,13 +289,13 @@ pub trait IntWrapper: AsProtoType + Default {
     + ListFormatter
     + AsProtoMapKey
     + 'static;
-  const LT_VIOLATION: ViolationData;
-  const LTE_VIOLATION: ViolationData;
-  const GT_VIOLATION: ViolationData;
-  const GTE_VIOLATION: ViolationData;
-  const IN_VIOLATION: ViolationData;
-  const NOT_IN_VIOLATION: ViolationData;
-  const CONST_VIOLATION: ViolationData;
+  const LT_VIOLATION: ViolationKind;
+  const LTE_VIOLATION: ViolationKind;
+  const GT_VIOLATION: ViolationKind;
+  const GTE_VIOLATION: ViolationKind;
+  const IN_VIOLATION: ViolationKind;
+  const NOT_IN_VIOLATION: ViolationKind;
+  const CONST_VIOLATION: ViolationKind;
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
@@ -307,13 +307,13 @@ macro_rules! impl_int_wrapper {
     paste::paste! {
       impl IntWrapper for $wrapper {
         type RustType = $target_type;
-        const LT_VIOLATION: ViolationData = [< $proto_type _LT_VIOLATION >];
-        const LTE_VIOLATION: ViolationData = [< $proto_type _LTE_VIOLATION >];
-        const GT_VIOLATION: ViolationData = [< $proto_type _GT_VIOLATION >];
-        const GTE_VIOLATION: ViolationData = [< $proto_type _GTE_VIOLATION >];
-        const IN_VIOLATION: ViolationData = [< $proto_type _IN_VIOLATION >];
-        const NOT_IN_VIOLATION: ViolationData = [< $proto_type _NOT_IN_VIOLATION >];
-        const CONST_VIOLATION: ViolationData = [< $proto_type _CONST_VIOLATION >];
+        const LT_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Lt);
+        const LTE_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Lte);
+        const GT_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Gt);
+        const GTE_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Gte);
+        const CONST_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Const);
+        const IN_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::In);
+        const NOT_IN_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::NotIn);
         #[allow(private_interfaces)]
         const SEALED: Sealed = Sealed;
 
@@ -336,12 +336,10 @@ macro_rules! impl_int {
   };
 
   ($rust_type:ty, $wrapper:ident) => {
-    paste::paste! {
-      impl_int_wrapper!($wrapper, $rust_type, [< $wrapper:upper >]);
-      impl_proto_type!($wrapper, $wrapper);
-      impl_proto_map_key!($wrapper, $wrapper);
-      impl_int_validator!($wrapper, $rust_type);
-    }
+    impl_int_wrapper!($wrapper, $rust_type, $wrapper);
+    impl_proto_type!($wrapper, $wrapper);
+    impl_proto_map_key!($wrapper, $wrapper);
+    impl_int_validator!($wrapper, $rust_type);
   };
 }
 
@@ -363,7 +361,7 @@ impl_int!(i32, Sfixed32);
 impl_int!(i64, Sfixed64);
 impl_int!(u32, Fixed32);
 impl_int!(u64, Fixed64);
-impl_int!(i32, INT32, primitive);
-impl_int!(i64, INT64, primitive);
-impl_int!(u32, UINT32, primitive);
-impl_int!(u64, UINT64, primitive);
+impl_int!(i32, Int32, primitive);
+impl_int!(i64, Int64, primitive);
+impl_int!(u32, Uint32, primitive);
+impl_int!(u64, Uint64, primitive);

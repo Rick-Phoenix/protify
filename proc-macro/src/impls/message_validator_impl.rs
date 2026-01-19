@@ -198,7 +198,7 @@ pub fn generate_message_validator(
         #cel_methods
 
         #[inline(always)]
-        fn validate(&self) -> Result<(), ::prelude::Violations> {
+        fn validate(&self) -> Result<(), ::prelude::ViolationsAcc> {
           Ok(())
         }
 

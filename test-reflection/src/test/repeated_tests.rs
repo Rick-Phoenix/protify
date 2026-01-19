@@ -46,9 +46,7 @@ fn unique_enums() {
     unique_enums: vec![DummyEnum::A as i32, DummyEnum::A as i32],
   };
 
-  let err = msg.validate().unwrap_err();
-
-  assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  assert_violation_id(&msg, "repeated.unique", "unique enums");
 
   msg.unique_enums = vec![DummyEnum::A as i32, DummyEnum::B as i32];
   assert!(msg.validate().is_ok());
@@ -60,9 +58,7 @@ fn unique_floats() {
     unique_floats: vec![1.1, 1.1],
   };
 
-  let err = msg.validate().unwrap_err();
-
-  assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  assert_violation_id(&msg, "repeated.unique", "unique floats");
 
   msg.unique_floats = vec![1.5, 2.5];
   assert!(msg.validate().is_ok());
@@ -74,9 +70,7 @@ fn unique_messages() {
     unique_messages: vec![DummyMsg { id: 1 }, DummyMsg { id: 1 }],
   };
 
-  let err = msg.validate().unwrap_err();
-
-  assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  assert_violation_id(&msg, "repeated.unique", "unique strings");
 
   msg.unique_messages = vec![DummyMsg { id: 1 }, DummyMsg { id: 2 }];
   assert!(msg.validate().is_ok());
@@ -88,9 +82,7 @@ fn unique_bytes() {
     unique_bytes: vec![Bytes::default(), Bytes::default()],
   };
 
-  let err = msg.validate().unwrap_err();
-
-  assert_eq!(err.first().unwrap().rule_id(), "repeated.unique");
+  assert_violation_id(&msg, "repeated.unique", "unique bytes");
 
   msg.unique_bytes = vec![Bytes::default(), Bytes::from_static(b"hi")];
   assert!(msg.validate().is_ok());
@@ -100,9 +92,7 @@ fn unique_bytes() {
 fn min_items() {
   let mut msg = MinItems { items: vec![] };
 
-  let err = msg.validate().unwrap_err();
-
-  assert_eq!(err.first().unwrap().rule_id(), "repeated.min_items");
+  assert_violation_id(&msg, "repeated.min_items", "min items rule");
 
   msg.items = vec![1, 2, 3];
   assert!(msg.validate().is_ok());
@@ -112,9 +102,7 @@ fn min_items() {
 fn max_items() {
   let mut msg = MaxItems { items: vec![1, 2] };
 
-  let err = msg.validate().unwrap_err();
-
-  assert_eq!(err.first().unwrap().rule_id(), "repeated.max_items");
+  assert_violation_id(&msg, "repeated.max_items", "max items rule");
 
   msg.items = vec![1];
   assert!(msg.validate().is_ok());

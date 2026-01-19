@@ -213,8 +213,8 @@ where
       if let Some(min) = &self.min_items
         && val.len() < *min
       {
-        ctx.add_violation(
-          REPEATED_MIN_ITEMS_VIOLATION,
+        ctx.add_repeated_violation(
+          RepeatedViolation::MinItems,
           &format!("must contain at least {min} items"),
         );
         handle_violation!(is_valid, ctx);
@@ -223,8 +223,8 @@ where
       if let Some(max) = &self.max_items
         && val.len() > *max
       {
-        ctx.add_violation(
-          REPEATED_MAX_ITEMS_VIOLATION,
+        ctx.add_repeated_violation(
+          RepeatedViolation::MaxItems,
           &format!("cannot contain more than {max} items"),
         );
         handle_violation!(is_valid, ctx);
@@ -293,7 +293,7 @@ where
       }
 
       if !has_unique_values_so_far {
-        ctx.add_violation(REPEATED_UNIQUE_VIOLATION, "must contain unique values");
+        ctx.add_repeated_violation(RepeatedViolation::Unique, "must contain unique values");
         handle_violation!(is_valid, ctx);
       }
 
@@ -310,9 +310,10 @@ where
             is_valid = cel_ctx.execute_programs();
           }
           Err(e) => {
-            ctx
-              .violations
-              .push(e.into_violation(ctx.field_context.as_ref(), &ctx.parent_elements));
+            ctx.violations.push(ViolationCtx {
+              kind: ViolationKind::Cel,
+              data: e.into_violation(ctx.field_context.as_ref(), &ctx.parent_elements),
+            });
             is_valid = false;
           }
         };

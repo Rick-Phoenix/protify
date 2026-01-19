@@ -168,10 +168,10 @@ impl Validator<String> for StringValidator {
     &self,
     val: <Self::Target as ToOwned>::Owned,
   ) -> Result<(), Vec<CelError>> {
-    if !self.cel.is_empty() {
-      test_programs(&self.cel, val)
-    } else {
+    if self.cel.is_empty() {
       Ok(())
+    } else {
+      test_programs(&self.cel, val)
     }
   }
   #[cfg(feature = "cel")]
@@ -274,8 +274,8 @@ impl Validator<String> for StringValidator {
 
       if let Some(const_val) = &self.const_ {
         if val != const_val.as_ref() {
-          ctx.add_violation(
-            STRING_CONST_VIOLATION,
+          ctx.add_string_violation(
+            StringViolation::Const,
             &format!("must be equal to {const_val}",),
           );
 
@@ -289,8 +289,8 @@ impl Validator<String> for StringValidator {
       if let Some(len) = self.len
         && val.chars().count() != len
       {
-        ctx.add_violation(
-          STRING_LEN_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::Len,
           &format!("must be exactly {len} characters long"),
         );
         handle_violation!(is_valid, ctx);
@@ -299,8 +299,8 @@ impl Validator<String> for StringValidator {
       if let Some(min_len) = self.min_len
         && val.chars().count() < min_len
       {
-        ctx.add_violation(
-          STRING_MIN_LEN_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::MinLen,
           &format!("must be at least {min_len} characters long"),
         );
         handle_violation!(is_valid, ctx);
@@ -309,8 +309,8 @@ impl Validator<String> for StringValidator {
       if let Some(max_len) = self.max_len
         && val.chars().count() > max_len
       {
-        ctx.add_violation(
-          STRING_MAX_LEN_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::MaxLen,
           &format!("cannot be longer than {max_len} characters"),
         );
         handle_violation!(is_valid, ctx);
@@ -319,8 +319,8 @@ impl Validator<String> for StringValidator {
       if let Some(len_bytes) = self.len_bytes
         && val.len() != len_bytes
       {
-        ctx.add_violation(
-          STRING_LEN_BYTES_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::LenBytes,
           &format!("must be exactly {len_bytes} bytes long"),
         );
         handle_violation!(is_valid, ctx);
@@ -329,8 +329,8 @@ impl Validator<String> for StringValidator {
       if let Some(min_bytes) = self.min_bytes
         && val.len() < min_bytes
       {
-        ctx.add_violation(
-          STRING_MIN_BYTES_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::MinBytes,
           &format!("must be at least {min_bytes} bytes long"),
         );
         handle_violation!(is_valid, ctx);
@@ -339,8 +339,8 @@ impl Validator<String> for StringValidator {
       if let Some(max_bytes) = self.max_bytes
         && val.len() > max_bytes
       {
-        ctx.add_violation(
-          STRING_MAX_BYTES_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::MaxBytes,
           &format!("cannot be longer than {max_bytes} bytes"),
         );
         handle_violation!(is_valid, ctx);
@@ -349,8 +349,8 @@ impl Validator<String> for StringValidator {
       if let Some(prefix) = &self.prefix
         && !val.starts_with(&**prefix)
       {
-        ctx.add_violation(
-          STRING_PREFIX_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::Prefix,
           &format!("must start with {prefix}"),
         );
         handle_violation!(is_valid, ctx);
@@ -359,15 +359,15 @@ impl Validator<String> for StringValidator {
       if let Some(suffix) = &self.suffix
         && !val.ends_with(&**suffix)
       {
-        ctx.add_violation(STRING_SUFFIX_VIOLATION, &format!("must end with {suffix}"));
+        ctx.add_string_violation(StringViolation::Suffix, &format!("must end with {suffix}"));
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(substring) = &self.contains
         && !val.contains(substring.as_ref())
       {
-        ctx.add_violation(
-          STRING_CONTAINS_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::Contains,
           &format!("must contain {substring}"),
         );
         handle_violation!(is_valid, ctx);
@@ -376,8 +376,8 @@ impl Validator<String> for StringValidator {
       if let Some(substring) = &self.not_contains
         && val.contains(substring.as_ref())
       {
-        ctx.add_violation(
-          STRING_NOT_CONTAINS_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::NotContains,
           &format!("cannot contain {substring}"),
         );
         handle_violation!(is_valid, ctx);
@@ -387,8 +387,8 @@ impl Validator<String> for StringValidator {
       if let Some(pattern) = &self.pattern
         && !pattern.is_match(val)
       {
-        ctx.add_violation(
-          STRING_PATTERN_VIOLATION,
+        ctx.add_string_violation(
+          StringViolation::Pattern,
           &format!("must match the pattern `{pattern}`"),
         );
         handle_violation!(is_valid, ctx);
@@ -399,7 +399,7 @@ impl Validator<String> for StringValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        ctx.add_violation(STRING_IN_VIOLATION, &err);
+        ctx.add_string_violation(StringViolation::In, &err);
         handle_violation!(is_valid, ctx);
       }
 
@@ -408,20 +408,18 @@ impl Validator<String> for StringValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        ctx.add_violation(STRING_NOT_IN_VIOLATION, &err);
+        ctx.add_string_violation(StringViolation::NotIn, &err);
         handle_violation!(is_valid, ctx);
       }
 
       macro_rules! impl_well_known_check {
         ($check:expr, $violation:ident, $msg:literal) => {
-          paste::paste! {
-            if !$check(val.as_ref()) {
-              ctx.add_violation(
-                [< STRING_ $violation _VIOLATION >],
-                concat!("must be a valid ", $msg),
-              );
-              handle_violation!(is_valid, ctx);
-            }
+          if !$check(val.as_ref()) {
+            ctx.add_string_violation(
+              StringViolation::$violation,
+              concat!("must be a valid ", $msg),
+            );
+            handle_violation!(is_valid, ctx);
           }
         };
       }
@@ -430,79 +428,79 @@ impl Validator<String> for StringValidator {
         match well_known {
           #[cfg(feature = "regex")]
           WellKnownStrings::Ulid => {
-            impl_well_known_check!(is_valid_ulid, ULID, "ULID");
+            impl_well_known_check!(is_valid_ulid, Ulid, "ULID");
           }
           WellKnownStrings::Ip => {
-            impl_well_known_check!(is_valid_ip, IP, "ip address");
+            impl_well_known_check!(is_valid_ip, Ip, "ip address");
           }
           WellKnownStrings::Ipv4 => {
-            impl_well_known_check!(is_valid_ipv4, IPV4, "ipv4 address");
+            impl_well_known_check!(is_valid_ipv4, Ipv4, "ipv4 address");
           }
           WellKnownStrings::Ipv6 => {
-            impl_well_known_check!(is_valid_ipv6, IPV6, "ipv6 address");
+            impl_well_known_check!(is_valid_ipv6, Ipv6, "ipv6 address");
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::Email => {
-            impl_well_known_check!(is_valid_email, EMAIL, "email address");
+            impl_well_known_check!(is_valid_email, Email, "email address");
           }
           WellKnownStrings::Hostname => {
-            impl_well_known_check!(is_valid_hostname, HOSTNAME, "hostname");
+            impl_well_known_check!(is_valid_hostname, Hostname, "hostname");
           }
           WellKnownStrings::Uri => {
-            impl_well_known_check!(is_valid_uri, URI, "uri");
+            impl_well_known_check!(is_valid_uri, Uri, "uri");
           }
           WellKnownStrings::UriRef => {
-            impl_well_known_check!(is_valid_uri_ref, URI_REF, "uri reference");
+            impl_well_known_check!(is_valid_uri_ref, UriRef, "uri reference");
           }
           WellKnownStrings::Address => {
-            impl_well_known_check!(is_valid_address, ADDRESS, "address");
+            impl_well_known_check!(is_valid_address, Address, "address");
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::Uuid => {
-            impl_well_known_check!(is_valid_uuid, UUID, "uuid");
+            impl_well_known_check!(is_valid_uuid, Uuid, "uuid");
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::Tuuid => {
-            impl_well_known_check!(is_valid_tuuid, TUUID, "trimmed uuid");
+            impl_well_known_check!(is_valid_tuuid, Tuuid, "trimmed uuid");
           }
           WellKnownStrings::IpWithPrefixlen => {
             impl_well_known_check!(
               is_valid_ip_with_prefixlen,
-              IP_WITH_PREFIXLEN,
+              IpWithPrefixlen,
               "ip with prefix length"
             );
           }
           WellKnownStrings::Ipv4WithPrefixlen => {
             impl_well_known_check!(
               is_valid_ipv4_with_prefixlen,
-              IPV4_WITH_PREFIXLEN,
+              Ipv4WithPrefixlen,
               "ipv4 with prefix length"
             );
           }
           WellKnownStrings::Ipv6WithPrefixlen => {
             impl_well_known_check!(
               is_valid_ipv6_with_prefixlen,
-              IPV6_WITH_PREFIXLEN,
+              Ipv6WithPrefixlen,
               "ipv6 with prefix length"
             );
           }
           WellKnownStrings::IpPrefix => {
-            impl_well_known_check!(is_valid_ip_prefix, IP_PREFIX, "ip prefix");
+            impl_well_known_check!(is_valid_ip_prefix, IpPrefix, "ip prefix");
           }
           WellKnownStrings::Ipv4Prefix => {
-            impl_well_known_check!(is_valid_ipv4_prefix, IPV4_PREFIX, "ipv4 prefix");
+            impl_well_known_check!(is_valid_ipv4_prefix, Ipv4Prefix, "ipv4 prefix");
           }
           WellKnownStrings::Ipv6Prefix => {
-            impl_well_known_check!(is_valid_ipv6_prefix, IPV6_PREFIX, "ipv6 prefix");
+            impl_well_known_check!(is_valid_ipv6_prefix, Ipv6Prefix, "ipv6 prefix");
           }
           WellKnownStrings::HostAndPort => {
-            impl_well_known_check!(is_valid_host_and_port, HOST_AND_PORT, "host and port");
+            impl_well_known_check!(is_valid_host_and_port, HostAndPort, "host and port");
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderNameLoose => {
-            if !is_valid_http_header_name(val.as_ref(), false) {
-              ctx.add_violation(
-                STRING_WELL_KNOWN_REGEX_VIOLATION,
+            if !is_valid_http_header_name(val, false) {
+              ctx.add_string_violation(
+                StringViolation::WellKnownRegex,
                 "must be a valid http header name",
               );
               handle_violation!(is_valid, ctx);
@@ -510,9 +508,9 @@ impl Validator<String> for StringValidator {
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderNameStrict => {
-            if !is_valid_http_header_name(val.as_ref(), true) {
-              ctx.add_violation(
-                STRING_WELL_KNOWN_REGEX_VIOLATION,
+            if !is_valid_http_header_name(val, true) {
+              ctx.add_string_violation(
+                StringViolation::WellKnownRegex,
                 "must be a valid http header name",
               );
               handle_violation!(is_valid, ctx);
@@ -520,9 +518,9 @@ impl Validator<String> for StringValidator {
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderValueLoose => {
-            if !is_valid_http_header_value(val.as_ref(), false) {
-              ctx.add_violation(
-                STRING_WELL_KNOWN_REGEX_VIOLATION,
+            if !is_valid_http_header_value(val, false) {
+              ctx.add_string_violation(
+                StringViolation::WellKnownRegex,
                 "must be a valid http header value",
               );
               handle_violation!(is_valid, ctx);
@@ -530,9 +528,9 @@ impl Validator<String> for StringValidator {
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderValueStrict => {
-            if !is_valid_http_header_value(val.as_ref(), true) {
-              ctx.add_violation(
-                STRING_WELL_KNOWN_REGEX_VIOLATION,
+            if !is_valid_http_header_value(val, true) {
+              ctx.add_string_violation(
+                StringViolation::WellKnownRegex,
                 "must be a valid http header value",
               );
               handle_violation!(is_valid, ctx);
@@ -545,7 +543,7 @@ impl Validator<String> for StringValidator {
       if !self.cel.is_empty() {
         let cel_ctx = ProgramsExecutionCtx {
           programs: &self.cel,
-          value: val.clone(),
+          value: val,
           ctx,
         };
 

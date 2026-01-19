@@ -23,7 +23,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   }
 
   #[inline]
-  fn into_validated_message(self) -> Result<Self::Message, Violations> {
+  fn into_validated_message(self) -> Result<Self::Message, ViolationsAcc> {
     let msg = self.into_message();
 
     match msg.validate() {
@@ -33,7 +33,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   }
 
   #[inline]
-  fn from_validated_message(msg: Self::Message) -> Result<Self, Violations> {
+  fn from_validated_message(msg: Self::Message) -> Result<Self, ViolationsAcc> {
     match msg.validate() {
       Ok(()) => Ok(Self::from_message(msg)),
       Err(e) => Err(e),

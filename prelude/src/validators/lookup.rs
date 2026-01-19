@@ -151,6 +151,7 @@ pub struct UnsupportedStore<T: ?Sized> {
   _marker: PhantomData<T>,
 }
 
+#[allow(clippy::new_without_default, clippy::must_use_candidate)]
 impl<T: ?Sized> UnsupportedStore<T> {
   #[inline]
   pub const fn new() -> Self {

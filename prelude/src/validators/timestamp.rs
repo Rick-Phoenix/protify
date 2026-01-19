@@ -138,8 +138,8 @@ impl Validator<Timestamp> for TimestampValidator {
 
       if let Some(const_val) = self.const_ {
         if val != const_val {
-          ctx.add_violation(
-            TIMESTAMP_CONST_VIOLATION,
+          ctx.add_timestamp_violation(
+            TimestampViolation::Const,
             &format!("must be equal to {const_val}"),
           );
 
@@ -153,15 +153,15 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(gt) = self.gt
         && val <= gt
       {
-        ctx.add_violation(TIMESTAMP_GT_VIOLATION, &format!("must be later than {gt}"));
+        ctx.add_timestamp_violation(TimestampViolation::Gt, &format!("must be later than {gt}"));
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
-        ctx.add_violation(
-          TIMESTAMP_GTE_VIOLATION,
+        ctx.add_timestamp_violation(
+          TimestampViolation::Gte,
           &format!("must be later than or equal to {gte}"),
         );
         handle_violation!(is_valid, ctx);
@@ -170,8 +170,8 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(lt) = self.lt
         && val >= lt
       {
-        ctx.add_violation(
-          TIMESTAMP_LT_VIOLATION,
+        ctx.add_timestamp_violation(
+          TimestampViolation::Lt,
           &format!("must be earlier than {lt}"),
         );
         handle_violation!(is_valid, ctx);
@@ -180,8 +180,8 @@ impl Validator<Timestamp> for TimestampValidator {
       if let Some(lte) = self.lte
         && val > lte
       {
-        ctx.add_violation(
-          TIMESTAMP_LTE_VIOLATION,
+        ctx.add_timestamp_violation(
+          TimestampViolation::Lte,
           &format!("must be earlier than or equal to {lte}"),
         );
         handle_violation!(is_valid, ctx);
@@ -190,20 +190,20 @@ impl Validator<Timestamp> for TimestampValidator {
       #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
       {
         if self.gt_now && !(val + self.now_tolerance).is_future() {
-          ctx.add_violation(TIMESTAMP_GT_NOW_VIOLATION, "must be in the future");
+          ctx.add_timestamp_violation(TimestampViolation::GtNow, "must be in the future");
           handle_violation!(is_valid, ctx);
         }
 
         if self.lt_now && !val.is_past() {
-          ctx.add_violation(TIMESTAMP_LT_NOW_VIOLATION, "must be in the past");
+          ctx.add_timestamp_violation(TimestampViolation::LtNow, "must be in the past");
           handle_violation!(is_valid, ctx);
         }
 
         if let Some(range) = self.within
           && !val.is_within_range_from_now(range)
         {
-          ctx.add_violation(
-            TIMESTAMP_WITHIN_VIOLATION,
+          ctx.add_timestamp_violation(
+            TimestampViolation::Within,
             &format!("must be within {range} from now"),
           );
           handle_violation!(is_valid, ctx);

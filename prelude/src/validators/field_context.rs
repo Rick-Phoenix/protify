@@ -76,6 +76,18 @@ impl Default for ValidationCtx {
   }
 }
 
+macro_rules! violation_helpers {
+  ($($name:ident),*) => {
+    paste::paste! {
+      $(
+        pub(crate) fn [< add_ $name _violation >](&mut self, kind: [< $name:camel Violation >], error_message: &str) {
+          self.add_violation(ViolationKind::[< $name:camel >](kind), error_message);
+        }
+      )*
+    }
+  };
+}
+
 impl ValidationCtx {
   #[inline]
   pub fn reset_field_context(&mut self) {
@@ -88,35 +100,45 @@ impl ValidationCtx {
     self
   }
 
+  violation_helpers!(
+    any, bytes, duration, string, timestamp, enum, field_mask, map, repeated
+  );
+
   #[inline]
-  pub fn add_violation(&mut self, violation_data: ViolationData, error_message: &str) {
+  pub fn add_violation(&mut self, kind: ViolationKind, error_message: &str) {
     let violation = create_violation_core(
       None,
       self.field_context.as_ref(),
       &self.parent_elements,
-      violation_data,
+      kind.data(),
       error_message,
     );
 
-    self.violations.push(violation);
+    self.violations.push(ViolationCtx {
+      kind,
+      data: violation,
+    });
   }
 
   #[inline]
   pub fn add_violation_with_custom_id(
     &mut self,
     rule_id: &str,
-    violation_data: ViolationData,
+    kind: ViolationKind,
     error_message: &str,
   ) {
     let violation = new_violation_with_custom_id(
       rule_id,
       self.field_context.as_ref(),
       &self.parent_elements,
-      violation_data,
+      kind.data(),
       error_message,
     );
 
-    self.violations.push(violation);
+    self.violations.push(ViolationCtx {
+      kind,
+      data: violation,
+    });
   }
 
   #[inline]
@@ -135,60 +157,189 @@ impl ValidationCtx {
 
   #[inline]
   pub fn add_required_violation(&mut self) {
-    self.add_violation(REQUIRED_VIOLATION, "is required")
+    self.add_violation(ViolationKind::Required, "is required")
   }
 }
 
 pub struct ViolationsAcc {
-  inner: Vec<Violation>,
+  violations: Vec<Violation>,
+  kinds: Vec<ViolationKind>,
+}
+
+pub struct ViolationCtx {
+  pub kind: ViolationKind,
+  pub data: Violation,
+}
+
+impl ViolationCtx {
+  #[must_use]
+  pub fn into_violation(self) -> Violation {
+    self.into()
+  }
+}
+
+impl From<ViolationsAcc> for Violations {
+  fn from(value: ViolationsAcc) -> Self {
+    Self {
+      violations: value.violations,
+    }
+  }
+}
+
+impl From<ViolationsAcc> for Vec<Violation> {
+  fn from(value: ViolationsAcc) -> Self {
+    value.violations
+  }
+}
+
+impl From<ViolationCtx> for Violation {
+  fn from(value: ViolationCtx) -> Self {
+    value.data
+  }
 }
 
 impl IntoIterator for ViolationsAcc {
-  type IntoIter = vec::IntoIter<Violation>;
-  type Item = Violation;
+  type IntoIter = core::iter::Zip<vec::IntoIter<ViolationKind>, vec::IntoIter<Violation>>;
+  type Item = (ViolationKind, Violation);
 
   #[inline]
   fn into_iter(self) -> Self::IntoIter {
-    self.inner.into_iter()
-  }
-}
-
-impl Deref for ViolationsAcc {
-  type Target = [Violation];
-
-  fn deref(&self) -> &Self::Target {
-    &self.inner
-  }
-}
-
-impl DerefMut for ViolationsAcc {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.inner
+    self.kinds.into_iter().zip(self.violations)
   }
 }
 
 impl<'a> IntoIterator for &'a ViolationsAcc {
-  type IntoIter = core::slice::Iter<'a, Violation>;
-  type Item = &'a Violation;
+  type Item = (ViolationKind, &'a Violation);
 
-  #[inline]
+  type IntoIter = core::iter::Zip<
+    core::iter::Copied<core::slice::Iter<'a, ViolationKind>>,
+    core::slice::Iter<'a, Violation>,
+  >;
+
   fn into_iter(self) -> Self::IntoIter {
-    self.inner.iter()
+    self
+      .kinds
+      .iter()
+      .copied()
+      .zip(self.violations.iter())
   }
 }
 
-impl Extend<Violation> for ViolationsAcc {
-  #[inline]
-  fn extend<T: IntoIterator<Item = Violation>>(&mut self, iter: T) {
-    self.inner.extend(iter);
+impl<'a> IntoIterator for &'a mut ViolationsAcc {
+  type Item = (&'a mut ViolationKind, &'a mut Violation);
+
+  type IntoIter =
+    core::iter::Zip<core::slice::IterMut<'a, ViolationKind>, core::slice::IterMut<'a, Violation>>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self
+      .kinds
+      .iter_mut()
+      .zip(self.violations.iter_mut())
+  }
+}
+
+impl Extend<ViolationCtx> for ViolationsAcc {
+  fn extend<T: IntoIterator<Item = ViolationCtx>>(&mut self, iter: T) {
+    let iter = iter.into_iter();
+
+    let (lower_bound, _) = iter.size_hint();
+    if lower_bound > 0 {
+      self.kinds.reserve(lower_bound);
+      self.violations.reserve(lower_bound);
+    }
+
+    for ctx in iter {
+      self.kinds.push(ctx.kind);
+      self.violations.push(ctx.data);
+    }
+  }
+}
+
+impl Extend<(ViolationKind, Violation)> for ViolationsAcc {
+  fn extend<T: IntoIterator<Item = (ViolationKind, Violation)>>(&mut self, iter: T) {
+    let iter = iter.into_iter();
+
+    let (lower_bound, _) = iter.size_hint();
+    if lower_bound > 0 {
+      self.kinds.reserve(lower_bound);
+      self.violations.reserve(lower_bound);
+    }
+
+    for (kind, data) in iter {
+      self.kinds.push(kind);
+      self.violations.push(data);
+    }
   }
 }
 
 impl ViolationsAcc {
-  #[inline]
-  pub fn iter(&self) -> core::slice::Iter<'_, Violation> {
-    self.inner.iter()
+  pub fn merge(&mut self, other: &mut Self) {
+    self.kinds.append(&mut other.kinds);
+    self.violations.append(&mut other.violations);
   }
+
+  #[must_use]
+  #[inline]
+  pub fn first(&self) -> Option<(ViolationKind, &Violation)> {
+    self
+      .kinds
+      .first()
+      .copied()
+      .and_then(|k| self.violations.first().map(|v| (k, v)))
+  }
+
+  #[must_use]
+  #[inline]
+  pub fn last(&self) -> Option<(ViolationKind, &Violation)> {
+    self
+      .kinds
+      .last()
+      .copied()
+      .and_then(|k| self.violations.last().map(|v| (k, v)))
+  }
+
+  #[inline]
+  pub fn iter(
+    &self,
+  ) -> core::iter::Zip<
+    core::iter::Copied<core::slice::Iter<'_, ViolationKind>>,
+    core::slice::Iter<'_, Violation>,
+  > {
+    self.into_iter()
+  }
+
+  #[inline]
+  pub fn iter_mut(
+    &mut self,
+  ) -> core::iter::Zip<core::slice::IterMut<'_, ViolationKind>, core::slice::IterMut<'_, Violation>>
+  {
+    self.into_iter()
+  }
+
+  pub fn retain<F>(&mut self, mut f: F)
+  where
+    F: FnMut(ViolationKind, &Violation) -> bool,
+  {
+    let len = self.violations.len();
+    let mut keep_count = 0;
+
+    for i in 0..len {
+      let should_keep = f(self.kinds[i], &self.violations[i]);
+
+      if should_keep {
+        if keep_count != i {
+          self.kinds.swap(keep_count, i);
+          self.violations.swap(keep_count, i);
+        }
+        keep_count += 1;
+      }
+    }
+
+    self.kinds.truncate(keep_count);
+    self.violations.truncate(keep_count);
+  }
+
   #[inline]
   pub fn add_required_oneof_violation(&mut self, parent_elements: &[FieldPathElement]) {
     let violation = new_violation_with_custom_id(
@@ -199,7 +350,10 @@ impl ViolationsAcc {
       "at least one value must be set",
     );
 
-    self.inner.push(violation);
+    self.push(ViolationCtx {
+      kind: ViolationKind::RequiredOneof,
+      data: violation,
+    });
   }
 
   #[inline]
@@ -217,32 +371,45 @@ impl ViolationsAcc {
       &rule.message,
     );
 
-    self.push(violation);
+    self.push(ViolationCtx {
+      kind: ViolationKind::Cel,
+      data: violation,
+    });
   }
 
   #[must_use]
   #[inline]
   pub const fn new() -> Self {
-    Self { inner: Vec::new() }
+    Self {
+      kinds: vec![],
+      violations: vec![],
+    }
   }
 
   #[inline]
   #[must_use]
   pub fn into_violations(self) -> Violations {
     Violations {
-      violations: self.inner,
+      violations: self.violations,
     }
   }
 
   #[inline]
-  pub fn push(&mut self, v: Violation) {
-    self.inner.push(v);
+  pub fn push(&mut self, v: ViolationCtx) {
+    self.kinds.push(v.kind);
+    self.violations.push(v.data);
   }
 
   #[inline]
   #[must_use]
   pub const fn is_empty(&self) -> bool {
-    self.inner.is_empty()
+    self.violations.is_empty()
+  }
+
+  #[inline]
+  #[must_use]
+  pub const fn len(&self) -> usize {
+    self.violations.len()
   }
 }
 

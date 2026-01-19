@@ -30,7 +30,6 @@ use core::{
   hash::Hash,
   marker::{PhantomData, Sized},
   ops::Deref,
-  ops::DerefMut,
   ops::Range,
 };
 

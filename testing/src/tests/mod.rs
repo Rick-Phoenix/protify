@@ -23,7 +23,7 @@ define_proto_file!(TESTING, name = "testing.proto", package = TESTING_PKG);
 
 #[track_caller]
 pub(crate) fn assert_violation_id(msg: &impl ValidatedMessage, expected: &str, error: &str) {
-  let violations = msg.validate().unwrap_err();
+  let violations = msg.validate().unwrap_err().into_violations();
 
   assert_eq!(violations.len(), 1, "Expected a single violation");
   assert_eq!(violations.first().unwrap().rule_id(), expected, "{error}");

@@ -254,7 +254,10 @@ mod cel_impls {
       let ctx = match initialize_context(value) {
         Ok(ctx) => ctx,
         Err(e) => {
-          violations.push(e.into_violation(field_context.as_ref(), parent_elements));
+          violations.push(ViolationCtx {
+            kind: ViolationKind::Cel,
+            data: e.into_violation(field_context.as_ref(), parent_elements),
+          });
           return false;
         }
       };
@@ -272,7 +275,10 @@ mod cel_impls {
               }
             }
           }
-          Err(e) => violations.push(e.into_violation(field_context.as_ref(), parent_elements)),
+          Err(e) => violations.push(ViolationCtx {
+            kind: ViolationKind::Cel,
+            data: e.into_violation(field_context.as_ref(), parent_elements),
+          }),
         };
       }
 

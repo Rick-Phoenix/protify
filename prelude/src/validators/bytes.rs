@@ -164,8 +164,8 @@ impl Validator<Bytes> for BytesValidator {
 
       if let Some(const_val) = &self.const_ {
         if *val != const_val {
-          ctx.add_violation(
-            BYTES_CONST_VIOLATION,
+          ctx.add_bytes_violation(
+            BytesViolation::Const,
             &format!("must be equal to {}", const_val.escape_ascii()),
           );
 
@@ -179,8 +179,8 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(len) = self.len
         && val.len() != len
       {
-        ctx.add_violation(
-          BYTES_LEN_VIOLATION,
+        ctx.add_bytes_violation(
+          BytesViolation::Len,
           &format!("must be exactly {len} bytes long"),
         );
         handle_violation!(is_valid, ctx);
@@ -189,8 +189,8 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(min_len) = self.min_len
         && val.len() < min_len
       {
-        ctx.add_violation(
-          BYTES_MIN_LEN_VIOLATION,
+        ctx.add_bytes_violation(
+          BytesViolation::MinLen,
           &format!("must be at least {min_len} bytes long"),
         );
         handle_violation!(is_valid, ctx);
@@ -199,8 +199,8 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(max_len) = self.max_len
         && val.len() > max_len
       {
-        ctx.add_violation(
-          BYTES_MAX_LEN_VIOLATION,
+        ctx.add_bytes_violation(
+          BytesViolation::MaxLen,
           &format!("cannot be longer than {max_len} bytes"),
         );
         handle_violation!(is_valid, ctx);
@@ -209,8 +209,8 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(prefix) = &self.prefix
         && !val.starts_with(prefix)
       {
-        ctx.add_violation(
-          BYTES_PREFIX_VIOLATION,
+        ctx.add_bytes_violation(
+          BytesViolation::Prefix,
           &format!("must start with {}", prefix.escape_ascii()),
         );
         handle_violation!(is_valid, ctx);
@@ -219,8 +219,8 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(suffix) = &self.suffix
         && !val.ends_with(suffix)
       {
-        ctx.add_violation(
-          BYTES_SUFFIX_VIOLATION,
+        ctx.add_bytes_violation(
+          BytesViolation::Suffix,
           &format!("must end with {}", suffix.escape_ascii()),
         );
         handle_violation!(is_valid, ctx);
@@ -231,8 +231,8 @@ impl Validator<Bytes> for BytesValidator {
           .windows(val.len())
           .any(|slice| slice == substring)
       {
-        ctx.add_violation(
-          BYTES_CONTAINS_VIOLATION,
+        ctx.add_bytes_violation(
+          BytesViolation::Contains,
           &format!("must contain {}", substring.escape_ascii()),
         );
         handle_violation!(is_valid, ctx);
@@ -242,8 +242,8 @@ impl Validator<Bytes> for BytesValidator {
       if let Some(pattern) = &self.pattern
         && !pattern.is_match(val)
       {
-        ctx.add_violation(
-          BYTES_PATTERN_VIOLATION,
+        ctx.add_bytes_violation(
+          BytesViolation::Pattern,
           &format!("must match the pattern `{pattern}`"),
         );
         handle_violation!(is_valid, ctx);
@@ -254,7 +254,7 @@ impl Validator<Bytes> for BytesValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        ctx.add_violation(BYTES_IN_VIOLATION, &err);
+        ctx.add_bytes_violation(BytesViolation::In, &err);
         handle_violation!(is_valid, ctx);
       }
 
@@ -263,7 +263,7 @@ impl Validator<Bytes> for BytesValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        ctx.add_violation(BYTES_IN_VIOLATION, &err);
+        ctx.add_bytes_violation(BytesViolation::NotIn, &err);
         handle_violation!(is_valid, ctx);
       }
 
@@ -274,25 +274,25 @@ impl Validator<Bytes> for BytesValidator {
           #[cfg(feature = "regex")]
           WellKnownBytes::Uuid => {
             if !is_valid_uuid(byte_str) {
-              ctx.add_violation(BYTES_UUID_VIOLATION, "must be a valid UUID");
+              ctx.add_bytes_violation(BytesViolation::Uuid, "must be a valid UUID");
               handle_violation!(is_valid, ctx);
             }
           }
           WellKnownBytes::Ip => {
             if !is_valid_ip(byte_str) {
-              ctx.add_violation(BYTES_IP_VIOLATION, "must be a valid ip address");
+              ctx.add_bytes_violation(BytesViolation::Ip, "must be a valid ip address");
               handle_violation!(is_valid, ctx);
             }
           }
           WellKnownBytes::Ipv4 => {
             if !is_valid_ipv4(byte_str) {
-              ctx.add_violation(BYTES_IPV4_VIOLATION, "must be a valid ipv4 address");
+              ctx.add_bytes_violation(BytesViolation::Ipv4, "must be a valid ipv4 address");
               handle_violation!(is_valid, ctx);
             }
           }
           WellKnownBytes::Ipv6 => {
             if !is_valid_ipv6(byte_str) {
-              ctx.add_violation(BYTES_IPV6_VIOLATION, "must be a valid ipv6 address");
+              ctx.add_bytes_violation(BytesViolation::Ipv6, "must be a valid ipv6 address");
               handle_violation!(is_valid, ctx);
             }
           }

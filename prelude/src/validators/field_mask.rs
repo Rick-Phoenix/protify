@@ -97,8 +97,8 @@ impl Validator<FieldMask> for FieldMaskValidator {
         };
 
         if !is_valid {
-          ctx.add_violation(
-            FIELD_MASK_CONST_VIOLATION,
+          ctx.add_field_mask_violation(
+            FieldMaskViolation::Const,
             &format!(
               "must contain exactly these paths: [ {} ]",
               val.paths.join(", ")
@@ -115,7 +115,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
           if !allowed_paths.items.contains(path.as_str()) {
             let err = ["can only contain these paths: ", &allowed_paths.items_str].concat();
 
-            ctx.add_violation(FIELD_MASK_IN_VIOLATION, &err);
+            ctx.add_field_mask_violation(FieldMaskViolation::In, &err);
 
             if ctx.fail_fast {
               return false;
@@ -137,7 +137,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
             ]
             .concat();
 
-            ctx.add_violation(FIELD_MASK_NOT_IN_VIOLATION, &err);
+            ctx.add_field_mask_violation(FieldMaskViolation::NotIn, &err);
 
             if ctx.fail_fast {
               return false;

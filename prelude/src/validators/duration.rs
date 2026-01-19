@@ -100,8 +100,8 @@ impl Validator<Duration> for DurationValidator {
 
       if let Some(const_val) = self.const_ {
         if val != const_val {
-          ctx.add_violation(
-            DURATION_CONST_VIOLATION,
+          ctx.add_duration_violation(
+            DurationViolation::Const,
             &format!("must be equal to {const_val}"),
           );
 
@@ -115,15 +115,15 @@ impl Validator<Duration> for DurationValidator {
       if let Some(gt) = self.gt
         && val <= gt
       {
-        ctx.add_violation(DURATION_GT_VIOLATION, &format!("must be longer than {gt}"));
+        ctx.add_duration_violation(DurationViolation::Gt, &format!("must be longer than {gt}"));
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
-        ctx.add_violation(
-          DURATION_GTE_VIOLATION,
+        ctx.add_duration_violation(
+          DurationViolation::Gte,
           &format!("must be longer than or equal to {gte}"),
         );
         handle_violation!(is_valid, ctx);
@@ -132,15 +132,15 @@ impl Validator<Duration> for DurationValidator {
       if let Some(lt) = self.lt
         && val >= lt
       {
-        ctx.add_violation(DURATION_LT_VIOLATION, &format!("must be shorter than {lt}"));
+        ctx.add_duration_violation(DurationViolation::Lt, &format!("must be shorter than {lt}"));
         handle_violation!(is_valid, ctx);
       }
 
       if let Some(lte) = self.lte
         && val > lte
       {
-        ctx.add_violation(
-          DURATION_LTE_VIOLATION,
+        ctx.add_duration_violation(
+          DurationViolation::Lte,
           &format!("must be shorter than or equal to {lte}"),
         );
         handle_violation!(is_valid, ctx);
@@ -151,7 +151,7 @@ impl Validator<Duration> for DurationValidator {
       {
         let err = ["must be one of these values: ", &allowed_list.items_str].concat();
 
-        ctx.add_violation(DURATION_IN_VIOLATION, &err);
+        ctx.add_duration_violation(DurationViolation::In, &err);
         handle_violation!(is_valid, ctx);
       }
 
@@ -160,7 +160,7 @@ impl Validator<Duration> for DurationValidator {
       {
         let err = ["cannot be one of these values: ", &forbidden_list.items_str].concat();
 
-        ctx.add_violation(DURATION_NOT_IN_VIOLATION, &err);
+        ctx.add_duration_violation(DurationViolation::NotIn, &err);
         handle_violation!(is_valid, ctx);
       }
 

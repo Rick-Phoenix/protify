@@ -250,8 +250,8 @@ where
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {
-        ctx.add_violation(
-          MAP_MIN_PAIRS_VIOLATION,
+        ctx.add_map_violation(
+          MapViolation::MinPairs,
           &format!("must contain at least {min_pairs} pairs"),
         );
         handle_violation!(is_valid, ctx);
@@ -260,8 +260,8 @@ where
       if let Some(max_pairs) = self.max_pairs
         && val.len() > max_pairs
       {
-        ctx.add_violation(
-          MAP_MAX_PAIRS_VIOLATION,
+        ctx.add_map_violation(
+          MapViolation::MaxPairs,
           &format!("cannot contain more than {max_pairs} pairs"),
         );
         handle_violation!(is_valid, ctx);
@@ -443,8 +443,8 @@ where
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {
-        ctx.add_violation(
-          MAP_MIN_PAIRS_VIOLATION,
+        ctx.add_map_violation(
+          MapViolation::MinPairs,
           &format!("must contain at least {min_pairs} pairs"),
         );
         handle_violation!(is_valid, ctx);
@@ -453,8 +453,8 @@ where
       if let Some(max_pairs) = self.max_pairs
         && val.len() > max_pairs
       {
-        ctx.add_violation(
-          MAP_MAX_PAIRS_VIOLATION,
+        ctx.add_map_violation(
+          MapViolation::MaxPairs,
           &format!("cannot contain more than {max_pairs} pairs"),
         );
         handle_violation!(is_valid, ctx);
@@ -521,9 +521,10 @@ where
             is_valid = cel_ctx.execute_programs();
           }
           Err(e) => {
-            ctx
-              .violations
-              .push(e.into_violation(ctx.field_context.as_ref(), &ctx.parent_elements));
+            ctx.violations.push(ViolationCtx {
+              kind: ViolationKind::Cel,
+              data: e.into_violation(ctx.field_context.as_ref(), &ctx.parent_elements),
+            });
 
             is_valid = false;
           }

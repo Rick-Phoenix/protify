@@ -35,7 +35,7 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>>;
 
   #[inline]
-  fn validate<V>(&self, val: &V) -> Result<(), Violations>
+  fn validate<V>(&self, val: &V) -> Result<(), ViolationsAcc>
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -46,12 +46,12 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
     if ctx.violations.is_empty() {
       Ok(())
     } else {
-      Err(ctx.violations.into_violations())
+      Err(ctx.violations)
     }
   }
 
   #[inline]
-  fn validate_option<V>(&self, val: Option<&V>) -> Result<(), Violations>
+  fn validate_option<V>(&self, val: Option<&V>) -> Result<(), ViolationsAcc>
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -62,12 +62,12 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
     if ctx.violations.is_empty() {
       Ok(())
     } else {
-      Err(ctx.violations.into_violations())
+      Err(ctx.violations)
     }
   }
 
   #[inline]
-  fn validate_with_ctx<V>(&self, mut ctx: ValidationCtx, val: &V) -> Result<(), Violations>
+  fn validate_with_ctx<V>(&self, mut ctx: ValidationCtx, val: &V) -> Result<(), ViolationsAcc>
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -76,7 +76,7 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
     if ctx.violations.is_empty() {
       Ok(())
     } else {
-      Err(ctx.violations.into_violations())
+      Err(ctx.violations)
     }
   }
 
@@ -85,7 +85,7 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
     &self,
     mut ctx: ValidationCtx,
     val: Option<&V>,
-  ) -> Result<(), Violations>
+  ) -> Result<(), ViolationsAcc>
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -94,7 +94,7 @@ pub trait Validator<T: ?Sized>: Into<ProtoOption> {
     if ctx.violations.is_empty() {
       Ok(())
     } else {
-      Err(ctx.violations.into_violations())
+      Err(ctx.violations)
     }
   }
 

@@ -77,7 +77,7 @@ impl Validator<Any> for AnyValidator {
         ]
         .concat();
 
-        ctx.add_violation(ANY_IN_VIOLATION, &err);
+        ctx.add_any_violation(AnyViolation::In, &err);
         handle_violation!(is_valid, ctx);
       }
 
@@ -92,7 +92,7 @@ impl Validator<Any> for AnyValidator {
         ]
         .concat();
 
-        ctx.add_violation(ANY_NOT_IN_VIOLATION, &err);
+        ctx.add_any_violation(AnyViolation::NotIn, &err);
         handle_violation!(is_valid, ctx);
       }
 

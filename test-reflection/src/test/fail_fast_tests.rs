@@ -36,7 +36,7 @@ fn validators_fail_fast_test() {
 
   macro_rules! assert_violation {
     () => {
-      assert!(msg.validate().unwrap_err().violations.len() == 1);
+      assert!(msg.validate().unwrap_err().len() == 1);
       // The `validate_all` method should not exit early
       assert!(msg.validate_all().unwrap_err().len() != 1);
       msg = baseline.clone();
@@ -114,7 +114,7 @@ fn message_fail_fast_test() {
     name: "a".to_string(),
   });
 
-  assert!(msg.validate().unwrap_err().violations.len() == 1);
+  assert!(msg.validate().unwrap_err().len() == 1);
 
   // The `validate_all` method should not exit early
   assert!(msg.validate_all().unwrap_err().len() != 1);

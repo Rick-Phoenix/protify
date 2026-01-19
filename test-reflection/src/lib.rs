@@ -21,7 +21,7 @@ mod test {
   #[allow(unused)]
   #[track_caller]
   pub(crate) fn full_rule_id_path<T: ValidatedMessage>(msg: &T) -> String {
-    let violations = msg.validate().unwrap_err();
+    let violations = msg.validate().unwrap_err().into_violations();
 
     let first = violations.first().unwrap();
 
@@ -31,7 +31,7 @@ mod test {
   #[allow(unused)]
   #[track_caller]
   pub(crate) fn first_violation<T: ValidatedMessage>(msg: &T) -> Violation {
-    let mut violations = msg.validate().unwrap_err();
+    let mut violations = msg.validate().unwrap_err().into_violations();
 
     violations.violations.remove(0)
   }
@@ -39,7 +39,7 @@ mod test {
   #[allow(unused)]
   #[track_caller]
   pub(crate) fn inspect_violations<T: ValidatedMessage>(msg: &T) {
-    let violations = msg.validate().unwrap_err();
+    let violations = msg.validate().unwrap_err().into_violations();
 
     eprintln!("{violations:#?}");
   }
@@ -47,7 +47,7 @@ mod test {
   #[allow(unused)]
   #[track_caller]
   pub(crate) fn get_rules_ids<T: ValidatedMessage>(msg: &T) -> Vec<String> {
-    let violations = msg.validate().unwrap_err();
+    let violations = msg.validate().unwrap_err().into_violations();
 
     violations
       .into_iter()
@@ -57,7 +57,7 @@ mod test {
 
   #[track_caller]
   pub(crate) fn assert_violation_id(msg: &impl ValidatedMessage, expected: &str, error: &str) {
-    let violations = msg.validate().unwrap_err();
+    let violations = msg.validate().unwrap_err().into_violations();
 
     assert_eq!(violations.len(), 1, "Expected a single violation");
     assert_eq!(violations.first().unwrap().rule_id(), expected, "{error}");

@@ -59,7 +59,10 @@ impl Validator<bool> for BoolValidator {
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        ctx.add_violation(BOOL_CONST_VIOLATION, &format!("must be {const_val}"));
+        ctx.add_violation(
+          ViolationKind::Bool(BoolViolation::Const),
+          &format!("must be {const_val}"),
+        );
         is_valid = false;
       }
     } else if self.required {
