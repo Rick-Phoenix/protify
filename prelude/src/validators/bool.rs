@@ -61,7 +61,7 @@ impl Validator<bool> for BoolValidator {
       {
         ctx.add_violation(
           ViolationKind::Bool(BoolViolation::Const),
-          &format!("must be {const_val}"),
+          format!("must be {const_val}"),
         );
         is_valid = false;
       }

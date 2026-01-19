@@ -20,6 +20,7 @@ where
   min_pairs: Option<usize>,
   max_pairs: Option<usize>,
   ignore: Ignore,
+  error_messages: Option<ErrorMessages<MapViolation>>,
 }
 
 impl<K, V, S: State> Default for MapValidatorBuilder<K, V, S>
@@ -39,6 +40,7 @@ where
       min_pairs: Default::default(),
       max_pairs: Default::default(),
       ignore: Default::default(),
+      error_messages: None,
     }
   }
 }
@@ -81,6 +83,7 @@ where
       max_pairs,
       ignore,
       cel,
+      error_messages,
       ..
     } = self;
 
@@ -93,6 +96,7 @@ where
       min_pairs,
       max_pairs,
       ignore,
+      error_messages,
     }
   }
 
@@ -113,6 +117,7 @@ where
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -131,6 +136,7 @@ where
       min_pairs: Some(num),
       max_pairs: self.max_pairs,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -149,6 +155,7 @@ where
       min_pairs: self.min_pairs,
       max_pairs: Some(num),
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -168,6 +175,7 @@ where
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
       ignore: Ignore::IfZeroValue,
+      error_messages: self.error_messages,
     }
   }
 
@@ -187,6 +195,7 @@ where
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
       ignore: Ignore::Always,
+      error_messages: self.error_messages,
     }
   }
 
@@ -210,6 +219,7 @@ where
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -233,6 +243,7 @@ where
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 }

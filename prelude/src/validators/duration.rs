@@ -36,6 +36,8 @@ pub struct DurationValidator {
 
   /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
   pub gte: Option<Duration>,
+
+  pub error_messages: Option<ErrorMessages<DurationViolation>>,
 }
 
 impl Validator<Duration> for DurationValidator {
@@ -98,14 +100,29 @@ impl Validator<Duration> for DurationValidator {
     if let Some(val) = val {
       let val = *val.borrow();
 
-      if let Some(const_val) = self.const_ {
-        if val != const_val {
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
           ctx.add_duration_violation(
-            DurationViolation::Const,
-            &format!("must be equal to {const_val}"),
+            DurationViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&DurationViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
           );
 
-          is_valid = false;
+          if ctx.fail_fast {
+            return false;
+          } else {
+            is_valid = false;
+          }
+        };
+      }
+
+      if let Some(const_val) = self.const_ {
+        if val != const_val {
+          handle_violation!(Const, format!("must be equal to {const_val}"));
         }
 
         // Using `const` implies no other rules
@@ -115,61 +132,49 @@ impl Validator<Duration> for DurationValidator {
       if let Some(gt) = self.gt
         && val <= gt
       {
-        ctx.add_duration_violation(DurationViolation::Gt, &format!("must be longer than {gt}"));
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Gt, format!("must be longer than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
-        ctx.add_duration_violation(
-          DurationViolation::Gte,
-          &format!("must be longer than or equal to {gte}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Gte, format!("must be longer than or equal to {gte}"));
       }
 
       if let Some(lt) = self.lt
         && val >= lt
       {
-        ctx.add_duration_violation(DurationViolation::Lt, &format!("must be shorter than {lt}"));
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Lt, format!("must be shorter than {lt}"));
       }
 
       if let Some(lte) = self.lte
         && val > lte
       {
-        ctx.add_duration_violation(
-          DurationViolation::Lte,
-          &format!("must be shorter than or equal to {lte}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Lte, format!("must be shorter than or equal to {lte}"));
       }
 
       if let Some(allowed_list) = &self.in_
         && !allowed_list.contains(&val)
       {
-        ctx.add_duration_violation(
-          DurationViolation::In,
-          &format!(
+        handle_violation!(
+          In,
+          format!(
             "must be one of these values: {}",
             Duration::format_list(allowed_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list.items.contains(&val)
       {
-        ctx.add_duration_violation(
-          DurationViolation::NotIn,
-          &format!(
+        handle_violation!(
+          NotIn,
+          format!(
             "must be one of these values: {}",
             Duration::format_list(forbidden_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]

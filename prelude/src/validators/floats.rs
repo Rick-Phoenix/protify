@@ -7,7 +7,7 @@ use float_eq::float_eq;
 use super::*;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct FloatValidator<Num>
 where
   Num: FloatWrapper,
@@ -51,6 +51,51 @@ where
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
   pub not_in: Option<SortedList<OrderedFloat<Num::RustType>>>,
+
+  pub error_messages: Option<ErrorMessages<Num::ViolationEnum>>,
+}
+
+impl<Num> FloatValidator<Num>
+where
+  Num: FloatWrapper,
+{
+  fn custom_error_or_else(
+    &self,
+    violation: Num::ViolationEnum,
+    default: impl Fn() -> String,
+  ) -> String {
+    self
+      .error_messages
+      .as_deref()
+      .and_then(|map| map.get(&violation))
+      .map(|m| m.to_string())
+      .unwrap_or_else(default)
+  }
+}
+
+impl<Num> Default for FloatValidator<Num>
+where
+  Num: FloatWrapper + Default,
+{
+  fn default() -> Self {
+    Self {
+      cel: Default::default(),
+      ignore: Default::default(),
+      _wrapper: Default::default(),
+      required: Default::default(),
+      abs_tolerance: Default::default(),
+      rel_tolerance: Default::default(),
+      finite: Default::default(),
+      const_: Default::default(),
+      lt: Default::default(),
+      lte: Default::default(),
+      gt: Default::default(),
+      gte: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      error_messages: Default::default(),
+    }
+  }
 }
 
 pub(crate) fn float_in_list<T>(target: T, list: &[OrderedFloat<T>], abs_tol: T, r2nd_tol: T) -> bool
@@ -200,14 +245,29 @@ where
     if let Some(val) = val {
       let val = *val.borrow();
 
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
+          paste::paste! {
+            ctx.add_violation(
+              Num::[< $id:snake:upper _VIOLATION >].into(),
+              self.custom_error_or_else(
+                Num::[< $id:snake:upper _VIOLATION >],
+                || $default
+              )
+            );
+
+            if ctx.fail_fast {
+              return false;
+            } else {
+              is_valid = false;
+            }
+          }
+        };
+      }
+
       if let Some(const_val) = self.const_ {
         if !self.float_is_eq(const_val, val) {
-          ctx.add_violation(
-            Num::CONST_VIOLATION,
-            &format!("must be equal to {const_val}"),
-          );
-
-          is_valid = false;
+          handle_violation!(Const, format!("must be equal to {const_val}"));
         }
 
         // Using `const` implies no other rules
@@ -215,68 +275,55 @@ where
       }
 
       if self.finite && !val.is_finite() {
-        ctx.add_violation(Num::FINITE_VIOLATION, "must be a finite number");
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Finite, "must be a finite number".to_string());
       }
 
       if let Some(gt) = self.gt
         && (val.is_nan() || self.float_is_eq(gt, val) || val < gt)
       {
-        ctx.add_violation(Num::GT_VIOLATION, &format!("must be greater than {gt}"));
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Gt, format!("must be greater than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && (val.is_nan() || !self.float_is_eq(gte, val) && val < gte)
       {
-        ctx.add_violation(
-          Num::GTE_VIOLATION,
-          &format!("must be greater than or equal to {gte}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Gte, format!("must be greater than or equal to {gte}"));
       }
 
       if let Some(lt) = self.lt
         && (val.is_nan() || self.float_is_eq(lt, val) || val > lt)
       {
-        ctx.add_violation(Num::LT_VIOLATION, &format!("must be smaller than {lt}"));
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Lt, format!("must be smaller than {lt}"));
       }
 
       if let Some(lte) = self.lte
         && (val.is_nan() || !self.float_is_eq(lte, val) && val > lte)
       {
-        ctx.add_violation(
-          Num::LTE_VIOLATION,
-          &format!("must be smaller than or equal to {lte}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Lte, format!("must be smaller than or equal to {lte}"));
       }
 
       if let Some(allowed_list) = &self.in_
         && !float_in_list(val, allowed_list, self.abs_tolerance, self.rel_tolerance)
       {
-        ctx.add_violation(
-          Num::IN_VIOLATION,
-          &format!(
+        handle_violation!(
+          In,
+          format!(
             "must be one of these values: {}",
             OrderedFloat::<Num::RustType>::format_list(allowed_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && float_in_list(val, forbidden_list, self.abs_tolerance, self.rel_tolerance)
       {
-        ctx.add_violation(
-          Num::NOT_IN_VIOLATION,
-          &format!(
+        handle_violation!(
+          NotIn,
+          format!(
             "cannot be one of these values: {}",
             OrderedFloat::<Num::RustType>::format_list(forbidden_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]
@@ -385,14 +432,15 @@ pub trait FloatWrapper: AsProtoType + Default {
     + ordered_float::PrimitiveFloat
     + float_eq::FloatEq<Tol = Self::RustType>
     + 'static;
-  const LT_VIOLATION: ViolationKind;
-  const LTE_VIOLATION: ViolationKind;
-  const GT_VIOLATION: ViolationKind;
-  const GTE_VIOLATION: ViolationKind;
-  const IN_VIOLATION: ViolationKind;
-  const NOT_IN_VIOLATION: ViolationKind;
-  const CONST_VIOLATION: ViolationKind;
-  const FINITE_VIOLATION: ViolationKind;
+  type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug;
+  const LT_VIOLATION: Self::ViolationEnum;
+  const LTE_VIOLATION: Self::ViolationEnum;
+  const GT_VIOLATION: Self::ViolationEnum;
+  const GTE_VIOLATION: Self::ViolationEnum;
+  const IN_VIOLATION: Self::ViolationEnum;
+  const NOT_IN_VIOLATION: Self::ViolationEnum;
+  const CONST_VIOLATION: Self::ViolationEnum;
+  const FINITE_VIOLATION: Self::ViolationEnum;
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
@@ -404,14 +452,15 @@ macro_rules! impl_float_wrapper {
     paste::paste! {
       impl FloatWrapper for $target_type {
         type RustType = $target_type;
-        const LT_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Lt);
-        const LTE_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Lte);
-        const GT_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Gt);
-        const GTE_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Gte);
-        const CONST_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Const);
-        const FINITE_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Finite);
-        const IN_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::In);
-        const NOT_IN_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::NotIn);
+        type ViolationEnum = [< $proto_type Violation >];
+        const LT_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Lt;
+        const LTE_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Lte;
+        const GT_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Gt;
+        const GTE_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Gte;
+        const CONST_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Const;
+        const FINITE_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Finite;
+        const IN_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::In;
+        const NOT_IN_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::NotIn;
         #[allow(private_interfaces)]
         const SEALED: Sealed = Sealed;
 

@@ -26,6 +26,7 @@ pub trait State: Sized {
   type In;
   type NotIn;
   type Const;
+  type ErrorMessages;
   #[doc(hidden)]
   const SEALED: sealed::Sealed;
 }
@@ -50,6 +51,7 @@ mod members {
   pub struct in_;
   pub struct not_in;
   pub struct const_;
+  pub struct error_messages;
 }
 
 pub struct SetWellKnown<S: State = Empty>(PhantomData<fn() -> S>);
@@ -69,6 +71,7 @@ pub struct SetNotContains<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetIn<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetNotIn<S: State = Empty>(PhantomData<fn() -> S>);
 pub struct SetConst<S: State = Empty>(PhantomData<fn() -> S>);
+pub struct SetErrorMessages<S: State = Empty>(PhantomData<fn() -> S>);
 #[doc(hidden)]
 impl State for Empty {
   type WellKnown = Unset<members::well_known>;
@@ -88,6 +91,7 @@ impl State for Empty {
   type In = Unset<members::in_>;
   type NotIn = Unset<members::not_in>;
   type Const = Unset<members::const_>;
+  type ErrorMessages = Unset<members::error_messages>;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -109,6 +113,29 @@ impl<S: State> State for SetWellKnown<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
+  const SEALED: sealed::Sealed = sealed::Sealed;
+}
+#[doc(hidden)]
+impl<S: State> State for SetErrorMessages<S> {
+  type WellKnown = S::WellKnown;
+  type Ignore = S::Ignore;
+  type Required = S::Required;
+  type Len = S::Len;
+  type MinLen = S::MinLen;
+  type MaxLen = S::MaxLen;
+  type LenBytes = S::LenBytes;
+  type MinBytes = S::MinBytes;
+  type MaxBytes = S::MaxBytes;
+  type Pattern = S::Pattern;
+  type Prefix = S::Prefix;
+  type Suffix = S::Suffix;
+  type Contains = S::Contains;
+  type NotContains = S::NotContains;
+  type In = S::In;
+  type NotIn = S::NotIn;
+  type Const = S::Const;
+  type ErrorMessages = Set<members::error_messages>;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -130,6 +157,7 @@ impl<S: State> State for SetIgnore<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -151,6 +179,7 @@ impl<S: State> State for SetRequired<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -172,6 +201,7 @@ impl<S: State> State for SetLen<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -193,6 +223,7 @@ impl<S: State> State for SetMinLen<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -214,6 +245,7 @@ impl<S: State> State for SetMaxLen<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -235,6 +267,7 @@ impl<S: State> State for SetLenBytes<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -256,6 +289,7 @@ impl<S: State> State for SetMinBytes<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -277,6 +311,7 @@ impl<S: State> State for SetMaxBytes<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -298,6 +333,7 @@ impl<S: State> State for SetPattern<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -319,6 +355,7 @@ impl<S: State> State for SetPrefix<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -340,6 +377,7 @@ impl<S: State> State for SetSuffix<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -361,6 +399,7 @@ impl<S: State> State for SetContains<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -382,6 +421,7 @@ impl<S: State> State for SetNotContains<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -403,6 +443,7 @@ impl<S: State> State for SetIn<S> {
   type In = Set<members::in_>;
   type NotIn = S::NotIn;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -424,6 +465,7 @@ impl<S: State> State for SetNotIn<S> {
   type In = S::In;
   type NotIn = Set<members::not_in>;
   type Const = S::Const;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }
 #[doc(hidden)]
@@ -445,5 +487,6 @@ impl<S: State> State for SetConst<S> {
   type In = S::In;
   type NotIn = S::NotIn;
   type Const = Set<members::const_>;
+  type ErrorMessages = S::ErrorMessages;
   const SEALED: sealed::Sealed = sealed::Sealed;
 }

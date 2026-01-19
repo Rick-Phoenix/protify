@@ -27,6 +27,8 @@ pub struct EnumValidator<T: ProtoEnum> {
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
+
+  pub error_messages: Option<ErrorMessages<EnumViolation>>,
 }
 
 impl<T: ProtoEnum> Default for EnumValidator<T> {
@@ -41,6 +43,7 @@ impl<T: ProtoEnum> Default for EnumValidator<T> {
       in_: Default::default(),
       not_in: Default::default(),
       const_: Default::default(),
+      error_messages: None,
     }
   }
 }
@@ -127,14 +130,29 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     if let Some(val) = val {
       let val = *val.borrow();
 
-      if let Some(const_val) = self.const_ {
-        if val != const_val {
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
           ctx.add_enum_violation(
-            EnumViolation::Const,
-            &format!("must be equal to {const_val}"),
+            EnumViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&EnumViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
           );
 
-          is_valid = false;
+          if ctx.fail_fast {
+            return false;
+          } else {
+            is_valid = false;
+          }
+        };
+      }
+
+      if let Some(const_val) = self.const_ {
+        if val != const_val {
+          handle_violation!(Const, format!("must be equal to {const_val}"));
         }
 
         // Using `const` implies no other rules
@@ -142,34 +160,31 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
       }
 
       if self.defined_only && T::try_from(val).is_err() {
-        ctx.add_enum_violation(EnumViolation::DefinedOnly, "must be a known enum value");
-        handle_violation!(is_valid, ctx);
+        handle_violation!(DefinedOnly, "must be a known enum value".to_string());
       }
 
       if let Some(allowed_list) = &self.in_
         && !allowed_list.items.contains(&val)
       {
-        ctx.add_enum_violation(
-          EnumViolation::In,
-          &format!(
+        handle_violation!(
+          In,
+          format!(
             "must be one of these values: {}",
             i32::format_list(allowed_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list.items.contains(&val)
       {
-        ctx.add_enum_violation(
-          EnumViolation::NotIn,
-          &format!(
+        handle_violation!(
+          NotIn,
+          format!(
             "cannot be one of these values: {}",
             i32::format_list(forbidden_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]

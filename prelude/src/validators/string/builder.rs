@@ -56,6 +56,22 @@ impl<S: State> From<StringValidatorBuilder<S>> for ProtoOption {
 )]
 impl<S: State> StringValidatorBuilder<S> {
   #[inline]
+  pub fn error_messages(
+    mut self,
+    error_messages: BTreeMap<StringViolation, SharedStr>,
+  ) -> StringValidatorBuilder<SetErrorMessages<S>>
+  where
+    S::ErrorMessages: IsUnset,
+  {
+    self.data.error_messages = Some(Box::new(error_messages));
+
+    StringValidatorBuilder {
+      _state: PhantomData,
+      data: self.data,
+    }
+  }
+
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> StringValidatorBuilder<S> {
     self.data.cel.push(program);
 

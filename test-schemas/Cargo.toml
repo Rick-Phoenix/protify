@@ -11,6 +11,7 @@ keywords.workspace = true
 similar-asserts = { workspace = true }
 
 [dependencies]
+maplit = "1"
 prelude = { path = "../prelude/" }
 prost = { workspace = true }
 paste = "1"

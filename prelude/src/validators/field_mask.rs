@@ -23,6 +23,8 @@ pub struct FieldMaskValidator {
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<SortedList<SharedStr>>,
+
+  pub error_messages: Option<ErrorMessages<FieldMaskViolation>>,
 }
 
 impl ProtoValidator for FieldMask {
@@ -85,10 +87,24 @@ impl Validator<FieldMask> for FieldMaskValidator {
     if let Some(val) = val {
       let val = val.borrow();
 
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
+          ctx.add_field_mask_violation(
+            FieldMaskViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&FieldMaskViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
+          );
+        };
+      }
+
       if let Some(const_val) = &self.const_ {
         let const_val_len = const_val.items.len();
 
-        let is_valid = if const_val_len != val.paths.len() {
+        is_valid = if const_val_len != val.paths.len() {
           false
         } else if const_val_len <= 64 {
           Self::validate_exact_small(const_val, &val.paths)
@@ -97,12 +113,12 @@ impl Validator<FieldMask> for FieldMaskValidator {
         };
 
         if !is_valid {
-          ctx.add_field_mask_violation(
-            FieldMaskViolation::Const,
-            &format!(
+          handle_violation!(
+            Const,
+            format!(
               "must contain exactly these paths: [ {} ]",
               val.paths.join(", ")
-            ),
+            )
           );
         }
 
@@ -113,12 +129,12 @@ impl Validator<FieldMask> for FieldMaskValidator {
       if let Some(allowed_paths) = &self.in_ {
         for path in &val.paths {
           if !allowed_paths.contains(path.as_str()) {
-            ctx.add_field_mask_violation(
-              FieldMaskViolation::In,
-              &format!(
+            handle_violation!(
+              In,
+              format!(
                 "can only contain these paths: {}",
                 SharedStr::format_list(allowed_paths)
-              ),
+              )
             );
 
             if ctx.fail_fast {
@@ -135,12 +151,12 @@ impl Validator<FieldMask> for FieldMaskValidator {
       if let Some(forbidden_paths) = &self.not_in {
         for path in &val.paths {
           if forbidden_paths.contains(path.as_str()) {
-            ctx.add_field_mask_violation(
-              FieldMaskViolation::NotIn,
-              &format!(
+            handle_violation!(
+              NotIn,
+              format!(
                 "cannot contain one of these paths: {}",
                 SharedStr::format_list(forbidden_paths)
-              ),
+              )
             );
 
             if ctx.fail_fast {

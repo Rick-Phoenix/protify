@@ -29,6 +29,8 @@ where
   /// The maximum amount of key-value pairs that this field should have in order to be valid.
   pub max_pairs: Option<usize>,
   pub ignore: Ignore,
+
+  pub error_messages: Option<ErrorMessages<MapViolation>>,
 }
 
 impl<K: AsProtoMapKey, V: AsProtoType> AsProtoField for HashMap<K, V> {
@@ -127,6 +129,7 @@ where
       min_pairs: None,
       max_pairs: None,
       ignore: Ignore::Unspecified,
+      error_messages: None,
     }
   }
 }
@@ -147,6 +150,7 @@ where
       min_pairs: self.min_pairs,
       max_pairs: self.max_pairs,
       ignore: self.ignore,
+      error_messages: self.error_messages.clone(),
     }
   }
 }
@@ -247,24 +251,39 @@ where
     if let Some(val) = val {
       let val = val.borrow();
 
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
+          ctx.add_map_violation(
+            MapViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&MapViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
+          );
+
+          if ctx.fail_fast {
+            return false;
+          } else {
+            is_valid = false;
+          }
+        };
+      }
+
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {
-        ctx.add_map_violation(
-          MapViolation::MinPairs,
-          &format!("must contain at least {min_pairs} pairs"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(MinPairs, format!("must contain at least {min_pairs} pairs"));
       }
 
       if let Some(max_pairs) = self.max_pairs
         && val.len() > max_pairs
       {
-        ctx.add_map_violation(
-          MapViolation::MaxPairs,
-          &format!("cannot contain more than {max_pairs} pairs"),
+        handle_violation!(
+          MaxPairs,
+          format!("cannot contain more than {max_pairs} pairs")
         );
-        handle_violation!(is_valid, ctx);
       }
 
       let keys_validator = self.keys.as_ref();
@@ -440,24 +459,39 @@ where
     if let Some(val) = val {
       let val = val.borrow();
 
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
+          ctx.add_map_violation(
+            MapViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&MapViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
+          );
+
+          if ctx.fail_fast {
+            return false;
+          } else {
+            is_valid = false;
+          }
+        };
+      }
+
       if let Some(min_pairs) = self.min_pairs
         && val.len() < min_pairs
       {
-        ctx.add_map_violation(
-          MapViolation::MinPairs,
-          &format!("must contain at least {min_pairs} pairs"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(MinPairs, format!("must contain at least {min_pairs} pairs"));
       }
 
       if let Some(max_pairs) = self.max_pairs
         && val.len() > max_pairs
       {
-        ctx.add_map_violation(
-          MapViolation::MaxPairs,
-          &format!("cannot contain more than {max_pairs} pairs"),
+        handle_violation!(
+          MaxPairs,
+          format!("cannot contain more than {max_pairs} pairs")
         );
-        handle_violation!(is_valid, ctx);
       }
 
       let keys_validator = self.keys.as_ref();

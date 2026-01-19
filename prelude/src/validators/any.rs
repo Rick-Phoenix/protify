@@ -21,6 +21,8 @@ pub struct AnyValidator {
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
   pub not_in: Option<SortedList<SharedStr>>,
+
+  pub error_messages: Option<ErrorMessages<AnyViolation>>,
 }
 
 impl Validator<Any> for AnyValidator {
@@ -68,30 +70,48 @@ impl Validator<Any> for AnyValidator {
     if let Some(val) = val {
       let val = val.borrow();
 
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
+          ctx.add_any_violation(
+            AnyViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&AnyViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
+          );
+
+          if ctx.fail_fast {
+            return false;
+          } else {
+            is_valid = false;
+          }
+        };
+      }
+
       if let Some(allowed_list) = &self.in_
         && !allowed_list.contains(val.type_url.as_str())
       {
-        ctx.add_any_violation(
-          AnyViolation::In,
-          &format!(
+        handle_violation!(
+          In,
+          format!(
             "must have one of these type URLs: {}",
             SharedStr::format_list(allowed_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list.contains(val.type_url.as_str())
       {
-        ctx.add_any_violation(
-          AnyViolation::NotIn,
-          &format!(
+        handle_violation!(
+          NotIn,
+          format!(
             "cannot have one of these type URLs: {}",
             SharedStr::format_list(forbidden_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]

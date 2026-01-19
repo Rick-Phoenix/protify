@@ -145,6 +145,7 @@ pub(crate) trait IsDefault: Default + PartialEq {
 }
 
 impl<T: Default + PartialEq> IsDefault for T {}
+type ErrorMessages<T> = Box<BTreeMap<T, SharedStr>>;
 
 pub mod any;
 pub mod bool;

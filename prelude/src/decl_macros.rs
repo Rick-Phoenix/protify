@@ -1,13 +1,3 @@
-macro_rules! handle_violation {
-  ($is_valid:ident, $ctx:ident) => {
-    if $ctx.fail_fast {
-      return false;
-    } else {
-      $is_valid = false;
-    }
-  };
-}
-
 #[cfg(feature = "inventory")]
 #[macro_export]
 macro_rules! register_proto_data {

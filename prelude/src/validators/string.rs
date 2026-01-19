@@ -147,6 +147,8 @@ pub struct StringValidator {
 
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<SharedStr>,
+
+  pub error_messages: Option<ErrorMessages<StringViolation>>,
 }
 
 impl StringValidator {
@@ -287,14 +289,29 @@ impl Validator<String> for StringValidator {
     if let Some(val) = val {
       let val = val.borrow();
 
-      if let Some(const_val) = &self.const_ {
-        if val != const_val.as_ref() {
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
           ctx.add_string_violation(
-            StringViolation::Const,
-            &format!("must be equal to {const_val}",),
+            StringViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&StringViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
           );
 
-          is_valid = false;
+          if ctx.fail_fast {
+            return false;
+          } else {
+            is_valid = false;
+          }
+        };
+      }
+
+      if let Some(const_val) = &self.const_ {
+        if val != const_val.as_ref() {
+          handle_violation!(Const, format!("must be equal to {const_val}"));
         }
 
         // Using `const` implies no other rules
@@ -304,145 +321,104 @@ impl Validator<String> for StringValidator {
       if let Some(len) = self.len
         && val.chars().count() != len
       {
-        ctx.add_string_violation(
-          StringViolation::Len,
-          &format!("must be exactly {len} characters long"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Len, format!("must be exactly {len} characters long"));
       }
 
       if let Some(min_len) = self.min_len
         && val.chars().count() < min_len
       {
-        ctx.add_string_violation(
-          StringViolation::MinLen,
-          &format!("must be at least {min_len} characters long"),
+        handle_violation!(
+          MinLen,
+          format!("must be at least {min_len} characters long")
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(max_len) = self.max_len
         && val.chars().count() > max_len
       {
-        ctx.add_string_violation(
-          StringViolation::MaxLen,
-          &format!("cannot be longer than {max_len} characters"),
+        handle_violation!(
+          MaxLen,
+          format!("cannot be longer than {max_len} characters")
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(len_bytes) = self.len_bytes
         && val.len() != len_bytes
       {
-        ctx.add_string_violation(
-          StringViolation::LenBytes,
-          &format!("must be exactly {len_bytes} bytes long"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(LenBytes, format!("must be exactly {len_bytes} bytes long"));
       }
 
       if let Some(min_bytes) = self.min_bytes
         && val.len() < min_bytes
       {
-        ctx.add_string_violation(
-          StringViolation::MinBytes,
-          &format!("must be at least {min_bytes} bytes long"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(MinBytes, format!("must be at least {min_bytes} bytes long"));
       }
 
       if let Some(max_bytes) = self.max_bytes
         && val.len() > max_bytes
       {
-        ctx.add_string_violation(
-          StringViolation::MaxBytes,
-          &format!("cannot be longer than {max_bytes} bytes"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(MaxBytes, format!("cannot be longer than {max_bytes} bytes"));
       }
 
       if let Some(prefix) = &self.prefix
         && !val.starts_with(&**prefix)
       {
-        ctx.add_string_violation(
-          StringViolation::Prefix,
-          &format!("must start with {prefix}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Prefix, format!("must start with {prefix}"));
       }
 
       if let Some(suffix) = &self.suffix
         && !val.ends_with(&**suffix)
       {
-        ctx.add_string_violation(StringViolation::Suffix, &format!("must end with {suffix}"));
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Suffix, format!("must end with {suffix}"));
       }
 
       if let Some(substring) = &self.contains
         && !val.contains(substring.as_ref())
       {
-        ctx.add_string_violation(
-          StringViolation::Contains,
-          &format!("must contain {substring}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Contains, format!("must contain {substring}"));
       }
 
       if let Some(substring) = &self.not_contains
         && val.contains(substring.as_ref())
       {
-        ctx.add_string_violation(
-          StringViolation::NotContains,
-          &format!("cannot contain {substring}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(NotContains, format!("cannot contain {substring}"));
       }
 
       #[cfg(feature = "regex")]
       if let Some(pattern) = &self.pattern
         && !pattern.is_match(val)
       {
-        ctx.add_string_violation(
-          StringViolation::Pattern,
-          &format!("must match the pattern `{pattern}`"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Pattern, format!("must match the pattern `{pattern}`"));
       }
 
       if let Some(allowed_list) = &self.in_
         && !allowed_list.contains(val)
       {
-        ctx.add_string_violation(
-          StringViolation::In,
-          &format!(
+        handle_violation!(
+          In,
+          format!(
             "must be one of these values: {}",
             SharedStr::format_list(allowed_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list.contains(val)
       {
-        ctx.add_string_violation(
-          StringViolation::NotIn,
-          &format!(
+        handle_violation!(
+          NotIn,
+          format!(
             "cannot be one of these values: {}",
             SharedStr::format_list(forbidden_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       macro_rules! impl_well_known_check {
         ($check:expr, $violation:ident, $msg:literal) => {
           if !$check(val.as_ref()) {
-            ctx.add_string_violation(
-              StringViolation::$violation,
-              concat!("must be a valid ", $msg),
-            );
-            handle_violation!(is_valid, ctx);
+            handle_violation!($violation, format!("must be a valid {}", $msg));
           }
         };
       }
@@ -522,41 +498,37 @@ impl Validator<String> for StringValidator {
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderNameLoose => {
             if !is_valid_http_header_name(val, false) {
-              ctx.add_string_violation(
-                StringViolation::WellKnownRegex,
-                "must be a valid http header name",
+              handle_violation!(
+                WellKnownRegex,
+                "must be a valid http header name".to_string()
               );
-              handle_violation!(is_valid, ctx);
             }
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderNameStrict => {
             if !is_valid_http_header_name(val, true) {
-              ctx.add_string_violation(
-                StringViolation::WellKnownRegex,
-                "must be a valid http header name",
+              handle_violation!(
+                WellKnownRegex,
+                "must be a valid http header name".to_string()
               );
-              handle_violation!(is_valid, ctx);
             }
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderValueLoose => {
             if !is_valid_http_header_value(val, false) {
-              ctx.add_string_violation(
-                StringViolation::WellKnownRegex,
-                "must be a valid http header value",
+              handle_violation!(
+                WellKnownRegex,
+                "must be a valid http header value".to_string()
               );
-              handle_violation!(is_valid, ctx);
             }
           }
           #[cfg(feature = "regex")]
           WellKnownStrings::HeaderValueStrict => {
             if !is_valid_http_header_value(val, true) {
-              ctx.add_string_violation(
-                StringViolation::WellKnownRegex,
-                "must be a valid http header value",
+              handle_violation!(
+                WellKnownRegex,
+                "must be a valid http header value".to_string()
               );
-              handle_violation!(is_valid, ctx);
             }
           }
         };

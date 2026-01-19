@@ -39,14 +39,6 @@ pub struct SimpleMsg {
   pub name: String,
 }
 
-fn abc() {
-  let msg = SimpleMsg::default();
-
-  let validator = String::validator_builder().email().build();
-
-  let _ = validator.validate(&msg.name);
-}
-
 #[proto_message(no_auto_test)]
 pub struct FailFastTest {
   #[proto(validate = |v| v.max_len(1).not_in(["abc"]))]
@@ -143,9 +135,7 @@ pub struct RustKeywords {
 
 #[cfg(test)]
 mod test {
-  use prelude::ProtoMessage;
-
-  use crate::RustKeywords;
+  use super::*;
 
   #[test]
   fn test_keywords() {

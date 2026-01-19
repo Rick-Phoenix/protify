@@ -80,7 +80,7 @@ macro_rules! violation_helpers {
   ($($name:ident),*) => {
     paste::paste! {
       $(
-        pub(crate) fn [< add_ $name _violation >](&mut self, kind: [< $name:camel Violation >], error_message: &str) {
+        pub(crate) fn [< add_ $name _violation >](&mut self, kind: [< $name:camel Violation >], error_message: CowStr) {
           self.add_violation(ViolationKind::[< $name:camel >](kind), error_message);
         }
       )*
@@ -105,13 +105,13 @@ impl ValidationCtx {
   );
 
   #[inline]
-  pub fn add_violation(&mut self, kind: ViolationKind, error_message: &str) {
+  pub fn add_violation(&mut self, kind: ViolationKind, error_message: impl Into<String>) {
     let violation = create_violation_core(
       None,
       self.field_context.as_ref(),
       &self.parent_elements,
       kind.data(),
-      error_message,
+      error_message.into(),
     );
 
     self.violations.push(ViolationCtx {
@@ -125,14 +125,14 @@ impl ValidationCtx {
     &mut self,
     rule_id: &str,
     kind: ViolationKind,
-    error_message: &str,
+    error_message: impl Into<String>,
   ) {
     let violation = new_violation_with_custom_id(
       rule_id,
       self.field_context.as_ref(),
       &self.parent_elements,
       kind.data(),
-      error_message,
+      error_message.into(),
     );
 
     self.violations.push(ViolationCtx {
@@ -157,7 +157,7 @@ impl ValidationCtx {
 
   #[inline]
   pub fn add_required_violation(&mut self) {
-    self.add_violation(ViolationKind::Required, "is required")
+    self.add_violation(ViolationKind::Required, Cow::Borrowed("is required"))
   }
 }
 
@@ -347,7 +347,7 @@ impl ViolationsAcc {
       None,
       parent_elements,
       ONEOF_REQUIRED_VIOLATION,
-      "at least one value must be set",
+      "at least one value must be set".into(),
     );
 
     self.push(ViolationCtx {
@@ -368,7 +368,7 @@ impl ViolationsAcc {
       field_context,
       parent_elements,
       CEL_VIOLATION,
-      &rule.message,
+      rule.message.to_string(),
     );
 
     self.push(ViolationCtx {
@@ -425,7 +425,7 @@ pub(crate) fn create_violation_core(
   field_context: Option<&FieldContext>,
   parent_elements: &[FieldPathElement],
   violation_data: ViolationData,
-  error_message: &str,
+  error_message: String,
 ) -> Violation {
   let mut field_elements: Option<Vec<FieldPathElement>> = None;
   let mut rule_elements: Vec<FieldPathElement> = Vec::new();
@@ -459,7 +459,7 @@ pub(crate) fn create_violation_core(
     rule_id: Some(
       custom_rule_id.map_or_else(|| violation_data.name.to_string(), |id| id.to_string()),
     ),
-    message: Some(error_message.to_string()),
+    message: Some(error_message),
     for_key: Some(is_for_key),
     field: field_elements.map(|elements| FieldPath { elements }),
     rule: Some(FieldPath {
@@ -468,12 +468,14 @@ pub(crate) fn create_violation_core(
   }
 }
 
+type CowStr<'a> = Cow<'a, str>;
+
 pub(crate) fn new_violation_with_custom_id(
   rule_id: &str,
   field_context: Option<&FieldContext>,
   parent_elements: &[FieldPathElement],
   violation_data: ViolationData,
-  error_message: &str,
+  error_message: String,
 ) -> Violation {
   create_violation_core(
     Some(rule_id),

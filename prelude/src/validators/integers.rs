@@ -7,7 +7,7 @@ use proto_types::protovalidate::violations_data::*;
 use super::*;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct IntValidator<Num>
 where
   Num: IntWrapper,
@@ -42,6 +42,48 @@ where
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
   pub not_in: Option<SortedList<Num::RustType>>,
+
+  pub error_messages: Option<ErrorMessages<Num::ViolationEnum>>,
+}
+
+impl<Num> Default for IntValidator<Num>
+where
+  Num: IntWrapper + Default,
+{
+  fn default() -> Self {
+    Self {
+      cel: Default::default(),
+      ignore: Default::default(),
+      _wrapper: Default::default(),
+      required: Default::default(),
+      const_: Default::default(),
+      lt: Default::default(),
+      lte: Default::default(),
+      gt: Default::default(),
+      gte: Default::default(),
+      in_: Default::default(),
+      not_in: Default::default(),
+      error_messages: Default::default(),
+    }
+  }
+}
+
+impl<Num> IntValidator<Num>
+where
+  Num: IntWrapper,
+{
+  fn custom_error_or_else(
+    &self,
+    violation: Num::ViolationEnum,
+    default: impl Fn() -> String,
+  ) -> String {
+    self
+      .error_messages
+      .as_deref()
+      .and_then(|map| map.get(&violation))
+      .map(|m| m.to_string())
+      .unwrap_or_else(default)
+  }
 }
 
 impl<S: builder::state::State, Num: IntWrapper> ValidatorBuilderFor<Num>
@@ -129,14 +171,29 @@ where
     if let Some(val) = val {
       let val = *val.borrow();
 
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
+          paste::paste! {
+            ctx.add_violation(
+              Num::[< $id:snake:upper _VIOLATION >].into(),
+              self.custom_error_or_else(
+                Num::[< $id:snake:upper _VIOLATION >],
+                || $default
+              )
+            );
+
+            if ctx.fail_fast {
+              return false;
+            } else {
+              is_valid = false;
+            }
+          }
+        };
+      }
+
       if let Some(const_val) = self.const_ {
         if val != const_val {
-          ctx.add_violation(
-            Num::CONST_VIOLATION,
-            &format!("must be equal to {const_val}"),
-          );
-
-          is_valid = false;
+          handle_violation!(Const, format!("must be equal to {const_val}"));
         }
 
         // Using `const` implies no other rules
@@ -146,61 +203,49 @@ where
       if let Some(gt) = self.gt
         && val <= gt
       {
-        ctx.add_violation(Num::GT_VIOLATION, &format!("must be greater than {gt}"));
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Gt, format!("must be greater than {gt}"));
       }
 
       if let Some(gte) = self.gte
         && val < gte
       {
-        ctx.add_violation(
-          Num::GTE_VIOLATION,
-          &format!("must be greater than or equal to {gte}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Gte, format!("must be greater than or equal to {gte}"));
       }
 
       if let Some(lt) = self.lt
         && val >= lt
       {
-        ctx.add_violation(Num::LT_VIOLATION, &format!("must be smaller than {lt}"));
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Lt, format!("must be smaller than {lt}"));
       }
 
       if let Some(lte) = self.lte
         && val > lte
       {
-        ctx.add_violation(
-          Num::LTE_VIOLATION,
-          &format!("must be smaller than or equal to {lte}"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Lte, format!("must be smaller than or equal to {lte}"));
       }
 
       if let Some(allowed_list) = &self.in_
         && !allowed_list.contains(&val)
       {
-        ctx.add_violation(
-          Num::IN_VIOLATION,
-          &format!(
+        handle_violation!(
+          In,
+          format!(
             "must be one of these values: {}",
             Num::RustType::format_list(allowed_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       if let Some(forbidden_list) = &self.not_in
         && forbidden_list.contains(&val)
       {
-        ctx.add_violation(
-          Num::NOT_IN_VIOLATION,
-          &format!(
+        handle_violation!(
+          NotIn,
+          format!(
             "cannot be one of these values: {}",
             Num::RustType::format_list(forbidden_list)
-          ),
+          )
         );
-        handle_violation!(is_valid, ctx);
       }
 
       #[cfg(feature = "cel")]
@@ -297,13 +342,14 @@ pub trait IntWrapper: AsProtoType + Default {
     + ListFormatter
     + AsProtoMapKey
     + 'static;
-  const LT_VIOLATION: ViolationKind;
-  const LTE_VIOLATION: ViolationKind;
-  const GT_VIOLATION: ViolationKind;
-  const GTE_VIOLATION: ViolationKind;
-  const IN_VIOLATION: ViolationKind;
-  const NOT_IN_VIOLATION: ViolationKind;
-  const CONST_VIOLATION: ViolationKind;
+  type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug;
+  const LT_VIOLATION: Self::ViolationEnum;
+  const LTE_VIOLATION: Self::ViolationEnum;
+  const GT_VIOLATION: Self::ViolationEnum;
+  const GTE_VIOLATION: Self::ViolationEnum;
+  const IN_VIOLATION: Self::ViolationEnum;
+  const NOT_IN_VIOLATION: Self::ViolationEnum;
+  const CONST_VIOLATION: Self::ViolationEnum;
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
@@ -315,13 +361,14 @@ macro_rules! impl_int_wrapper {
     paste::paste! {
       impl IntWrapper for $wrapper {
         type RustType = $target_type;
-        const LT_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Lt);
-        const LTE_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Lte);
-        const GT_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Gt);
-        const GTE_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Gte);
-        const CONST_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::Const);
-        const IN_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::In);
-        const NOT_IN_VIOLATION: ViolationKind = ViolationKind::[< $proto_type >]([< $proto_type Violation >]::NotIn);
+        type ViolationEnum = [< $proto_type Violation >];
+        const LT_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Lt;
+        const LTE_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Lte;
+        const GT_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Gt;
+        const GTE_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Gte;
+        const CONST_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Const;
+        const IN_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::In;
+        const NOT_IN_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::NotIn;
         #[allow(private_interfaces)]
         const SEALED: Sealed = Sealed;
 

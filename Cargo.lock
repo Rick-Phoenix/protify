@@ -1754,6 +1754,7 @@ name = "test-schemas"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "maplit",
  "paste",
  "prelude",
  "prost",

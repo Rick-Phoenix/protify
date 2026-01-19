@@ -130,7 +130,7 @@ mod cel_impls {
         field_context,
         parent_elements,
         CEL_VIOLATION,
-        "internal server error",
+        "internal server error".to_string(),
       )
     }
   }

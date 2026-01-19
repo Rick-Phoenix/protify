@@ -21,6 +21,8 @@ where
   /// Specifies that this field must contain only unique values (only applies to scalar fields).
   unique: bool,
   ignore: Ignore,
+
+  error_messages: Option<ErrorMessages<RepeatedViolation>>,
 }
 
 impl<T, S: State> Default for RepeatedValidatorBuilder<T, S>
@@ -38,6 +40,7 @@ where
       max_items: Default::default(),
       unique: Default::default(),
       ignore: Default::default(),
+      error_messages: None,
     }
   }
 }
@@ -67,6 +70,7 @@ where
       unique,
       ignore,
       cel,
+      error_messages,
       ..
     } = self;
 
@@ -78,6 +82,7 @@ where
       max_items,
       unique,
       ignore,
+      error_messages,
     }
   }
 
@@ -97,6 +102,7 @@ where
       max_items: self.max_items,
       unique: self.unique,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -120,6 +126,7 @@ where
       max_items: self.max_items,
       unique: self.unique,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -137,6 +144,7 @@ where
       max_items: self.max_items,
       unique: self.unique,
       ignore: Ignore::IfZeroValue,
+      error_messages: self.error_messages,
     }
   }
 
@@ -155,6 +163,7 @@ where
       max_items: self.max_items,
       unique: self.unique,
       ignore: Ignore::Always,
+      error_messages: self.error_messages,
     }
   }
 
@@ -172,6 +181,7 @@ where
       max_items: self.max_items,
       unique: self.unique,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -189,6 +199,7 @@ where
       max_items: Some(num),
       unique: self.unique,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 
@@ -206,6 +217,7 @@ where
       max_items: self.max_items,
       unique: true,
       ignore: self.ignore,
+      error_messages: self.error_messages,
     }
   }
 }

@@ -22,6 +22,8 @@ where
   /// Specifies that this field must contain only unique values (only applies to scalar fields).
   pub unique: bool,
   pub ignore: Ignore,
+
+  pub error_messages: Option<ErrorMessages<RepeatedViolation>>,
 }
 
 impl<T> Clone for RepeatedValidator<T>
@@ -38,6 +40,7 @@ where
       max_items: self.max_items,
       unique: self.unique,
       ignore: self.ignore,
+      error_messages: None,
     }
   }
 }
@@ -58,6 +61,7 @@ where
       max_items: None,
       unique: false,
       ignore: Ignore::Unspecified,
+      error_messages: None,
     }
   }
 }
@@ -210,24 +214,36 @@ where
     if let Some(val) = val {
       let val = val.borrow();
 
+      macro_rules! handle_violation {
+        ($id:ident, $default:expr) => {
+          ctx.add_repeated_violation(
+            RepeatedViolation::$id,
+            self
+              .error_messages
+              .as_deref()
+              .and_then(|map| map.get(&RepeatedViolation::$id))
+              .map(|m| Cow::Borrowed(m.as_ref()))
+              .unwrap_or_else(|| Cow::Owned($default)),
+          );
+
+          if ctx.fail_fast {
+            return false;
+          } else {
+            is_valid = false;
+          }
+        };
+      }
+
       if let Some(min) = &self.min_items
         && val.len() < *min
       {
-        ctx.add_repeated_violation(
-          RepeatedViolation::MinItems,
-          &format!("must contain at least {min} items"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(MinItems, format!("must contain at least {min} items"));
       }
 
       if let Some(max) = &self.max_items
         && val.len() > *max
       {
-        ctx.add_repeated_violation(
-          RepeatedViolation::MaxItems,
-          &format!("cannot contain more than {max} items"),
-        );
-        handle_violation!(is_valid, ctx);
+        handle_violation!(MaxItems, format!("cannot contain more than {max} items"));
       }
 
       let items_validator = self.items.as_ref();
@@ -293,8 +309,7 @@ where
       }
 
       if !has_unique_values_so_far {
-        ctx.add_repeated_violation(RepeatedViolation::Unique, "must contain unique values");
-        handle_violation!(is_valid, ctx);
+        handle_violation!(Unique, "must contain unique values".to_string());
       }
 
       #[cfg(feature = "cel")]
