@@ -39,19 +39,6 @@ pub struct SimpleMsg {
   pub name: String,
 }
 
-fn abc() {
-  let msg = SimpleMsg::default();
-
-  let validator = String::validator_builder().email().build();
-
-  let _ = msg.name.validate_with(&validator);
-  let _ = validator.validate_core(&mut ValidationCtx::default(), Some("abc"));
-
-  let _msg_v = msg.validate_with(&SimpleMsg::validator_builder().build());
-
-  let dur = &Duration::default();
-}
-
 #[proto_message(no_auto_test)]
 pub struct FailFastTest {
   #[proto(validate = |v| v.max_len(1).not_in(["abc"]))]
