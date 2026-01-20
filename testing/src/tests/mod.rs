@@ -2,10 +2,12 @@
   clippy::needless_pass_by_value,
   clippy::struct_field_names,
   clippy::use_self,
-  clippy::derive_partial_eq_without_eq
+  clippy::derive_partial_eq_without_eq,
+  clippy::enum_variant_names
 )]
 
 mod cel_tests;
+mod custom_validators_tests;
 mod oneof_tags_tests;
 mod validation_tests;
 

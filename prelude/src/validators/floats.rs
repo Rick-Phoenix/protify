@@ -329,8 +329,8 @@ where
     is_valid
   }
 
-  fn into_proto_option(self) -> Option<ProtoOption> {
-    Some(self.into())
+  fn as_proto_option(&self) -> Option<ProtoOption> {
+    Some(self.clone().into())
   }
 }
 
@@ -411,7 +411,7 @@ impl_proto_type!(f64, Double);
 #[allow(private_interfaces)]
 struct Sealed;
 
-pub trait FloatWrapper: AsProtoType + Default {
+pub trait FloatWrapper: AsProtoType + Default + Copy {
   type RustType: PartialOrd
     + PartialEq
     + Copy

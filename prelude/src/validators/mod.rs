@@ -2,69 +2,6 @@ use crate::*;
 
 use proto_types::protovalidate::*;
 
-pub struct FnValidator<F, T: ?Sized> {
-  func: F,
-  _phantom: PhantomData<T>,
-}
-
-impl<F, T> Validator<T> for FnValidator<F, T>
-where
-  T: ToOwned + ?Sized,
-  F: Fn(&mut ValidationCtx, Option<&T>) -> bool,
-{
-  type Target = T;
-
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
-    let target = val.map(|v| v.borrow());
-    (self.func)(ctx, target)
-  }
-}
-
-pub const fn from_fn<T, F>(f: F) -> FnValidator<F, T>
-where
-  T: ?Sized,
-  F: Fn(&mut ValidationCtx, Option<&T>) -> bool,
-{
-  FnValidator {
-    func: f,
-    _phantom: PhantomData,
-  }
-}
-
-#[cfg(test)]
-#[allow(unused)]
-mod test {
-  use super::*;
-
-  struct Test;
-
-  fn validator(ctx: &mut ValidationCtx, val: Option<&str>) -> bool {
-    true
-  }
-
-  fn abc() {
-    let x = Test.validate("abc");
-
-    let v = from_fn(validator);
-
-    let z = v.validate("abc");
-  }
-
-  impl Validator<String> for Test {
-    type Target = str;
-
-    fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
-    where
-      V: Borrow<Self::Target> + ?Sized,
-    {
-      unimplemented!()
-    }
-  }
-}
-
 // Here we use a generic for the target of the validator
 // AND an assoc. type for the actual type being validated
 // so that it can be proxied by wrappers (like with Sint32, Fixed32, enums, etc...).
@@ -76,18 +13,16 @@ pub trait Validator<T: ?Sized>: Sized {
     vec![]
   }
 
-  fn into_proto_option(self) -> Option<ProtoOption> {
+  fn as_proto_option(&self) -> Option<ProtoOption> {
     None
   }
 
-  fn into_schema(self) -> Option<FieldValidatorSchema> {
-    let cel_rules = self.cel_rules();
-
+  fn schema(&self) -> Option<FieldValidatorSchema> {
     self
-      .into_proto_option()
+      .as_proto_option()
       .map(|opt| FieldValidatorSchema {
         schema: opt,
-        cel_rules,
+        cel_rules: self.cel_rules(),
       })
   }
 
@@ -226,6 +161,38 @@ pub trait ProtoValidator {
 pub(crate) trait IsDefault: Default + PartialEq {
   fn is_default(&self) -> bool {
     (*self) == Self::default()
+  }
+}
+
+pub struct FnValidator<F, T: ?Sized> {
+  func: F,
+  _phantom: PhantomData<T>,
+}
+
+impl<F, T> Validator<T> for FnValidator<F, T>
+where
+  T: ToOwned + ?Sized,
+  F: Fn(&mut ValidationCtx, Option<&T>) -> bool,
+{
+  type Target = T;
+
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    let target = val.map(|v| v.borrow());
+    (self.func)(ctx, target)
+  }
+}
+
+pub const fn from_fn<T, F>(f: F) -> FnValidator<F, T>
+where
+  T: ?Sized,
+  F: Fn(&mut ValidationCtx, Option<&T>) -> bool,
+{
+  FnValidator {
+    func: f,
+    _phantom: PhantomData,
   }
 }
 

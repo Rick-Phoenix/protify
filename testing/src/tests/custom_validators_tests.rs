@@ -1,0 +1,82 @@
+use prelude::proto_types::protovalidate::{Violation, ViolationKind};
+
+use super::*;
+use std::sync::LazyLock;
+
+struct CustomValidator;
+
+impl Validator<i32> for CustomValidator {
+  type Target = i32;
+
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: std::borrow::Borrow<Self::Target> + ?Sized,
+  {
+    custom_validator(ctx, Some(val.unwrap().borrow()))
+  }
+}
+
+fn test_violation() -> Violation {
+  Violation {
+    field: None,
+    rule: None,
+    rule_id: Some("must_be_1".to_string()),
+    message: Some("must be 1".to_string()),
+    for_key: None,
+  }
+}
+
+fn custom_validator(ctx: &mut ValidationCtx, val: Option<&i32>) -> bool {
+  let val = val.unwrap();
+
+  if *val != 1 {
+    ctx.violations.push(ViolationCtx {
+      data: test_violation(),
+      kind: ViolationKind::Cel,
+    });
+
+    return false;
+  }
+
+  true
+}
+
+static CUSTOM_STATIC: LazyLock<CustomValidator> = LazyLock::new(|| CustomValidator);
+
+#[proto_message(no_auto_test)]
+struct CustomValidatorsMsg {
+  #[proto(validate = CustomValidator)]
+  custom_struct: i32,
+  #[proto(validate = from_fn(custom_validator))]
+  custom_fn: i32,
+  #[proto(validate = *CUSTOM_STATIC)]
+  custom_static: i32,
+  #[proto(oneof(tags(1, 2)))]
+  oneof: Option<CustomValidatorOneof>,
+}
+
+#[proto_oneof(no_auto_test)]
+enum CustomValidatorOneof {
+  #[proto(tag = 1, validate = CustomValidator)]
+  CustomStruct(i32),
+  #[proto(tag = 2, validate = from_fn(custom_validator))]
+  CustomFn(i32),
+  #[proto(tag = 3, validate = *CUSTOM_STATIC)]
+  CustomStatic(i32),
+}
+
+#[test]
+fn custom_validators() {
+  let msg = CustomValidatorsMsg {
+    oneof: Some(CustomValidatorOneof::CustomStruct(0)),
+    ..Default::default()
+  };
+
+  let violations = msg.validate_all().unwrap_err().into_violations();
+
+  assert_eq_pretty!(violations.len(), 4);
+
+  for v in violations {
+    assert_eq_pretty!(v, test_violation());
+  }
+}

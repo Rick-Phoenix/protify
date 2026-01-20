@@ -43,7 +43,7 @@ pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
           let validator_target_type = proto_field.validator_target_type(*span);
 
           quote_spanned! {*span=>
-            ::prelude::Validator::<#validator_target_type>::into_schema(#e)
+            ::prelude::Validator::<#validator_target_type>::schema(&#e)
           }
         },
       );

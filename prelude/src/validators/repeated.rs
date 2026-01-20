@@ -332,8 +332,8 @@ where
     is_valid
   }
 
-  fn into_proto_option(self) -> Option<ProtoOption> {
-    Some(self.into())
+  fn as_proto_option(&self) -> Option<ProtoOption> {
+    Some(self.clone().into())
   }
 }
 
@@ -349,10 +349,7 @@ where
       .maybe_set("min_items", validator.min_items)
       .maybe_set("max_items", validator.max_items);
 
-    if let Some(items_option) = validator
-      .items
-      .and_then(|i| i.into_proto_option())
-    {
+    if let Some(items_option) = validator.items.and_then(|i| i.as_proto_option()) {
       rules.set("items", items_option.value);
     }
 

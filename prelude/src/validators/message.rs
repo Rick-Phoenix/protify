@@ -169,8 +169,8 @@ where
     is_valid
   }
 
-  fn into_proto_option(self) -> Option<ProtoOption> {
-    Some(self.into())
+  fn as_proto_option(&self) -> Option<ProtoOption> {
+    Some(self.clone().into())
   }
 }
 

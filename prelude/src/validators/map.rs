@@ -33,6 +33,49 @@ where
   pub error_messages: Option<ErrorMessages<MapViolation>>,
 }
 
+impl<K, V> MapValidator<K, V>
+where
+  K: ProtoValidator,
+  V: ProtoValidator,
+{
+  fn proto_option(&self) -> ProtoOption {
+    let mut rules = OptionMessageBuilder::new();
+
+    rules
+      .maybe_set("min_pairs", self.min_pairs)
+      .maybe_set("max_pairs", self.max_pairs);
+
+    if let Some(keys_option) = self
+      .keys
+      .as_ref()
+      .and_then(|k| k.as_proto_option())
+    {
+      rules.set("keys", keys_option.value);
+    }
+
+    if let Some(values_option) = self
+      .values
+      .as_ref()
+      .and_then(|v| v.as_proto_option())
+    {
+      rules.set("values", values_option.value);
+    }
+
+    let mut outer_rules = OptionMessageBuilder::new();
+
+    outer_rules.set("map", OptionValue::Message(rules.into()));
+
+    outer_rules
+      .add_cel_options(self.cel.clone())
+      .set_ignore(self.ignore);
+
+    ProtoOption {
+      name: "(buf.validate.field)".into(),
+      value: OptionValue::Message(outer_rules.into()),
+    }
+  }
+}
+
 impl<K: AsProtoMapKey, V: AsProtoType> AsProtoField for HashMap<K, V> {
   fn as_proto_field() -> FieldType {
     FieldType::Map {
@@ -344,8 +387,8 @@ where
     is_valid
   }
 
-  fn into_proto_option(self) -> Option<ProtoOption> {
-    Some(self.into())
+  fn as_proto_option(&self) -> Option<ProtoOption> {
+    Some(self.proto_option())
   }
 }
 
@@ -566,8 +609,8 @@ where
     is_valid
   }
 
-  fn into_proto_option(self) -> Option<ProtoOption> {
-    Some(self.into())
+  fn as_proto_option(&self) -> Option<ProtoOption> {
+    Some(self.proto_option())
   }
 }
 
@@ -577,34 +620,6 @@ where
   V: ProtoValidator,
 {
   fn from(validator: MapValidator<K, V>) -> Self {
-    let mut rules = OptionMessageBuilder::new();
-
-    rules
-      .maybe_set("min_pairs", validator.min_pairs)
-      .maybe_set("max_pairs", validator.max_pairs);
-
-    if let Some(keys_option) = validator.keys.and_then(|k| k.into_proto_option()) {
-      rules.set("keys", keys_option.value);
-    }
-
-    if let Some(values_option) = validator
-      .values
-      .and_then(|v| v.into_proto_option())
-    {
-      rules.set("values", values_option.value);
-    }
-
-    let mut outer_rules = OptionMessageBuilder::new();
-
-    outer_rules.set("map", OptionValue::Message(rules.into()));
-
-    outer_rules
-      .add_cel_options(validator.cel)
-      .set_ignore(validator.ignore);
-
-    Self {
-      name: "(buf.validate.field)".into(),
-      value: OptionValue::Message(outer_rules.into()),
-    }
+    validator.proto_option()
   }
 }

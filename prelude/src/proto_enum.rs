@@ -1,6 +1,6 @@
 use crate::*;
 
-pub trait ProtoEnum: TryFrom<i32> + Default {
+pub trait ProtoEnum: TryFrom<i32> + Copy + Default {
   fn proto_name() -> &'static str;
 }
 
