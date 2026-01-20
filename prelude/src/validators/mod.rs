@@ -12,9 +12,13 @@ pub trait Validator<T: ?Sized>: Sized {
   where
     Self: 'a;
 
-  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a>;
+  fn make_unique_store<'a>(&self, cap: usize) -> Self::UniqueStore<'a> {
+    Self::UniqueStore::default_with_capacity(cap)
+  }
 
-  fn cel_rules(&self) -> Vec<CelRule>;
+  fn cel_rules(&self) -> Vec<CelRule> {
+    vec![]
+  }
 
   fn into_proto_option(self) -> Option<ProtoOption> {
     None
@@ -31,16 +35,22 @@ pub trait Validator<T: ?Sized>: Sized {
       })
   }
 
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>>;
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+    Ok(())
+  }
 
   #[cfg(feature = "cel")]
   fn check_cel_programs_with(
     &self,
     _val: <Self::Target as ToOwned>::Owned,
-  ) -> Result<(), Vec<CelError>>;
+  ) -> Result<(), Vec<CelError>> {
+    Ok(())
+  }
 
   #[cfg(feature = "cel")]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>>;
+  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+    Ok(())
+  }
 
   #[inline]
   fn validate<V>(&self, val: &V) -> Result<(), ViolationsAcc>
