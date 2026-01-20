@@ -129,7 +129,7 @@ impl MessageEntry {
     field_opt
       .into_iter()
       .chain(oneof_vec.into_iter().flatten())
-      .filter_map(|f| f.validator)
+      .flat_map(|f| f.validators)
       .flat_map(|v| v.cel_rules)
   }
 

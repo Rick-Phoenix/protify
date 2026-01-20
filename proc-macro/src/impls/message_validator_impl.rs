@@ -2,12 +2,12 @@ use crate::*;
 
 bool_enum!(pub UseFallback);
 
-pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Option<TokenStream2> {
+pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Vec<TokenStream2> {
   let FieldData {
     ident,
     ident_str,
     tag,
-    validator,
+    validators,
     proto_name,
     proto_field,
     span,
@@ -15,8 +15,10 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
     ..
   } = field_data;
 
+  let mut tokens: Vec<TokenStream2> = Vec::new();
+
   if let ProtoField::Oneof(OneofInfo { required, .. }) = proto_field {
-    Some(if *required {
+    tokens.push(if *required {
       quote_spanned! {*span=>
         match self.#ident.as_ref() {
           Some(oneof) => {
@@ -38,9 +40,9 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
           }
         }
       }
-    })
+    });
   } else {
-    validator.as_ref().map(|validator| {
+    tokens = validators.iter().map(|validator| {
       let ValidatorTokens {
         expr: validator_expr,
         span,
@@ -99,18 +101,22 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
         let validator_name = field_data.validator_name();
 
         quote_spanned! {*span=>
-          static #validator_static_ident: ::prelude::Lazy<#validator_name> = ::prelude::Lazy::new(|| {
-            #validator_expr
-          });
+          { 
+            static #validator_static_ident: ::prelude::Lazy<#validator_name> = ::prelude::Lazy::new(|| {
+              #validator_expr
+            });
 
-          ::prelude::Validator::<#validator_target_type>::validate_core(
-            &*#validator_static_ident,
-            #validate_args
-          )
+            ::prelude::Validator::<#validator_target_type>::validate_core(
+              &*#validator_static_ident,
+              #validate_args
+            ) 
+          }
         }
       }
-    })
+    }).collect();
   }
+
+  tokens
 }
 
 pub fn generate_message_validator(
@@ -125,28 +131,33 @@ pub fn generate_message_validator(
     let tokens = fields
       .iter()
       .filter_map(|d| d.as_normal())
-      .filter_map(|data| {
-        field_validator_tokens(data, ItemKind::Message).map(|validator| {
-          let span = data.span;
+      .filter_map(|d| {
+        let tokens = field_validator_tokens(d, ItemKind::Message);
 
-          let check = if data.proto_field.is_oneof() {
-            validator
-          } else {
-            quote_spanned! {span=>
-              if !{ #validator } {
+        (!tokens.is_empty()).then_some((d, tokens))
+      })
+      .map(|(data, validators)| {
+        let span = data.span;
+
+        let check = if data.proto_field.is_oneof() {
+          quote! { #(#validators)* }
+        } else {
+          quote_spanned! {span=>
+            #(
+              if !#validators {
                 is_valid = false;
               }
-            }
-          };
-
-          quote_spanned! {span=>
-            #check
-
-            if !is_valid && ctx.fail_fast {
-              return false;
-            }
+            )*
           }
-        })
+        };
+
+        quote_spanned! {span=>
+          #check
+
+          if !is_valid && ctx.fail_fast {
+            return false;
+          }
+        }
       });
 
     quote! { #(#tokens)* }

@@ -6,7 +6,7 @@ pub struct Field {
   pub tag: i32,
   pub type_: FieldType,
   pub options: Vec<ProtoOption>,
-  pub validator: Option<FieldValidatorSchema>,
+  pub validators: Vec<FieldValidatorSchema>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -20,11 +20,11 @@ impl Field {
     self
       .options
       .iter()
-      .chain(self.validator.iter().map(|v| &v.schema))
+      .chain(self.validators.iter().map(|v| &v.schema))
   }
 
   pub(crate) fn register_import_path(&self, imports: &mut FileImports) {
-    if self.validator.is_some() {
+    if !self.validators.is_empty() {
       imports.insert_validate_proto();
     }
 

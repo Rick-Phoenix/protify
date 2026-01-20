@@ -2,7 +2,8 @@ use crate::*;
 
 #[derive(Clone, Copy)]
 pub enum ValidatorKind {
-  Known,
+  Closure,
+  Reflection,
   Custom,
   Default,
 }
@@ -12,7 +13,7 @@ impl ValidatorKind {
   ///
   /// [`Default`]: ValidatorKind::Default
   #[must_use]
-  pub fn is_default(&self) -> bool {
+  pub const fn is_default(self) -> bool {
     matches!(self, Self::Default)
   }
 
@@ -20,16 +21,16 @@ impl ValidatorKind {
   ///
   /// [`Custom`]: ValidatorKind::Custom
   #[must_use]
-  pub fn is_custom(&self) -> bool {
+  pub const fn is_custom(self) -> bool {
     matches!(self, Self::Custom)
   }
 
-  /// Returns `true` if the validator kind is [`Known`].
+  /// Returns `true` if the validator kind is [`Closure`].
   ///
-  /// [`Known`]: ValidatorKind::Known
+  /// [`Closure`]: ValidatorKind::Closure
   #[must_use]
-  pub fn is_known(&self) -> bool {
-    matches!(self, Self::Known)
+  pub fn is_closure(&self) -> bool {
+    matches!(self, Self::Closure)
   }
 }
 
@@ -38,6 +39,83 @@ pub struct ValidatorTokens {
   pub expr: TokenStream2,
   pub kind: ValidatorKind,
   pub span: Span,
+}
+
+#[derive(Clone, Default)]
+pub struct Validators {
+  pub validators: Vec<ValidatorTokens>,
+}
+
+impl<'a> IntoIterator for &'a Validators {
+  type Item = &'a ValidatorTokens;
+  type IntoIter = std::slice::Iter<'a, ValidatorTokens>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.validators.iter()
+  }
+}
+
+impl Validators {
+  pub fn from_sinle(validator: ValidatorTokens) -> Self {
+    Self {
+      validators: vec![validator],
+    }
+  }
+  pub fn iter(&self) -> std::slice::Iter<'_, ValidatorTokens> {
+    self.validators.iter()
+  }
+
+  pub fn adjust_closures(&mut self, proto_field: &ProtoField) {
+    for validator in &mut self.validators {
+      if validator.kind.is_closure() {
+        let validator_target_type = proto_field.validator_target_type(validator.span);
+
+        validator.expr = quote_spanned! {validator.span=> <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#validator) };
+      }
+    }
+  }
+}
+
+impl Parse for ValidatorTokens {
+  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    let validator: Expr = input.parse()?;
+
+    let kind = match &validator {
+      Expr::Closure(_) => ValidatorKind::Closure,
+      _ => ValidatorKind::Custom,
+    };
+
+    Ok(Self {
+      span: validator.span(),
+      kind,
+      expr: validator.into_token_stream(),
+    })
+  }
+}
+
+impl Parse for Validators {
+  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    let mut validators: Vec<ValidatorTokens> = Vec::new();
+
+    if input.peek(token::Bracket) {
+      let content;
+      bracketed!(content in input);
+
+      while !content.is_empty() {
+        validators.push(content.parse::<ValidatorTokens>()?);
+
+        if content.is_empty() {
+          break;
+        }
+
+        let _comma: token::Comma = content.parse()?;
+      }
+    } else {
+      validators.push(input.parse::<ValidatorTokens>()?);
+    }
+
+    Ok(Self { validators })
+  }
 }
 
 impl ToTokens for ValidatorTokens {
@@ -53,7 +131,7 @@ pub struct FieldData {
   pub type_info: TypeInfo,
   pub ident_str: String,
   pub tag: Option<ParsedNum>,
-  pub validator: Option<ValidatorTokens>,
+  pub validators: Validators,
   pub options: TokensOr<TokenStream2>,
   pub proto_name: String,
   pub proto_field: ProtoField,
@@ -110,7 +188,7 @@ impl FieldDataKind {
 pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error> {
   let field_span = field.ident()?.span();
 
-  let mut validator: Option<ClosureOrExpr> = None;
+  let mut validators = Validators::default();
   let mut tag: Option<ParsedNum> = None;
   let mut options = TokensOr::<TokenStream2>::vec();
   let mut name: Option<String> = None;
@@ -154,7 +232,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
               name = Some(meta.expr_value()?.as_string()?);
             }
             "validate" => {
-              validator = Some(meta.expr_value()?.as_closure_or_expr());
+              validators = meta.parse_value::<Validators>()?;
             }
             "from_proto" => {
               from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
@@ -251,26 +329,11 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     }
   };
 
-  let validator = if let Some(expr) = validator {
-    let span = expr.span();
-
-    let (expr, kind) = match expr {
-      ClosureOrExpr::Expr(expr) => (expr.to_token_stream(), ValidatorKind::Custom),
-
-      ClosureOrExpr::Closure(closure) => {
-        let validator_target_type = proto_field.validator_target_type(field_span);
-
-        (
-          quote_spanned! {closure.span()=> <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#closure) },
-          ValidatorKind::Known,
-        )
-      }
-    };
-
-    Some(ValidatorTokens { expr, span, kind })
-  } else {
-    proto_field.default_validator_expr(field_span)
-  };
+  if !validators.validators.is_empty() {
+    validators.adjust_closures(&proto_field);
+  } else if let Some(default) = proto_field.default_validator_expr(field_span) {
+    validators.validators.push(default);
+  }
 
   let proto_name = name.unwrap_or_else(|| {
     if field.is_variant() {
@@ -281,7 +344,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
   });
 
   Ok(FieldDataKind::Normal(FieldData {
-    validator,
+    validators,
     tag,
     options,
     proto_name,

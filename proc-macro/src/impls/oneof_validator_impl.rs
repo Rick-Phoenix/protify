@@ -11,23 +11,37 @@ pub fn generate_oneof_validator(
     let tokens = variants
       .iter()
       .filter_map(|d| d.as_normal())
-      .filter_map(|data| {
-        field_validator_tokens(data, ItemKind::Oneof).map(|inner| {
-          let ident = &data.ident;
+      .filter_map(|d| {
+        let tokens = field_validator_tokens(d, ItemKind::Oneof);
 
-          quote_spanned! {data.span=>
-            Self::#ident(v) => {
-              #inner
-            }
+        (!tokens.is_empty()).then_some((d, tokens))
+      })
+      .map(|(data, validators)| {
+        let ident = &data.ident;
+
+        quote_spanned! {data.span=>
+          Self::#ident(v) => {
+            #(
+              if !#validators {
+                is_valid = false;
+
+                if ctx.fail_fast {
+                  return false;
+                }
+              }
+            )*
           }
-        })
+        }
       });
 
     quote! {
+      let mut is_valid = true;
       match self {
         #(#tokens,)*
-        _ => true
-      }
+        _ => {}
+      };
+
+      is_valid
     }
   };
 

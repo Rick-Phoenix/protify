@@ -2,35 +2,28 @@ use crate::*;
 
 impl FieldData {
   pub fn consistency_check_tokens(&self) -> Option<TokenStream2> {
-    self
-      .validator
-      .as_ref()
+    let validators = self
+      .validators
+      .iter()
       // Useless to check consistency for default validators
       .filter(|v| !v.kind.is_default())
       .map(|validator| {
         let ident_str = &self.ident_str;
-
-        let call = if let ProtoField::Map(_) = &self.proto_field {
-
-          let validator_name = self.validator_name();
-          let validator_target_type = self.proto_field.validator_target_type(self.span);
-
-          quote_spanned! {self.span=>
-            <#validator_name as ::prelude::Validator<#validator_target_type>>::check_consistency(&#validator)
-          }
-        } else {
-          quote_spanned! {self.span=> ::prelude::Validator::check_consistency(&#validator)}
-        };
+        let validator_target_type = self.proto_field.validator_target_type(self.span);
 
         quote_spanned! {self.span=>
-          if let Err(errs) = #call {
+          if let Err(errs) = ::prelude::Validator::<#validator_target_type>::check_consistency(&#validator) {
             field_errors.push(::prelude::FieldError {
               field: #ident_str,
               errors: errs
             });
           }
         }
-      })
+      });
+
+    let tokens = quote! { #(#validators)* };
+
+    (!tokens.is_empty()).then_some(tokens)
   }
 
   pub fn descriptor_type_tokens(&self) -> TokenStream2 {

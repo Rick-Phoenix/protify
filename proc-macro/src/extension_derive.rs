@@ -49,7 +49,7 @@ pub fn process_extension_derive(
         tag: #tag,
         options: #options.into_iter().collect(),
         type_: #field_type_tokens,
-        validator: None,
+        validators: ::prelude::vec![],
       }
     });
   }

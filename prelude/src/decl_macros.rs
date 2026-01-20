@@ -165,28 +165,6 @@ macro_rules! cel_program {
   };
 }
 
-macro_rules! impl_validator {
-  ($validator:ident, $rust_type:ty) => {
-    $crate::paste! {
-      impl ProtoValidator for $rust_type {
-        type Target = $rust_type;
-        type Validator = $validator;
-        type Builder = [< $validator Builder >];
-      }
-
-      impl<S: State> ValidatorBuilderFor<$rust_type> for [< $validator Builder >]<S> {
-        type Target = $rust_type;
-        type Validator = $validator;
-
-        #[inline]
-        fn build_validator(self) -> $validator {
-          self.build()
-        }
-      }
-    }
-  };
-}
-
 macro_rules! impl_proto_type {
   ($rust_type:ty, $proto_type:ident) => {
     impl AsProtoType for $rust_type {

@@ -80,3 +80,31 @@ fn custom_validators() {
     assert_eq_pretty!(v, test_violation());
   }
 }
+
+#[proto_message(no_auto_test)]
+struct MultipleValidators {
+  #[proto(validate = [ |v| v.const_(1), CustomValidator, from_fn(custom_validator), *CUSTOM_STATIC ])]
+  id: i32,
+  #[proto(oneof(tags(1, 2)))]
+  oneof: Option<MultipleValidatorsOneof>,
+}
+
+#[proto_oneof(no_auto_test)]
+enum MultipleValidatorsOneof {
+  #[proto(tag = 1, validate = [ |v| v.const_(1), CustomValidator, from_fn(custom_validator), *CUSTOM_STATIC ])]
+  A(i32),
+  #[proto(tag = 2)]
+  B(i32),
+}
+
+#[test]
+fn multiple_validators() {
+  let msg = MultipleValidators {
+    id: 0,
+    oneof: Some(MultipleValidatorsOneof::A(0)),
+  };
+
+  let violations = msg.validate_all().unwrap_err().into_violations();
+
+  assert_eq_pretty!(violations.len(), 8);
+}

@@ -92,7 +92,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
 
       ValidatorTokens {
         expr: expr.into_built_validator(),
-        kind: ValidatorKind::Known,
+        kind: ValidatorKind::Reflection,
         span: variant_span,
       }
     } else if let Some(fallback) = proto_field.default_validator_expr(variant_span) {
@@ -110,7 +110,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
       tag: Some(ParsedNum::with_default_span(
         field_desc.number().cast_signed(),
       )),
-      validator: Some(validator),
+      validators: Validators::from_sinle(validator),
       options: TokenStreamOr::vec(),
       proto_field,
       from_proto: None,

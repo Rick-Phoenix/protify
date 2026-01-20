@@ -112,7 +112,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
           proto_name: proto_name.to_string(),
           ident_str,
           tag: None,
-          validator: None,
+          validators: Validators::default(),
           options: TokensOr::<TokenStream2>::vec(),
           proto_field: ProtoField::Oneof(oneof),
           from_proto: None,
@@ -141,7 +141,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
 
         ValidatorTokens {
           expr: expr.into_built_validator(),
-          kind: ValidatorKind::Known,
+          kind: ValidatorKind::Reflection,
           span: field_span,
         }
       } else if let Some(fallback) = proto_field.default_validator_expr(field_span) {
@@ -160,7 +160,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
           num: field_desc.number().cast_signed(),
           span: Span::call_site(),
         }),
-        validator: Some(validator),
+        validators: Validators::from_sinle(validator),
         options: TokensOr::<TokenStream2>::vec(),
         proto_field,
         from_proto: None,
