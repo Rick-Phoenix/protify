@@ -1,9 +1,42 @@
 use crate::*;
 
+#[derive(Clone, Copy)]
+pub enum ValidatorKind {
+  Known,
+  Custom,
+  Default,
+}
+
+impl ValidatorKind {
+  /// Returns `true` if the validator kind is [`Default`].
+  ///
+  /// [`Default`]: ValidatorKind::Default
+  #[must_use]
+  pub fn is_default(&self) -> bool {
+    matches!(self, Self::Default)
+  }
+
+  /// Returns `true` if the validator kind is [`Custom`].
+  ///
+  /// [`Custom`]: ValidatorKind::Custom
+  #[must_use]
+  pub fn is_custom(&self) -> bool {
+    matches!(self, Self::Custom)
+  }
+
+  /// Returns `true` if the validator kind is [`Known`].
+  ///
+  /// [`Known`]: ValidatorKind::Known
+  #[must_use]
+  pub fn is_known(&self) -> bool {
+    matches!(self, Self::Known)
+  }
+}
+
 #[derive(Clone)]
 pub struct ValidatorTokens {
   pub expr: TokenStream2,
-  pub is_fallback: bool,
+  pub kind: ValidatorKind,
   pub span: Span,
 }
 
@@ -221,21 +254,20 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
   let validator = if let Some(expr) = validator {
     let span = expr.span();
 
-    let expr = match expr {
-      ClosureOrExpr::Expr(expr) => expr.to_token_stream(),
+    let (expr, kind) = match expr {
+      ClosureOrExpr::Expr(expr) => (expr.to_token_stream(), ValidatorKind::Custom),
 
       ClosureOrExpr::Closure(closure) => {
         let validator_target_type = proto_field.validator_target_type(field_span);
 
-        quote_spanned! {closure.span()=> <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#closure) }
+        (
+          quote_spanned! {closure.span()=> <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#closure) },
+          ValidatorKind::Known,
+        )
       }
     };
 
-    Some(ValidatorTokens {
-      expr,
-      is_fallback: false,
-      span,
-    })
+    Some(ValidatorTokens { expr, span, kind })
   } else {
     proto_field.default_validator_expr(field_span)
   };

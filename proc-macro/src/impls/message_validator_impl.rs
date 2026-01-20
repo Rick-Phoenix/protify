@@ -44,12 +44,9 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
       let ValidatorTokens {
         expr: validator_expr,
         span,
+        kind,
         ..
       } = validator;
-
-      let validator_static_ident = format_ident!("{}_VALIDATOR", to_upper_snake_case(ident_str));
-      let validator_name = field_data.validator_name();
-      let field_type = field_data.descriptor_type_tokens();
 
       let argument = match item_kind {
         ItemKind::Oneof => quote_spanned! {*span=> Some(v) },
@@ -72,35 +69,45 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Op
         },
       };
 
-      let validate_method = {
-        let validator_name = field_data.validator_name();
-        let validator_target_type = proto_field.validator_target_type(*span);
+      let field_type = field_data.descriptor_type_tokens();
+      let validator_target_type = proto_field.validator_target_type(*span);
 
-        quote_spanned! {*span=>
-          <#validator_name as ::prelude::Validator<#validator_target_type>>::validate_core(
-            &#validator_static_ident,
-            ctx.with_field_context(
-              ::prelude::FieldContext {
-                proto_name: #proto_name,
-                tag: #tag,
-                field_type: #field_type,
-                map_key_type: None,
-                map_value_type: None,
-                subscript: None,
-                field_kind: Default::default(),
-              }
-            ),
-            #argument
-          )
-        }
+      let validate_args = quote! {
+        ctx.with_field_context(
+          ::prelude::FieldContext {
+            proto_name: #proto_name,
+            tag: #tag,
+            field_type: #field_type,
+            map_key_type: None,
+            map_value_type: None,
+            subscript: None,
+            field_kind: Default::default(),
+          }
+        ),
+        #argument
       };
 
-      quote_spanned! {*span=>
-        static #validator_static_ident: ::prelude::Lazy<#validator_name> = ::prelude::Lazy::new(|| {
-          #validator_expr
-        });
+      if kind.is_custom() {
+        quote_spanned! {*span=>
+          ::prelude::Validator::<#validator_target_type>::validate_core(
+            &(#validator_expr),
+            #validate_args
+          )
+        }
+      } else {
+        let validator_static_ident = format_ident!("{}_VALIDATOR", to_upper_snake_case(ident_str));
+        let validator_name = field_data.validator_name();
 
-        #validate_method
+        quote_spanned! {*span=>
+          static #validator_static_ident: ::prelude::Lazy<#validator_name> = ::prelude::Lazy::new(|| {
+            #validator_expr
+          });
+
+          ::prelude::Validator::<#validator_target_type>::validate_core(
+            &*#validator_static_ident,
+            #validate_args
+          )
+        }
       }
     })
   }

@@ -36,19 +36,14 @@ pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
     let validator_schema_tokens = validator
       .as_ref()
       // For default validators (messages only) we skip the schema generation
-      .filter(|v| !v.is_fallback)
+      .filter(|v| !v.kind.is_default())
       .map_or_else(
         || quote_spanned! {*span=> None },
         |e| {
-          if let ProtoField::Map(_) = proto_field {
-            let validator_name = data.validator_name();
-            let validator_target_type = proto_field.validator_target_type(*span);
+          let validator_target_type = proto_field.validator_target_type(*span);
 
-            quote_spanned! {*span=>
-              <#validator_name as ::prelude::Validator<#validator_target_type>>::into_schema(#e)
-            }
-          } else {
-            quote_spanned! {*span=> #e.into_schema() }
+          quote_spanned! {*span=>
+            ::prelude::Validator::<#validator_target_type>::into_schema(#e)
           }
         },
       );

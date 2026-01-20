@@ -92,7 +92,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
 
       ValidatorTokens {
         expr: expr.into_built_validator(),
-        is_fallback: false,
+        kind: ValidatorKind::Known,
         span: variant_span,
       }
     } else if let Some(fallback) = proto_field.default_validator_expr(variant_span) {

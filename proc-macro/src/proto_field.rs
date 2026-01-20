@@ -135,8 +135,8 @@ impl ProtoField {
 
     expr.map(|expr| ValidatorTokens {
       expr,
-      is_fallback: true,
       span,
+      kind: ValidatorKind::Default,
     })
   }
 

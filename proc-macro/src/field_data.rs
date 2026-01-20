@@ -6,7 +6,7 @@ impl FieldData {
       .validator
       .as_ref()
       // Useless to check consistency for default validators
-      .filter(|v| !v.is_fallback)
+      .filter(|v| !v.kind.is_default())
       .map(|validator| {
         let ident_str = &self.ident_str;
 
