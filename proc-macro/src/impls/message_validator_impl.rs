@@ -101,7 +101,7 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Ve
         let validator_name = field_data.validator_name();
 
         quote_spanned! {*span=>
-          { 
+          {
             static #validator_static_ident: ::prelude::Lazy<#validator_name> = ::prelude::Lazy::new(|| {
               #validator_expr
             });
@@ -109,7 +109,7 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Ve
             ::prelude::Validator::<#validator_target_type>::validate_core(
               &*#validator_static_ident,
               #validate_args
-            ) 
+            )
           }
         }
       }
@@ -123,11 +123,58 @@ pub fn generate_message_validator(
   use_fallback: UseFallback,
   target_ident: &Ident,
   fields: &[FieldDataKind],
-  top_level_cel_rules: &TokenStream2,
+  top_level_validators: &Validators,
 ) -> TokenStream2 {
   let validators_tokens = if *use_fallback {
     quote! { unimplemented!(); }
   } else {
+    let top_level = top_level_validators.iter().enumerate().map(|(i, v)| {
+      let validator = if v.kind.is_custom() {
+        quote_spanned! {v.span=>
+          ::prelude::Validator::<#target_ident>::validate_core(
+            &(#v),
+            ctx,
+            Some(self)
+          )
+        }
+      } else {
+        let validator_static_ident = format_ident!("__VALIDATOR_{i}");
+
+        let expr = if v.kind.is_closure() {
+          quote_spanned! {v.span=>
+            ::prelude::apply(::prelude::CelValidator::default(), #v)
+          }
+        } else {
+          v.to_token_stream()
+        };
+
+        quote_spanned! {v.span=>
+          {
+            static #validator_static_ident: ::prelude::Lazy<::prelude::CelValidator> = ::prelude::Lazy::new(|| {
+              #v
+            });
+
+            ::prelude::Validator::<#target_ident>::validate_core(
+              &*#validator_static_ident,
+              ctx,
+              Some(self)
+            )
+          }
+        }
+      };
+
+      quote_spanned! {v.span=>
+        if !#validator {
+          is_valid = false;
+
+          if ctx.fail_fast {
+            return false;
+          }
+        }
+      }
+
+    });
+
     let tokens = fields
       .iter()
       .filter_map(|d| d.as_normal())
@@ -160,49 +207,22 @@ pub fn generate_message_validator(
         }
       });
 
-    quote! { #(#tokens)* }
-  };
+    let all_validators = top_level.chain(tokens);
 
-  let has_cel_rules = !top_level_cel_rules.is_empty();
-
-  let cel_methods = if has_cel_rules {
-    quote_spanned! {top_level_cel_rules.span()=>
-      #[inline]
-      #[allow(clippy::iter_on_single_items)]
-      fn cel_rules() -> &'static [::prelude::CelProgram] {
-        static PROGRAMS: ::prelude::Lazy<::prelude::Box<[::prelude::CelProgram]>> = ::prelude::Lazy::new(|| {
-          let programs: ::prelude::Vec<::prelude::CelProgram> = #top_level_cel_rules.into_iter().collect();
-          programs.into_boxed_slice()
-        });
-
-        &PROGRAMS
-      }
-    }
-  } else {
-    // `cel_rules` will use the default impl
-    quote! {
-      #[inline(always)]
-      fn validate_cel(&self, _: &mut ::prelude::ValidationCtx) -> bool {
-        true
-      }
-    }
+    quote! { #(#all_validators)* }
   };
 
   // Validators will always be populated if a field is marked
   // as a message (or vec/map of messages), or as a oneof,
   // because we cannot know if it has validators of its own.
-  let has_validators = !validators_tokens.is_empty() || has_cel_rules;
+  let has_validators = !validators_tokens.is_empty();
 
   let validator_impl = if has_validators {
     quote! {
       impl ::prelude::ValidatedMessage for #target_ident {
-        #cel_methods
-
         #[doc(hidden)]
         fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
           let mut is_valid = true;
-
-          ::prelude::ValidatedMessage::validate_cel(self, ctx);
 
           #validators_tokens
 
@@ -213,8 +233,6 @@ pub fn generate_message_validator(
   } else {
     quote! {
       impl ::prelude::ValidatedMessage for #target_ident {
-        #cel_methods
-
         #[inline(always)]
         fn validate(&self) -> Result<(), ::prelude::ViolationsAcc> {
           Ok(())
@@ -271,7 +289,7 @@ impl MessageCtx<'_> {
       self.fields_data.is_empty().into(),
       target_ident,
       &self.fields_data,
-      &self.message_attrs.cel_rules,
+      &self.message_attrs.validators,
     )
   }
 }

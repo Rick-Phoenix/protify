@@ -58,7 +58,7 @@ impl Display for OneofErrors {
 pub struct MessageTestError {
   pub message_full_name: &'static str,
   pub field_errors: Vec<FieldError>,
-  pub cel_errors: Vec<CelError>,
+  pub top_level_errors: Vec<ConsistencyError>,
 }
 
 impl Display for MessageTestError {
@@ -66,7 +66,7 @@ impl Display for MessageTestError {
     let Self {
       message_full_name,
       field_errors,
-      cel_errors,
+      top_level_errors,
     } = self;
 
     let _ = writeln!(
@@ -87,10 +87,9 @@ impl Display for MessageTestError {
       }
     }
 
-    #[cfg(feature = "cel")]
-    if !cel_errors.is_empty() {
-      let _ = writeln!(f, "  CEL rules errors:");
-      for err in cel_errors {
+    if !top_level_errors.is_empty() {
+      let _ = writeln!(f, "  Errors from top level validators:");
+      for err in top_level_errors {
         let _ = writeln!(f, "    - {err}");
       }
     }

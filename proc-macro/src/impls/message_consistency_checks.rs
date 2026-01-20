@@ -1,7 +1,6 @@
 use crate::*;
 
 bool_enum!(pub SkipOneofTagsCheck);
-bool_enum!(pub HasCelRules);
 
 pub fn generate_message_consistency_checks(
   item_ident: &Ident,
@@ -9,7 +8,7 @@ pub fn generate_message_consistency_checks(
   skip_auto_test: SkipAutoTest,
   skip_oneof_tags_check: SkipOneofTagsCheck,
   message_name: &str,
-  has_top_level_rules: HasCelRules,
+  top_level_validators: &Validators,
 ) -> TokenStream2 {
   let consistency_checks = fields_data.iter().filter_map(|d| d.as_normal()).filter_map(|data| {
     let FieldData {
@@ -33,11 +32,18 @@ pub fn generate_message_consistency_checks(
     } else {
       data.consistency_check_tokens()
     }
-  });
+  })
+    .chain(top_level_validators.iter().map(|v| {
+      quote! {
+        if let Err(errs) = ::prelude::Validator::<#item_ident>::check_consistency(&#v) {
+          top_level_errors.extend(errs);
+        }
+      }
+    }));
 
   let consistency_checks_tokens = quote! { #(#consistency_checks)* };
 
-  if consistency_checks_tokens.is_empty() && !(*has_top_level_rules) {
+  if consistency_checks_tokens.is_empty() {
     return TokenStream2::new();
   }
 
@@ -58,18 +64,6 @@ pub fn generate_message_consistency_checks(
     }
   });
 
-  let cel_programs_check = has_cel_feature().then(|| {
-    quote! {
-      let top_level_programs = <Self as ::prelude::ValidatedMessage>::cel_rules();
-
-      if !top_level_programs.is_empty() {
-        if let Err(errs) = ::prelude::test_programs(top_level_programs, Self::default()) {
-          cel_errors.extend(errs);
-        }
-      }
-    }
-  });
-
   quote! {
     #auto_test_fn
 
@@ -78,16 +72,15 @@ pub fn generate_message_consistency_checks(
       #[track_caller]
       pub fn check_validators_consistency() -> Result<(), ::prelude::MessageTestError> {
         let mut field_errors: Vec<::prelude::FieldError> = Vec::new();
-        let mut cel_errors: Vec<::prelude::CelError> = Vec::new();
+        let mut top_level_errors: Vec<::prelude::ConsistencyError> = Vec::new();
 
         #consistency_checks_tokens
-        #cel_programs_check
 
-        if !field_errors.is_empty() || !cel_errors.is_empty() {
+        if !field_errors.is_empty() || !top_level_errors.is_empty() {
           return Err(::prelude::MessageTestError {
               message_full_name: #message_name,
               field_errors,
-              cel_errors
+              top_level_errors
             }
           );
         }
@@ -102,15 +95,13 @@ impl MessageCtx<'_> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
     let item_ident = self.proto_struct_ident();
 
-    let has_cel_rules = !self.message_attrs.cel_rules.is_empty();
-
     generate_message_consistency_checks(
       item_ident,
       &self.fields_data,
       self.message_attrs.no_auto_test,
       SkipOneofTagsCheck::No,
       &self.message_attrs.name,
-      has_cel_rules.into(),
+      &self.message_attrs.validators,
     )
   }
 }

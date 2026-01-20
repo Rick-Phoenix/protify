@@ -56,34 +56,6 @@ pub trait ValidatedMessage: Default + Clone {
   fn validate_cel(&self, ctx: &mut ValidationCtx) -> bool {
     true
   }
-
-  #[cfg(feature = "cel")]
-  #[doc(hidden)]
-  fn validate_cel(&self, ctx: &mut ValidationCtx) -> bool
-  where
-    Self: TryIntoCel,
-  {
-    let top_level_programs = Self::cel_rules();
-
-    if top_level_programs.is_empty() {
-      true
-    } else {
-      let cel_ctx = ProgramsExecutionCtx {
-        programs: top_level_programs,
-        value: self.clone(),
-        ctx,
-      };
-
-      cel_ctx.execute_programs()
-    }
-  }
-
-  #[inline]
-  #[must_use]
-  #[doc(hidden)]
-  fn cel_rules() -> &'static [CelProgram] {
-    &[]
-  }
 }
 
 impl<T, S: builder::State> ValidatorBuilderFor<T> for MessageValidatorBuilder<T, S>
@@ -171,6 +143,108 @@ where
 
   fn as_proto_option(&self) -> Option<ProtoOption> {
     Some(self.clone().into())
+  }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone, Default)]
+pub struct CelValidator {
+  pub programs: Vec<CelProgram>,
+}
+
+impl CelValidator {
+  #[must_use]
+  pub fn cel(mut self, program: CelProgram) -> Self {
+    self.programs.push(program);
+    self
+  }
+}
+
+impl<T> Validator<T> for CelValidator
+where
+  T: ValidatedMessage + PartialEq + TryIntoCel + Default + Clone,
+{
+  type Target = T;
+
+  #[cfg(feature = "cel")]
+  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+    if self.programs.is_empty() {
+      Ok(())
+    } else {
+      test_programs(&self.programs, val)
+    }
+  }
+
+  #[cfg(feature = "cel")]
+  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+    <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
+  }
+
+  #[doc(hidden)]
+  fn cel_rules(&self) -> Vec<CelRule> {
+    self
+      .programs
+      .iter()
+      .map(|p| p.rule.clone())
+      .collect()
+  }
+
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+    let mut errors = Vec::new();
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = <Self as Validator<T>>::check_cel_programs(self) {
+      errors.extend(e.into_iter().map(ConsistencyError::from));
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    let mut is_valid = true;
+
+    if let Some(val) = val {
+      let val = val.borrow();
+
+      #[cfg(feature = "cel")]
+      if !self.programs.is_empty() {
+        let cel_ctx = ProgramsExecutionCtx {
+          programs: &self.programs,
+          value: val.clone(),
+          ctx,
+        };
+
+        is_valid = cel_ctx.execute_programs();
+      }
+    }
+
+    is_valid
+  }
+
+  fn as_proto_option(&self) -> Option<ProtoOption> {
+    Some(self.clone().into())
+  }
+}
+
+impl From<CelValidator> for ProtoOption {
+  fn from(value: CelValidator) -> Self {
+    let rule_options: Vec<OptionValue> = value
+      .programs
+      .into_iter()
+      .map(|program| program.rule.into())
+      .collect();
+
+    Self {
+      name: "(buf.validate.message).cel".into(),
+      value: OptionValue::List(rule_options.into()),
+    }
   }
 }
 

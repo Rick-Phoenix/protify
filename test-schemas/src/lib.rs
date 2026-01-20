@@ -181,7 +181,7 @@ pub struct BadFieldRules {
 }
 
 #[proto_message(no_auto_test)]
-#[proto(cel_rules = [bad_rule()])]
+#[proto(validate = |v| v.cel(bad_rule()))]
 pub struct BadMsgRules {
   #[proto(tag = 1)]
   pub id: i32,
@@ -248,7 +248,7 @@ pub struct DefaultValidatorTestMap {
 // if there are top level rules
 #[allow(clippy::use_self)]
 #[proto_message(no_auto_test)]
-#[proto(cel_rules = [cel_program!(id = "id_is_1", msg = "abc", expr = "this.id == 1")])]
+#[proto(validate = |v| v.cel(cel_program!(id = "id_is_1", msg = "abc", expr = "this.id == 1")))]
 pub struct DefaultValidatorTestCel {
   pub id: i32,
 }

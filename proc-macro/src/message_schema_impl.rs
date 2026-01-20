@@ -74,6 +74,7 @@ impl MessageCtx<'_> {
       parent_message,
       extern_path,
       deprecated,
+      validators,
       ..
     } = &self.message_attrs;
 
@@ -194,7 +195,12 @@ impl MessageCtx<'_> {
             messages: vec![],
             enums: vec![],
             entries: vec![ #entries_tokens ],
-            cel_rules: <#proto_struct as ::prelude::ValidatedMessage>::cel_rules().iter().map(|prog| prog.rule.clone()).collect(),
+            #[allow(
+              clippy::filter_map_identity,
+              clippy::iter_on_empty_collections,
+              clippy::iter_on_single_items
+            )]
+            validators: [ #(::prelude::Validator::<#proto_struct>::schema(&#validators)),* ].into_iter().filter_map(|s| s).collect(),
             rust_path: #rust_path_field
           }
         }

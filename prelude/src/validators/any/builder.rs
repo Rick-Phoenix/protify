@@ -30,12 +30,12 @@ impl AnyValidator {
 }
 
 impl ProtoValidator for Any {
-  type Target = Any;
+  type Target = Self;
   type Validator = AnyValidator;
   type Builder = AnyValidatorBuilder;
 
   type UniqueStore<'a>
-    = LinearRefStore<'a, Any>
+    = LinearRefStore<'a, Self>
   where
     Self: 'a;
 

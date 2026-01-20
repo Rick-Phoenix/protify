@@ -17,13 +17,11 @@ pub trait Validator<T: ?Sized>: Sized {
     None
   }
 
-  fn schema(&self) -> Option<FieldValidatorSchema> {
-    self
-      .as_proto_option()
-      .map(|opt| FieldValidatorSchema {
-        schema: opt,
-        cel_rules: self.cel_rules(),
-      })
+  fn schema(&self) -> Option<ValidatorSchema> {
+    self.as_proto_option().map(|opt| ValidatorSchema {
+      schema: opt,
+      cel_rules: self.cel_rules(),
+    })
   }
 
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {

@@ -10,12 +10,12 @@ pub struct BoolValidatorBuilder<S: State = Empty> {
 }
 
 impl ProtoValidator for bool {
-  type Target = bool;
+  type Target = Self;
   type Validator = BoolValidator;
   type Builder = BoolValidatorBuilder;
 
   type UniqueStore<'a>
-    = CopyHybridStore<bool>
+    = CopyHybridStore<Self>
   where
     Self: 'a;
 

@@ -12,12 +12,12 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
 }
 
 impl ProtoValidator for Bytes {
-  type Target = Bytes;
+  type Target = Self;
   type Validator = BytesValidator;
   type Builder = BytesValidatorBuilder;
 
   type UniqueStore<'a>
-    = RefHybridStore<'a, Bytes>
+    = RefHybridStore<'a, Self>
   where
     Self: 'a;
 

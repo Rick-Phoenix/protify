@@ -3,7 +3,7 @@ use super::*;
 #[derive(Default)]
 struct ReflectionMsgData {
   pub fields_data: Vec<FieldDataKind>,
-  pub top_level_rules: TokenStream2,
+  pub top_level_validator: Validators,
   pub no_auto_test: SkipAutoTest,
   pub msg_name: String,
 }
@@ -160,7 +160,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
           num: field_desc.number().cast_signed(),
           span: Span::call_site(),
         }),
-        validators: Validators::from_sinle(validator),
+        validators: Validators::from_single(validator),
         options: TokensOr::<TokenStream2>::vec(),
         proto_field,
         from_proto: None,
@@ -170,29 +170,38 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
     }
   }
 
-  let mut cel_rules = TokenStream2::new();
+  let mut top_level_validator: Option<Validators> = None;
 
   // Message Rules
   if let Some(message_rules) = get_message_rules(&message_desc) {
-    for rule in message_rules.cel {
-      let Rule {
-        id,
-        message,
-        expression,
-      } = rule;
+    if !message_rules.cel.is_empty() {
+      let mut builder_tokens = quote! {
+        ::prelude::CelValidator::default()
+      };
 
-      cel_rules
-        .extend(quote! { ::prelude::cel_program!(id = #id, msg = #message, expr = #expression), });
+      for rule in message_rules.cel {
+        let Rule {
+          id,
+          message,
+          expression,
+        } = rule;
+
+        builder_tokens.extend(
+          quote! { .cel(::prelude::cel_program!(id = #id, msg = #message, expr = #expression)) },
+        );
+      }
+
+      top_level_validator = Some(Validators::from_single(ValidatorTokens {
+        expr: builder_tokens,
+        kind: ValidatorKind::Reflection,
+        span: Span::call_site(),
+      }));
     }
-  }
-
-  if !cel_rules.is_empty() {
-    cel_rules = quote! { vec![ #cel_rules ] }
   }
 
   Ok(ReflectionMsgData {
     fields_data,
-    top_level_rules: cel_rules,
+    top_level_validator: top_level_validator.unwrap_or_default(),
     no_auto_test,
     msg_name,
   })
@@ -233,7 +242,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
 
   let ReflectionMsgData {
     fields_data,
-    top_level_rules: cel_rules,
+    top_level_validator,
     no_auto_test,
     msg_name,
   } = extract_fields_data(item).unwrap_or_default_and_push_error(&mut errors);
@@ -248,7 +257,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
     use_fallback,
     &item.ident,
     &fields_data,
-    &cel_rules,
+    &top_level_validator,
   )]);
 
   let consistency_checks = errors.is_empty().then(|| {
@@ -258,7 +267,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
       no_auto_test,
       SkipOneofTagsCheck::Yes,
       &msg_name,
-      HasCelRules::from(!cel_rules.is_empty()),
+      &top_level_validator,
     )
   });
 

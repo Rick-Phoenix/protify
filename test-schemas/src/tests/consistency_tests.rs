@@ -5,13 +5,12 @@ fn bad_field_rules() {
   let MessageTestError {
     message_full_name,
     field_errors,
-    cel_errors,
+    top_level_errors,
   } = BadFieldRules::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(message_full_name, "BadFieldRules");
   assert_eq_pretty!(field_errors.len(), 1);
-  // Top level rules, which don't apply here
-  assert_eq_pretty!(cel_errors.len(), 0);
+  assert_eq_pretty!(top_level_errors.len(), 0);
 }
 
 #[test]
@@ -19,12 +18,12 @@ fn bad_msg_rules() {
   let MessageTestError {
     message_full_name,
     field_errors,
-    cel_errors,
+    top_level_errors,
   } = BadMsgRules::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(message_full_name, "BadMsgRules");
   assert_eq_pretty!(field_errors.len(), 0);
-  assert_eq_pretty!(cel_errors.len(), 1);
+  assert_eq_pretty!(top_level_errors.len(), 1);
 }
 
 #[test]

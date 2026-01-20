@@ -6,12 +6,12 @@ pub(crate) use state::*;
 use proto_types::Duration;
 
 impl ProtoValidator for Duration {
-  type Target = Duration;
+  type Target = Self;
   type Validator = DurationValidator;
   type Builder = DurationValidatorBuilder;
 
   type UniqueStore<'a>
-    = CopyHybridStore<Duration>
+    = CopyHybridStore<Self>
   where
     Self: 'a;
 

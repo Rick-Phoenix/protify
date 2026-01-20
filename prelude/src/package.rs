@@ -131,12 +131,16 @@ impl Package {
       .into_iter()
       .flat_map(|f| f.messages.into_iter())
       .flat_map(|message| {
-        message.cel_rules.into_iter().chain(
-          message
-            .entries
-            .into_iter()
-            .flat_map(|entry| entry.cel_rules()),
-        )
+        message
+          .validators
+          .into_iter()
+          .flat_map(|v| v.cel_rules)
+          .chain(
+            message
+              .entries
+              .into_iter()
+              .flat_map(|entry| entry.cel_rules()),
+          )
       })
     {
       let entry = rules.entry(rule.id.clone());

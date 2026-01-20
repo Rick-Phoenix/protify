@@ -67,7 +67,7 @@ pub struct Message {
   pub options: Vec<ProtoOption>,
   pub reserved_names: Vec<&'static str>,
   pub reserved_numbers: Vec<Range<i32>>,
-  pub cel_rules: Vec<CelRule>,
+  pub validators: Vec<ValidatorSchema>,
   // Not a static str because we compose this
   // by default with module_path!() + ident
   pub rust_path: String,
@@ -79,11 +79,7 @@ impl Message {
       .options
       .clone()
       .into_iter()
-      .chain(self.cel_rules.clone().into_iter().map(|r| {
-        let mut opt: ProtoOption = r.into();
-        opt.name = "(buf.validate.message).cel".into();
-        opt
-      }))
+      .chain(self.validators.iter().map(|v| v.schema.clone()))
       .collect()
   }
 
@@ -149,6 +145,7 @@ impl MessageEntry {
     matches!(self, Self::Oneof { .. })
   }
 
+  #[must_use]
   pub const fn as_field(&self) -> Option<&Field> {
     if let Self::Field(v) = self {
       Some(v)
@@ -168,7 +165,7 @@ impl Message {
   }
 
   pub(crate) fn register_imports(&self, imports: &mut FileImports) {
-    if !self.cel_rules.is_empty() {
+    if !self.validators.is_empty() {
       imports.insert_validate_proto();
     }
 

@@ -110,7 +110,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
       tag: Some(ParsedNum::with_default_span(
         field_desc.number().cast_signed(),
       )),
-      validators: Validators::from_sinle(validator),
+      validators: Validators::from_single(validator),
       options: TokenStreamOr::vec(),
       proto_field,
       from_proto: None,

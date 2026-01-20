@@ -108,3 +108,51 @@ fn multiple_validators() {
 
   assert_eq_pretty!(violations.len(), 8);
 }
+
+struct CustomMsgValidator;
+
+impl Validator<CustomTopLevelValidators> for CustomMsgValidator {
+  type Target = CustomTopLevelValidators;
+
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  where
+    V: std::borrow::Borrow<Self::Target> + ?Sized,
+  {
+    custom_top_level_validator(ctx, Some(val.unwrap().borrow()))
+  }
+}
+
+fn custom_top_level_validator(
+  ctx: &mut ValidationCtx,
+  val: Option<&CustomTopLevelValidators>,
+) -> bool {
+  let val = val.unwrap();
+
+  if val.id != 1 {
+    ctx.violations.push(ViolationCtx {
+      data: test_violation(),
+      kind: ViolationKind::Cel,
+    });
+
+    return false;
+  }
+
+  true
+}
+
+static CUSTOM_TOP_LEVEL_STATIC: LazyLock<CustomMsgValidator> = LazyLock::new(|| CustomMsgValidator);
+
+#[proto_message(no_auto_test)]
+#[proto(validate = [|v| v.cel(cel_program!(id = "abc", msg = "abc", expr = "this.id == 1")), from_fn(custom_top_level_validator), CustomMsgValidator, *CUSTOM_TOP_LEVEL_STATIC])]
+struct CustomTopLevelValidators {
+  id: i32,
+}
+
+#[test]
+fn custom_top_level_validators() {
+  let msg = CustomTopLevelValidators::default();
+
+  let violations = msg.validate_all().unwrap_err().into_violations();
+
+  assert_eq_pretty!(violations.len(), 4);
+}

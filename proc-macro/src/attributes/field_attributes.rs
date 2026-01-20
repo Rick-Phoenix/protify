@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use crate::*;
 
 #[derive(Clone, Copy)]
@@ -55,8 +57,24 @@ impl<'a> IntoIterator for &'a Validators {
   }
 }
 
+impl Deref for Validators {
+  type Target = [ValidatorTokens];
+
+  fn deref(&self) -> &Self::Target {
+    &self.validators
+  }
+}
+
 impl Validators {
-  pub fn from_sinle(validator: ValidatorTokens) -> Self {
+  pub fn span(&self) -> Span {
+    self
+      .validators
+      .first()
+      .as_ref()
+      .map_or_else(|| Span::call_site(), |v| v.span)
+  }
+
+  pub fn from_single(validator: ValidatorTokens) -> Self {
     Self {
       validators: vec![validator],
     }

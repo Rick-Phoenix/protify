@@ -6,11 +6,11 @@ pub struct Field {
   pub tag: i32,
   pub type_: FieldType,
   pub options: Vec<ProtoOption>,
-  pub validators: Vec<FieldValidatorSchema>,
+  pub validators: Vec<ValidatorSchema>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct FieldValidatorSchema {
+pub struct ValidatorSchema {
   pub schema: ProtoOption,
   pub cel_rules: Vec<CelRule>,
 }

@@ -12,11 +12,11 @@ pub struct MessageAttrs {
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
-  pub cel_rules: TokenStream2,
   pub is_proxied: bool,
   pub no_auto_test: SkipAutoTest,
   pub extern_path: Option<ParsedStr>,
   pub deprecated: bool,
+  pub validators: Validators,
 }
 
 impl MessageAttrs {
@@ -75,9 +75,9 @@ pub fn process_message_attrs(
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Option<MetaList> = None;
-  let mut cel_rules = TokenStream2::new();
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;
+  let mut validators = Validators::default();
 
   for attr in attrs {
     let ident = if let Some(ident) = attr.path().get_ident() {
@@ -95,13 +95,13 @@ pub fn process_message_attrs(
           let ident = meta.path.require_ident()?.to_string();
 
           match ident.as_str() {
+            "validate" => {
+              validators = meta.parse_value::<Validators>()?;
+            }
             "deprecated" => {
               let boolean = meta.parse_value::<LitBool>()?;
 
               deprecated = boolean.value();
-            }
-            "cel_rules" => {
-              cel_rules = meta.parse_value::<Expr>()?.into_token_stream();
             }
             "reserved_names" => {
               let names = meta.parse_list::<StringList>()?;
@@ -150,6 +150,14 @@ pub fn process_message_attrs(
     }
   }
 
+  for validator in validators.validators.iter_mut() {
+    if validator.kind.is_closure() {
+      validator.expr = quote_spanned! {validator.span=>
+        ::prelude::apply(::prelude::CelValidator::default(), #validator)
+      }
+    }
+  }
+
   let name = proto_name
     .unwrap_or_else(|| ParsedStr::with_default_span(to_pascal_case(&struct_ident.to_string())));
 
@@ -162,10 +170,10 @@ pub fn process_message_attrs(
     from_proto,
     into_proto,
     shadow_derives,
-    cel_rules,
     is_proxied: macro_args.is_proxied,
     no_auto_test: macro_args.no_auto_test,
     extern_path: macro_args.extern_path,
     deprecated,
+    validators,
   })
 }

@@ -250,7 +250,7 @@ fn msg_rule() -> CelProgram {
 #[proto(reserved_numbers(1, 2, 3..9))]
 #[proto(reserved_names("abc", "bcd"))]
 #[proto(options = test_options())]
-#[proto(cel_rules = [ msg_rule(), msg_rule() ])]
+#[proto(validate = |v| v.cel(msg_rule()).cel(msg_rule()))]
 pub struct TestMessage {
   #[proto(tag = 9)]
   pub manual_tag_field: i32,
@@ -289,7 +289,13 @@ fn message_schema_output() {
 
   assert_eq_pretty!(schema.name, "TestMessage");
   assert_eq_pretty!(schema.options, test_options());
-  assert_eq_pretty!(schema.cel_rules, &[msg_rule().rule, msg_rule().rule]);
+
+  let cel_rules: Vec<CelRule> = schema
+    .validators
+    .into_iter()
+    .flat_map(|v| v.cel_rules)
+    .collect();
+  assert_eq_pretty!(cel_rules, &[msg_rule().rule, msg_rule().rule]);
   assert_eq_pretty!(schema.reserved_numbers, &[1..2, 2..3, 3..9]);
   assert_eq_pretty!(schema.reserved_names, &["abc", "bcd"]);
 
