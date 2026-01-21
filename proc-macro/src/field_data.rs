@@ -13,6 +13,16 @@ impl FieldData {
     msg_info.map(|m| &m.path)
   }
 
+  pub fn message_info(&self) -> Option<&MessageInfo> {
+    match &self.proto_field {
+      ProtoField::Map(map) => map.values.as_message(),
+      ProtoField::Oneof(_) => None,
+      ProtoField::Repeated(inner) | ProtoField::Optional(inner) | ProtoField::Single(inner) => {
+        inner.as_message()
+      }
+    }
+  }
+
   pub fn consistency_check_tokens(&self) -> Option<TokenStream2> {
     let validators = self
       .validators

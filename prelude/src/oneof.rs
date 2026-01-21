@@ -63,7 +63,7 @@ pub trait ProtoOneof {
   }
 }
 
-pub trait ValidatedOneof {
+pub trait ValidatedOneof: Clone {
   fn validate(&self, ctx: &mut ValidationCtx) -> ValidatorResult;
 }
 

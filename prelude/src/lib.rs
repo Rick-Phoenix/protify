@@ -219,19 +219,46 @@ mod regex_impls {
   impl_into_regex!((IntoRegex, Regex), (IntoBytesRegex, BytesRegex));
 }
 
-pub fn validate_oneof<O: ValidatedOneof>(
-  oneof: Option<&O>,
-  ctx: &mut ValidationCtx,
-  required: bool,
-) -> ValidatorResult {
-  match oneof {
-    Some(oneof) => oneof.validate(ctx),
-    None => {
-      if required {
-        ctx.add_required_oneof_violation()
-      } else {
-        Ok(IsValid::Yes)
+#[derive(Clone, Default, Debug, Copy)]
+pub struct OneofValidator {
+  pub required: bool,
+}
+
+impl<T: ValidatedOneof> ValidatorBuilderFor<T> for OneofValidator {
+  type Target = T;
+  type Validator = Self;
+
+  fn build_validator(self) -> Self::Validator {
+    self
+  }
+}
+
+impl<T: ValidatedOneof> Validator<T> for OneofValidator {
+  type Target = T;
+
+  // This one should have into<protooption>
+
+  #[inline]
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    match val {
+      Some(oneof) => oneof.borrow().validate(ctx),
+      None => {
+        if self.required {
+          ctx.add_required_oneof_violation()
+        } else {
+          Ok(IsValid::Yes)
+        }
       }
     }
+  }
+}
+
+impl OneofValidator {
+  #[must_use]
+  pub const fn new(required: bool) -> Self {
+    Self { required }
   }
 }

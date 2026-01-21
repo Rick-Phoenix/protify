@@ -17,9 +17,15 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Ve
 
   let mut tokens: Vec<TokenStream2> = Vec::new();
 
-  if let ProtoField::Oneof(OneofInfo { required, .. }) = proto_field {
+  if let ProtoField::Oneof(OneofInfo { required, path, .. }) = proto_field {
     tokens.push(quote_spanned! {*span=>
-      is_valid &= ::prelude::validate_oneof(self.#ident.as_ref(), ctx, #required)?;
+      if <#path as ::prelude::ProtoValidator>::HAS_DEFAULT_VALIDATOR {
+        is_valid &= ::prelude::Validator::<#path>::validate_core(
+          & ::prelude::OneofValidator::new(#required),
+          ctx,
+          self.#ident.as_ref(),
+        )?;
+      }
     });
   } else {
     tokens = validators.iter().map(|validator| {
@@ -173,15 +179,17 @@ pub fn generate_message_validator(
 
   let inline_if_empty = (!has_validators).then(|| quote! { #[inline(always)] });
 
-  for v in fields
-    .iter()
-    .filter_map(|f| f.as_normal())
-    .flat_map(|d| &d.validators)
-  {
-    if v.kind.is_default() {
+  for f in fields.iter().filter_map(|f| f.as_normal()) {
+    if f.proto_field.is_oneof() {
       maybe_default_validators += 1;
-    } else {
-      non_default_validators += 1;
+    }
+
+    for v in &f.validators {
+      if v.kind.is_default() {
+        maybe_default_validators += 1;
+      } else {
+        non_default_validators += 1;
+      }
     }
   }
 
@@ -192,15 +200,27 @@ pub fn generate_message_validator(
   } else if non_default_validators > 0 {
     quote! { true }
   } else {
-    let message_paths = fields
+    let paths_to_check = fields
       .iter()
       .filter_map(|f| f.as_normal())
-      .filter_map(|f| f.message_path())
-      .filter(|p| p.get_ident().is_none_or(|i| i != target_ident));
+      .filter_map(|f| match &f.proto_field {
+        ProtoField::Map(map) => map
+          .values
+          .as_message()
+          .filter(|m| !m.boxed)
+          .map(|m| &m.path),
+        ProtoField::Oneof(oneof) => Some(&oneof.path),
+        ProtoField::Repeated(inner) | ProtoField::Optional(inner) | ProtoField::Single(inner) => {
+          inner
+            .as_message()
+            .filter(|m| !m.boxed)
+            .map(|m| &m.path)
+        }
+      });
 
     let mut has_default_validator_tokens = TokenStream2::new();
 
-    for (i, path) in message_paths.enumerate() {
+    for (i, path) in paths_to_check.enumerate() {
       if i != 0 {
         has_default_validator_tokens.extend(quote! { && });
       }
@@ -209,6 +229,10 @@ pub fn generate_message_validator(
         .extend(quote! { <#path as ::prelude::ProtoValidator>::HAS_DEFAULT_VALIDATOR });
     }
 
+    // This can still happen if the only element in the paths_to_check
+    // is this same message, which was boxed. In that case,
+    // if we got to this point, non_default_validators is > 0,
+    // so this should be false
     if has_default_validator_tokens.is_empty() {
       has_default_validator_tokens = quote! { false };
     }
