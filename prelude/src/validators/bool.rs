@@ -32,14 +32,14 @@ impl Validator<bool> for BoolValidator {
     Ok(())
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_default()));
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = *val.borrow();
@@ -47,18 +47,16 @@ impl Validator<bool> for BoolValidator {
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        ctx.add_violation(
+        is_valid &= ctx.add_violation(
           ViolationKind::Bool(BoolViolation::Const),
           format!("must be {const_val}"),
-        );
-        is_valid = false;
+        )?;
       }
     } else if self.required {
-      ctx.add_required_violation();
-      is_valid = false;
+      is_valid &= ctx.add_required_violation()?;
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

@@ -250,7 +250,7 @@ impl ProtoType {
       Self::Bool => quote_spanned! {span=> ::prelude::BoolValidator },
       Self::Bytes => quote_spanned! {span=> ::prelude::BytesValidator },
       Self::Enum(path) => quote_spanned! {span=> ::prelude::EnumValidator<#path> },
-      Self::Message(MessageInfo { path, .. }) => {
+      Self::Message(MessageInfo { .. }) => {
         quote_spanned! {span=> ::prelude::MessageValidator }
       }
       Self::Int32 => quote_spanned! {span=> ::prelude::IntValidator<i32> },

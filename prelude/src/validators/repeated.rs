@@ -194,21 +194,21 @@ where
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = val.borrow();
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_repeated_violation(
+          is_valid &= ctx.add_repeated_violation(
             RepeatedViolation::$id,
             self
               .error_messages
@@ -216,13 +216,7 @@ where
               .and_then(|map| map.get(&RepeatedViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
-
-          if ctx.fail_fast {
-            return false;
-          } else {
-            is_valid = false;
-          }
+          )?;
         };
       }
 
@@ -284,11 +278,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::RepeatedItem);
 
-            is_valid = validator.validate_core(ctx, Some(value));
-
-            if !is_valid && ctx.fail_fast {
-              return false;
-            }
+            is_valid &= validator.validate_core(ctx, Some(value))?;
           }
         }
 
@@ -316,20 +306,16 @@ where
               ctx,
             };
 
-            is_valid = cel_ctx.execute_programs();
+            is_valid &= cel_ctx.execute_programs()?;
           }
           Err(e) => {
-            ctx.violations.push(ViolationCtx {
-              kind: ViolationKind::Cel,
-              data: e.into_violation(ctx.field_context.as_ref(), &ctx.parent_elements),
-            });
-            is_valid = false;
+            is_valid &= ctx.add_cel_error_violation(e)?;
           }
         };
       }
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

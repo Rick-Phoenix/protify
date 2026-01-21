@@ -31,7 +31,7 @@ impl ValidatorKind {
   ///
   /// [`Closure`]: ValidatorKind::Closure
   #[must_use]
-  pub fn is_closure(&self) -> bool {
+  pub const fn is_closure(self) -> bool {
     matches!(self, Self::Closure)
   }
 }

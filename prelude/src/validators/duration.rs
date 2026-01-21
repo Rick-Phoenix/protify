@@ -80,20 +80,20 @@ impl Validator<Duration> for DurationValidator {
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = *val.borrow();
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_duration_violation(
+          is_valid &= ctx.add_duration_violation(
             DurationViolation::$id,
             self
               .error_messages
@@ -101,13 +101,7 @@ impl Validator<Duration> for DurationValidator {
               .and_then(|map| map.get(&DurationViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
-
-          if ctx.fail_fast {
-            return false;
-          } else {
-            is_valid = false;
-          }
+          )?;
         };
       }
 
@@ -117,7 +111,7 @@ impl Validator<Duration> for DurationValidator {
         }
 
         // Using `const` implies no other rules
-        return is_valid;
+        return Ok(is_valid);
       }
 
       if let Some(gt) = self.gt
@@ -176,14 +170,13 @@ impl Validator<Duration> for DurationValidator {
           ctx,
         };
 
-        is_valid = cel_ctx.execute_programs();
+        is_valid &= cel_ctx.execute_programs()?;
       }
     } else if self.required {
-      ctx.add_required_violation();
-      is_valid = false;
+      is_valid &= ctx.add_required_violation()?;
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

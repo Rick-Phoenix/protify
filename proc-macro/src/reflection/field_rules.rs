@@ -9,7 +9,7 @@ impl RulesCtx {
       ProtoType::Bool => self.get_bool_validator(),
       ProtoType::Bytes => self.get_bytes_validator(),
       ProtoType::Enum(path) => self.get_enum_validator(path),
-      ProtoType::Message(message_info) => self.get_message_field_validator(&message_info.path),
+      ProtoType::Message(_) => self.get_message_field_validator(),
       ProtoType::Float => self.get_numeric_validator::<FloatRules>(),
       ProtoType::Double => self.get_numeric_validator::<DoubleRules>(),
       ProtoType::Int32 => self.get_numeric_validator::<Int32Rules>(),

@@ -8,7 +8,7 @@ struct CustomValidator;
 impl Validator<i32> for CustomValidator {
   type Target = i32;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: std::borrow::Borrow<Self::Target> + ?Sized,
   {
@@ -26,19 +26,19 @@ fn test_violation() -> Violation {
   }
 }
 
-fn custom_validator(ctx: &mut ValidationCtx, val: Option<&i32>) -> bool {
+fn custom_validator(ctx: &mut ValidationCtx, val: Option<&i32>) -> ValidatorResult {
   let val = val.unwrap();
 
-  if *val != 1 {
+  if *val == 1 {
+    Ok(IsValid::Yes)
+  } else {
     ctx.violations.push(ViolationCtx {
       data: test_violation(),
       kind: ViolationKind::Cel,
     });
 
-    return false;
+    Ok(IsValid::No)
   }
-
-  true
 }
 
 static CUSTOM_STATIC: LazyLock<CustomValidator> = LazyLock::new(|| CustomValidator);
@@ -114,7 +114,7 @@ struct CustomMsgValidator;
 impl Validator<CustomTopLevelValidators> for CustomMsgValidator {
   type Target = CustomTopLevelValidators;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: std::borrow::Borrow<Self::Target> + ?Sized,
   {
@@ -125,19 +125,19 @@ impl Validator<CustomTopLevelValidators> for CustomMsgValidator {
 fn custom_top_level_validator(
   ctx: &mut ValidationCtx,
   val: Option<&CustomTopLevelValidators>,
-) -> bool {
+) -> ValidatorResult {
   let val = val.unwrap();
 
-  if val.id != 1 {
+  if val.id == 1 {
+    Ok(IsValid::Yes)
+  } else {
     ctx.violations.push(ViolationCtx {
       data: test_violation(),
       kind: ViolationKind::Cel,
     });
 
-    return false;
+    Ok(IsValid::No)
   }
-
-  true
 }
 
 static CUSTOM_TOP_LEVEL_STATIC: LazyLock<CustomMsgValidator> = LazyLock::new(|| CustomMsgValidator);

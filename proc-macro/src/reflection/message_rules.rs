@@ -1,7 +1,7 @@
 use super::*;
 
 impl RulesCtx {
-  pub fn get_message_field_validator(&self, msg_path: &Path) -> BuilderTokens {
+  pub fn get_message_field_validator(&self) -> BuilderTokens {
     let span = self.field_span;
     let mut builder =
       BuilderTokens::new(span, quote_spanned! {span=> MessageValidator::builder() });

@@ -49,21 +49,21 @@ impl Validator<Any> for AnyValidator {
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_default()));
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = val.borrow();
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_any_violation(
+          is_valid &= ctx.add_any_violation(
             AnyViolation::$id,
             self
               .error_messages
@@ -71,13 +71,7 @@ impl Validator<Any> for AnyValidator {
               .and_then(|map| map.get(&AnyViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
-
-          if ctx.fail_fast {
-            return false;
-          } else {
-            is_valid = false;
-          }
+          )?;
         };
       }
 
@@ -113,14 +107,13 @@ impl Validator<Any> for AnyValidator {
           ctx,
         };
 
-        is_valid = cel_ctx.execute_programs();
+        is_valid &= cel_ctx.execute_programs()?;
       }
     } else if self.required {
-      ctx.add_required_violation();
-      is_valid = false;
+      ctx.add_required_violation()?;
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

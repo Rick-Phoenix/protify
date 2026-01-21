@@ -64,7 +64,7 @@ pub trait ProtoOneof {
 }
 
 pub trait ValidatedOneof {
-  fn validate(&self, ctx: &mut ValidationCtx) -> bool;
+  fn validate(&self, ctx: &mut ValidationCtx) -> ValidatorResult;
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]

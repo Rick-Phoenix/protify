@@ -113,7 +113,7 @@ macro_rules! use_proto_file {
 macro_rules! handle_ignore_always {
   ($ignore:expr) => {
     if matches!($ignore, Ignore::Always) {
-      return true;
+      return Ok(IsValid::Yes);
     }
   };
 }
@@ -121,7 +121,7 @@ macro_rules! handle_ignore_always {
 macro_rules! handle_ignore_if_zero_value {
   ($ignore:expr, $condition:expr) => {
     if matches!($ignore, Ignore::IfZeroValue) && $condition {
-      return true;
+      return Ok(IsValid::Yes);
     }
   };
 }

@@ -13,7 +13,7 @@ pub trait ValidatedMessage: Default + Clone {
       fail_fast: false,
     };
 
-    self.nested_validate(&mut ctx);
+    let _ = self.nested_validate(&mut ctx);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -26,7 +26,7 @@ pub trait ValidatedMessage: Default + Clone {
   fn validate(&self) -> Result<(), ViolationsAcc> {
     let mut ctx = ValidationCtx::default();
 
-    self.nested_validate(&mut ctx);
+    let _ = self.nested_validate(&mut ctx);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -49,13 +49,7 @@ pub trait ValidatedMessage: Default + Clone {
   }
 
   #[doc(hidden)]
-  fn nested_validate(&self, ctx: &mut ValidationCtx) -> bool;
-
-  #[cfg(not(feature = "cel"))]
-  #[doc(hidden)]
-  fn validate_cel(&self, ctx: &mut ValidationCtx) -> bool {
-    true
-  }
+  fn nested_validate(&self, ctx: &mut ValidationCtx) -> ValidatorResult;
 }
 
 impl<T, S: builder::State> ValidatorBuilderFor<T> for MessageValidatorBuilder<S>
@@ -80,10 +74,10 @@ where
 
   #[cfg(feature = "cel")]
   fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
-    if !self.cel.is_empty() {
-      test_programs(&self.cel, val)
-    } else {
+    if self.cel.is_empty() {
       Ok(())
+    } else {
+      test_programs(&self.cel, val)
     }
   }
   #[cfg(feature = "cel")]
@@ -110,14 +104,14 @@ where
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none());
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = val.borrow();
@@ -128,14 +122,10 @@ where
           .push(field_context.as_path_element());
       }
 
-      is_valid = val.nested_validate(ctx);
+      is_valid &= val.nested_validate(ctx)?;
 
       if ctx.field_context.is_some() {
         ctx.parent_elements.pop();
-      }
-
-      if !is_valid && ctx.fail_fast {
-        return false;
       }
 
       #[cfg(feature = "cel")]
@@ -146,14 +136,13 @@ where
           ctx,
         };
 
-        is_valid = cel_ctx.execute_programs();
+        is_valid &= cel_ctx.execute_programs()?;
       }
     } else if self.required {
-      ctx.add_required_violation();
-      is_valid = false;
+      is_valid &= ctx.add_required_violation()?;
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {
@@ -219,11 +208,11 @@ where
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = val.borrow();
@@ -236,11 +225,11 @@ where
           ctx,
         };
 
-        is_valid = cel_ctx.execute_programs();
+        is_valid &= cel_ctx.execute_programs()?;
       }
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

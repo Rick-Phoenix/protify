@@ -77,20 +77,20 @@ impl Validator<FieldMask> for FieldMaskValidator {
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = val.borrow();
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_field_mask_violation(
+          is_valid &= ctx.add_field_mask_violation(
             FieldMaskViolation::$id,
             self
               .error_messages
@@ -98,14 +98,14 @@ impl Validator<FieldMask> for FieldMaskValidator {
               .and_then(|map| map.get(&FieldMaskViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
+          )?;
         };
       }
 
       if let Some(const_val) = &self.const_ {
         let const_val_len = const_val.items.len();
 
-        is_valid = if const_val_len != val.paths.len() {
+        let matches_const = if const_val_len != val.paths.len() {
           false
         } else if const_val_len <= 64 {
           Self::validate_exact_small(const_val, &val.paths)
@@ -113,7 +113,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
           Self::validate_exact_large(const_val, &val.paths, const_val_len)
         };
 
-        if !is_valid {
+        if !matches_const {
           handle_violation!(
             Const,
             format!(
@@ -124,7 +124,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
         }
 
         // Using `const` implies no other rules
-        return is_valid;
+        return Ok(is_valid);
       }
 
       if let Some(allowed_paths) = &self.in_ {
@@ -138,13 +138,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
               )
             );
 
-            if ctx.fail_fast {
-              return false;
-            } else {
-              is_valid = false;
-
-              break;
-            }
+            break;
           }
         }
       }
@@ -160,13 +154,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
               )
             );
 
-            if ctx.fail_fast {
-              return false;
-            } else {
-              is_valid = false;
-
-              break;
-            }
+            break;
           }
         }
       }
@@ -179,14 +167,13 @@ impl Validator<FieldMask> for FieldMaskValidator {
           ctx,
         };
 
-        is_valid = cel_ctx.execute_programs();
+        is_valid &= cel_ctx.execute_programs()?;
       }
     } else if self.required {
-      ctx.add_required_violation();
-      is_valid = false;
+      is_valid &= ctx.add_required_violation()?;
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

@@ -101,18 +101,18 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_default()));
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if self.required && val.is_none_or(|v| *v.borrow() == 0) {
-      ctx.add_required_violation();
-      return false;
+      is_valid &= ctx.add_required_violation()?;
+      return Ok(is_valid);
     }
 
     if let Some(val) = val {
@@ -120,7 +120,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_enum_violation(
+          is_valid &= ctx.add_enum_violation(
             EnumViolation::$id,
             self
               .error_messages
@@ -128,13 +128,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
               .and_then(|map| map.get(&EnumViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
-
-          if ctx.fail_fast {
-            return false;
-          } else {
-            is_valid = false;
-          }
+          )?;
         };
       }
 
@@ -144,7 +138,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
         }
 
         // Using `const` implies no other rules
-        return is_valid;
+        return Ok(is_valid);
       }
 
       if self.defined_only && T::try_from(val).is_err() {
@@ -183,11 +177,11 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
           ctx,
         };
 
-        is_valid = cel_ctx.execute_programs();
+        is_valid &= cel_ctx.execute_programs()?;
       }
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

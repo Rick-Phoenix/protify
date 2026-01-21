@@ -2,6 +2,48 @@ use crate::*;
 
 use proto_types::protovalidate::*;
 
+#[derive(Debug, Clone, Copy)]
+pub struct FailFast;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum IsValid {
+  Yes = 1,
+  No = 0,
+}
+
+impl From<IsValid> for bool {
+  fn from(val: IsValid) -> Self {
+    match val {
+      IsValid::Yes => true,
+      IsValid::No => false,
+    }
+  }
+}
+
+impl IsValid {
+  #[must_use]
+  pub fn is_valid(&self) -> bool {
+    (*self).into()
+  }
+
+  #[must_use]
+  pub const fn merge(self, other: Self) -> Self {
+    match (self, other) {
+      (Self::Yes, Self::Yes) => Self::Yes,
+      _ => Self::No,
+    }
+  }
+}
+
+impl core::ops::BitAndAssign for IsValid {
+  fn bitand_assign(&mut self, rhs: Self) {
+    *self = self.merge(rhs);
+  }
+}
+
+pub type ValidatorResult = Result<IsValid, FailFast>;
+
 // Here we use a generic for the target of the validator
 // AND an assoc. type for the actual type being validated
 // so that it can be proxied by wrappers (like with Sint32, Fixed32, enums, etc...).
@@ -48,7 +90,7 @@ pub trait Validator<T: ?Sized>: Sized {
   {
     let mut ctx = ValidationCtx::default();
 
-    self.validate_core(&mut ctx, Some(val));
+    let _ = self.validate_core(&mut ctx, Some(val));
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -64,7 +106,7 @@ pub trait Validator<T: ?Sized>: Sized {
   {
     let mut ctx = ValidationCtx::default();
 
-    self.validate_core(&mut ctx, val);
+    let _ = self.validate_core(&mut ctx, val);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -78,7 +120,7 @@ pub trait Validator<T: ?Sized>: Sized {
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    self.validate_core(&mut ctx, Some(val));
+    let _ = self.validate_core(&mut ctx, Some(val));
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -96,7 +138,7 @@ pub trait Validator<T: ?Sized>: Sized {
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    self.validate_core(&mut ctx, val);
+    let _ = self.validate_core(&mut ctx, val);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -105,7 +147,7 @@ pub trait Validator<T: ?Sized>: Sized {
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized;
 }
@@ -170,11 +212,11 @@ pub struct FnValidator<F, T: ?Sized> {
 impl<F, T> Validator<T> for FnValidator<F, T>
 where
   T: ToOwned + ?Sized,
-  F: Fn(&mut ValidationCtx, Option<&T>) -> bool,
+  F: Fn(&mut ValidationCtx, Option<&T>) -> ValidatorResult,
 {
   type Target = T;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -186,7 +228,7 @@ where
 pub const fn from_fn<T, F>(f: F) -> FnValidator<F, T>
 where
   T: ?Sized,
-  F: Fn(&mut ValidationCtx, Option<&T>) -> bool,
+  F: Fn(&mut ValidationCtx, Option<&T>) -> ValidatorResult,
 {
   FnValidator {
     func: f,

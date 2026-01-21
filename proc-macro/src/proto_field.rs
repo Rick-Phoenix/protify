@@ -122,7 +122,7 @@ impl ProtoField {
         }
       }
       Self::Optional(inner) | Self::Single(inner) => {
-        if let ProtoType::Message(MessageInfo { path, .. }) = inner {
+        if let ProtoType::Message(MessageInfo { .. }) = inner {
           Some(quote_spanned! {span=>
             ::prelude::MessageValidator::default()
           })

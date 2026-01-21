@@ -18,28 +18,8 @@ pub fn field_validator_tokens(field_data: &FieldData, item_kind: ItemKind) -> Ve
   let mut tokens: Vec<TokenStream2> = Vec::new();
 
   if let ProtoField::Oneof(OneofInfo { required, .. }) = proto_field {
-    tokens.push(if *required {
-      quote_spanned! {*span=>
-        match self.#ident.as_ref() {
-          Some(oneof) => {
-            if !::prelude::ValidatedOneof::validate(oneof, ctx) {
-              is_valid = false;
-            }
-          },
-          None => {
-            ctx.violations.add_required_oneof_violation(&ctx.parent_elements);
-            is_valid = false;
-          }
-        }
-      }
-    } else {
-      quote_spanned! {*span=>
-        if let Some(oneof) = self.#ident.as_ref() {
-          if !::prelude::ValidatedOneof::validate(oneof, ctx) {
-            is_valid = false;
-          }
-        }
-      }
+    tokens.push(quote_spanned! {*span=>
+      ::prelude::validate_oneof(self.#ident.as_ref(), ctx, #required)
     });
   } else {
     tokens = validators.iter().map(|validator| {
@@ -140,14 +120,6 @@ pub fn generate_message_validator(
       } else {
         let validator_static_ident = format_ident!("__VALIDATOR_{i}");
 
-        let expr = if v.kind.is_closure() {
-          quote_spanned! {v.span=>
-            ::prelude::apply(::prelude::CelValidator::default(), #v)
-          }
-        } else {
-          v.to_token_stream()
-        };
-
         quote_spanned! {v.span=>
           {
             static #validator_static_ident: ::prelude::Lazy<::prelude::CelValidator> = ::prelude::Lazy::new(|| {
@@ -164,18 +136,11 @@ pub fn generate_message_validator(
       };
 
       quote_spanned! {v.span=>
-        if !#validator {
-          is_valid = false;
-
-          if ctx.fail_fast {
-            return false;
-          }
-        }
+        is_valid &= #validator?;
       }
-
     });
 
-    let tokens = fields
+    let field_validators = fields
       .iter()
       .filter_map(|d| d.as_normal())
       .filter_map(|d| {
@@ -186,28 +151,14 @@ pub fn generate_message_validator(
       .map(|(data, validators)| {
         let span = data.span;
 
-        let check = if data.proto_field.is_oneof() {
-          quote! { #(#validators)* }
-        } else {
-          quote_spanned! {span=>
-            #(
-              if !#validators {
-                is_valid = false;
-              }
-            )*
-          }
-        };
-
         quote_spanned! {span=>
-          #check
-
-          if !is_valid && ctx.fail_fast {
-            return false;
-          }
+          #(
+            is_valid &= #validators?;
+          )*
         }
       });
 
-    let all_validators = top_level.chain(tokens);
+    let all_validators = top_level.chain(field_validators);
 
     quote! { #(#all_validators)* }
   };
@@ -221,12 +172,12 @@ pub fn generate_message_validator(
     quote! {
       impl ::prelude::ValidatedMessage for #target_ident {
         #[doc(hidden)]
-        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
-          let mut is_valid = true;
+        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> ::prelude::ValidatorResult {
+          let mut is_valid = ::prelude::IsValid::Yes;
 
           #validators_tokens
 
-          is_valid
+          Ok(is_valid)
         }
       }
     }
@@ -240,8 +191,8 @@ pub fn generate_message_validator(
 
         #[doc(hidden)]
         #[inline(always)]
-        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
-          true
+        fn nested_validate(&self, ctx: &mut ::prelude::ValidationCtx) -> ::prelude::ValidatorResult {
+          Ok(::prelude::IsValid::Yes)
         }
       }
     }

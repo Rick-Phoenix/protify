@@ -80,8 +80,8 @@ macro_rules! violation_helpers {
   ($($name:ident),*) => {
     paste::paste! {
       $(
-        pub(crate) fn [< add_ $name _violation >](&mut self, kind: [< $name:camel Violation >], error_message: CowStr) {
-          self.add_violation(ViolationKind::[< $name:camel >](kind), error_message);
+        pub(crate) fn [< add_ $name _violation >](&mut self, kind: [< $name:camel Violation >], error_message: CowStr) -> ValidatorResult {
+          self.add_violation(ViolationKind::[< $name:camel >](kind), error_message)
         }
       )*
     }
@@ -105,7 +105,11 @@ impl ValidationCtx {
   );
 
   #[inline]
-  pub fn add_violation(&mut self, kind: ViolationKind, error_message: impl Into<String>) {
+  pub fn add_violation(
+    &mut self,
+    kind: ViolationKind,
+    error_message: impl Into<String>,
+  ) -> ValidatorResult {
     let violation = create_violation_core(
       None,
       self.field_context.as_ref(),
@@ -118,6 +122,12 @@ impl ValidationCtx {
       kind,
       data: violation,
     });
+
+    if self.fail_fast {
+      Err(FailFast)
+    } else {
+      Ok(IsValid::No)
+    }
   }
 
   #[inline]
@@ -126,7 +136,7 @@ impl ValidationCtx {
     rule_id: &str,
     kind: ViolationKind,
     error_message: impl Into<String>,
-  ) {
+  ) -> ValidatorResult {
     let violation = new_violation_with_custom_id(
       rule_id,
       self.field_context.as_ref(),
@@ -139,25 +149,57 @@ impl ValidationCtx {
       kind,
       data: violation,
     });
+
+    if self.fail_fast {
+      Err(FailFast)
+    } else {
+      Ok(IsValid::No)
+    }
   }
 
   #[inline]
-  pub fn add_cel_violation(&mut self, rule: &CelRule) {
+  pub fn add_cel_violation(&mut self, rule: &CelRule) -> ValidatorResult {
     self
       .violations
       .add_cel_violation(rule, self.field_context.as_ref(), &self.parent_elements);
+
+    if self.fail_fast {
+      Err(FailFast)
+    } else {
+      Ok(IsValid::No)
+    }
   }
 
   #[inline]
-  pub fn add_required_oneof_violation(&mut self) {
+  pub fn add_required_oneof_violation(&mut self) -> ValidatorResult {
     self
       .violations
       .add_required_oneof_violation(&self.parent_elements);
+
+    if self.fail_fast {
+      Err(FailFast)
+    } else {
+      Ok(IsValid::No)
+    }
   }
 
   #[inline]
-  pub fn add_required_violation(&mut self) {
+  pub fn add_required_violation(&mut self) -> ValidatorResult {
     self.add_violation(ViolationKind::Required, Cow::Borrowed("is required"))
+  }
+
+  #[cfg(feature = "cel")]
+  pub fn add_cel_error_violation(&mut self, error: CelError) -> ValidatorResult {
+    self.violations.push(ViolationCtx {
+      kind: ViolationKind::Cel,
+      data: error.into_violation(self.field_context.as_ref(), &self.parent_elements),
+    });
+
+    if self.fail_fast {
+      Err(FailFast)
+    } else {
+      Ok(IsValid::No)
+    }
   }
 }
 

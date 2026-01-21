@@ -218,3 +218,20 @@ mod regex_impls {
 
   impl_into_regex!((IntoRegex, Regex), (IntoBytesRegex, BytesRegex));
 }
+
+pub fn validate_oneof<O: ValidatedOneof>(
+  oneof: Option<&O>,
+  ctx: &mut ValidationCtx,
+  required: bool,
+) -> ValidatorResult {
+  match oneof {
+    Some(oneof) => oneof.validate(ctx),
+    None => {
+      if required {
+        ctx.add_required_oneof_violation()
+      } else {
+        Ok(IsValid::Yes)
+      }
+    }
+  }
+}

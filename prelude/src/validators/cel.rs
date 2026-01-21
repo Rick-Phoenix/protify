@@ -236,53 +236,35 @@ mod cel_impls {
   where
     CelT: TryIntoCel,
   {
-    pub fn execute_programs(self) -> bool {
+    pub fn execute_programs(self) -> ValidatorResult {
       let Self {
         programs,
         value,
-        ctx:
-          ValidationCtx {
-            field_context,
-            parent_elements,
-            violations,
-            fail_fast,
-          },
+        ctx,
       } = self;
 
-      let mut is_valid = true;
+      let mut is_valid = IsValid::Yes;
 
-      let ctx = match initialize_context(value) {
-        Ok(ctx) => ctx,
+      let cel_ctx = match initialize_context(value) {
+        Ok(cel_ctx) => cel_ctx,
         Err(e) => {
-          violations.push(ViolationCtx {
-            kind: ViolationKind::Cel,
-            data: e.into_violation(field_context.as_ref(), parent_elements),
-          });
-          return false;
+          let _ = ctx.add_cel_error_violation(e);
+          return Err(FailFast);
         }
       };
 
       for program in programs {
-        match program.execute(&ctx) {
+        match program.execute(&cel_ctx) {
           Ok(was_successful) => {
             if !was_successful {
-              violations.add_cel_violation(&program.rule, field_context.as_ref(), parent_elements);
-
-              if *fail_fast {
-                return false;
-              } else {
-                is_valid = false;
-              }
+              is_valid &= ctx.add_cel_violation(&program.rule)?;
             }
           }
-          Err(e) => violations.push(ViolationCtx {
-            kind: ViolationKind::Cel,
-            data: e.into_violation(field_context.as_ref(), parent_elements),
-          }),
+          Err(e) => is_valid &= ctx.add_cel_error_violation(e)?,
         };
       }
 
-      is_valid
+      Ok(is_valid)
     }
   }
 

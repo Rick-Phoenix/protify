@@ -22,26 +22,20 @@ pub fn generate_oneof_validator(
         quote_spanned! {data.span=>
           Self::#ident(v) => {
             #(
-              if !#validators {
-                is_valid = false;
-
-                if ctx.fail_fast {
-                  return false;
-                }
-              }
+              is_valid &= #validators?;
             )*
           }
         }
       });
 
     quote! {
-      let mut is_valid = true;
+      let mut is_valid = ::prelude::IsValid::Yes;
       match self {
         #(#tokens,)*
         _ => {}
       };
 
-      is_valid
+      Ok(is_valid)
     }
   };
 
@@ -52,15 +46,15 @@ pub fn generate_oneof_validator(
     quote! {
       impl ::prelude::ValidatedOneof for #oneof_ident {
         #[inline(always)]
-        fn validate(&self, _: &mut ::prelude::ValidationCtx) -> bool {
-          true
+        fn validate(&self, _: &mut ::prelude::ValidationCtx) -> ::prelude::ValidatorResult {
+          Ok(::prelude::IsValid::Yes)
         }
       }
     }
   } else {
     quote! {
       impl ::prelude::ValidatedOneof for #oneof_ident {
-        fn validate(&self, ctx: &mut ::prelude::ValidationCtx) -> bool {
+        fn validate(&self, ctx: &mut ::prelude::ValidationCtx) -> ::prelude::ValidatorResult {
           #validators_tokens
         }
       }

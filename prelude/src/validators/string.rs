@@ -263,18 +263,18 @@ impl Validator<String> for StringValidator {
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> bool
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if self.required && val.is_none_or(|v| v.borrow().is_empty()) {
-      ctx.add_required_violation();
-      return false;
+      is_valid &= ctx.add_required_violation()?;
+      return Ok(is_valid);
     }
 
     if let Some(val) = val {
@@ -282,7 +282,7 @@ impl Validator<String> for StringValidator {
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_string_violation(
+          is_valid &= ctx.add_string_violation(
             StringViolation::$id,
             self
               .error_messages
@@ -290,13 +290,7 @@ impl Validator<String> for StringValidator {
               .and_then(|map| map.get(&StringViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
-
-          if ctx.fail_fast {
-            return false;
-          } else {
-            is_valid = false;
-          }
+          )?;
         };
       }
 
@@ -306,7 +300,7 @@ impl Validator<String> for StringValidator {
         }
 
         // Using `const` implies no other rules
-        return is_valid;
+        return Ok(is_valid);
       }
 
       if let Some(len) = self.len
@@ -560,11 +554,11 @@ impl Validator<String> for StringValidator {
           ctx,
         };
 
-        is_valid = cel_ctx.execute_programs();
+        is_valid &= cel_ctx.execute_programs()?;
       }
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {

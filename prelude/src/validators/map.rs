@@ -281,21 +281,21 @@ where
     Ok(())
   }
 
-  fn validate_core<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
+  fn validate_core<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> ValidatorResult
   where
     Val: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = val.borrow();
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_map_violation(
+          is_valid &= ctx.add_map_violation(
             MapViolation::$id,
             self
               .error_messages
@@ -303,13 +303,7 @@ where
               .and_then(|map| map.get(&MapViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
-
-          if ctx.fail_fast {
-            return false;
-          } else {
-            is_valid = false;
-          }
+          )?;
         };
       }
 
@@ -354,11 +348,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapKey);
 
-            is_valid = validator.validate_core(ctx, Some(k));
-
-            if !is_valid && ctx.fail_fast {
-              return false;
-            }
+            is_valid &= validator.validate_core(ctx, Some(k))?;
           }
 
           if let Some(validator) = values_validator {
@@ -367,11 +357,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapValue);
 
-            is_valid = validator.validate_core(ctx, Some(v));
-
-            if !is_valid && ctx.fail_fast {
-              return false;
-            }
+            is_valid &= validator.validate_core(ctx, Some(v))?;
           }
         }
 
@@ -386,7 +372,7 @@ where
       }
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {
@@ -489,21 +475,21 @@ where
     }
   }
 
-  fn validate_core<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> bool
+  fn validate_core<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> ValidatorResult
   where
     Val: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
 
-    let mut is_valid = true;
+    let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
       let val = val.borrow();
 
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
-          ctx.add_map_violation(
+          is_valid &= ctx.add_map_violation(
             MapViolation::$id,
             self
               .error_messages
@@ -511,13 +497,7 @@ where
               .and_then(|map| map.get(&MapViolation::$id))
               .map(|m| Cow::Borrowed(m.as_ref()))
               .unwrap_or_else(|| Cow::Owned($default)),
-          );
-
-          if ctx.fail_fast {
-            return false;
-          } else {
-            is_valid = false;
-          }
+          )?;
         };
       }
 
@@ -553,11 +533,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapKey);
 
-            is_valid = validator.validate_core(ctx, Some(k));
-
-            if !is_valid && ctx.fail_fast {
-              return false;
-            }
+            is_valid &= validator.validate_core(ctx, Some(k))?;
           }
 
           if let Some(validator) = values_validator {
@@ -566,11 +542,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapValue);
 
-            is_valid = validator.validate_core(ctx, Some(v));
-
-            if !is_valid && ctx.fail_fast {
-              return false;
-            }
+            is_valid &= validator.validate_core(ctx, Some(v))?;
           }
         }
 
@@ -594,21 +566,16 @@ where
               ctx,
             };
 
-            is_valid = cel_ctx.execute_programs();
+            is_valid &= cel_ctx.execute_programs()?;
           }
           Err(e) => {
-            ctx.violations.push(ViolationCtx {
-              kind: ViolationKind::Cel,
-              data: e.into_violation(ctx.field_context.as_ref(), &ctx.parent_elements),
-            });
-
-            is_valid = false;
+            is_valid &= ctx.add_cel_error_violation(e)?;
           }
         };
       }
     }
 
-    is_valid
+    Ok(is_valid)
   }
 
   fn as_proto_option(&self) -> Option<ProtoOption> {
