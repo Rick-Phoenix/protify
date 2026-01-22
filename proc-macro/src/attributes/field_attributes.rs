@@ -89,14 +89,24 @@ impl Validators {
     self.validators.iter()
   }
 
-  pub fn adjust_closures(&mut self, proto_field: &ProtoField) {
+  pub fn adjust_closures(&mut self, proto_field: &ProtoField) -> syn::Result<()> {
     for validator in &mut self.validators {
       if validator.kind.is_closure() {
+        if proto_field.is_oneof() {
+          // We need the boolean at compile time for the default check, so this must be an attribute
+          bail_with_span!(
+            validator.span,
+            "Cannot use closures with oneofs. If you want to mark the oneof as required, use the attribute notation `#[proto(oneof(required))]`"
+          );
+        }
+
         let validator_target_type = proto_field.validator_target_type(validator.span);
 
         validator.expr = quote_spanned! {validator.span=> <#validator_target_type as ::prelude::ProtoValidator>::validator_from_closure(#validator) };
       }
     }
+
+    Ok(())
   }
 }
 
@@ -358,7 +368,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
   }
 
   if !validators.validators.is_empty() {
-    validators.adjust_closures(&proto_field);
+    validators.adjust_closures(&proto_field)?;
   }
 
   let proto_name = name.unwrap_or_else(|| {
