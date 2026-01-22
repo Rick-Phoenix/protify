@@ -270,6 +270,47 @@ where
   where
     Val: Borrow<Self::Target> + ?Sized,
   {
+    self.validate_map(ctx, val.map(|v| v.borrow()))
+  }
+}
+
+#[non_exhaustive]
+#[derive(Debug)]
+pub struct MapValidator<K, V>
+where
+  K: ProtoValidator,
+  V: ProtoValidator,
+{
+  /// The validation rules to apply to the keys of this map field.
+  pub keys: Option<K::Validator>,
+
+  _key_type: PhantomData<K>,
+  _value_type: PhantomData<V>,
+
+  pub cel: Vec<CelProgram>,
+
+  /// The validation rules to apply to the keys of this map field.
+  pub values: Option<V::Validator>,
+  /// The minimum amount of key-value pairs that this field should have in order to be valid.
+  pub min_pairs: Option<usize>,
+  /// The maximum amount of key-value pairs that this field should have in order to be valid.
+  pub max_pairs: Option<usize>,
+  pub ignore: Ignore,
+
+  pub error_messages: Option<ErrorMessages<MapViolation>>,
+}
+
+impl<K, V> MapValidator<K, V>
+where
+  K: ProtoValidator,
+  V: ProtoValidator,
+{
+  pub fn validate_map<M>(&self, ctx: &mut ValidationCtx, val: Option<&M>) -> ValidatorResult
+  where
+    M: Map<K::Stored, V::Stored> + Clone,
+    K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
+    V::Stored: Sized + Clone + TryIntoCel,
+  {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().length() == 0));
 
@@ -368,39 +409,7 @@ where
 
     Ok(is_valid)
   }
-}
 
-#[non_exhaustive]
-#[derive(Debug)]
-pub struct MapValidator<K, V>
-where
-  K: ProtoValidator,
-  V: ProtoValidator,
-{
-  /// The validation rules to apply to the keys of this map field.
-  pub keys: Option<K::Validator>,
-
-  _key_type: PhantomData<K>,
-  _value_type: PhantomData<V>,
-
-  pub cel: Vec<CelProgram>,
-
-  /// The validation rules to apply to the keys of this map field.
-  pub values: Option<V::Validator>,
-  /// The minimum amount of key-value pairs that this field should have in order to be valid.
-  pub min_pairs: Option<usize>,
-  /// The maximum amount of key-value pairs that this field should have in order to be valid.
-  pub max_pairs: Option<usize>,
-  pub ignore: Ignore,
-
-  pub error_messages: Option<ErrorMessages<MapViolation>>,
-}
-
-impl<K, V> MapValidator<K, V>
-where
-  K: ProtoValidator,
-  V: ProtoValidator,
-{
   fn proto_option(&self) -> ProtoOption {
     let mut rules = OptionMessageBuilder::new();
 
