@@ -6,6 +6,7 @@ use super::*;
 fn repeated_tests() {
   let mut msg = RepeatedTests {
     string_test: vec!["abc".to_string()],
+    wrappers_test: vec![1],
     items_test: vec![15, 15],
     items_cel_test: vec![1],
     cel_test: vec![1],
