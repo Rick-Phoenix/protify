@@ -102,8 +102,6 @@ impl MessageCtx<'_> {
       quote! { #(#tokens),* }
     };
 
-    let mut output = TokenStream2::new();
-
     let proto_struct = self.proto_struct_ident();
 
     let name_method = if let Some(parent) = parent_message {
@@ -134,7 +132,21 @@ impl MessageCtx<'_> {
 
     let options_tokens = options_tokens(Span::call_site(), message_options, *deprecated);
 
-    output.extend(quote! {
+    let proxy_struct_impl = self
+      .shadow_struct_ident
+      .map(|shadow_struct_ident| {
+        let orig_struct_ident = &self.orig_struct_ident;
+
+        quote_spanned! {orig_struct_ident.span()=>
+          impl ::prelude::AsProtoType for #orig_struct_ident {
+            fn proto_type() -> ::prelude::ProtoType {
+              <#shadow_struct_ident as ::prelude::AsProtoType>::proto_type()
+            }
+          }
+        }
+      });
+
+    quote! {
       ::prelude::register_proto_data! {
         ::prelude::RegistryMessage {
           package: __PROTO_FILE.package,
@@ -205,20 +217,8 @@ impl MessageCtx<'_> {
           }
         }
       }
-    });
 
-    if let Some(shadow_struct_ident) = &self.shadow_struct_ident {
-      let orig_struct_ident = &self.orig_struct_ident;
-
-      output.extend(quote! {
-        impl ::prelude::AsProtoType for #orig_struct_ident {
-          fn proto_type() -> ::prelude::ProtoType {
-            <#shadow_struct_ident as ::prelude::AsProtoType>::proto_type()
-          }
-        }
-      });
+      #proxy_struct_impl
     }
-
-    output
   }
 }

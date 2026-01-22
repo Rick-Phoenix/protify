@@ -74,7 +74,7 @@ pub struct Message {
 }
 
 impl Message {
-  pub(crate) fn options_with_cel_rules(&self) -> Vec<ProtoOption> {
+  pub(crate) fn options_with_validators(&self) -> Vec<ProtoOption> {
     self
       .options
       .clone()
