@@ -125,7 +125,7 @@ pub struct StringValidator {
 
   #[cfg(feature = "regex")]
   /// Specifies a regex pattern that this field's value should match in order to be considered valid.
-  pub pattern: Option<Cow<'static, Regex>>,
+  pub pattern: Option<Regex>,
 
   /// Specifies the prefix that this field's value should contain in order to be considered valid.
   pub prefix: Option<SharedStr>,

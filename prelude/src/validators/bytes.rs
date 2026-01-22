@@ -35,7 +35,7 @@ pub struct BytesValidator {
 
   #[cfg(feature = "regex")]
   /// Specifies a regex pattern that must be matches by the value to pass validation.
-  pub pattern: Option<Cow<'static, Regex>>,
+  pub pattern: Option<Regex>,
 
   /// Specifies a prefix that the value must start with in order to pass validation.
   pub prefix: Option<Bytes>,

@@ -163,60 +163,75 @@ mod regex_impls {
   use regex::Regex;
   use regex::bytes::Regex as BytesRegex;
 
-  macro_rules! impl_into_regex {
-    ($(( $trait:ident, $path:ident )),*) => {
-      $(
-        pub trait $trait {
-          #[allow(private_interfaces)]
-          const SEALED: Sealed;
+  pub trait IntoRegex {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed;
 
-          fn into_regex(self) -> Cow<'static, $path>;
-        }
-
-        impl $trait for &str {
-          #[allow(private_interfaces)]
-          const SEALED: Sealed = Sealed;
-
-          #[inline]
-          fn into_regex(self) -> Cow<'static, $path> {
-            Cow::Owned($path::new(self).unwrap())
-          }
-        }
-
-        impl $trait for Arc<str> {
-          #[allow(private_interfaces)]
-          const SEALED: Sealed = Sealed;
-
-          #[inline]
-          fn into_regex(self) -> Cow<'static, $path> {
-            Cow::Owned($path::new(&self).unwrap())
-          }
-        }
-
-        impl $trait for $path {
-          #[allow(private_interfaces)]
-          const SEALED: Sealed = Sealed;
-
-          #[inline]
-          fn into_regex(self) -> Cow<'static, $path> {
-            Cow::Owned(self)
-          }
-        }
-
-        impl $trait for &'static $path {
-          #[allow(private_interfaces)]
-          const SEALED: Sealed = Sealed;
-
-          #[inline]
-          fn into_regex(self) -> Cow<'static, $path> {
-            Cow::Borrowed(self)
-          }
-        }
-      )*
-    };
+    fn into_regex(self) -> Regex;
   }
 
-  impl_into_regex!((IntoRegex, Regex), (IntoBytesRegex, BytesRegex));
+  impl IntoRegex for &str {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed = Sealed;
+
+    #[track_caller]
+    fn into_regex(self) -> Regex {
+      Regex::new(self).unwrap()
+    }
+  }
+
+  impl IntoRegex for Regex {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed = Sealed;
+
+    fn into_regex(self) -> Regex {
+      self
+    }
+  }
+
+  impl IntoRegex for &Regex {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed = Sealed;
+
+    fn into_regex(self) -> Regex {
+      self.clone()
+    }
+  }
+
+  pub trait IntoBytesRegex {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed;
+
+    fn into_regex(self) -> BytesRegex;
+  }
+
+  impl IntoBytesRegex for &str {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed = Sealed;
+
+    #[track_caller]
+    fn into_regex(self) -> BytesRegex {
+      BytesRegex::new(self).unwrap()
+    }
+  }
+
+  impl IntoBytesRegex for BytesRegex {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed = Sealed;
+
+    fn into_regex(self) -> BytesRegex {
+      self
+    }
+  }
+
+  impl IntoBytesRegex for &BytesRegex {
+    #[allow(private_interfaces)]
+    const SEALED: Sealed = Sealed;
+
+    fn into_regex(self) -> BytesRegex {
+      self.clone()
+    }
+  }
 }
 
 #[derive(Clone, Default, Debug, Copy)]
@@ -235,8 +250,6 @@ impl<T: ValidatedOneof + ProtoValidator> ValidatorBuilderFor<T> for OneofValidat
 
 impl<T: ValidatedOneof + ProtoValidator> Validator<T> for OneofValidator {
   type Target = T;
-
-  // This one should have into<protooption>
 
   #[inline]
   fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
