@@ -101,7 +101,7 @@ impl ValidationCtx {
   }
 
   violation_helpers!(
-    any, bytes, duration, string, timestamp, enum, field_mask, map, repeated
+    any, bool, bytes, duration, string, timestamp, enum, field_mask, map, repeated
   );
 
   #[inline]

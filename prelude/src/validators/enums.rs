@@ -129,31 +129,31 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     V: Borrow<Self::Target> + ?Sized,
   {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_default()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| *v.borrow() == 0));
 
     let mut is_valid = IsValid::Yes;
 
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        is_valid &= ctx.add_enum_violation(
+          EnumViolation::$id,
+          self
+            .error_messages
+            .as_deref()
+            .and_then(|map| map.get(&EnumViolation::$id))
+            .map(|m| Cow::Borrowed(m.as_ref()))
+            .unwrap_or_else(|| Cow::Owned($default)),
+        )?;
+      };
+    }
+
     if self.required && val.is_none_or(|v| *v.borrow() == 0) {
-      is_valid &= ctx.add_required_violation()?;
+      handle_violation!(Required, "is required".to_string());
       return Ok(is_valid);
     }
 
     if let Some(val) = val {
       let val = *val.borrow();
-
-      macro_rules! handle_violation {
-        ($id:ident, $default:expr) => {
-          is_valid &= ctx.add_enum_violation(
-            EnumViolation::$id,
-            self
-              .error_messages
-              .as_deref()
-              .and_then(|map| map.get(&EnumViolation::$id))
-              .map(|m| Cow::Borrowed(m.as_ref()))
-              .unwrap_or_else(|| Cow::Owned($default)),
-          )?;
-        };
-      }
 
       if let Some(const_val) = self.const_ {
         if val != const_val {

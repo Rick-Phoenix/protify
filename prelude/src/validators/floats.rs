@@ -255,27 +255,27 @@ where
 
     let mut is_valid = IsValid::Yes;
 
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        paste::paste! {
+          is_valid &= ctx.add_violation(
+            Num::[< $id:snake:upper _VIOLATION >].into(),
+            self.custom_error_or_else(
+              Num::[< $id:snake:upper _VIOLATION >],
+              || $default
+            )
+          )?;
+        }
+      };
+    }
+
     if self.required && val.is_none_or(|v| v.borrow().is_default()) {
-      is_valid &= ctx.add_required_violation()?;
+      handle_violation!(Required, "is required".to_string());
       return Ok(is_valid);
     }
 
     if let Some(val) = val {
       let val = *val.borrow();
-
-      macro_rules! handle_violation {
-        ($id:ident, $default:expr) => {
-          paste::paste! {
-            is_valid &= ctx.add_violation(
-              Num::[< $id:snake:upper _VIOLATION >].into(),
-              self.custom_error_or_else(
-                Num::[< $id:snake:upper _VIOLATION >],
-                || $default
-              )
-            )?;
-          }
-        };
-      }
 
       if let Some(const_val) = self.const_ {
         if !self.float_is_eq(const_val, val) {

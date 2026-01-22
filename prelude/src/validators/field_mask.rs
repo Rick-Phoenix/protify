@@ -108,22 +108,22 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
     let mut is_valid = IsValid::Yes;
 
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        is_valid &= ctx.add_field_mask_violation(
+          FieldMaskViolation::$id,
+          self
+            .error_messages
+            .as_deref()
+            .and_then(|map| map.get(&FieldMaskViolation::$id))
+            .map(|m| Cow::Borrowed(m.as_ref()))
+            .unwrap_or_else(|| Cow::Owned($default)),
+        )?;
+      };
+    }
+
     if let Some(val) = val {
       let val = val.borrow();
-
-      macro_rules! handle_violation {
-        ($id:ident, $default:expr) => {
-          is_valid &= ctx.add_field_mask_violation(
-            FieldMaskViolation::$id,
-            self
-              .error_messages
-              .as_deref()
-              .and_then(|map| map.get(&FieldMaskViolation::$id))
-              .map(|m| Cow::Borrowed(m.as_ref()))
-              .unwrap_or_else(|| Cow::Owned($default)),
-          )?;
-        };
-      }
 
       if let Some(const_val) = &self.const_ {
         let const_val_len = const_val.items.len();
@@ -193,7 +193,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
         is_valid &= cel_ctx.execute_programs()?;
       }
     } else if self.required {
-      is_valid &= ctx.add_required_violation()?;
+      handle_violation!(Required, "is required".to_string());
     }
 
     Ok(is_valid)

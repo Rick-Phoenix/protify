@@ -67,19 +67,33 @@ impl Validator<bool> for BoolValidator {
 
     let mut is_valid = IsValid::Yes;
 
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        is_valid &= ctx.add_bool_violation(
+          BoolViolation::$id,
+          self
+            .error_messages
+            .as_deref()
+            .and_then(|map| map.get(&BoolViolation::$id))
+            .map(|m| Cow::Borrowed(m.as_ref()))
+            .unwrap_or_else(|| Cow::Owned($default)),
+        )?;
+      };
+    }
+
+    if self.required && val.is_none_or(|v| !v.borrow()) {
+      handle_violation!(Required, "is required".to_string());
+      return Ok(is_valid);
+    }
+
     if let Some(val) = val {
       let val = *val.borrow();
 
       if let Some(const_val) = self.const_
         && val != const_val
       {
-        is_valid &= ctx.add_violation(
-          ViolationKind::Bool(BoolViolation::Const),
-          format!("must be {const_val}"),
-        )?;
+        handle_violation!(Const, format!("must be {const_val}"));
       }
-    } else if self.required {
-      is_valid &= ctx.add_required_violation()?;
     }
 
     Ok(is_valid)
