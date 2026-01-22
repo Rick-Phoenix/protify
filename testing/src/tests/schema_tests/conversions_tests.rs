@@ -344,68 +344,6 @@ fn message_custom_into_proto_only() {
   assert_eq_pretty!(msg.id, 2);
 }
 
-#[proto_message(proxied, no_auto_test)]
-pub struct ProxiedMessageWithDefault {
-  #[proto(message(default, proxied))]
-  recursive: Box<ProxiedMessageWithDefault>,
-  #[proto(message(default))]
-  direct: MessageWithDefault,
-}
-
-#[proto_message(no_auto_test)]
-pub struct MessageWithDefault {
-  #[proto(message)]
-  recursive: Option<Box<MessageWithDefault>>,
-}
-
-#[proto_message(no_auto_test)]
-pub struct WithDirectRecursiveOneof {
-  #[proto(oneof(tags(1, 2)))]
-  oneof: Option<DirectRecursiveOneof>,
-}
-
-#[proto_oneof(no_auto_test)]
-pub enum DirectRecursiveOneof {
-  #[proto(tag = 1)]
-  A(i32),
-  #[proto(tag = 2, message)]
-  B(Box<WithDirectRecursiveOneof>),
-}
-
-#[proto_message(proxied, no_auto_test)]
-pub struct WithProxiedRecursiveDefaultOneof {
-  #[proto(oneof(default, proxied, tags(1, 2)))]
-  oneof: ProxiedRecursiveOneof,
-}
-
-#[proto_oneof(proxied, no_auto_test)]
-pub enum ProxiedRecursiveOneof {
-  #[proto(tag = 1)]
-  A(i32),
-  #[proto(tag = 2, message(proxied))]
-  B(Box<WithProxiedRecursiveDefaultOneof>),
-}
-
-impl Default for ProxiedRecursiveOneofProto {
-  fn default() -> Self {
-    Self::A(1)
-  }
-}
-
-// This should compile because a non-Option message should be allowed without `default`
-// if a custom conversion impl is provided
-#[proto_message(proxied, no_auto_test)]
-pub struct DefaultMsgWithCustomImpl {
-  #[proto(message(proxied))]
-  #[proto(from_proto = |_| Box::new(DefaultMsgWithCustomImpl { recursive: Box::new(DefaultMsgWithCustomImplProto::default().into()), normal: DirectMsg::default() }))]
-  #[proto(into_proto = |_| Some(Box::new(DefaultMsgWithCustomImplProto::default())))]
-  recursive: Box<DefaultMsgWithCustomImpl>,
-  #[proto(message)]
-  #[proto(from_proto = |v| v.unwrap_or_default())]
-  #[proto(into_proto = |_| Some(DirectMsg::default()))]
-  normal: DirectMsg,
-}
-
 impl Default for OneofIgnoredFieldDefaultConversionProto {
   fn default() -> Self {
     Self::B(1)
@@ -539,4 +477,74 @@ fn message_ignored_field_global() {
 
   assert_eq_pretty!(proxy.ignored, 1);
   assert_eq_pretty!(proxy.other, 1);
+}
+
+mod borderline_nonsensical {
+  use super::*;
+
+  // These are just stress tests for various scenarios to make sure that all conditions
+  // that are technically allowed are compiling, although in practice most of these
+  // would actually cause a stack overflow if they were to be actually converted
+
+  #[proto_message(proxied, no_auto_test)]
+  pub struct ProxiedMessageWithDefault {
+    #[proto(message(default, proxied))]
+    recursive: Box<ProxiedMessageWithDefault>,
+    #[proto(message(default))]
+    direct: MessageWithDefault,
+  }
+
+  #[proto_message(no_auto_test)]
+  pub struct MessageWithDefault {
+    #[proto(message)]
+    recursive: Option<Box<MessageWithDefault>>,
+  }
+
+  #[proto_message(no_auto_test)]
+  pub struct WithDirectRecursiveOneof {
+    #[proto(oneof(tags(1, 2)))]
+    oneof: Option<DirectRecursiveOneof>,
+  }
+
+  #[proto_oneof(no_auto_test)]
+  pub enum DirectRecursiveOneof {
+    #[proto(tag = 1)]
+    A(i32),
+    #[proto(tag = 2, message)]
+    B(Box<WithDirectRecursiveOneof>),
+  }
+
+  #[proto_message(proxied, no_auto_test)]
+  pub struct WithProxiedRecursiveDefaultOneof {
+    #[proto(oneof(default, proxied, tags(1, 2)))]
+    oneof: ProxiedRecursiveOneof,
+  }
+
+  #[proto_oneof(proxied, no_auto_test)]
+  pub enum ProxiedRecursiveOneof {
+    #[proto(tag = 1)]
+    A(i32),
+    #[proto(tag = 2, message(proxied))]
+    B(Box<WithProxiedRecursiveDefaultOneof>),
+  }
+
+  impl Default for ProxiedRecursiveOneofProto {
+    fn default() -> Self {
+      Self::A(1)
+    }
+  }
+
+  // This should compile because a non-Option message should be allowed without `default`
+  // if a custom conversion impl is provided
+  #[proto_message(proxied, no_auto_test)]
+  pub struct DefaultMsgWithCustomImpl {
+    #[proto(message(proxied))]
+    #[proto(from_proto = |_| Box::new(DefaultMsgWithCustomImpl { recursive: Box::new(DefaultMsgWithCustomImplProto::default().into()), normal: DirectMsg::default() }))]
+    #[proto(into_proto = |_| Some(Box::new(DefaultMsgWithCustomImplProto::default())))]
+    recursive: Box<DefaultMsgWithCustomImpl>,
+    #[proto(message)]
+    #[proto(from_proto = |v| v.unwrap_or_default())]
+    #[proto(into_proto = |_| Some(DirectMsg::default()))]
+    normal: DirectMsg,
+  }
 }
