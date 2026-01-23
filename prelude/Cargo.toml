@@ -16,6 +16,10 @@ regex = { version = "1", optional = true, default-features = false, features = [
   "unicode",
 ] }
 cel = { workspace = true, optional = true }
+serde = { version = "1", optional = true, default-features = false, features = [
+  "derive",
+  "rc",
+] }
 
 ordered-float = { version = "5", default-features = false }
 proto-types = { workspace = true, features = ["protovalidate"] }
@@ -47,6 +51,8 @@ chrono = { version = "0.4", default-features = false, features = [
 [features]
 default = ["std", "regex", "cel", "chrono", "inventory"]
 
+serde = ["dep:serde", "bytes/serde", "proto-types/serde", "ordered-float/serde"]
+
 inventory = ["std", "dep:inventory"]
 
 chrono = ["proto-types/chrono", "dep:chrono"]
@@ -66,6 +72,7 @@ std = [
   "ipnet/std",
   "chrono?/std",
   "chrono?/now",
+  "serde?/std",
 ]
 
 reflection = ["proc-macro-impls/reflection"]

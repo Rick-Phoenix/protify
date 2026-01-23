@@ -5,6 +5,7 @@ use super::*;
 
 // This will be included even without the cel feature, as it is useful for schema purposes
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CelRule {
   /// The id of this specific rule.
   pub id: FixedStr,
@@ -18,6 +19,12 @@ impl From<CelRule> for CelProgram {
   #[inline]
   fn from(value: CelRule) -> Self {
     Self::new(value)
+  }
+}
+
+impl From<CelProgram> for CelRule {
+  fn from(value: CelProgram) -> Self {
+    value.rule
   }
 }
 
@@ -80,6 +87,8 @@ mod cel_impls {
   use std::sync::OnceLock;
 
   #[derive(Debug)]
+  #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+  #[cfg_attr(feature = "serde", serde(from = "CelRule", into = "CelRule"))]
   pub struct CelProgram {
     pub rule: CelRule,
     program: OnceLock<Program>,

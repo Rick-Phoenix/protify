@@ -300,6 +300,14 @@ where
 
 #[non_exhaustive]
 #[derive(Debug)]
+#[cfg_attr(
+  feature = "serde",
+  derive(serde::Serialize, serde::Deserialize),
+  serde(bound(
+    serialize = "K::Validator: serde::Serialize, V::Validator: serde::Serialize",
+    deserialize = "K::Validator: serde::de::DeserializeOwned, V::Validator: serde::de::DeserializeOwned",
+  ))
+)]
 pub struct MapValidator<K, V>
 where
   K: ProtoValidator,
@@ -308,7 +316,9 @@ where
   /// The validation rules to apply to the keys of this map field.
   pub keys: Option<K::Validator>,
 
+  #[cfg_attr(feature = "serde", serde(skip))]
   _key_type: PhantomData<K>,
+  #[cfg_attr(feature = "serde", serde(skip))]
   _value_type: PhantomData<V>,
 
   pub cel: Vec<CelProgram>,

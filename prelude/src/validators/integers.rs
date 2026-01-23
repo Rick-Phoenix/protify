@@ -8,6 +8,7 @@ use super::*;
 
 #[non_exhaustive]
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct IntValidator<Num>
 where
   Num: IntWrapper,
@@ -17,6 +18,7 @@ where
 
   pub ignore: Ignore,
 
+  #[cfg_attr(feature = "serde", serde(skip))]
   _wrapper: PhantomData<Num>,
 
   /// Specifies that the field must be set in order to be valid.
@@ -364,8 +366,9 @@ pub trait IntWrapper: AsProtoType + Default + Copy + Send + Sync {
     + AsProtoMapKey
     + Send
     + Sync
+    + MaybeSerde
     + 'static;
-  type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync;
+  type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync + MaybeSerde;
   const LT_VIOLATION: Self::ViolationEnum;
   const LTE_VIOLATION: Self::ViolationEnum;
   const GT_VIOLATION: Self::ViolationEnum;

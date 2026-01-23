@@ -110,6 +110,7 @@ impl Validator<bool> for BoolValidator {
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BoolValidator {
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<bool>,

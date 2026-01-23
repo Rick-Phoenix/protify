@@ -5,12 +5,14 @@ use super::*;
 
 #[non_exhaustive]
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EnumValidator<T: ProtoEnum> {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
   pub ignore: Ignore,
 
+  #[cfg_attr(feature = "serde", serde(skip))]
   _enum: PhantomData<T>,
 
   /// Marks that this field will only accept values that are defined in the enum that it's referring to.

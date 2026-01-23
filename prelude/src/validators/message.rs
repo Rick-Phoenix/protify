@@ -171,6 +171,7 @@ where
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Default)]
 pub struct CelValidator {
   pub programs: Vec<CelProgram>,
@@ -276,6 +277,7 @@ impl From<CelValidator> for ProtoOption {
 
 #[non_exhaustive]
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,

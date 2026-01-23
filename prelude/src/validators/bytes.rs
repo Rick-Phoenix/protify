@@ -13,6 +13,7 @@ impl_proto_type!(Vec<u8>, Bytes);
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BytesValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
@@ -34,6 +35,10 @@ pub struct BytesValidator {
   pub max_len: Option<usize>,
 
   #[cfg(feature = "regex")]
+  #[cfg_attr(
+    feature = "serde",
+    serde(with = "crate::serde_impls::bytes_regex_serde")
+  )]
   /// Specifies a regex pattern that must be matches by the value to pass validation.
   pub pattern: Option<Regex>,
 
@@ -430,6 +435,7 @@ impl From<BytesValidator> for ProtoOption {
 #[doc(hidden)]
 #[non_exhaustive]
 #[derive(Clone, Debug, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WellKnownBytes {
   #[cfg(feature = "regex")]
   Uuid,

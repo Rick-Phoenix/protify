@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Clone, Debug, Copy)]
 #[non_exhaustive]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WellKnownStrings {
   #[cfg(feature = "regex")]
   Email,

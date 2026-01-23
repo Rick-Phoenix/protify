@@ -7,6 +7,7 @@ use proto_types::{Duration, Timestamp, protovalidate::Ignore};
 use crate::*;
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ProtoOption {
   pub name: FixedStr,
   pub value: OptionValue,
@@ -14,6 +15,7 @@ pub struct ProtoOption {
 
 /// An enum representing values for protobuf options.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "option_value.proto.j2"))]
 pub enum OptionValue {
@@ -31,6 +33,7 @@ pub enum OptionValue {
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptionMessage {
   inner: Arc<[ProtoOption]>,
 }
@@ -368,6 +371,7 @@ impl OptionValue {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptionList {
   inner: Arc<[OptionValue]>,
 }

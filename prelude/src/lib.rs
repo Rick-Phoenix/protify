@@ -88,6 +88,9 @@ pub use registry::*;
 mod extension;
 pub use extension::*;
 
+#[cfg(feature = "serde")]
+pub(crate) mod serde_impls;
+
 #[cfg(not(feature = "std"))]
 mod lazy;
 #[cfg(not(feature = "std"))]
@@ -291,3 +294,15 @@ impl OneofValidator {
     Self { required }
   }
 }
+
+#[cfg(feature = "serde")]
+pub trait MaybeSerde: serde::Serialize + serde::de::DeserializeOwned {}
+
+#[cfg(feature = "serde")]
+impl<T: serde::Serialize + serde::de::DeserializeOwned> MaybeSerde for T {}
+
+#[cfg(not(feature = "serde"))]
+pub trait MaybeSerde {}
+
+#[cfg(not(feature = "serde"))]
+impl<T> MaybeSerde for T {}

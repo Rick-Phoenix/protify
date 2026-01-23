@@ -9,10 +9,23 @@ use regex::Regex;
 use super::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum FixedStr {
   Static(&'static str),
   Shared(Arc<str>),
   Boxed(Box<str>),
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for FixedStr {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    let s = String::deserialize(deserializer)?;
+
+    Ok(Self::from(s))
+  }
 }
 
 impl FixedStr {
@@ -100,6 +113,7 @@ impl From<&Arc<str>> for FixedStr {
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StringValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
@@ -130,6 +144,7 @@ pub struct StringValidator {
   pub max_bytes: Option<usize>,
 
   #[cfg(feature = "regex")]
+  #[cfg_attr(feature = "serde", serde(with = "crate::serde_impls::regex_serde"))]
   /// Specifies a regex pattern that this field's value should match in order to be considered valid.
   pub pattern: Option<Regex>,
 

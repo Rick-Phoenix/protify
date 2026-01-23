@@ -7,10 +7,19 @@ use super::*;
 
 #[non_exhaustive]
 #[derive(Debug)]
+#[cfg_attr(
+  feature = "serde",
+  derive(serde::Serialize, serde::Deserialize),
+  serde(bound(
+    serialize = "T::Validator: serde::Serialize",
+    deserialize = "T::Validator: serde::de::DeserializeOwned",
+  ))
+)]
 pub struct RepeatedValidator<T>
 where
   T: ProtoValidator,
 {
+  #[cfg_attr(feature = "serde", serde(skip))]
   _inner_type: PhantomData<T>,
 
   pub cel: Vec<CelProgram>,
