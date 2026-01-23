@@ -2,6 +2,32 @@ use crate::*;
 
 use proto_types::protovalidate::*;
 
+pub trait ValidatorResultExt {
+  #[allow(private_interfaces)]
+  const SEALED: Sealed;
+
+  fn is_valid(&self) -> bool;
+  fn is_fail_fast(&self) -> bool;
+}
+
+impl ValidatorResultExt for ValidatorResult {
+  #[allow(private_interfaces)]
+  const SEALED: Sealed = Sealed;
+
+  #[inline]
+  fn is_valid(&self) -> bool {
+    match self {
+      Ok(outcome) => matches!(outcome, IsValid::Yes),
+      Err(_) => false,
+    }
+  }
+
+  #[inline]
+  fn is_fail_fast(&self) -> bool {
+    self.is_err()
+  }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct FailFast;
 
