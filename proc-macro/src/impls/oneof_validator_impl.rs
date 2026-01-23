@@ -4,13 +4,27 @@ pub fn generate_oneof_validator(
   use_fallback: UseFallback,
   oneof_ident: &Ident,
   variants: &[FieldDataKind],
+  top_level_validators: &Validators,
 ) -> TokenStream2 {
-  let mut validators_data = ValidatorsData::default();
+  let mut validators_data = ValidatorsData {
+    has_non_default_validators: !top_level_validators.is_empty(),
+    default_check_tokens: Vec::new(),
+  };
 
   let validators_tokens = if *use_fallback {
     quote! { unimplemented!() }
   } else {
-    let tokens = variants
+    let top_level = top_level_validators.iter().map(|v| {
+      quote_spanned! {v.span=>
+        is_valid &= ::prelude::Validator::<#oneof_ident>::validate_core(
+          &(#v),
+          ctx,
+          Some(self)
+        )?;
+      }
+    });
+
+    let variants_validators = variants
       .iter()
       .filter_map(|d| d.as_normal())
       .filter_map(|d| {
@@ -28,7 +42,21 @@ pub fn generate_oneof_validator(
         }
       });
 
-    quote! { #(#tokens,)* }
+    let top_level_tokens = quote! { #(#top_level)* };
+    let variants_tokens = quote! { #(#variants_validators,)* };
+
+    if top_level_tokens.is_empty() && variants_tokens.is_empty() {
+      TokenStream2::new()
+    } else {
+      quote! {
+        #top_level_tokens
+
+        match self {
+          #variants_tokens
+          _ => {}
+        };
+      }
+    }
   };
 
   let has_validators = !validators_tokens.is_empty();
@@ -65,10 +93,7 @@ pub fn generate_oneof_validator(
       fn validate(&self, ctx: &mut ::prelude::ValidationCtx) -> ::prelude::ValidatorResult {
         let mut is_valid = ::prelude::IsValid::Yes;
 
-        match self {
-          #validators_tokens
-          _ => {}
-        };
+        #validators_tokens
 
         Ok(is_valid)
       }
@@ -105,6 +130,7 @@ impl OneofCtx<'_> {
       UseFallback::from(self.variants.is_empty()),
       oneof_ident,
       &self.variants,
+      &self.oneof_attrs.validators,
     )
   }
 }

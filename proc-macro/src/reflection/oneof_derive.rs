@@ -143,6 +143,7 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> TokenStream2 {
     use_fallback,
     &item.ident,
     &fields_data,
+    &Validators::default(),
   )]);
 
   let consistency_checks = errors.is_empty().then(|| {

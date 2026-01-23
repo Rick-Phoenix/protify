@@ -183,6 +183,7 @@ struct MultipleValidators {
 
 #[proto_oneof]
 #[proto(skip_checks(all))]
+#[proto(validate = [ CustomValidator ])]
 enum MultipleValidatorsOneof {
   #[proto(tag = 1, validate = [ |v| v.const_(1), CustomValidator, from_fn(custom_int_validator), *CUSTOM_STATIC ])]
   A(i32),
@@ -202,8 +203,9 @@ fn multiple_validators() {
   // 4 for the `id` field
   // + 3 for the oneof as a field
   // + 4 for the oneof variant
-  // = 11
-  assert_eq_pretty!(violations.len(), 11);
+  // + 1 for the top level oneof validator
+  // = 12
+  assert_eq_pretty!(violations.len(), 12);
 }
 
 impl Validator<CustomTopLevelValidators> for CustomValidator {

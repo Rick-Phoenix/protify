@@ -9,6 +9,7 @@ pub struct OneofAttrs {
   pub shadow_derives: Option<MetaList>,
   pub is_proxied: bool,
   pub auto_tests: AutoTests,
+  pub validators: Validators,
 }
 
 #[derive(Default)]
@@ -51,11 +52,15 @@ pub fn process_oneof_attrs(
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Option<MetaList> = None;
   let mut auto_tests = AutoTests::default();
+  let mut validators = Validators::default();
 
   parse_filtered_attrs(attrs, &["proto"], |meta| {
     let ident = meta.path.require_ident()?.to_string();
 
     match ident.as_str() {
+      "validate" => {
+        validators = meta.parse_value::<Validators>()?;
+      }
       "skip_checks" => {
         auto_tests = AutoTests::parse(&meta)?;
       }
@@ -89,5 +94,6 @@ pub fn process_oneof_attrs(
     shadow_derives,
     is_proxied: macro_attrs.is_proxied,
     auto_tests,
+    validators,
   })
 }
