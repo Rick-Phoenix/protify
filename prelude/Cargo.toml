@@ -84,6 +84,9 @@ std = [
   "serde_json?/std",
 ]
 
+common-types = ["proto-types/all_common"]
+rpc-types = ["proto-types/rpc"]
+
 reflection = ["proc-macro-impls/reflection"]
 cel = ["std", "dep:cel", "proto-types/cel", "proc-macro-impls/cel"]
 regex = ["dep:regex"]
