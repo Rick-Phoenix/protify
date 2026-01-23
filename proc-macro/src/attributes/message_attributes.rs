@@ -13,7 +13,7 @@ pub struct MessageAttrs {
   pub into_proto: Option<PathOrClosure>,
   pub shadow_derives: Option<MetaList>,
   pub is_proxied: bool,
-  pub no_auto_test: SkipAutoTest,
+  pub auto_tests: AutoTests,
   pub extern_path: Option<ParsedStr>,
   pub deprecated: bool,
   pub validators: Validators,
@@ -25,18 +25,14 @@ impl MessageAttrs {
   }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct MessageMacroArgs {
   pub is_proxied: bool,
-  pub no_auto_test: SkipAutoTest,
-  pub extern_path: Option<ParsedStr>,
 }
 
 impl MessageMacroArgs {
   pub fn parse(macro_args: TokenStream2) -> syn::Result<Self> {
     let mut is_proxied = false;
-    let mut no_auto_test = false;
-    let mut extern_path: Option<ParsedStr> = None;
 
     let parser = syn::meta::parser(|meta| {
       if let Some(ident) = meta.path.get_ident() {
@@ -44,9 +40,7 @@ impl MessageMacroArgs {
 
         match ident.as_str() {
           "proxied" => is_proxied = true,
-          "no_auto_test" => no_auto_test = true,
-          "extern_path" => extern_path = Some(meta.parse_value::<ParsedStr>()?),
-          _ => {}
+          _ => return Err(meta.error("Unknown attribute")),
         };
       }
 
@@ -55,11 +49,7 @@ impl MessageMacroArgs {
 
     parser.parse2(macro_args)?;
 
-    Ok(Self {
-      is_proxied,
-      no_auto_test: no_auto_test.into(),
-      extern_path,
-    })
+    Ok(Self { is_proxied })
   }
 }
 
@@ -78,6 +68,8 @@ pub fn process_message_attrs(
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;
   let mut validators = Validators::default();
+  let mut extern_path: Option<ParsedStr> = None;
+  let mut auto_tests = AutoTests::default();
 
   for attr in attrs {
     let ident = if let Some(ident) = attr.path().get_ident() {
@@ -95,9 +87,13 @@ pub fn process_message_attrs(
           let ident = meta.path.require_ident()?.to_string();
 
           match ident.as_str() {
+            "skip_checks" => {
+              auto_tests = AutoTests::parse(&meta)?;
+            }
             "validate" => {
               validators = meta.parse_value::<Validators>()?;
             }
+            "extern_path" => extern_path = Some(meta.parse_value::<ParsedStr>()?),
             "deprecated" => {
               let boolean = meta.parse_value::<LitBool>()?;
 
@@ -171,8 +167,8 @@ pub fn process_message_attrs(
     into_proto,
     shadow_derives,
     is_proxied: macro_args.is_proxied,
-    no_auto_test: macro_args.no_auto_test,
-    extern_path: macro_args.extern_path,
+    auto_tests,
+    extern_path,
     deprecated,
     validators,
   })

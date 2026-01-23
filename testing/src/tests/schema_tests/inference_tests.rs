@@ -1,6 +1,7 @@
 use super::*;
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct EnumInference {
   #[proto(enum_(TestEnum))]
   single_enum: i32,
@@ -36,7 +37,8 @@ fn enum_inference() {
   }
 }
 
-#[proto_message(proxied, no_auto_test)]
+#[proto_message(proxied)]
+#[proto(skip_checks(all))]
 pub struct ProxiedEnumInference {
   #[proto(enum_)]
   single_enum: TestEnum,
@@ -72,7 +74,8 @@ fn proxied_enum_inference() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct PrimitiveInference {
   int32: i32,
   int64: i64,
@@ -108,7 +111,8 @@ fn primitive_inference() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct CardinalityInference {
   optional_inf: Option<String>,
   repeated_inf: Vec<String>,
@@ -134,7 +138,8 @@ fn cardinality_inference() {
 }
 
 #[allow(clippy::use_self)]
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct MessageInference {
   #[proto(message)]
   normal_inf: Option<CardinalityInference>,
@@ -167,7 +172,8 @@ fn message_inference() {
   }
 }
 
-#[proto_oneof(proxied, no_auto_test)]
+#[proto_oneof(proxied)]
+#[proto(skip_checks(all))]
 pub enum ProxiedOneof {
   #[proto(tag = 1)]
   A(String),
@@ -175,12 +181,14 @@ pub enum ProxiedOneof {
   B(i32),
 }
 
-#[proto_message(proxied, no_auto_test)]
+#[proto_message(proxied)]
+#[proto(skip_checks(all))]
 pub struct ProxiedMsg {
   id: i32,
 }
 
-#[proto_message(proxied, no_auto_test)]
+#[proto_message(proxied)]
+#[proto(skip_checks(all))]
 pub struct ProxiedInference {
   #[proto(oneof(proxied, tags(1, 2)))]
   oneof: Option<ProxiedOneof>,
@@ -211,7 +219,8 @@ fn proxied_inference() {
   );
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct IntWrappers {
   #[proto(sint32)]
   sint32: i32,
@@ -245,7 +254,8 @@ fn int_wrappers() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct OptionalIntWrappers {
   #[proto(sint32)]
   sint32: Option<i32>,
@@ -279,7 +289,8 @@ fn optional_int_wrappers() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct RepeatedIntWrappers {
   #[proto(sint32)]
   sint32: Vec<i32>,
@@ -313,7 +324,8 @@ fn repeated_int_wrappers() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct MapIntWrappers {
   #[proto(map(sint32, sint32))]
   sint32: HashMap<i32, i32>,

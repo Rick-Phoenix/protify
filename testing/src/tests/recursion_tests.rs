@@ -1,7 +1,8 @@
 use super::*;
 
 #[allow(clippy::use_self)]
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 // Using a CEL rule implicitly tests that recursive CEL conversions are working fine
 #[proto(validate = |v| v.cel(cel_program!(id = "id_is_1", msg = "abc", expr = "this.id == 1")))]
 struct RecursiveMsg {
@@ -14,13 +15,15 @@ struct RecursiveMsg {
   recursive_oneof: Option<RecursiveOneof>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct RecursiveMsg2 {
   #[proto(message)]
   recursive: Option<Box<RecursiveMsg>>,
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 enum RecursiveOneof {
   #[proto(tag = 1, message)]
   Recursive1Deg(Box<RecursiveMsg>),
@@ -81,7 +84,8 @@ fn recursion_tests() {
 }
 
 #[allow(clippy::use_self)]
-#[proto_message(proxied, no_auto_test)]
+#[proto_message(proxied)]
+#[proto(skip_checks(all))]
 // Using a CEL rule implicitly tests that recursive CEL conversions are working fine
 #[proto(validate = |v| v.cel(cel_program!(id = "id_is_1", msg = "abc", expr = "this.id == 1")))]
 pub struct RecursiveProxiedMsg {
@@ -94,13 +98,15 @@ pub struct RecursiveProxiedMsg {
   recursive_oneof: Option<RecursiveProxiedOneof>,
 }
 
-#[proto_message(proxied, no_auto_test)]
+#[proto_message(proxied)]
+#[proto(skip_checks(all))]
 pub struct RecursiveProxiedMsg2 {
   #[proto(message(proxied))]
   recursive: Option<Box<RecursiveProxiedMsg>>,
 }
 
-#[proto_oneof(proxied, no_auto_test)]
+#[proto_oneof(proxied)]
+#[proto(skip_checks(all))]
 pub enum RecursiveProxiedOneof {
   #[proto(tag = 1, message(proxied))]
   Recursive1Deg(Box<RecursiveProxiedMsg>),

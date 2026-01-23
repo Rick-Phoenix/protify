@@ -34,12 +34,14 @@ pub(crate) fn assert_violation_id(msg: &impl ValidatedMessage, expected: &str, e
   assert_eq!(violations.first().unwrap().rule_id(), expected, "{error}");
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DirectMsg {
   pub id: i32,
 }
 
-#[proto_message(proxied, no_auto_test)]
+#[proto_message(proxied)]
+#[proto(skip_checks(all))]
 pub struct ProxiedMsg {
   pub id: i32,
 }

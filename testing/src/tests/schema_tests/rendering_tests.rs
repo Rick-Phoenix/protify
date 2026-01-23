@@ -198,7 +198,8 @@ fn enum_schema_output() {
   assert_eq_pretty!(var2.tag, 3);
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 #[proto(options = test_options())]
 pub enum OneofA {
   #[proto(tag = 201, options = test_options())]
@@ -234,7 +235,8 @@ fn oneof_schema_output() {
   }
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 pub enum OneofB {
   #[proto(tag = 1502)]
   A(String),
@@ -246,7 +248,8 @@ fn msg_rule() -> CelProgram {
   cel_program!(id = "abc", msg = "abc", expr = "true == true")
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(reserved_numbers(1, 2, 3..9))]
 #[proto(reserved_names("abc", "bcd"))]
 #[proto(options = test_options())]
@@ -349,7 +352,8 @@ fn message_schema_output() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(parent_message = TestMessage)]
 pub struct Nested1 {
   #[proto(oneof(tags(200, 201)), options = [proto_option!("some_option" => 100)])]
@@ -379,7 +383,8 @@ fn reusable_oneofs() {
   assert_eq_pretty!(base_options, oneof.options);
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(parent_message = Nested1)]
 pub struct Nested2 {
   name: String,

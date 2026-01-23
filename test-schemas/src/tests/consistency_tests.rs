@@ -38,7 +38,8 @@ fn bad_oneof_rules() {
   assert!(matches!(errors[0].errors[0], ConsistencyError::CelError(_)));
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct LtGtError {
   #[proto(validate = |v| v.gt(2).lt(2))]
   gt_lt: i32,
@@ -85,7 +86,8 @@ fn lt_gt_error() {
   );
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct FloatLtGtError {
   #[proto(validate = |v| v.gt(2.0).lt(2.0))]
   gt_lt: f32,
@@ -146,7 +148,8 @@ fn one_sec() -> Duration {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DurationLtGtError {
   #[proto(duration, validate = |v| v.gt(two_secs()).lt(two_secs()))]
   gt_lt: Option<Duration>,
@@ -201,7 +204,8 @@ fn past() -> Timestamp {
   Default::default()
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct TimestampLtGtError {
   #[proto(timestamp, validate = |v| v.gt(now()).lt(past()))]
   gt_lt: Option<Timestamp>,
@@ -280,7 +284,8 @@ fn timestamp_lt_gt_error() {
   );
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct ListErrors {
   #[proto(validate = |v| v.in_([1]).not_in([1]))]
   int: i32,
@@ -325,7 +330,8 @@ fn list_errors() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct LengthRulesErrors {
   #[proto(validate = |v| v.min_items(3).max_items(1))]
   repeated: Vec<i32>,
@@ -402,7 +408,8 @@ fn length_rules_errors() {
   );
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct StringErrors {
   #[proto(validate = |v| v.contains("abc").not_contains("abc"))]
   contains_not_contains: String,
@@ -419,7 +426,8 @@ fn string_errors() {
   );
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct ConstWithOtherRules {
   #[proto(validate = |v| v.const_("abc").min_len(3))]
   string: String,

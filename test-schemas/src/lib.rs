@@ -23,7 +23,8 @@ define_proto_file!(
   package = TEST_SCHEMAS
 );
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 pub enum SimpleOneof {
   #[proto(tag = 1, validate = |v| v.const_(1))]
   A(i32),
@@ -31,7 +32,8 @@ pub enum SimpleOneof {
   B(u32),
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct SimpleMsg {
   #[proto(validate = |v| v.const_(1))]
   pub id: i32,
@@ -39,7 +41,8 @@ pub struct SimpleMsg {
   pub name: String,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct FailFastTest {
   #[proto(validate = |v| v.max_len(1).not_in(["abc"]))]
   pub string: String,
@@ -63,7 +66,8 @@ pub struct FailFastTest {
   pub message: Option<SimpleMsg>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct ConstRulesTest {
   #[proto(validate = |v| v.const_("abc").min_len(3))]
   pub string: String,
@@ -84,7 +88,8 @@ pub struct ConstRulesTest {
 }
 
 // Placing it here so I can check if reflection for these works fine
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct RustKeywords {
   pub r#as: String,
   pub r#break: String,
@@ -155,7 +160,8 @@ mod test {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct BTreeMapTest {
   #[proto(map(int32, int32), validate = |v| v.min_pairs(1).max_pairs(2))]
   pub map: BTreeMap<i32, i32>,
@@ -166,7 +172,8 @@ fn bad_rule() -> CelProgram {
 }
 
 #[allow(clippy::use_self)]
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct BoxedMsg {
   #[proto(message)]
   pub msg: Option<Box<BoxedMsg>>,
@@ -174,13 +181,15 @@ pub struct BoxedMsg {
   pub id: i32,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct BadFieldRules {
   #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]
   pub id: i32,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(validate = |v| v.cel(bad_rule()))]
 pub struct BadMsgRules {
   #[proto(tag = 1)]
@@ -188,13 +197,15 @@ pub struct BadMsgRules {
 }
 
 // Just to let the oneof be picked up in the schema
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct BadCelOneofTest {
   #[proto(oneof(tags(1, 2)))]
   pub bad_cel_oneof: Option<BadCelOneof>,
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 pub enum BadCelOneof {
   #[proto(tag = 1, validate = |v| v.cel(bad_rule()))]
   Id(i32),
@@ -205,7 +216,8 @@ pub enum BadCelOneof {
 // This checks if the validator is registered even if there are no
 // validators explicitely defined, but a field is a message that has
 // its own validators
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DefaultValidatorTestMsg {
   #[proto(message)]
   pub msg_with_default_validator: Option<DefaultValidatorTestCel>,
@@ -213,7 +225,8 @@ pub struct DefaultValidatorTestMsg {
 
 // This checks if the default validator is registered
 // if a field is a oneof
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DefaultValidatorTestOneof {
   #[proto(oneof(required, tags(1, 2)))]
   pub default_validator_oneof: Option<DefaultValidatorOneof>,
@@ -221,7 +234,8 @@ pub struct DefaultValidatorTestOneof {
 
 // This checks if the default validator is registered
 // if a variant is a message with a validator
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 pub enum DefaultValidatorOneof {
   #[proto(message, tag = 1)]
   A(SimpleMsg),
@@ -231,7 +245,8 @@ pub enum DefaultValidatorOneof {
 
 // Checks if the default validator is registered if there is a
 // repeated message with a validator
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DefaultValidatorTestVec {
   #[proto(repeated(message))]
   pub repeated_test: Vec<DefaultValidatorTestCel>,
@@ -239,7 +254,8 @@ pub struct DefaultValidatorTestVec {
 
 // Checks if the default validator is registered if there is a
 // map of messages that have validators
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DefaultValidatorTestMap {
   #[proto(map(int32, message))]
   pub map_test: HashMap<i32, DefaultValidatorTestCel>,
@@ -248,13 +264,15 @@ pub struct DefaultValidatorTestMap {
 // This checks if the default validator is registered
 // if there are top level rules
 #[allow(clippy::use_self)]
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(validate = |v| v.cel(cel_program!(id = "id_is_1", msg = "abc", expr = "this.id == 1")))]
 pub struct DefaultValidatorTestCel {
   pub id: i32,
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 pub enum TestOneof {
   #[proto(tag = 1, validate = |v| v.cel(cel_program!(id = "string_cel_rule", msg = "abc", expr = "this != 'b'")))]
   String(String),
@@ -262,13 +280,15 @@ pub enum TestOneof {
   BoxedMsg(Box<OneofTests>),
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct OneofTests {
   #[proto(oneof(tags(1, 2, 3)))]
   pub test_oneof: Option<TestOneof>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct MapTests {
   // Just to check that the associated types are resolving correctly for String
   #[proto(map(string, string), validate = |v| v.min_pairs(1).keys(|k| k.const_("abc")).values(|v| v.const_("abc")))]
@@ -288,7 +308,8 @@ pub struct MapTests {
   pub cel_test: HashMap<i32, i32>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct RepeatedTests {
   // Just to check that the associated types are resolving correctly for String
   #[proto(repeated(string), validate = |v| v.min_items(1).items(|i| i.const_("abc")))]
@@ -304,7 +325,8 @@ pub struct RepeatedTests {
   pub cel_test: Vec<i32>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DummyMsg {
   #[proto(tag = 1)]
   pub id: i32,
@@ -317,37 +339,43 @@ pub enum DummyEnum {
   C,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct UniqueEnums {
   #[proto(repeated(enum_(DummyEnum)), tag = 1, validate = |v| v.unique())]
   pub unique_enums: Vec<i32>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct UniqueFloats {
   #[proto(tag = 1, validate = |v| v.unique().items(|i| i.abs_tolerance(0.0001)))]
   pub unique_floats: Vec<f32>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct UniqueMessages {
   #[proto(repeated(message), tag = 1, validate = |v| v.unique())]
   pub unique_messages: Vec<DummyMsg>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct UniqueBytes {
   #[proto(repeated(bytes), tag = 1, validate = |v| v.unique())]
   pub unique_bytes: Vec<Bytes>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct MinItems {
   #[proto(repeated(int32), tag = 1, validate = |v| v.min_items(3))]
   pub items: Vec<i32>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct MaxItems {
   #[proto(repeated(int32), tag = 1, validate = |v| v.max_items(1))]
   pub items: Vec<i32>,
@@ -360,7 +388,8 @@ pub enum TestEnum {
   Two = 2,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct EnumRules {
   #[proto(enum_(TestEnum), validate = |v| v.const_(1))]
   pub const_test: i32,
@@ -378,7 +407,8 @@ pub struct EnumRules {
   pub ignore_always_test: i32,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct FieldMaskRules {
   #[proto(field_mask, validate = |v| v.const_(["tom_bombadil"]))]
   pub const_test: Option<FieldMask>,
@@ -394,7 +424,8 @@ pub struct FieldMaskRules {
   pub ignore_always_test: Option<FieldMask>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct AnyRules {
   #[proto(any, validate = |v| v.in_(["/type_url"]))]
   pub in_test: Option<Any>,
@@ -408,7 +439,8 @@ pub struct AnyRules {
   pub ignore_always_test: Option<Any>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct TimestampRules {
   #[proto(timestamp, validate = |v| v.const_(Timestamp::default()))]
   pub const_test: Option<Timestamp>,
@@ -434,7 +466,8 @@ pub struct TimestampRules {
   pub cel_test: Option<Timestamp>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct DurationRules {
   #[proto(duration, validate = |v| v.const_(Duration::default()))]
   pub const_test: Option<Duration>,
@@ -458,7 +491,8 @@ pub struct DurationRules {
   pub cel_test: Option<Duration>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct BytesRules {
   #[proto(validate = |v| v.const_(b"a"))]
   pub const_test: Bytes,
@@ -494,7 +528,8 @@ pub struct BytesRules {
   pub ignore_always_test: Bytes,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct BoolRules {
   #[proto(validate = |v| v.const_(true))]
   pub const_test: bool,
@@ -509,7 +544,8 @@ pub struct BoolRules {
 macro_rules! string_rules {
   ($($well_known:ident),*) => {
     paste::paste! {
-      #[proto_message(no_auto_test)]
+      #[proto_message]
+      #[proto(skip_checks(all))]
       pub struct StringRules {
         #[proto(validate = |v| v.const_("a"))]
         pub const_test: String,
@@ -586,7 +622,8 @@ macro_rules! impl_numeric {
 
     paste::paste! {
       #[allow(unused, clippy::struct_field_names)]
-      #[proto_message(no_auto_test)]
+      #[proto_message]
+      #[proto(skip_checks(all))]
       pub struct [< $name:camel Rules >] {
         #[proto($name, validate = |v| v.required())]
         pub required_test: Option<$typ>,

@@ -5,8 +5,7 @@ bool_enum!(pub SkipOneofTagsCheck);
 pub fn generate_message_consistency_checks(
   item_ident: &Ident,
   fields_data: &[FieldDataKind],
-  skip_auto_test: SkipAutoTest,
-  skip_oneof_tags_check: SkipOneofTagsCheck,
+  auto_tests: AutoTests,
   message_name: &str,
   top_level_validators: &Validators,
 ) -> TokenStream2 {
@@ -19,7 +18,7 @@ pub fn generate_message_consistency_checks(
     } = data;
 
     if let ProtoField::Oneof(OneofInfo { path, tags, .. }) = proto_field
-      && !*skip_oneof_tags_check
+      && !auto_tests.skip_oneof_tags_check
     {
       Some(quote_spanned! {*span=>
         if let Err(err) = <#path as ::prelude::ProtoOneof>::check_tags(#ident_str, &mut [ #(#tags),* ]) {
@@ -47,7 +46,7 @@ pub fn generate_message_consistency_checks(
     return TokenStream2::new();
   }
 
-  let auto_test_fn = (!*skip_auto_test).then(|| {
+  let auto_test_fn = (!auto_tests.skip_consistency_checks).then(|| {
     let test_fn_ident = format_ident!(
       "{}_validators_consistency",
       to_snake_case(&item_ident.to_string())
@@ -98,8 +97,7 @@ impl MessageCtx<'_> {
     generate_message_consistency_checks(
       item_ident,
       &self.fields_data,
-      self.message_attrs.no_auto_test,
-      SkipOneofTagsCheck::No,
+      self.message_attrs.auto_tests,
       &self.message_attrs.name,
       &self.message_attrs.validators,
     )

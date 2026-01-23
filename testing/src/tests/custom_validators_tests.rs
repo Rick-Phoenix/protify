@@ -57,7 +57,8 @@ fn custom_int_validator(ctx: &mut ValidationCtx, val: Option<&i32>) -> Validator
 
 static CUSTOM_STATIC: LazyLock<CustomValidator> = LazyLock::new(|| CustomValidator);
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct CustomValidatorsMsg {
   // Tests validators for oneofs/enums/messages for correct type resolution
   #[proto(enum_(SimpleEnum), validate = CustomValidator)]
@@ -160,7 +161,8 @@ fn custom_oneof_validator2(
   }
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 enum CustomValidatorOneof {
   #[proto(tag = 1, validate = CustomValidator)]
   CustomStruct(i32),
@@ -170,7 +172,8 @@ enum CustomValidatorOneof {
   CustomStatic(i32),
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct MultipleValidators {
   #[proto(validate = [ |v| v.const_(1), CustomValidator, from_fn(custom_int_validator), *CUSTOM_STATIC ])]
   id: i32,
@@ -178,7 +181,8 @@ struct MultipleValidators {
   oneof: Option<MultipleValidatorsOneof>,
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 enum MultipleValidatorsOneof {
   #[proto(tag = 1, validate = [ |v| v.const_(1), CustomValidator, from_fn(custom_int_validator), *CUSTOM_STATIC ])]
   A(i32),
@@ -236,7 +240,8 @@ fn custom_top_level_validator(
 
 static CUSTOM_TOP_LEVEL_STATIC: LazyLock<CustomValidator> = LazyLock::new(|| CustomValidator);
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(validate = [|v| v.cel(cel_program!(id = "cel_rule", msg = "abc", expr = "this.id == 1")), from_fn(custom_top_level_validator), CustomValidator, *CUSTOM_TOP_LEVEL_STATIC])]
 struct CustomTopLevelValidators {
   id: i32,

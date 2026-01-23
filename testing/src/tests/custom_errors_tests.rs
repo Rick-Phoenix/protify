@@ -118,7 +118,8 @@ fn map_validator() -> MapValidator<i32, i32> {
     .build()
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct CustomErrorMessages {
   #[proto(validate = string_validator())]
   string: String,

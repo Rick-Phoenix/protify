@@ -7,7 +7,8 @@ proto_package!(TESTING_PKG, name = "testing", no_cel_test);
 define_proto_file!(TESTING, name = "testing.proto", package = TESTING_PKG);
 
 #[allow(clippy::use_self)]
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct MsgWithNoValidator {
   id: i32,
   #[proto(oneof(tags(1, 2, 3)))]
@@ -22,7 +23,8 @@ struct MsgWithNoValidator {
   second_degree_recursion: Option<SecondDegreeRecursion>,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct SecondDegreeRecursion {
   #[proto(message)]
   recursive: Option<Box<MsgWithNoValidator>>,
@@ -30,7 +32,8 @@ struct SecondDegreeRecursion {
   third_degree_recursion: Option<OneofWithNoValidator>,
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 enum OneofWithNoValidator {
   #[proto(tag = 1)]
   A(i32),

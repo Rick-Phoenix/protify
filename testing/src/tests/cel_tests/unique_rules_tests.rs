@@ -8,7 +8,8 @@ fn prog_2() -> CelProgram {
   cel_program!(id = "abc", msg = "not hi", expr = "false == false")
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct FieldDuplicateRules {
   #[proto(tag = 1, validate = |v| v.cel(prog_1()).cel(prog_2()))]
   pub id: i32,
@@ -28,7 +29,8 @@ fn field_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_err());
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(validate = |v| v.cel(prog_1()).cel(prog_2()))]
 struct MsgDuplicateRules {
   #[proto(tag = 1)]
@@ -49,7 +51,8 @@ fn msg_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_err());
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(validate = |v| v.cel(prog_1()))]
 struct MsgAndFieldDuplicateRules {
   #[proto(tag = 1, validate = |v| v.cel(prog_2()))]
@@ -70,7 +73,8 @@ fn msg_and_field_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_err());
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 enum OneofWithRule {
   #[proto(tag = 1, validate = |v| v.cel(prog_1()))]
   Id(i32),
@@ -78,7 +82,8 @@ enum OneofWithRule {
   Name(String),
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(validate = |v| v.cel(prog_2()))]
 struct MsgAndOneofDuplicateRules {
   #[proto(oneof(tags(1, 2)))]
@@ -99,7 +104,8 @@ fn msg_and_oneof_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_err());
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct FieldAndOneofDuplicateRules {
   #[proto(oneof(tags(1, 2)))]
   pub oneof: Option<OneofWithRule>,
@@ -121,7 +127,8 @@ fn field_and_oneof_duplicate_rules() {
   assert!(package.check_unique_cel_rules().is_err());
 }
 
-#[proto_oneof(no_auto_test)]
+#[proto_oneof]
+#[proto(skip_checks(all))]
 enum DuplicateRuleOneof {
   #[proto(tag = 1, validate = |v| v.cel(prog_1()))]
   Id(i32),
@@ -129,7 +136,8 @@ enum DuplicateRuleOneof {
   Name(String),
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct OneofDuplicateRules {
   #[proto(oneof(tags(1, 2)))]
   pub oneof: Option<DuplicateRuleOneof>,
@@ -151,7 +159,8 @@ fn oneof_duplicate_rules() {
 
 // This one should be okay because it's the same rule used twice, not
 // two different rules with the same ID
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(validate = |v| v.cel(prog_1()))]
 struct BenignDuplicateRules {
   #[proto(tag = 1, validate = |v| v.cel(prog_1()))]

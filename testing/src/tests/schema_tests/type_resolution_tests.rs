@@ -2,7 +2,8 @@ use super::*;
 
 use rendering_tests::{Nested1, TestEnum};
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct IntWrappers {
   #[proto(sint32)]
   sint32: i32,
@@ -41,7 +42,8 @@ fn int_wrappers_resolution() {
   }
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 struct Maps {
   #[proto(map(int32, enum_(TestEnum)))]
   enum_map: HashMap<i32, i32>,

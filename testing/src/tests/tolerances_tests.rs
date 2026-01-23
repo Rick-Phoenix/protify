@@ -4,7 +4,8 @@ use proto_types::{Duration, Timestamp};
 
 use super::*;
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct TolerancesTests {
   #[proto(validate = |v| v.const_(12.0).abs_tolerance(0.0001))]
   pub float_tolerance: f64,

@@ -4,7 +4,7 @@ use super::*;
 struct ReflectionMsgData {
   pub fields_data: Vec<FieldDataKind>,
   pub top_level_validator: Validators,
-  pub no_auto_test: SkipAutoTest,
+  pub auto_tests: AutoTests,
   pub msg_name: String,
 }
 
@@ -12,7 +12,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
   let ItemStruct { fields, .. } = item;
 
   let mut msg_name: Option<String> = None;
-  let mut no_auto_test = SkipAutoTest::No;
+  let mut auto_tests = AutoTests::default();
 
   for attr in &item.attrs {
     if attr.path().is_ident("proto") {
@@ -23,8 +23,8 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
           "name" => {
             msg_name = Some(meta.parse_value::<LitStr>()?.value());
           }
-          "no_auto_test" => {
-            no_auto_test = true.into();
+          "skip_checks" => {
+            auto_tests = AutoTests::parse(&meta)?;
           }
           _ => drain_token_stream!(meta.input),
         };
@@ -208,7 +208,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
   Ok(ReflectionMsgData {
     fields_data,
     top_level_validator: top_level_validator.unwrap_or_default(),
-    no_auto_test,
+    auto_tests,
     msg_name,
   })
 }
@@ -249,9 +249,12 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
   let ReflectionMsgData {
     fields_data,
     top_level_validator,
-    no_auto_test,
+    mut auto_tests,
     msg_name,
   } = extract_fields_data(item).unwrap_or_default_and_push_error(&mut errors);
+
+  // Not needed for prost-generated code
+  auto_tests.skip_oneof_tags_check = true;
 
   let use_fallback = if errors.is_empty() {
     UseFallback::No
@@ -270,8 +273,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
     generate_message_consistency_checks(
       &item.ident,
       &fields_data,
-      no_auto_test,
-      SkipOneofTagsCheck::Yes,
+      auto_tests,
       &msg_name,
       &top_level_validator,
     )

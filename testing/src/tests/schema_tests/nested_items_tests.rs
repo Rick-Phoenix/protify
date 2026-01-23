@@ -1,6 +1,7 @@
 use super::*;
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 pub struct ParentMessage {
   #[proto(message)]
   pub nested_message: Option<NestedMessage>,
@@ -16,7 +17,8 @@ pub enum NestedEnum {
   C,
 }
 
-#[proto_message(no_auto_test)]
+#[proto_message]
+#[proto(skip_checks(all))]
 #[proto(parent_message = ParentMessage)]
 pub struct NestedMessage {
   #[proto(enum_(NestedEnum))]

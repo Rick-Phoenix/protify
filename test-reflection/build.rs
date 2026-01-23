@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let desc_data = set_up_validators(&mut config, files, include_paths, &["test_schemas.v1"])?;
 
-  let skip_test_attr = "#[proto(no_auto_test)]";
+  let skip_test_attr = "#[proto(skip_checks(all))]";
 
   for oneof in desc_data.oneofs {
     config.enum_attribute(oneof.full_name(), skip_test_attr);

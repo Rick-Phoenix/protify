@@ -3,7 +3,7 @@ use crate::*;
 pub fn generate_oneof_consistency_checks(
   oneof_ident: &Ident,
   variants: &[FieldDataKind],
-  no_auto_test: SkipAutoTest,
+  skip_auto_test: bool,
 ) -> TokenStream2 {
   let consistency_checks = variants
     .iter()
@@ -16,7 +16,7 @@ pub fn generate_oneof_consistency_checks(
     return TokenStream2::new();
   }
 
-  let auto_test_fn = (!*no_auto_test).then(|| {
+  let auto_test_fn = (!skip_auto_test).then(|| {
     let test_fn_ident = format_ident!(
       "{}_validators_consistency",
       to_snake_case(&oneof_ident.to_string())
@@ -64,7 +64,10 @@ impl OneofCtx<'_> {
     generate_oneof_consistency_checks(
       self.proto_enum_ident(),
       &self.variants,
-      self.oneof_attrs.no_auto_test,
+      self
+        .oneof_attrs
+        .auto_tests
+        .skip_consistency_checks,
     )
   }
 }

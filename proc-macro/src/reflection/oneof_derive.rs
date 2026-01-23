@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Default)]
 struct OneofDataReflection {
-  pub no_auto_test: SkipAutoTest,
+  pub auto_tests: AutoTests,
   pub fields_data: Vec<FieldDataKind>,
 }
 
@@ -10,7 +10,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
   let ItemEnum { variants, .. } = item;
 
   let mut parent_message: Option<String> = None;
-  let mut no_auto_test = SkipAutoTest::No;
+  let mut auto_tests = AutoTests::default();
 
   for attr in &item.attrs {
     if attr.path().is_ident("proto") {
@@ -21,8 +21,8 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
           "parent_message" => {
             parent_message = Some(meta.parse_value::<LitStr>()?.value());
           }
-          "no_auto_test" => {
-            no_auto_test = true.into();
+          "skip_checks" => {
+            auto_tests = AutoTests::parse(&meta)?;
           }
           _ => return Err(meta.error("Unknown attribute")),
         };
@@ -120,7 +120,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
   }
 
   Ok(OneofDataReflection {
-    no_auto_test,
+    auto_tests,
     fields_data,
   })
 }
@@ -129,7 +129,7 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> TokenStream2 {
   let mut errors: Vec<Error> = Vec::new();
 
   let OneofDataReflection {
-    no_auto_test,
+    auto_tests,
     fields_data,
   } = extract_oneof_data(item).unwrap_or_default_and_push_error(&mut errors);
 
@@ -145,9 +145,13 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> TokenStream2 {
     &fields_data,
   )]);
 
-  let consistency_checks = errors
-    .is_empty()
-    .then(|| generate_oneof_consistency_checks(&item.ident, &fields_data, no_auto_test));
+  let consistency_checks = errors.is_empty().then(|| {
+    generate_oneof_consistency_checks(
+      &item.ident,
+      &fields_data,
+      auto_tests.skip_consistency_checks,
+    )
+  });
 
   let errors = errors.iter().map(|e| e.to_compile_error());
 

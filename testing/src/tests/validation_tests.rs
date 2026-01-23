@@ -1,6 +1,7 @@
 use super::*;
 
-#[proto_message(proxied, no_auto_test)]
+#[proto_message(proxied)]
+#[proto(skip_checks(all))]
 pub struct ProxiedMessageInCollections {
   #[proto(map(int32, message(proxied)))]
   pub map: HashMap<i32, ProxiedMessageInCollections>,
