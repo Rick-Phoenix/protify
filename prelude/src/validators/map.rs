@@ -25,6 +25,7 @@ pub trait Map<K, V> {
 }
 
 impl<K, V> Map<K, V> for BTreeMap<K, V> {
+  #[inline]
   fn length(&self) -> usize {
     self.len()
   }
@@ -38,6 +39,7 @@ impl<K, V> Map<K, V> for BTreeMap<K, V> {
     try_convert_to_cel(self)
   }
 
+  #[inline]
   fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
   where
     K: 'a,
@@ -51,6 +53,7 @@ impl<K, V, S> Map<K, V> for HashMap<K, V, S>
 where
   S: BuildHasher,
 {
+  #[inline]
   fn length(&self) -> usize {
     self.len()
   }
@@ -64,6 +67,7 @@ where
     try_convert_to_cel(self)
   }
 
+  #[inline]
   fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
   where
     K: 'a,
@@ -160,6 +164,7 @@ where
   type Target = M::Target;
   type Validator = MapValidator<K, V>;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -177,10 +182,14 @@ where
   type Target = M::Target;
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<M>>::check_cel_programs_with(self, M::Target::default())
   }
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -247,6 +256,8 @@ where
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
     let mut errors: Vec<CelError> = Vec::new();
 
@@ -282,6 +293,8 @@ where
     }
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -290,6 +303,7 @@ where
     })
   }
 
+  #[inline]
   fn validate_core<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> ValidatorResult
   where
     Val: Borrow<Self::Target> + ?Sized,
@@ -444,6 +458,8 @@ where
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn proto_option(&self) -> ProtoOption {
     let mut rules = OptionMessageBuilder::new();
 
@@ -520,7 +536,6 @@ where
   K: ProtoValidator,
   V: ProtoValidator,
 {
-  #[inline]
   fn clone(&self) -> Self {
     Self {
       keys: self.keys.clone(),
@@ -558,6 +573,8 @@ where
   K: ProtoValidator,
   V: ProtoValidator,
 {
+  #[inline(never)]
+  #[cold]
   fn from(validator: MapValidator<K, V>) -> Self {
     validator.proto_option()
   }

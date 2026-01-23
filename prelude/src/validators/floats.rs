@@ -61,6 +61,8 @@ impl<Num> FloatValidator<Num>
 where
   Num: FloatWrapper,
 {
+  #[inline(never)]
+  #[cold]
   fn custom_error_or_else(
     &self,
     violation: Num::ViolationEnum,
@@ -79,6 +81,7 @@ impl<Num> Default for FloatValidator<Num>
 where
   Num: FloatWrapper + Default,
 {
+  #[inline]
   fn default() -> Self {
     Self {
       cel: Default::default(),
@@ -178,6 +181,8 @@ where
 
   impl_testing_methods!();
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -355,6 +360,8 @@ where
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -389,6 +396,8 @@ impl<N> From<FloatValidator<N>> for ProtoOption
 where
   N: FloatWrapper,
 {
+  #[inline(never)]
+  #[cold]
   fn from(validator: FloatValidator<N>) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

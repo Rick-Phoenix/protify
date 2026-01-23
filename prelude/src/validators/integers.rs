@@ -52,6 +52,7 @@ impl<Num> Default for IntValidator<Num>
 where
   Num: IntWrapper + Default,
 {
+  #[inline]
   fn default() -> Self {
     Self {
       cel: Default::default(),
@@ -74,6 +75,8 @@ impl<Num> IntValidator<Num>
 where
   Num: IntWrapper,
 {
+  #[inline(never)]
+  #[cold]
   fn custom_error_or_else(
     &self,
     violation: Num::ViolationEnum,
@@ -95,7 +98,6 @@ impl<S: builder::state::State, Num: IntWrapper> ValidatorBuilderFor<Num>
   type Validator = IntValidator<Num>;
 
   #[inline]
-  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -109,6 +111,8 @@ where
 
   impl_testing_methods!();
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -276,6 +280,8 @@ where
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -300,6 +306,8 @@ impl<N> From<IntValidator<N>> for ProtoOption
 where
   N: IntWrapper,
 {
+  #[inline(never)]
+  #[cold]
   fn from(validator: IntValidator<N>) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

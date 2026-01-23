@@ -39,7 +39,6 @@ impl<T> Clone for RepeatedValidator<T>
 where
   T: ProtoValidator,
 {
-  #[inline]
   fn clone(&self) -> Self {
     Self {
       _inner_type: PhantomData,
@@ -63,8 +62,6 @@ where
     Self {
       _inner_type: PhantomData,
       cel: vec![],
-      // If the items are messages, the items validator
-      // will be set no matter what
       items: T::HAS_DEFAULT_VALIDATOR.then(|| T::Validator::default()),
       min_items: None,
       max_items: None,
@@ -133,10 +130,14 @@ where
   type Target = [T::Stored];
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(Vec::new())
   }
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -197,6 +198,8 @@ where
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs_with(
     &self,
     val: <Self::Target as ToOwned>::Owned,
@@ -351,6 +354,8 @@ where
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -364,6 +369,8 @@ impl<T> From<RepeatedValidator<T>> for ProtoOption
 where
   T: ProtoValidator,
 {
+  #[inline(never)]
+  #[cold]
   fn from(validator: RepeatedValidator<T>) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

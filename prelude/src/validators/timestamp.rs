@@ -51,6 +51,8 @@ pub struct TimestampValidator {
 }
 
 impl TimestampValidator {
+  #[inline(never)]
+  #[cold]
   const fn has_props(&self) -> bool {
     let mut has_props =
       self.lt.is_some() || self.lte.is_some() || self.gt.is_some() || self.gte.is_some();
@@ -75,6 +77,8 @@ impl Validator<Timestamp> for TimestampValidator {
 
   impl_testing_methods!();
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -246,6 +250,8 @@ impl Validator<Timestamp> for TimestampValidator {
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -256,6 +262,8 @@ impl Validator<Timestamp> for TimestampValidator {
 }
 
 impl From<TimestampValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: TimestampValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

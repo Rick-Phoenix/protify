@@ -55,6 +55,8 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
 
   impl_testing_methods!();
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -209,6 +211,8 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -219,6 +223,8 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
 }
 
 impl<T: ProtoEnum> From<EnumValidator<T>> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: EnumValidator<T>) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

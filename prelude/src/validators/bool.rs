@@ -9,18 +9,9 @@ impl_proto_map_key!(bool, Bool);
 impl Validator<bool> for BoolValidator {
   type Target = bool;
 
-  #[cfg(feature = "cel")]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-    self.check_cel_programs_with(false)
-  }
-
   #[doc(hidden)]
-  fn cel_rules(&self) -> Vec<CelRule> {
-    Vec::new()
-  }
-
-  #[inline]
-  #[doc(hidden)]
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -49,13 +40,6 @@ impl Validator<bool> for BoolValidator {
     } else {
       Err(errors)
     }
-  }
-
-  #[cfg(feature = "cel")]
-  #[doc(hidden)]
-  fn check_cel_programs_with(&self, _val: Self::Target) -> Result<(), Vec<CelError>> {
-    // No CEL rules in this one
-    Ok(())
   }
 
   fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
@@ -99,6 +83,8 @@ impl Validator<bool> for BoolValidator {
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -122,6 +108,8 @@ pub struct BoolValidator {
 }
 
 impl From<BoolValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: BoolValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

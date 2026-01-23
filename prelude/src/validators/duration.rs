@@ -46,6 +46,8 @@ impl Validator<Duration> for DurationValidator {
 
   impl_testing_methods!();
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -210,6 +212,8 @@ impl Validator<Duration> for DurationValidator {
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -220,6 +224,8 @@ impl Validator<Duration> for DurationValidator {
 }
 
 impl From<DurationValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: DurationValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

@@ -36,7 +36,6 @@ impl<'de> serde::Deserialize<'de> for FixedStr {
 }
 
 impl FixedStr {
-  #[inline]
   #[must_use]
   pub fn into_cheaply_clonable(self) -> Self {
     match self {
@@ -46,6 +45,7 @@ impl FixedStr {
   }
 
   #[must_use]
+  #[inline]
   pub fn as_str(&self) -> &str {
     match self {
       Self::Static(s) => s,
@@ -62,18 +62,21 @@ impl From<FixedStr> for String {
 }
 
 impl Borrow<str> for FixedStr {
+  #[inline]
   fn borrow(&self) -> &str {
     self
   }
 }
 
 impl AsRef<str> for FixedStr {
+  #[inline]
   fn as_ref(&self) -> &str {
     self
   }
 }
 
 impl<'a> PartialEq<&'a str> for FixedStr {
+  #[inline]
   fn eq(&self, other: &&'a str) -> bool {
     **other == **self
   }
@@ -88,6 +91,7 @@ impl Display for FixedStr {
 impl core::ops::Deref for FixedStr {
   type Target = str;
 
+  #[inline]
   fn deref(&self) -> &Self::Target {
     match self {
       Self::Static(str) => str,
@@ -98,30 +102,35 @@ impl core::ops::Deref for FixedStr {
 }
 
 impl From<&'static str> for FixedStr {
+  #[inline]
   fn from(value: &'static str) -> Self {
     Self::Static(value)
   }
 }
 
 impl From<Box<str>> for FixedStr {
+  #[inline]
   fn from(value: Box<str>) -> Self {
     Self::Boxed(value)
   }
 }
 
 impl From<String> for FixedStr {
+  #[inline]
   fn from(value: String) -> Self {
     Self::Boxed(value.into_boxed_str())
   }
 }
 
 impl From<Arc<str>> for FixedStr {
+  #[inline]
   fn from(value: Arc<str>) -> Self {
     Self::Shared(value)
   }
 }
 
 impl From<&Arc<str>> for FixedStr {
+  #[inline]
   fn from(value: &Arc<str>) -> Self {
     Self::Shared(value.clone())
   }
@@ -209,6 +218,8 @@ impl Validator<String> for StringValidator {
   type Target = str;
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs_with(
     &self,
     val: <Self::Target as ToOwned>::Owned,
@@ -219,15 +230,21 @@ impl Validator<String> for StringValidator {
       test_programs(&self.cel, val)
     }
   }
+
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(String::new())
   }
+
   #[doc(hidden)]
   fn cel_rules(&self) -> Vec<CelRule> {
     self.cel.iter().map(|p| p.rule.clone()).collect()
   }
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -670,6 +687,8 @@ impl Validator<String> for StringValidator {
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -680,6 +699,8 @@ impl Validator<String> for StringValidator {
 }
 
 impl From<StringValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: StringValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

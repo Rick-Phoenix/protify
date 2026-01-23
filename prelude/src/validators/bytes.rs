@@ -64,7 +64,6 @@ pub struct BytesValidator {
 }
 
 impl BytesValidator {
-  #[inline]
   const fn has_pattern(&self) -> bool {
     #[cfg(feature = "regex")]
     {
@@ -80,6 +79,8 @@ impl BytesValidator {
 impl Validator<Bytes> for BytesValidator {
   type Target = Bytes;
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -166,11 +167,15 @@ impl Validator<Bytes> for BytesValidator {
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(Bytes::default())
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
     if self.cel.is_empty() {
       Ok(())
@@ -353,6 +358,8 @@ impl Validator<Bytes> for BytesValidator {
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -363,6 +370,8 @@ impl Validator<Bytes> for BytesValidator {
 }
 
 impl From<BytesValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: BytesValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 
@@ -445,6 +454,8 @@ pub enum WellKnownBytes {
 }
 
 impl WellKnownBytes {
+  #[inline(never)]
+  #[cold]
   pub(crate) fn to_option(self) -> (FixedStr, OptionValue) {
     let name = match self {
       #[cfg(feature = "regex")]
@@ -458,6 +469,8 @@ impl WellKnownBytes {
   }
 }
 
+#[inline(never)]
+#[cold]
 pub(crate) fn format_bytes_as_proto_string_literal(bytes: &[u8]) -> String {
   let mut result = String::new();
 

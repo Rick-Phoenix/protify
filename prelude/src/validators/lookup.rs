@@ -153,7 +153,8 @@ pub struct UnsupportedStore<T: ?Sized> {
 
 #[allow(clippy::new_without_default, clippy::must_use_candidate)]
 impl<T: ?Sized> UnsupportedStore<T> {
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub const fn new() -> Self {
     Self {
       _marker: PhantomData,
@@ -164,12 +165,14 @@ impl<T: ?Sized> UnsupportedStore<T> {
 impl<'a, T: ?Sized> UniqueStore<'a> for UnsupportedStore<T> {
   type Item = T;
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   fn default_with_capacity(_size: usize) -> Self {
     Self::new()
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   fn insert(&mut self, _item: &'a Self::Item) -> bool {
     true
   }
@@ -266,12 +269,14 @@ pub trait IntoSortedList<T: Ord> {
 
 impl<T: Ord> IntoSortedList<T> for SortedList<T> {
   #[allow(clippy::use_self)]
+  #[inline]
   fn into_sorted_list(self) -> SortedList<T> {
     self
   }
 }
 
 impl<T: Ord + Clone> IntoSortedList<T> for &SortedList<T> {
+  #[inline]
   fn into_sorted_list(self) -> SortedList<T> {
     self.clone()
   }
@@ -399,10 +404,12 @@ where
   }
 
   #[must_use]
+  #[inline]
   pub fn as_slice(&self) -> &[T] {
     &self.items
   }
 
+  #[inline]
   pub fn contains<B>(&self, item: &B) -> bool
   where
     T: Borrow<B>,
@@ -414,12 +421,14 @@ where
       .is_ok()
   }
 
+  #[inline]
   pub fn iter(&self) -> core::slice::Iter<'_, T> {
     self.into_iter()
   }
 
   #[allow(clippy::len_without_is_empty)]
   #[must_use]
+  #[inline]
   pub fn len(&self) -> usize {
     self.items.len()
   }
@@ -428,12 +437,14 @@ where
 impl<T: Ord> Deref for SortedList<T> {
   type Target = [T];
 
+  #[inline]
   fn deref(&self) -> &Self::Target {
     &self.items
   }
 }
 
 impl<T: Ord> AsRef<[T]> for SortedList<T> {
+  #[inline]
   fn as_ref(&self) -> &[T] {
     &self.items
   }
@@ -443,6 +454,7 @@ impl<'a, T: Ord> IntoIterator for &'a SortedList<T> {
   type Item = &'a T;
   type IntoIter = core::slice::Iter<'a, T>;
 
+  #[inline]
   fn into_iter(self) -> Self::IntoIter {
     self.items.iter()
   }

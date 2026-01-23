@@ -76,7 +76,6 @@ where
   type Validator = MessageValidator;
 
   #[inline]
-  #[doc(hidden)]
   fn build_validator(self) -> Self::Validator {
     self.build()
   }
@@ -89,6 +88,8 @@ where
   type Target = T;
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
     if self.cel.is_empty() {
       Ok(())
@@ -96,7 +97,10 @@ where
       test_programs(&self.cel, val)
     }
   }
+
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
   }
@@ -105,6 +109,8 @@ where
     self.cel.iter().map(|p| p.rule.clone()).collect()
   }
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -161,6 +167,8 @@ where
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -179,6 +187,7 @@ pub struct CelValidator {
 
 impl CelValidator {
   #[must_use]
+  #[inline]
   pub fn cel(mut self, program: CelProgram) -> Self {
     self.programs.push(program);
     self
@@ -192,6 +201,8 @@ where
   type Target = T;
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
     if self.programs.is_empty() {
       Ok(())
@@ -201,6 +212,8 @@ where
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
   }
@@ -214,6 +227,8 @@ where
       .collect()
   }
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -253,6 +268,8 @@ where
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -263,6 +280,8 @@ where
 }
 
 impl From<CelValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(value: CelValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 
@@ -289,6 +308,8 @@ pub struct MessageValidator {
 }
 
 impl From<MessageValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: MessageValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

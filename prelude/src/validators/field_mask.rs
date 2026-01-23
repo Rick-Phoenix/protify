@@ -50,6 +50,8 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
   impl_testing_methods!();
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     let mut errors = Vec::new();
 
@@ -200,6 +202,8 @@ impl Validator<FieldMask> for FieldMaskValidator {
     Ok(is_valid)
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
@@ -210,7 +214,6 @@ impl Validator<FieldMask> for FieldMaskValidator {
 }
 
 impl FieldMaskValidator {
-  #[inline]
   fn validate_exact_small(const_val: &SortedList<FixedStr>, input_paths: &[String]) -> bool {
     let mut visited_mask: u64 = 0;
 
@@ -233,7 +236,6 @@ impl FieldMaskValidator {
 
   // Fallback: One allocation, Heap-based checklist
   // Only used in the rare case that a FieldMask has more than 64 paths in it
-  #[inline]
   fn validate_exact_large(
     const_val: &SortedList<FixedStr>,
     input_paths: &[String],
@@ -258,6 +260,8 @@ impl FieldMaskValidator {
 }
 
 impl From<FieldMaskValidator> for ProtoOption {
+  #[inline(never)]
+  #[cold]
   fn from(validator: FieldMaskValidator) -> Self {
     let mut rules = OptionMessageBuilder::new();
 

@@ -32,6 +32,8 @@ pub struct OneofErrors {
 impl core::error::Error for OneofErrors {}
 
 impl Display for OneofErrors {
+  #[inline(never)]
+  #[cold]
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let _ = writeln!(
       f,
@@ -64,6 +66,8 @@ pub struct MessageTestError {
 }
 
 impl Display for MessageTestError {
+  #[inline(never)]
+  #[cold]
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let Self {
       message_full_name,
@@ -108,6 +112,8 @@ pub struct OverlappingListsError {
 impl core::error::Error for OverlappingListsError {}
 
 impl Display for OverlappingListsError {
+  #[inline(never)]
+  #[cold]
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     writeln!(f, "The following values are both allowed and forbidden:")?;
 
