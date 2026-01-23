@@ -139,8 +139,8 @@ impl Package {
 
 #[cfg(feature = "cel")]
 fn check_unique_rules_in_msg(message: Message) -> Result<(), String> {
-  let mut rules: HashMap<SharedStr, CelRule> = HashMap::default();
-  let mut duplicates: HashMap<SharedStr, Vec<CelRule>> = HashMap::default();
+  let mut rules: HashMap<FixedStr, CelRule> = HashMap::default();
+  let mut duplicates: HashMap<FixedStr, Vec<CelRule>> = HashMap::default();
 
   for rule in message
     .validators

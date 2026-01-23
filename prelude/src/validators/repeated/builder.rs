@@ -88,12 +88,12 @@ where
 
   pub fn with_error_messages(
     self,
-    error_messages: impl IntoIterator<Item = (RepeatedViolation, impl Into<SharedStr>)>,
+    error_messages: impl IntoIterator<Item = (RepeatedViolation, impl Into<FixedStr>)>,
   ) -> RepeatedValidatorBuilder<T, SetErrorMessages<S>>
   where
     S::ErrorMessages: IsUnset,
   {
-    let map: BTreeMap<RepeatedViolation, SharedStr> = error_messages
+    let map: BTreeMap<RepeatedViolation, FixedStr> = error_messages
       .into_iter()
       .map(|(v, m)| (v, m.into()))
       .collect();

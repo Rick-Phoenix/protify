@@ -16,13 +16,13 @@ pub struct FieldMaskValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<SortedList<SharedStr>>,
+  pub in_: Option<SortedList<FixedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<SortedList<SharedStr>>,
+  pub not_in: Option<SortedList<FixedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<SortedList<SharedStr>>,
+  pub const_: Option<SortedList<FixedStr>>,
 
   pub error_messages: Option<ErrorMessages<FieldMaskViolation>>,
 }
@@ -157,7 +157,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
               In,
               format!(
                 "can only contain these paths: {}",
-                SharedStr::format_list(allowed_paths)
+                FixedStr::format_list(allowed_paths)
               )
             );
 
@@ -173,7 +173,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
               NotIn,
               format!(
                 "cannot contain one of these paths: {}",
-                SharedStr::format_list(forbidden_paths)
+                FixedStr::format_list(forbidden_paths)
               )
             );
 
@@ -210,7 +210,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
 
 impl FieldMaskValidator {
   #[inline]
-  fn validate_exact_small(const_val: &SortedList<SharedStr>, input_paths: &[String]) -> bool {
+  fn validate_exact_small(const_val: &SortedList<FixedStr>, input_paths: &[String]) -> bool {
     let mut visited_mask: u64 = 0;
 
     for path in input_paths {
@@ -234,7 +234,7 @@ impl FieldMaskValidator {
   // Only used in the rare case that a FieldMask has more than 64 paths in it
   #[inline]
   fn validate_exact_large(
-    const_val: &SortedList<SharedStr>,
+    const_val: &SortedList<FixedStr>,
     input_paths: &[String],
     len: usize,
   ) -> bool {

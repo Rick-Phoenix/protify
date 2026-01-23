@@ -17,10 +17,10 @@ pub struct AnyValidator {
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<SortedList<SharedStr>>,
+  pub in_: Option<SortedList<FixedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<SortedList<SharedStr>>,
+  pub not_in: Option<SortedList<FixedStr>>,
 
   pub error_messages: Option<ErrorMessages<AnyViolation>>,
 }
@@ -103,7 +103,7 @@ impl Validator<Any> for AnyValidator {
           In,
           format!(
             "must have one of these type URLs: {}",
-            SharedStr::format_list(allowed_list)
+            FixedStr::format_list(allowed_list)
           )
         );
       }
@@ -115,7 +115,7 @@ impl Validator<Any> for AnyValidator {
           NotIn,
           format!(
             "cannot have one of these type URLs: {}",
-            SharedStr::format_list(forbidden_list)
+            FixedStr::format_list(forbidden_list)
           )
         );
       }

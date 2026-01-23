@@ -206,7 +206,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn prefix<T: Into<SharedStr>>(mut self, val: T) -> StringValidatorBuilder<SetPrefix<S>>
+  pub fn prefix<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetPrefix<S>>
   where
     S::Prefix: IsUnset,
   {
@@ -219,7 +219,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn suffix<T: Into<SharedStr>>(mut self, val: T) -> StringValidatorBuilder<SetSuffix<S>>
+  pub fn suffix<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetSuffix<S>>
   where
     S::Suffix: IsUnset,
   {
@@ -232,7 +232,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn contains<T: Into<SharedStr>>(mut self, val: T) -> StringValidatorBuilder<SetContains<S>>
+  pub fn contains<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetContains<S>>
   where
     S::Contains: IsUnset,
   {
@@ -245,7 +245,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn not_contains<T: Into<SharedStr>>(
+  pub fn not_contains<T: Into<FixedStr>>(
     mut self,
     val: T,
   ) -> StringValidatorBuilder<SetNotContains<S>>
@@ -261,7 +261,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(mut self, val: impl IntoSortedList<SharedStr>) -> StringValidatorBuilder<SetIn<S>>
+  pub fn in_(mut self, val: impl IntoSortedList<FixedStr>) -> StringValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -274,10 +274,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn not_in(
-    mut self,
-    val: impl IntoSortedList<SharedStr>,
-  ) -> StringValidatorBuilder<SetNotIn<S>>
+  pub fn not_in(mut self, val: impl IntoSortedList<FixedStr>) -> StringValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {
@@ -290,7 +287,7 @@ impl<S: State> StringValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn const_<T: Into<SharedStr>>(mut self, val: T) -> StringValidatorBuilder<SetConst<S>>
+  pub fn const_<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,
   {

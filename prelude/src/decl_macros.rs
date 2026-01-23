@@ -15,12 +15,12 @@ macro_rules! custom_error_messages_method {
     paste! {
       pub fn with_error_messages(
         mut self,
-        error_messages: impl IntoIterator<Item = ([< $kind Violation >], impl Into<SharedStr>)>,
+        error_messages: impl IntoIterator<Item = ([< $kind Violation >], impl Into<FixedStr>)>,
       ) -> [< $kind ValidatorBuilder >]<SetErrorMessages<S>>
     where
       S::ErrorMessages: IsUnset,
       {
-        let map: BTreeMap<[< $kind Violation >], SharedStr> = error_messages
+        let map: BTreeMap<[< $kind Violation >], FixedStr> = error_messages
         .into_iter()
         .map(|(v, m)| (v, m.into()))
         .collect();

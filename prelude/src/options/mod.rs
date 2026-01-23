@@ -8,7 +8,7 @@ use crate::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProtoOption {
-  pub name: SharedStr,
+  pub name: FixedStr,
   pub value: OptionValue,
 }
 
@@ -21,11 +21,11 @@ pub enum OptionValue {
   Int(i64),
   Uint(u64),
   Float(f64),
-  String(SharedStr),
+  String(FixedStr),
   Bytes(Bytes),
   List(OptionList),
   Message(OptionMessage),
-  Enum(SharedStr),
+  Enum(FixedStr),
   Duration(Duration),
   Timestamp(Timestamp),
 }
@@ -93,7 +93,7 @@ impl OptionMessageBuilder {
 
   pub(crate) fn maybe_set(
     &mut self,
-    name: impl Into<SharedStr>,
+    name: impl Into<FixedStr>,
     value: Option<impl Into<OptionValue>>,
   ) -> &mut Self {
     if let Some(value) = value {
@@ -102,7 +102,7 @@ impl OptionMessageBuilder {
     self
   }
 
-  pub(crate) fn set_boolean(&mut self, name: impl Into<SharedStr>, boolean: bool) -> &mut Self {
+  pub(crate) fn set_boolean(&mut self, name: impl Into<FixedStr>, boolean: bool) -> &mut Self {
     if boolean {
       self.set(name.into(), OptionValue::Bool(true));
     }
@@ -127,7 +127,7 @@ impl OptionMessageBuilder {
   }
 
   #[inline]
-  pub fn set(&mut self, name: impl Into<SharedStr>, value: impl Into<OptionValue>) -> &mut Self {
+  pub fn set(&mut self, name: impl Into<FixedStr>, value: impl Into<OptionValue>) -> &mut Self {
     self.inner.push(ProtoOption {
       name: name.into(),
       value: value.into(),
@@ -172,7 +172,7 @@ impl OptionMessageBuilder {
 
 impl<N, V> From<(N, V)> for ProtoOption
 where
-  N: Into<SharedStr>,
+  N: Into<FixedStr>,
   V: Into<OptionValue>,
 {
   fn from(value: (N, V)) -> Self {
@@ -207,7 +207,7 @@ where
 
 impl<N, V> From<Vec<(N, V)>> for OptionValue
 where
-  N: Into<SharedStr>,
+  N: Into<FixedStr>,
   V: Into<Self>,
 {
   fn from(value: Vec<(N, V)>) -> Self {
@@ -223,7 +223,7 @@ impl From<Vec<ProtoOption>> for OptionValue {
 
 impl<N, V> From<HashMap<N, V>> for OptionMessage
 where
-  N: Into<SharedStr>,
+  N: Into<FixedStr>,
   V: Into<OptionValue>,
 {
   fn from(value: HashMap<N, V>) -> Self {
@@ -239,7 +239,7 @@ where
 
 impl<N, V> From<HashMap<N, V>> for OptionValue
 where
-  N: Into<SharedStr>,
+  N: Into<FixedStr>,
   V: Into<Self>,
 {
   fn from(value: HashMap<N, V>) -> Self {
@@ -249,7 +249,7 @@ where
 
 impl<N, V> From<BTreeMap<N, V>> for OptionMessage
 where
-  N: Into<SharedStr>,
+  N: Into<FixedStr>,
   V: Into<OptionValue>,
 {
   fn from(value: BTreeMap<N, V>) -> Self {
@@ -265,7 +265,7 @@ where
 
 impl<N, V> From<BTreeMap<N, V>> for OptionValue
 where
-  N: Into<SharedStr>,
+  N: Into<FixedStr>,
   V: Into<Self>,
 {
   fn from(value: BTreeMap<N, V>) -> Self {
@@ -540,4 +540,4 @@ option_value_conversion!(f32, Float, as f64);
 option_value_conversion!(Bytes, Bytes);
 option_value_conversion!(OptionMessage, Message);
 option_value_conversion!(OptionList, List);
-option_value_conversion!(SharedStr, String);
+option_value_conversion!(FixedStr, String);

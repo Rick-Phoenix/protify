@@ -100,7 +100,7 @@ impl<S: State> AnyValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(mut self, list: impl IntoSortedList<SharedStr>) -> AnyValidatorBuilder<SetIn<S>>
+  pub fn in_(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -113,7 +113,7 @@ impl<S: State> AnyValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn not_in(mut self, list: impl IntoSortedList<SharedStr>) -> AnyValidatorBuilder<SetNotIn<S>>
+  pub fn not_in(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
   {

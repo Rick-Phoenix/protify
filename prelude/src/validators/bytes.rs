@@ -439,7 +439,7 @@ pub enum WellKnownBytes {
 }
 
 impl WellKnownBytes {
-  pub(crate) fn to_option(self) -> (SharedStr, OptionValue) {
+  pub(crate) fn to_option(self) -> (FixedStr, OptionValue) {
     let name = match self {
       #[cfg(feature = "regex")]
       Self::Uuid => "uuid",

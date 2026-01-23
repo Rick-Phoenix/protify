@@ -7,11 +7,11 @@ use super::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CelRule {
   /// The id of this specific rule.
-  pub id: SharedStr,
+  pub id: FixedStr,
   /// The error message to display in case the rule fails validation.
-  pub message: SharedStr,
+  pub message: FixedStr,
   /// The CEL expression that must be used to perform the validation check.
-  pub expression: SharedStr,
+  pub expression: FixedStr,
 }
 
 impl From<CelRule> for CelProgram {
@@ -34,10 +34,10 @@ impl From<CelRule> for OptionValue {
   fn from(value: CelRule) -> Self {
     Self::Message(
       [
-        (SharedStr::Static("id"), Self::String(value.id)),
-        (SharedStr::Static("message"), Self::String(value.message)),
+        (FixedStr::Static("id"), Self::String(value.id)),
+        (FixedStr::Static("message"), Self::String(value.message)),
         (
-          SharedStr::Static("expression"),
+          FixedStr::Static("expression"),
           Self::String(value.expression),
         ),
       ]
@@ -168,15 +168,12 @@ mod cel_impls {
   #[derive(Debug, Clone, Error)]
   pub enum CelError {
     #[error("Expected CEL program with id `{rule_id}` to return a boolean result, got `{value:?}`")]
-    NonBooleanResult {
-      rule_id: SharedStr,
-      value: ValueType,
-    },
+    NonBooleanResult { rule_id: FixedStr, value: ValueType },
     #[error("Failed to inject value in CEL program: {0}")]
     ConversionError(String),
     #[error("Failed to execute CEL program with id `{rule_id}`: {source}")]
     ExecutionError {
-      rule_id: SharedStr,
+      rule_id: FixedStr,
       source: Box<ExecutionError>,
     },
   }

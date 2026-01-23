@@ -9,13 +9,13 @@ use regex::Regex;
 use super::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum SharedStr {
+pub enum FixedStr {
   Static(&'static str),
   Shared(Arc<str>),
   Boxed(Box<str>),
 }
 
-impl SharedStr {
+impl FixedStr {
   #[must_use]
   pub fn as_str(&self) -> &str {
     match self {
@@ -26,37 +26,37 @@ impl SharedStr {
   }
 }
 
-impl From<SharedStr> for String {
-  fn from(value: SharedStr) -> Self {
+impl From<FixedStr> for String {
+  fn from(value: FixedStr) -> Self {
     value.to_string()
   }
 }
 
-impl Borrow<str> for SharedStr {
+impl Borrow<str> for FixedStr {
   fn borrow(&self) -> &str {
     self
   }
 }
 
-impl AsRef<str> for SharedStr {
+impl AsRef<str> for FixedStr {
   fn as_ref(&self) -> &str {
     self
   }
 }
 
-impl<'a> PartialEq<&'a str> for SharedStr {
+impl<'a> PartialEq<&'a str> for FixedStr {
   fn eq(&self, other: &&'a str) -> bool {
     **other == **self
   }
 }
 
-impl Display for SharedStr {
+impl Display for FixedStr {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.as_str())
   }
 }
 
-impl core::ops::Deref for SharedStr {
+impl core::ops::Deref for FixedStr {
   type Target = str;
 
   fn deref(&self) -> &Self::Target {
@@ -68,31 +68,31 @@ impl core::ops::Deref for SharedStr {
   }
 }
 
-impl From<&'static str> for SharedStr {
+impl From<&'static str> for FixedStr {
   fn from(value: &'static str) -> Self {
     Self::Static(value)
   }
 }
 
-impl From<Box<str>> for SharedStr {
+impl From<Box<str>> for FixedStr {
   fn from(value: Box<str>) -> Self {
     Self::Boxed(value)
   }
 }
 
-impl From<String> for SharedStr {
+impl From<String> for FixedStr {
   fn from(value: String) -> Self {
     Self::Boxed(value.into_boxed_str())
   }
 }
 
-impl From<Arc<str>> for SharedStr {
+impl From<Arc<str>> for FixedStr {
   fn from(value: Arc<str>) -> Self {
     Self::Shared(value)
   }
 }
 
-impl From<&Arc<str>> for SharedStr {
+impl From<&Arc<str>> for FixedStr {
   fn from(value: &Arc<str>) -> Self {
     Self::Shared(value.clone())
   }
@@ -134,25 +134,25 @@ pub struct StringValidator {
   pub pattern: Option<Regex>,
 
   /// Specifies the prefix that this field's value should contain in order to be considered valid.
-  pub prefix: Option<SharedStr>,
+  pub prefix: Option<FixedStr>,
 
   /// Specifies the suffix that this field's value should contain in order to be considered valid.
-  pub suffix: Option<SharedStr>,
+  pub suffix: Option<FixedStr>,
 
   /// Specifies a substring that this field's value should contain in order to be considered valid.
-  pub contains: Option<SharedStr>,
+  pub contains: Option<FixedStr>,
 
   /// Specifies a substring that this field's value must not contain in order to be considered valid.
-  pub not_contains: Option<SharedStr>,
+  pub not_contains: Option<FixedStr>,
 
   /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<SortedList<SharedStr>>,
+  pub in_: Option<SortedList<FixedStr>>,
 
   /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<SortedList<SharedStr>>,
+  pub not_in: Option<SortedList<FixedStr>>,
 
   /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<SharedStr>,
+  pub const_: Option<FixedStr>,
 
   pub error_messages: Option<ErrorMessages<StringViolation>>,
 }
@@ -488,7 +488,7 @@ impl Validator<String> for StringValidator {
           In,
           format!(
             "must be one of these values: {}",
-            SharedStr::format_list(allowed_list)
+            FixedStr::format_list(allowed_list)
           )
         );
       }
@@ -500,7 +500,7 @@ impl Validator<String> for StringValidator {
           NotIn,
           format!(
             "cannot be one of these values: {}",
-            SharedStr::format_list(forbidden_list)
+            FixedStr::format_list(forbidden_list)
           )
         );
       }

@@ -206,9 +206,37 @@ pub fn generate_message_validator(
         field_validator_tokens(target_ident, &mut validators_data, d, ItemKind::Message)
       });
 
-    let all_validators = top_level.chain(field_validators);
+    let top_level_tokens = quote! { #(#top_level)* };
+    let field_validators_tokens = quote! { #(#field_validators)* };
 
-    quote! { #(#all_validators)* }
+    let has_field_validators = !field_validators_tokens.is_empty();
+    let has_top_level_validators = !top_level_tokens.is_empty();
+
+    if !has_top_level_validators && !has_field_validators {
+      TokenStream2::new()
+    } else {
+      if !has_field_validators {
+        quote! {
+          #top_level_tokens
+        }
+      } else if !has_top_level_validators {
+        quote! {
+          #field_validators_tokens
+        }
+      } else {
+        // Top level validators often include CEL validation which requires cloning
+        // and heavier operations, so they should go last
+        quote! {
+          let top_level_field_context = ::core::mem::take(&mut ctx.field_context);
+
+          #field_validators_tokens
+
+          ctx.field_context = top_level_field_context;
+
+          #top_level_tokens
+        }
+      }
+    }
   };
 
   let has_validators = !validators_tokens.is_empty();

@@ -43,20 +43,20 @@ impl Display for Edition {
 #[doc(hidden)]
 #[derive(PartialEq, Eq, Debug)]
 pub struct FileImports {
-  pub set: HashSet<SharedStr>,
+  pub set: HashSet<FixedStr>,
   pub file: &'static str,
   pub added_validate_proto: bool,
 }
 
-impl Extend<SharedStr> for FileImports {
-  fn extend<T: IntoIterator<Item = SharedStr>>(&mut self, iter: T) {
+impl Extend<FixedStr> for FileImports {
+  fn extend<T: IntoIterator<Item = FixedStr>>(&mut self, iter: T) {
     self.set.extend(iter);
   }
 }
 
 impl IntoIterator for FileImports {
-  type Item = SharedStr;
-  type IntoIter = hashbrown::hash_set::IntoIter<SharedStr>;
+  type Item = FixedStr;
+  type IntoIter = hashbrown::hash_set::IntoIter<FixedStr>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.set.into_iter()
@@ -84,7 +84,7 @@ impl FileImports {
 
   pub(crate) fn insert_internal<S>(&mut self, import: S)
   where
-    S: AsRef<str> + Into<SharedStr>,
+    S: AsRef<str> + Into<FixedStr>,
   {
     let import_str = import.as_ref();
 
@@ -99,7 +99,7 @@ impl FileImports {
 
   pub fn insert<S>(&mut self, import: S)
   where
-    S: AsRef<str> + Into<SharedStr>,
+    S: AsRef<str> + Into<FixedStr>,
   {
     if import.as_ref() != self.file {
       self.set.insert(import.into());
@@ -113,8 +113,8 @@ impl FileImports {
   }
 
   #[must_use]
-  pub fn as_sorted_vec(&self) -> Vec<SharedStr> {
-    let mut imports: Vec<SharedStr> = self.set.iter().cloned().collect();
+  pub fn as_sorted_vec(&self) -> Vec<FixedStr> {
+    let mut imports: Vec<FixedStr> = self.set.iter().cloned().collect();
 
     imports.sort_unstable();
 
@@ -145,7 +145,7 @@ impl ProtoFile {
 
   pub fn with_imports(
     &mut self,
-    imports: impl IntoIterator<Item = impl Into<SharedStr>>,
+    imports: impl IntoIterator<Item = impl Into<FixedStr>>,
   ) -> &mut Self {
     self
       .imports

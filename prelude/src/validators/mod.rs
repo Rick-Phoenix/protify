@@ -267,7 +267,7 @@ where
 }
 
 impl<T: Default + PartialEq> IsDefault for T {}
-type ErrorMessages<T> = Box<BTreeMap<T, SharedStr>>;
+type ErrorMessages<T> = Box<BTreeMap<T, FixedStr>>;
 
 pub mod any;
 pub mod bool;

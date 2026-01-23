@@ -36,7 +36,7 @@ pub enum WellKnownStrings {
 }
 
 impl WellKnownStrings {
-  pub(crate) fn to_option(self) -> (SharedStr, OptionValue, bool) {
+  pub(crate) fn to_option(self) -> (FixedStr, OptionValue, bool) {
     let mut is_strict = false;
 
     let name = match self {

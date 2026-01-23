@@ -50,12 +50,12 @@ impl<T: ProtoEnum, S: State> From<EnumValidatorBuilder<T, S>> for ProtoOption {
 impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
   pub fn with_error_messages(
     mut self,
-    error_messages: impl IntoIterator<Item = (EnumViolation, impl Into<SharedStr>)>,
+    error_messages: impl IntoIterator<Item = (EnumViolation, impl Into<FixedStr>)>,
   ) -> EnumValidatorBuilder<T, SetErrorMessages<S>>
   where
     S::ErrorMessages: IsUnset,
   {
-    let map: BTreeMap<EnumViolation, SharedStr> = error_messages
+    let map: BTreeMap<EnumViolation, FixedStr> = error_messages
       .into_iter()
       .map(|(v, m)| (v, m.into()))
       .collect();

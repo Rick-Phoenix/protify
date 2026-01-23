@@ -89,7 +89,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   }
 
   #[inline]
-  pub fn in_(mut self, val: impl IntoSortedList<SharedStr>) -> FieldMaskValidatorBuilder<SetIn<S>>
+  pub fn in_(mut self, val: impl IntoSortedList<FixedStr>) -> FieldMaskValidatorBuilder<SetIn<S>>
   where
     S::In: IsUnset,
   {
@@ -104,7 +104,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn not_in(
     mut self,
-    val: impl IntoSortedList<SharedStr>,
+    val: impl IntoSortedList<FixedStr>,
   ) -> FieldMaskValidatorBuilder<SetNotIn<S>>
   where
     S::NotIn: IsUnset,
@@ -120,7 +120,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
   #[inline]
   pub fn const_(
     mut self,
-    val: impl IntoSortedList<SharedStr>,
+    val: impl IntoSortedList<FixedStr>,
   ) -> FieldMaskValidatorBuilder<SetConst<S>>
   where
     S::Const: IsUnset,

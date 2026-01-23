@@ -315,15 +315,15 @@ impl<const B: usize, const L: usize> IntoSortedList<Bytes> for [&'static [u8; B]
 macro_rules! impl_sorted_string_list {
   ($($typ:ty),*) => {
     $(
-      impl IntoSortedList<SharedStr> for Vec<$typ> {
-        fn into_sorted_list(self) -> SortedList<SharedStr> {
+      impl IntoSortedList<FixedStr> for Vec<$typ> {
+        fn into_sorted_list(self) -> SortedList<FixedStr> {
           let iter = self.into_iter().map(Into::into);
           SortedList::new(iter)
         }
       }
 
-      impl<const N: usize> IntoSortedList<SharedStr> for [$typ; N] {
-        fn into_sorted_list(self) -> SortedList<SharedStr> {
+      impl<const N: usize> IntoSortedList<FixedStr> for [$typ; N] {
+        fn into_sorted_list(self) -> SortedList<FixedStr> {
           let iter = self.into_iter().map(Into::into);
           SortedList::new(iter)
         }
@@ -334,15 +334,15 @@ macro_rules! impl_sorted_string_list {
 
 impl_sorted_string_list!(String, Box<str>, &'static str, Arc<str>);
 
-impl IntoSortedList<SharedStr> for &[&'static str] {
-  fn into_sorted_list(self) -> SortedList<SharedStr> {
+impl IntoSortedList<FixedStr> for &[&'static str] {
+  fn into_sorted_list(self) -> SortedList<FixedStr> {
     let iter = self.iter().copied().map(Into::into);
     SortedList::new(iter)
   }
 }
 
-impl IntoSortedList<SharedStr> for &[Arc<str>] {
-  fn into_sorted_list(self) -> SortedList<SharedStr> {
+impl IntoSortedList<FixedStr> for &[Arc<str>] {
+  fn into_sorted_list(self) -> SortedList<FixedStr> {
     let iter = self.iter().cloned().map(Into::into);
     SortedList::new(iter)
   }
@@ -535,7 +535,7 @@ impl ListFormatter for &[u8] {
   }
 }
 
-impl ListFormatter for SharedStr {
+impl ListFormatter for FixedStr {
   fn format_list(items: &[Self]) -> String {
     let data_len: usize = items.iter().map(|s| s.len()).sum();
 

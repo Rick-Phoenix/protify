@@ -13,7 +13,7 @@ pub struct Field {
 pub struct ValidatorSchema {
   pub schema: ProtoOption,
   pub cel_rules: Vec<CelRule>,
-  pub imports: Vec<SharedStr>,
+  pub imports: Vec<FixedStr>,
 }
 
 impl Field {

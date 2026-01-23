@@ -37,12 +37,12 @@ where
 {
   pub fn with_error_messages(
     mut self,
-    error_messages: impl IntoIterator<Item = (Num::ViolationEnum, impl Into<SharedStr>)>,
+    error_messages: impl IntoIterator<Item = (Num::ViolationEnum, impl Into<FixedStr>)>,
   ) -> FloatValidatorBuilder<Num, SetErrorMessages<S>>
   where
     S::ErrorMessages: IsUnset,
   {
-    let map: BTreeMap<Num::ViolationEnum, SharedStr> = error_messages
+    let map: BTreeMap<Num::ViolationEnum, FixedStr> = error_messages
       .into_iter()
       .map(|(v, m)| (v, m.into()))
       .collect();

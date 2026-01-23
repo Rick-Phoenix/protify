@@ -102,12 +102,12 @@ where
 
   pub fn with_error_messages(
     self,
-    error_messages: impl IntoIterator<Item = (MapViolation, impl Into<SharedStr>)>,
+    error_messages: impl IntoIterator<Item = (MapViolation, impl Into<FixedStr>)>,
   ) -> MapValidatorBuilder<K, V, SetErrorMessages<S>>
   where
     S::ErrorMessages: IsUnset,
   {
-    let map: BTreeMap<MapViolation, SharedStr> = error_messages
+    let map: BTreeMap<MapViolation, FixedStr> = error_messages
       .into_iter()
       .map(|(v, m)| (v, m.into()))
       .collect();
