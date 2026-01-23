@@ -1,4 +1,5 @@
 use crate::*;
+use proto_types::field_descriptor_proto::Type as DescriptorType;
 
 pub trait AsProtoType {
   fn proto_type() -> ProtoType;
@@ -141,6 +142,29 @@ pub enum ProtoScalar {
   Bytes,
 }
 
+impl From<ProtoScalar> for DescriptorType {
+  #[inline]
+  fn from(value: ProtoScalar) -> Self {
+    match value {
+      ProtoScalar::Double => Self::Double,
+      ProtoScalar::Float => Self::Float,
+      ProtoScalar::Int32 => Self::Int32,
+      ProtoScalar::Int64 => Self::Int64,
+      ProtoScalar::Uint32 => Self::Uint32,
+      ProtoScalar::Uint64 => Self::Uint64,
+      ProtoScalar::Sint32 => Self::Sint32,
+      ProtoScalar::Sint64 => Self::Sint64,
+      ProtoScalar::Fixed32 => Self::Fixed32,
+      ProtoScalar::Fixed64 => Self::Fixed64,
+      ProtoScalar::Sfixed32 => Self::Sfixed32,
+      ProtoScalar::Sfixed64 => Self::Sfixed64,
+      ProtoScalar::Bool => Self::Bool,
+      ProtoScalar::String => Self::String,
+      ProtoScalar::Bytes => Self::Bytes,
+    }
+  }
+}
+
 impl Display for ProtoScalar {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match self {
@@ -169,6 +193,17 @@ pub enum ProtoType {
   Scalar(ProtoScalar),
   Message(ProtoPath),
   Enum(ProtoPath),
+}
+
+impl From<ProtoType> for DescriptorType {
+  #[inline]
+  fn from(value: ProtoType) -> Self {
+    match value {
+      ProtoType::Scalar(scalar) => scalar.into(),
+      ProtoType::Message(_) => Self::Message,
+      ProtoType::Enum(_) => Self::Enum,
+    }
+  }
 }
 
 impl Display for ProtoType {

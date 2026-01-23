@@ -145,7 +145,7 @@ mod cel_impls {
           item_path.push_str(name);
         }
 
-        if let Some(field_name) = field_context.map(|fc| fc.proto_name) {
+        if let Some(field_name) = field_context.map(|fc| &fc.name) {
           if !item_path.is_empty() {
             item_path.push('.');
           }

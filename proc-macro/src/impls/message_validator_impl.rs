@@ -103,7 +103,7 @@ pub fn field_validator_tokens(
       quote_spanned! {*span=>
         ctx.with_field_context(
           ::prelude::FieldContext {
-            proto_name: #proto_name,
+            name: #proto_name.into(),
             tag: #tag,
             field_type: #field_type,
             map_key_type: None,

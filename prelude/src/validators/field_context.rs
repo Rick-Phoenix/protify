@@ -6,7 +6,7 @@ use proto_types::protovalidate::field_path_element::Subscript;
 /// The context for the field being validated.
 #[derive(Clone, Debug)]
 pub struct FieldContext {
-  pub proto_name: &'static str,
+  pub name: FixedStr,
   pub tag: i32,
   pub subscript: Option<Subscript>,
   pub map_key_type: Option<ProtoPrimitive>,
@@ -22,7 +22,7 @@ impl FieldContext {
   pub fn as_path_element(&self) -> FieldPathElement {
     FieldPathElement {
       field_number: Some(self.tag),
-      field_name: Some(self.proto_name.to_string()),
+      field_name: Some(self.name.to_string()),
       field_type: Some(self.field_type as i32),
       key_type: self.map_key_type.map(|t| t as i32),
       value_type: self.map_value_type.map(|t| t as i32),

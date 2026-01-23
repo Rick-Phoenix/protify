@@ -32,11 +32,5 @@ update-changelog version:
     git add "CHANGELOG.md"
     git commit -m "updated changelog"
 
-release-test version: test-all
-    cargo release {{ version }} -p protoschema
-
-release-exec version: test-all (update-changelog version)
-    cargo release {{ version }} -p protoschema --execute
-
 build-docs:
     RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc -p prelude --all-features --open

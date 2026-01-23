@@ -111,8 +111,8 @@ where
 impl<K, V> ProtoValidator for BTreeMap<K, V>
 where
   Self: Clone,
-  K: ProtoValidator + Send + Sync,
-  V: ProtoValidator + Send + Sync,
+  K: ProtoValidator + Send + Sync + AsProtoType,
+  V: ProtoValidator + Send + Sync + AsProtoType,
   K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
   V::Stored: Sized + Clone + TryIntoCel,
 {
@@ -133,8 +133,8 @@ impl<K, V, S> ProtoValidator for HashMap<K, V, S>
 where
   S: BuildHasher + Default + Clone,
   Self: Clone,
-  K: ProtoValidator + Send + Sync,
-  V: ProtoValidator + Send + Sync,
+  K: ProtoValidator + Send + Sync + AsProtoType,
+  V: ProtoValidator + Send + Sync + AsProtoType,
   K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
   V::Stored: Sized + Clone + TryIntoCel,
 {
@@ -154,8 +154,8 @@ where
 impl<K, V, M, S> ValidatorBuilderFor<M> for MapValidatorBuilder<K, V, S>
 where
   S: builder::state::State,
-  K: ProtoValidator + Send + Sync,
-  V: ProtoValidator + Send + Sync,
+  K: ProtoValidator + Send + Sync + AsProtoType,
+  V: ProtoValidator + Send + Sync + AsProtoType,
   M: ProtoMap<K, V> + ToOwned,
   M::Target: Clone + Default,
   K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
@@ -172,8 +172,8 @@ where
 
 impl<K, V, M> Validator<M> for MapValidator<K, V>
 where
-  K: ProtoValidator + Send + Sync,
-  V: ProtoValidator + Send + Sync,
+  K: ProtoValidator + Send + Sync + AsProtoType,
+  V: ProtoValidator + Send + Sync + AsProtoType,
   M: ProtoMap<K, V> + ToOwned,
   M::Target: Clone + Default,
   K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
@@ -358,6 +358,8 @@ where
     M: Map<K::Stored, V::Stored> + Clone,
     K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
     V::Stored: Sized + Clone + TryIntoCel,
+    K: AsProtoType,
+    V: AsProtoType,
   {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().length() == 0));
@@ -402,10 +404,11 @@ where
 
       if keys_validator.is_some() || values_validator.is_some() {
         for (k, v) in val.items() {
-          let _ = ctx
-            .field_context
-            .as_mut()
-            .map(|fc| fc.subscript = Some(k.clone().into()));
+          let _ = ctx.field_context.as_mut().map(|fc| {
+            fc.subscript = Some(k.clone().into());
+            fc.map_key_type = Some(K::proto_type().into());
+            fc.map_value_type = Some(V::proto_type().into());
+          });
 
           if let Some(validator) = keys_validator {
             let _ = ctx
