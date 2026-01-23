@@ -17,6 +17,8 @@ pub struct FieldContext {
 
 impl FieldContext {
   #[must_use]
+  #[inline(never)]
+  #[cold]
   pub fn as_path_element(&self) -> FieldPathElement {
     FieldPathElement {
       field_number: Some(self.tag),
@@ -40,16 +42,19 @@ pub enum FieldKind {
 
 impl FieldKind {
   #[must_use]
+  #[inline]
   pub const fn is_map_key(&self) -> bool {
     matches!(self, Self::MapKey)
   }
 
   #[must_use]
+  #[inline]
   pub const fn is_map_value(&self) -> bool {
     matches!(self, Self::MapValue)
   }
 
   #[must_use]
+  #[inline]
   pub const fn is_repeated_item(&self) -> bool {
     matches!(self, Self::RepeatedItem)
   }
@@ -86,18 +91,19 @@ impl ValidationCtx {
     self
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn add_violation(
     &mut self,
     kind: ViolationKind,
-    error_message: impl Into<String>,
+    error_message: impl Display,
   ) -> ValidatorResult {
     let violation = create_violation_core(
       None,
       self.field_context.as_ref(),
       &self.parent_elements,
       kind.data(),
-      error_message.into(),
+      error_message.to_string(),
     );
 
     self.violations.push(ViolationCtx {
@@ -115,7 +121,9 @@ impl ValidationCtx {
     }
   }
 
-  fn field_kind(&self) -> FieldKind {
+  #[inline]
+  #[must_use]
+  pub fn field_kind(&self) -> FieldKind {
     self
       .field_context
       .as_ref()
@@ -123,19 +131,20 @@ impl ValidationCtx {
       .unwrap_or_default()
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn add_violation_with_custom_id(
     &mut self,
-    rule_id: &str,
+    rule_id: impl Display,
     kind: ViolationKind,
-    error_message: impl Into<String>,
+    error_message: impl Display,
   ) -> ValidatorResult {
-    let violation = new_violation_with_custom_id(
-      rule_id,
+    let violation = create_violation_core(
+      Some(rule_id.to_string()),
       self.field_context.as_ref(),
       &self.parent_elements,
       kind.data(),
-      error_message.into(),
+      error_message.to_string(),
     );
 
     self.violations.push(ViolationCtx {
@@ -153,7 +162,8 @@ impl ValidationCtx {
     }
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn add_cel_violation(&mut self, rule: &CelRule) -> ValidatorResult {
     self
       .violations
@@ -166,7 +176,8 @@ impl ValidationCtx {
     }
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn add_required_oneof_violation(&mut self) -> ValidatorResult {
     self
       .violations
@@ -179,12 +190,15 @@ impl ValidationCtx {
     }
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn add_required_violation(&mut self) -> ValidatorResult {
     self.add_violation(ViolationKind::Required, "is required")
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   pub(crate) fn add_cel_error_violation(&mut self, error: CelError) -> ValidatorResult {
     self.violations.push(ViolationCtx {
       meta: ViolationMeta {

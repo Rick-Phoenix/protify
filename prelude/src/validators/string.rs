@@ -26,6 +26,12 @@ impl SharedStr {
   }
 }
 
+impl From<SharedStr> for String {
+  fn from(value: SharedStr) -> Self {
+    value.to_string()
+  }
+}
+
 impl Borrow<str> for SharedStr {
   fn borrow(&self) -> &str {
     self

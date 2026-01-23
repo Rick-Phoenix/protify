@@ -156,7 +156,7 @@ mod cel_impls {
       }
 
       create_violation_core(
-        self.rule_id(),
+        self.rule_id().map(|s| s.to_string()),
         field_context,
         parent_elements,
         CEL_VIOLATION,

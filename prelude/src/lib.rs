@@ -176,6 +176,7 @@ mod regex_impls {
     const SEALED: Sealed = Sealed;
 
     #[track_caller]
+    #[inline]
     fn into_regex(self) -> Regex {
       Regex::new(self).unwrap()
     }
@@ -194,6 +195,7 @@ mod regex_impls {
     #[allow(private_interfaces)]
     const SEALED: Sealed = Sealed;
 
+    #[inline]
     fn into_regex(self) -> Regex {
       self.clone()
     }
@@ -211,6 +213,7 @@ mod regex_impls {
     const SEALED: Sealed = Sealed;
 
     #[track_caller]
+    #[inline]
     fn into_regex(self) -> BytesRegex {
       BytesRegex::new(self).unwrap()
     }
@@ -220,6 +223,7 @@ mod regex_impls {
     #[allow(private_interfaces)]
     const SEALED: Sealed = Sealed;
 
+    #[inline]
     fn into_regex(self) -> BytesRegex {
       self
     }
@@ -229,6 +233,7 @@ mod regex_impls {
     #[allow(private_interfaces)]
     const SEALED: Sealed = Sealed;
 
+    #[inline]
     fn into_regex(self) -> BytesRegex {
       self.clone()
     }
@@ -244,6 +249,7 @@ impl<T: ValidatedOneof + ProtoValidator> ValidatorBuilderFor<T> for OneofValidat
   type Target = T;
   type Validator = Self;
 
+  #[inline]
   fn build_validator(self) -> Self::Validator {
     self
   }
@@ -252,6 +258,8 @@ impl<T: ValidatedOneof + ProtoValidator> ValidatorBuilderFor<T> for OneofValidat
 impl<T: ValidatedOneof + ProtoValidator> Validator<T> for OneofValidator {
   type Target = T;
 
+  // Should be inlined because if the assoc. constant is false, it may promote
+  // dead code elimination
   #[inline]
   fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
@@ -278,13 +286,8 @@ impl<T: ValidatedOneof + ProtoValidator> Validator<T> for OneofValidator {
 
 impl OneofValidator {
   #[must_use]
+  #[inline]
   pub const fn new(required: bool) -> Self {
     Self { required }
-  }
-
-  #[must_use]
-  pub const fn required(mut self) -> Self {
-    self.required = true;
-    self
   }
 }

@@ -77,14 +77,20 @@ pub type ValidatorResult = Result<IsValid, FailFast>;
 pub trait Validator<T: ?Sized>: Sized {
   type Target: ToOwned + ?Sized;
 
+  #[inline(never)]
+  #[cold]
   fn cel_rules(&self) -> Vec<CelRule> {
     vec![]
   }
 
+  #[inline(never)]
+  #[cold]
   fn as_proto_option(&self) -> Option<ProtoOption> {
     None
   }
 
+  #[inline(never)]
+  #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     self.as_proto_option().map(|opt| ValidatorSchema {
       schema: opt,
@@ -92,11 +98,15 @@ pub trait Validator<T: ?Sized>: Sized {
     })
   }
 
+  #[inline(never)]
+  #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     Ok(())
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs_with(
     &self,
     _val: <Self::Target as ToOwned>::Owned,
@@ -105,6 +115,8 @@ pub trait Validator<T: ?Sized>: Sized {
   }
 
   #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     Ok(())
   }
@@ -198,6 +210,7 @@ pub trait ProtoValidator {
   where
     Self: 'a;
 
+  #[inline]
   fn make_unique_store<'a>(_validator: &Self::Validator, cap: usize) -> Self::UniqueStore<'a>
   where
     Self: 'a,
@@ -240,6 +253,7 @@ where
 {
   type Target = T;
 
+  #[inline]
   fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidatorResult
   where
     V: Borrow<Self::Target> + ?Sized,
@@ -249,6 +263,7 @@ where
   }
 }
 
+#[inline]
 pub const fn from_fn<T, F>(f: F) -> FnValidator<F, T>
 where
   T: ?Sized,

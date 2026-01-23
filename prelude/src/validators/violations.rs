@@ -185,10 +185,11 @@ impl ViolationsAcc {
     self.violations.truncate(keep_count);
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn add_required_oneof_violation(&mut self, parent_elements: &[FieldPathElement]) {
-    let violation = new_violation_with_custom_id(
-      ONEOF_REQUIRED_VIOLATION.name,
+    let violation = create_violation_core(
+      Some(ONEOF_REQUIRED_VIOLATION.name.to_string()),
       None,
       parent_elements,
       ONEOF_REQUIRED_VIOLATION,
@@ -204,15 +205,16 @@ impl ViolationsAcc {
     });
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn add_cel_violation(
     &mut self,
     rule: &CelRule,
     field_context: Option<&FieldContext>,
     parent_elements: &[FieldPathElement],
   ) {
-    let violation = new_violation_with_custom_id(
-      &rule.id,
+    let violation = create_violation_core(
+      Some(rule.id.to_string()),
       field_context,
       parent_elements,
       CEL_VIOLATION,
@@ -247,7 +249,8 @@ impl ViolationsAcc {
     }
   }
 
-  #[inline]
+  #[inline(never)]
+  #[cold]
   pub fn push(&mut self, v: ViolationCtx) {
     self.metas.push(v.meta);
     self.violations.push(v.data);
@@ -273,8 +276,10 @@ impl Default for ViolationsAcc {
   }
 }
 
+#[inline(never)]
+#[cold]
 pub(crate) fn create_violation_core(
-  custom_rule_id: Option<&str>,
+  custom_rule_id: Option<String>,
   field_context: Option<&FieldContext>,
   parent_elements: &[FieldPathElement],
   violation_data: ViolationData,
@@ -309,9 +314,7 @@ pub(crate) fn create_violation_core(
   rule_elements.extend(violation_data.elements_iter());
 
   Violation {
-    rule_id: Some(
-      custom_rule_id.map_or_else(|| violation_data.name.to_string(), |id| id.to_string()),
-    ),
+    rule_id: Some(custom_rule_id.unwrap_or_else(|| violation_data.name.to_string())),
     message: Some(error_message),
     for_key: Some(is_for_key),
     field: field_elements.map(|elements| FieldPath { elements }),
@@ -319,20 +322,4 @@ pub(crate) fn create_violation_core(
       elements: rule_elements,
     }),
   }
-}
-
-pub(crate) fn new_violation_with_custom_id(
-  rule_id: &str,
-  field_context: Option<&FieldContext>,
-  parent_elements: &[FieldPathElement],
-  violation_data: ViolationData,
-  error_message: String,
-) -> Violation {
-  create_violation_core(
-    Some(rule_id),
-    field_context,
-    parent_elements,
-    violation_data,
-    error_message,
-  )
 }
