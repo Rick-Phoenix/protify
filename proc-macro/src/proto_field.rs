@@ -203,7 +203,7 @@ impl ProtoField {
       }
       Self::Optional(inner) => {
         let conversion = if let ProtoType::Message(MessageInfo { boxed: true, .. }) = inner {
-          quote_spanned! {span=> Box::new((*v)).into() }
+          quote_spanned! {span=> Box::new((*v).into()) }
         } else {
           quote_spanned! {span=> v.into() }
         };
