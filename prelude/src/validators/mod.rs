@@ -273,3 +273,5 @@ pub use message::*;
 pub use repeated::*;
 pub use string::*;
 pub use timestamp::*;
+mod violations;
+pub use violations::*;

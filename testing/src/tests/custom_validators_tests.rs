@@ -45,7 +45,10 @@ fn custom_int_validator(ctx: &mut ValidationCtx, val: Option<&i32>) -> Validator
   } else {
     ctx.violations.push(ViolationCtx {
       data: test_violation(),
-      kind: ViolationKind::Cel,
+      meta: ViolationMeta {
+        field_kind: FieldKind::default(),
+        kind: ViolationKind::Cel,
+      },
     });
 
     Ok(IsValid::No)
@@ -115,7 +118,10 @@ fn custom_oneof_validator(
     _ => {
       ctx.violations.push(ViolationCtx {
         data: test_violation(),
-        kind: ViolationKind::Cel,
+        meta: ViolationMeta {
+          field_kind: FieldKind::default(),
+          kind: ViolationKind::Cel,
+        },
       });
 
       Ok(IsValid::No)
@@ -143,7 +149,10 @@ fn custom_oneof_validator2(
     _ => {
       ctx.violations.push(ViolationCtx {
         data: test_violation(),
-        kind: ViolationKind::Cel,
+        meta: ViolationMeta {
+          field_kind: FieldKind::default(),
+          kind: ViolationKind::Cel,
+        },
       });
 
       Ok(IsValid::No)
@@ -215,7 +224,10 @@ fn custom_top_level_validator(
   } else {
     ctx.violations.push(ViolationCtx {
       data: test_violation(),
-      kind: ViolationKind::Cel,
+      meta: ViolationMeta {
+        field_kind: FieldKind::default(),
+        kind: ViolationKind::Cel,
+      },
     });
 
     Ok(IsValid::No)
