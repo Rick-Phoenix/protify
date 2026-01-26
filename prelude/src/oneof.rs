@@ -1,7 +1,7 @@
 use crate::*;
 
 pub trait ProxiedOneof: From<Self::Proxy> + Into<Self::Proxy> {
-  type Proxy: OneofProxy<Oneof = Self>;
+  type Proxy: OneofProxy<Oneof = Self> + From<Self> + Into<Self>;
 
   #[inline]
   fn into_proxy(self) -> Self::Proxy {
@@ -10,7 +10,7 @@ pub trait ProxiedOneof: From<Self::Proxy> + Into<Self::Proxy> {
 }
 
 pub trait OneofProxy: From<Self::Oneof> + Into<Self::Oneof> {
-  type Oneof: ProtoOneof + From<Self>;
+  type Oneof: ProtoOneof + From<Self> + Into<Self>;
 
   #[inline]
   fn into_oneof(self) -> Self::Oneof {
@@ -58,7 +58,7 @@ pub trait ProtoOneof {
   }
 }
 
-pub trait ValidatedOneof: Clone {
+pub trait ValidatedOneof: ProtoValidation + Clone {
   fn validate(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 

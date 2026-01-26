@@ -21,7 +21,7 @@ pub fn generate_message_consistency_checks(
       && !auto_tests.skip_oneof_tags_check
     {
       Some(quote_spanned! {*span=>
-        if let Err(err) = <#path as ::prelude::ProtoOneof>::check_tags(#ident_str, &mut [ #(#tags),* ]) {
+        if let Err(err) = <#path as ::prelude::ProtoOneof>::check_tags(#message_name, &mut [ #(#tags),* ]) {
           field_errors.push(::prelude::FieldError {
             field: #ident_str,
             errors: vec![err]

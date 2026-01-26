@@ -143,13 +143,17 @@ impl MessageCtx<'_> {
       }
 
       impl ::prost::Name for #proto_struct {
+        #[doc(hidden)]
         const PACKAGE: &str = <Self as ::prelude::ProtoMessage>::PACKAGE;
+        #[doc(hidden)]
         const NAME: &str = <Self as ::prelude::ProtoMessage>::SHORT_NAME;
 
+        #[doc(hidden)]
         fn full_name() -> ::prelude::String {
           <Self as ::prelude::ProtoMessage>::full_name().into()
         }
 
+        #[doc(hidden)]
         fn type_url() -> ::prelude::String {
           <Self as ::prelude::ProtoMessage>::type_url().into()
         }
