@@ -6,6 +6,7 @@ struct ReflectionMsgData {
   pub top_level_validator: Validators,
   pub auto_tests: AutoTests,
   pub msg_name: String,
+  pub as_proto_type_impl: TokenStream2,
 }
 
 fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error> {
@@ -205,12 +206,43 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
     }
   }
 
+  let as_proto_type_impl = {
+    let file = message_desc.parent_file();
+    let file_name = file.name();
+    let pkg = message_desc.package_name();
+    let name = get_full_ish_name(&message_desc);
+    let struct_ident = &item.ident;
+
+    quote! {
+      impl ::prelude::AsProtoType for #struct_ident {
+        fn proto_type() -> ::prelude::ProtoType {
+          ::prelude::ProtoType::Message(
+            ::prelude::ProtoPath {
+              name: #name.into(),
+              file: #file_name.into(),
+              package: #pkg.into(),
+            }
+          )
+        }
+      }
+    }
+  };
+
   Ok(ReflectionMsgData {
     fields_data,
     top_level_validator: top_level_validator.unwrap_or_default(),
     auto_tests,
     msg_name,
+    as_proto_type_impl,
   })
+}
+
+pub fn get_full_ish_name(message_desc: &MessageDescriptor) -> &str {
+  message_desc
+    .full_name()
+    .strip_prefix(message_desc.package_name())
+    .and_then(|with_dot| with_dot.strip_prefix('.'))
+    .unwrap_or(message_desc.name())
 }
 
 fn get_message_rules(message_descriptor: &MessageDescriptor) -> Option<MessageRules> {
@@ -251,6 +283,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
     top_level_validator,
     mut auto_tests,
     msg_name,
+    as_proto_type_impl,
   } = extract_fields_data(item).unwrap_or_default_and_push_error(&mut errors);
 
   // Not needed for prost-generated code
@@ -284,6 +317,7 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
   quote! {
     #validator_impl
     #consistency_checks
+    #as_proto_type_impl
 
     #(#errors)*
   }
