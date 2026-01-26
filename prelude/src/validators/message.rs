@@ -17,7 +17,7 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
       fail_fast: false,
     };
 
-    let _ = self.nested_validate(&mut ctx);
+    let _ = self.validate_with_ctx(&mut ctx);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -34,7 +34,7 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
 
     let mut ctx = ValidationCtx::default();
 
-    let _ = self.nested_validate(&mut ctx);
+    let _ = self.validate_with_ctx(&mut ctx);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -65,7 +65,7 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
   }
 
   #[doc(hidden)]
-  fn nested_validate(&self, ctx: &mut ValidationCtx) -> ValidationResult;
+  fn validate_with_ctx(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 
 impl<T, S: builder::State> ValidatorBuilderFor<T> for MessageValidatorBuilder<S>
@@ -144,7 +144,7 @@ where
           .push(field_context.as_path_element());
       }
 
-      is_valid &= val.nested_validate(ctx)?;
+      is_valid &= val.validate_with_ctx(ctx)?;
 
       if ctx.field_context.is_some() {
         ctx.parent_elements.pop();
