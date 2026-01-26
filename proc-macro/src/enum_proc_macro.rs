@@ -118,7 +118,6 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
         options: enum_options,
         parent_message,
         name: proto_name,
-        extern_path,
         deprecated,
         ..
       },
@@ -147,13 +146,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
     quote! { None }
   };
 
-  let rust_path_field = if let Some(extern_path) = extern_path {
-    quote_spanned! {extern_path.span()=> #extern_path.to_string() }
-  } else {
-    let rust_ident_str = enum_ident.to_string();
-
-    quote! { ::prelude::format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str) }
-  };
+  let rust_ident_str = enum_ident.to_string();
 
   let variants_tokens = if error.is_some() {
     quote! { unimplemented!() }
@@ -339,7 +332,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
           reserved_names: ::prelude::vec![ #(#reserved_names.into()),* ],
           reserved_numbers: #reserved_numbers,
           options: #options_tokens.into_iter().collect(),
-          rust_path: #rust_path_field.into()
+          rust_path:  ::prelude::format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str).into()
         }
       }
     }

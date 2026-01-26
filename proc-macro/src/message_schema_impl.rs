@@ -58,7 +58,6 @@ impl MessageCtx<'_> {
       options: message_options,
       name: proto_name,
       parent_message,
-      extern_path,
       deprecated,
       validators,
       ..
@@ -108,13 +107,7 @@ impl MessageCtx<'_> {
       quote! { None }
     };
 
-    let rust_path_field = if let Some(path) = extern_path {
-      quote_spanned! {path.span()=> #path.to_string() }
-    } else {
-      let rust_ident_str = proto_struct.to_string();
-
-      quote! { format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str) }
-    };
+    let rust_ident_str = proto_struct.to_string();
 
     let options_tokens = options_tokens(Span::call_site(), message_options, *deprecated);
 
@@ -207,7 +200,7 @@ impl MessageCtx<'_> {
             enums: vec![],
             entries: vec![ #entries_tokens ],
             validators: ::prelude::collect_validators([ #(::prelude::Validator::<#proto_struct>::schema(&#validators)),* ]),
-            rust_path: #rust_path_field.into()
+            rust_path:  format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str).into()
           }
         }
       }

@@ -8,7 +8,6 @@ pub struct EnumAttrs {
   pub parent_message: Option<Ident>,
   pub name: ParsedStr,
   pub no_prefix: bool,
-  pub extern_path: Option<ParsedStr>,
   pub deprecated: bool,
 }
 
@@ -22,7 +21,6 @@ pub fn process_derive_enum_attrs(
   let mut proto_name: Option<ParsedStr> = None;
   let mut no_prefix = false;
   let mut parent_message: Option<Ident> = None;
-  let mut extern_path: Option<ParsedStr> = None;
   let mut deprecated = false;
 
   for attr in attrs {
@@ -55,9 +53,6 @@ pub fn process_derive_enum_attrs(
               let numbers = meta.parse_list::<ReservedNumbers>()?;
 
               reserved_numbers = numbers;
-            }
-            "extern_path" => {
-              extern_path = Some(meta.parse_value::<ParsedStr>()?);
             }
             "parent_message" => {
               parent_message = Some(
@@ -96,7 +91,6 @@ pub fn process_derive_enum_attrs(
     parent_message,
     name,
     no_prefix,
-    extern_path,
     deprecated,
   })
 }

@@ -14,7 +14,6 @@ pub struct MessageAttrs {
   pub shadow_derives: Option<MetaList>,
   pub is_proxied: bool,
   pub auto_tests: AutoTests,
-  pub extern_path: Option<ParsedStr>,
   pub deprecated: bool,
   pub validators: Validators,
 }
@@ -68,7 +67,6 @@ pub fn process_message_attrs(
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;
   let mut validators = Validators::default();
-  let mut extern_path: Option<ParsedStr> = None;
   let mut auto_tests = AutoTests::default();
 
   for attr in attrs {
@@ -93,7 +91,6 @@ pub fn process_message_attrs(
             "validate" => {
               validators = meta.parse_value::<Validators>()?;
             }
-            "extern_path" => extern_path = Some(meta.parse_value::<ParsedStr>()?),
             "deprecated" => {
               let boolean = meta.parse_value::<LitBool>()?;
 
@@ -168,7 +165,6 @@ pub fn process_message_attrs(
     shadow_derives,
     is_proxied: macro_args.is_proxied,
     auto_tests,
-    extern_path,
     deprecated,
     validators,
   })
