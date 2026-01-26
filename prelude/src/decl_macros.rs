@@ -102,8 +102,17 @@ macro_rules! length_rule_value {
 }
 
 #[macro_export]
+macro_rules! inherit_proto_file {
+  ($file:path) => {
+    #[doc(hidden)]
+    #[allow(unused)]
+    const __PROTO_FILE: $crate::FileReference = $file;
+  };
+}
+
+#[macro_export]
 macro_rules! use_proto_file {
-  ($file:path, extern_path = $path:literal) => {
+  ($file:path, extern_path = $path:expr) => {
     #[doc(hidden)]
     #[allow(unused)]
     const __PROTO_FILE: $crate::FileReference = ::prelude::FileReference {
@@ -116,7 +125,11 @@ macro_rules! use_proto_file {
   ($file:path) => {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: $crate::FileReference = $file;
+    const __PROTO_FILE: $crate::FileReference = ::prelude::FileReference {
+      name: $file.name,
+      package: $file.package,
+      extern_path: ::core::module_path!(),
+    };
   };
 }
 
