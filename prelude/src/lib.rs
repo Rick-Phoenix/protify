@@ -319,3 +319,19 @@ pub trait MaybeSerde {}
 
 #[cfg(not(feature = "serde"))]
 impl<T> MaybeSerde for T {}
+
+#[inline]
+#[doc(hidden)]
+pub fn filter_validators(
+  validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
+) -> impl IntoIterator<Item = ValidatorSchema> {
+  validators.into_iter().flatten()
+}
+
+#[inline]
+#[doc(hidden)]
+pub fn collect_validators(
+  validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
+) -> Vec<ValidatorSchema> {
+  validators.into_iter().flatten().collect()
+}

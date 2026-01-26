@@ -12,29 +12,30 @@ pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
     ..
   } = data;
 
+  let validator_schema_tokens = validators
+    .iter()
+    // For default validators (messages only) we skip the schema generation
+    .filter(|v| !v.kind.is_default())
+    .map(|e| {
+      let validator_target_type = proto_field.validator_target_type(*span);
+
+      quote_spanned! {*span=>
+        ::prelude::Validator::<#validator_target_type>::schema(&#e)
+      }
+    });
+
   if let ProtoField::Oneof(OneofInfo { path, required, .. }) = proto_field {
     quote_spanned! {*span=>
       ::prelude::MessageEntry::Oneof(
         <#path as ::prelude::ProtoOneof>::proto_schema()
           .with_name(#proto_name)
           .with_options(#options)
+          .with_validators(::prelude::filter_validators([ #(#validator_schema_tokens),* ]))
           .required(#required)
       )
     }
   } else {
     let field_type_tokens = proto_field.proto_field_target_type(*span);
-
-    let validator_schema_tokens = validators
-      .iter()
-      // For default validators (messages only) we skip the schema generation
-      .filter(|v| !v.kind.is_default())
-      .map(|e| {
-        let validator_target_type = proto_field.validator_target_type(*span);
-
-        quote_spanned! {*span=>
-          ::prelude::Validator::<#validator_target_type>::schema(&#e)
-        }
-      });
 
     let options_tokens = options_tokens(*span, options, *deprecated);
 
@@ -44,12 +45,7 @@ pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
         tag: #tag,
         options: #options_tokens.into_iter().collect(),
         type_: #field_type_tokens,
-        #[allow(
-          clippy::filter_map_identity,
-          clippy::iter_on_empty_collections,
-          clippy::iter_on_single_items
-        )]
-        validators: [ #(#validator_schema_tokens),* ].into_iter().filter_map(|s| s).collect(),
+        validators: ::prelude::collect_validators([ #(#validator_schema_tokens),* ]),
       }
     }
   }
@@ -211,12 +207,7 @@ impl MessageCtx<'_> {
             messages: vec![],
             enums: vec![],
             entries: vec![ #entries_tokens ],
-            #[allow(
-              clippy::filter_map_identity,
-              clippy::iter_on_empty_collections,
-              clippy::iter_on_single_items
-            )]
-            validators: [ #(::prelude::Validator::<#proto_struct>::schema(&#validators)),* ].into_iter().filter_map(|s| s).collect(),
+            validators: ::prelude::collect_validators([ #(::prelude::Validator::<#proto_struct>::schema(&#validators)),* ]),
             rust_path: #rust_path_field.into()
           }
         }
