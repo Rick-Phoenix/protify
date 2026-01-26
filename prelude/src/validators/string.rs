@@ -204,203 +204,9 @@ pub struct StringValidator {
 }
 
 impl StringValidator {
-  #[inline]
-  const fn has_pattern(&self) -> bool {
-    #[cfg(feature = "regex")]
-    {
-      self.pattern.is_some()
-    }
-    #[cfg(not(feature = "regex"))]
-    {
-      false
-    }
-  }
-}
-
-impl_proto_type!(String, String);
-impl_proto_map_key!(String, String);
-
-impl Validator<String> for StringValidator {
-  type Target = str;
-
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn check_cel_programs_with(
-    &self,
-    val: <Self::Target as ToOwned>::Owned,
-  ) -> Result<(), Vec<CelError>> {
-    if self.cel.is_empty() {
-      Ok(())
-    } else {
-      test_programs(&self.cel, val)
-    }
-  }
-
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-    self.check_cel_programs_with(String::new())
-  }
-
-  #[doc(hidden)]
-  fn cel_rules(&self) -> Vec<CelRule> {
-    self.cel.iter().map(|p| p.rule.clone()).collect()
-  }
-
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
-
-    macro_rules! check_prop_some {
-      ($($id:ident),*) => {
-        $(self.$id.is_some()) ||*
-      };
-    }
-
-    if self.const_.is_some()
-      && (!self.cel.is_empty()
-        || check_prop_some!(
-          in_,
-          not_in,
-          well_known,
-          len,
-          min_len,
-          max_len,
-          len_bytes,
-          min_bytes,
-          max_bytes,
-          suffix,
-          prefix,
-          contains,
-          not_contains
-        )
-        || self.has_pattern())
-    {
-      errors.push(ConsistencyError::ConstWithOtherRules);
-    }
-
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
-
-      for key in custom_messages.keys() {
-        macro_rules! check_unused_messages {
-          ($($name:ident),*) => {
-            paste! {
-              match key {
-                StringViolation::Required => self.required,
-                StringViolation::In => self.in_.is_some(),
-                StringViolation::Const => self.const_.is_some(),
-                StringViolation::WellKnownRegex => self.well_known.is_some(),
-                #[cfg(feature = "regex")]
-                StringViolation::Pattern => self.pattern.is_some(),
-                $(StringViolation::[< $name:camel >] => self.$name.is_some(),)*
-                _ => true,
-              }
-            }
-          };
-        }
-
-        let is_used = check_unused_messages!(
-          len,
-          min_len,
-          max_len,
-          len_bytes,
-          min_bytes,
-          max_bytes,
-          prefix,
-          suffix,
-          contains,
-          not_contains,
-          not_in
-        );
-
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
-
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
-
-    #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
-
-    if let Some(forbidden_substr) = self.not_contains.as_deref() {
-      if let Some(required_substr) = self.contains.as_deref()
-        && required_substr.contains(forbidden_substr)
-      {
-        errors.push(ConsistencyError::ContradictoryInput(
-          "`not_contains` is a substring of `contains`".to_string(),
-        ));
-      }
-
-      if let Some(prefix) = self.prefix.as_deref()
-        && prefix.contains(forbidden_substr)
-      {
-        errors.push(ConsistencyError::ContradictoryInput(
-          "`not_contains` is a substring of `prefix`".to_string(),
-        ));
-      }
-
-      if let Some(suffix) = self.suffix.as_deref()
-        && suffix.contains(forbidden_substr)
-      {
-        errors.push(ConsistencyError::ContradictoryInput(
-          "`not_contains` is a substring of `suffix`".to_string(),
-        ));
-      }
-
-      if let Some(allowed_values) = self.in_.as_ref() {
-        for str in allowed_values {
-          if str.contains(forbidden_substr) {
-            errors.push(ConsistencyError::ContradictoryInput(
-              format!("The `in` list contains '{str}', which matches the `not_contains` substring '{forbidden_substr}'")
-            ));
-          }
-        }
-      }
-    }
-
-    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.into());
-    }
-
-    if let Err(e) = check_length_rules(
-      Some(length_rule_value!("len", self.len)),
-      length_rule_value!("min_len", self.min_len),
-      length_rule_value!("max_len", self.max_len),
-    ) {
-      errors.push(e);
-    }
-
-    if let Err(e) = check_length_rules(
-      Some(length_rule_value!("len_bytes", self.len_bytes)),
-      length_rule_value!("min_bytes", self.min_bytes),
-      length_rule_value!("max_bytes", self.max_bytes),
-    ) {
-      errors.push(e);
-    }
-
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
-
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&str>) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
 
     let mut is_valid = IsValid::Yes;
 
@@ -418,14 +224,12 @@ impl Validator<String> for StringValidator {
       };
     }
 
-    if self.required && val.is_none_or(|v| v.borrow().is_empty()) {
+    if self.required && val.is_none_or(|v| v.is_empty()) {
       handle_violation!(Required, "is required".to_string());
       return Ok(is_valid);
     }
 
     if let Some(val) = val {
-      let val = val.borrow();
-
       if let Some(const_val) = &self.const_ {
         if val != const_val.as_ref() {
           handle_violation!(Const, format!("must be equal to {const_val}"));
@@ -691,6 +495,209 @@ impl Validator<String> for StringValidator {
     }
 
     Ok(is_valid)
+  }
+}
+
+impl StringValidator {
+  #[inline]
+  const fn has_pattern(&self) -> bool {
+    #[cfg(feature = "regex")]
+    {
+      self.pattern.is_some()
+    }
+    #[cfg(not(feature = "regex"))]
+    {
+      false
+    }
+  }
+}
+
+impl_proto_type!(String, String);
+impl_proto_map_key!(String, String);
+
+impl Validator<String> for StringValidator {
+  type Target = str;
+
+  #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
+  fn check_cel_programs_with(
+    &self,
+    val: <Self::Target as ToOwned>::Owned,
+  ) -> Result<(), Vec<CelError>> {
+    if self.cel.is_empty() {
+      Ok(())
+    } else {
+      test_programs(&self.cel, val)
+    }
+  }
+
+  #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
+  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+    self.check_cel_programs_with(String::new())
+  }
+
+  #[doc(hidden)]
+  #[inline(never)]
+  #[cold]
+  fn cel_rules(&self) -> Vec<CelRule> {
+    self.cel.iter().map(|p| p.rule.clone()).collect()
+  }
+
+  #[inline(never)]
+  #[cold]
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+    let mut errors = Vec::new();
+
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some()
+      && (!self.cel.is_empty()
+        || check_prop_some!(
+          in_,
+          not_in,
+          well_known,
+          len,
+          min_len,
+          max_len,
+          len_bytes,
+          min_bytes,
+          max_bytes,
+          suffix,
+          prefix,
+          contains,
+          not_contains
+        )
+        || self.has_pattern())
+    {
+      errors.push(ConsistencyError::ConstWithOtherRules);
+    }
+
+    if let Some(custom_messages) = self.error_messages.as_deref() {
+      let mut unused_messages: Vec<String> = Vec::new();
+
+      for key in custom_messages.keys() {
+        macro_rules! check_unused_messages {
+          ($($name:ident),*) => {
+            paste! {
+              match key {
+                StringViolation::Required => self.required,
+                StringViolation::In => self.in_.is_some(),
+                StringViolation::Const => self.const_.is_some(),
+                StringViolation::WellKnownRegex => self.well_known.is_some(),
+                #[cfg(feature = "regex")]
+                StringViolation::Pattern => self.pattern.is_some(),
+                $(StringViolation::[< $name:camel >] => self.$name.is_some(),)*
+                _ => true,
+              }
+            }
+          };
+        }
+
+        let is_used = check_unused_messages!(
+          len,
+          min_len,
+          max_len,
+          len_bytes,
+          min_bytes,
+          max_bytes,
+          prefix,
+          suffix,
+          contains,
+          not_contains,
+          not_in
+        );
+
+        if !is_used {
+          unused_messages.push(format!("{key:?}"));
+        }
+      }
+
+      if !unused_messages.is_empty() {
+        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+      }
+    }
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(ConsistencyError::from));
+    }
+
+    if let Some(forbidden_substr) = self.not_contains.as_deref() {
+      if let Some(required_substr) = self.contains.as_deref()
+        && required_substr.contains(forbidden_substr)
+      {
+        errors.push(ConsistencyError::ContradictoryInput(
+          "`not_contains` is a substring of `contains`".to_string(),
+        ));
+      }
+
+      if let Some(prefix) = self.prefix.as_deref()
+        && prefix.contains(forbidden_substr)
+      {
+        errors.push(ConsistencyError::ContradictoryInput(
+          "`not_contains` is a substring of `prefix`".to_string(),
+        ));
+      }
+
+      if let Some(suffix) = self.suffix.as_deref()
+        && suffix.contains(forbidden_substr)
+      {
+        errors.push(ConsistencyError::ContradictoryInput(
+          "`not_contains` is a substring of `suffix`".to_string(),
+        ));
+      }
+
+      if let Some(allowed_values) = self.in_.as_ref() {
+        for str in allowed_values {
+          if str.contains(forbidden_substr) {
+            errors.push(ConsistencyError::ContradictoryInput(
+              format!("The `in` list contains '{str}', which matches the `not_contains` substring '{forbidden_substr}'")
+            ));
+          }
+        }
+      }
+    }
+
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
+      errors.push(e.into());
+    }
+
+    if let Err(e) = check_length_rules(
+      Some(length_rule_value!("len", self.len)),
+      length_rule_value!("min_len", self.min_len),
+      length_rule_value!("max_len", self.max_len),
+    ) {
+      errors.push(e);
+    }
+
+    if let Err(e) = check_length_rules(
+      Some(length_rule_value!("len_bytes", self.len_bytes)),
+      length_rule_value!("min_bytes", self.min_bytes),
+      length_rule_value!("max_bytes", self.max_bytes),
+    ) {
+      errors.push(e);
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
+  #[inline]
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    self.__validate(ctx, val.map(|v| v.borrow()))
   }
 
   #[inline(never)]

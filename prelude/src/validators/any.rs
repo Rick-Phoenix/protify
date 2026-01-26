@@ -26,6 +26,70 @@ pub struct AnyValidator {
   pub error_messages: Option<ErrorMessages<AnyViolation>>,
 }
 
+impl AnyValidator {
+  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&Any>) -> ValidationResult {
+    handle_ignore_always!(&self.ignore);
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
+
+    let mut is_valid = IsValid::Yes;
+
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        is_valid &= ctx.add_violation(
+          ViolationKind::Any(AnyViolation::$id),
+          self
+            .error_messages
+            .as_deref()
+            .and_then(|map| map.get(&AnyViolation::$id))
+            .map(|m| Cow::Borrowed(m.as_ref()))
+            .unwrap_or_else(|| Cow::Owned($default)),
+        )?;
+      };
+    }
+
+    if let Some(val) = val {
+      if let Some(allowed_list) = &self.in_
+        && !allowed_list.contains(val.type_url.as_str())
+      {
+        handle_violation!(
+          In,
+          format!(
+            "must have one of these type URLs: {}",
+            FixedStr::format_list(allowed_list)
+          )
+        );
+      }
+
+      if let Some(forbidden_list) = &self.not_in
+        && forbidden_list.contains(val.type_url.as_str())
+      {
+        handle_violation!(
+          NotIn,
+          format!(
+            "cannot have one of these type URLs: {}",
+            FixedStr::format_list(forbidden_list)
+          )
+        );
+      }
+
+      #[cfg(feature = "cel")]
+      if !self.cel.is_empty() {
+        let cel_ctx = ProgramsExecutionCtx {
+          programs: &self.cel,
+          value: val.clone(),
+          ctx,
+        };
+
+        is_valid &= cel_ctx.execute_programs()?;
+      }
+    } else if self.required {
+      handle_violation!(Required, "is required".to_string());
+    }
+
+    Ok(is_valid)
+  }
+}
+
 impl Validator<Any> for AnyValidator {
   type Target = Any;
 
@@ -73,71 +137,12 @@ impl Validator<Any> for AnyValidator {
     }
   }
 
+  #[inline]
   fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_default()));
-
-    let mut is_valid = IsValid::Yes;
-
-    macro_rules! handle_violation {
-      ($id:ident, $default:expr) => {
-        is_valid &= ctx.add_violation(
-          ViolationKind::Any(AnyViolation::$id),
-          self
-            .error_messages
-            .as_deref()
-            .and_then(|map| map.get(&AnyViolation::$id))
-            .map(|m| Cow::Borrowed(m.as_ref()))
-            .unwrap_or_else(|| Cow::Owned($default)),
-        )?;
-      };
-    }
-
-    if let Some(val) = val {
-      let val = val.borrow();
-
-      if let Some(allowed_list) = &self.in_
-        && !allowed_list.contains(val.type_url.as_str())
-      {
-        handle_violation!(
-          In,
-          format!(
-            "must have one of these type URLs: {}",
-            FixedStr::format_list(allowed_list)
-          )
-        );
-      }
-
-      if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.contains(val.type_url.as_str())
-      {
-        handle_violation!(
-          NotIn,
-          format!(
-            "cannot have one of these type URLs: {}",
-            FixedStr::format_list(forbidden_list)
-          )
-        );
-      }
-
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        let cel_ctx = ProgramsExecutionCtx {
-          programs: &self.cel,
-          value: val.clone(),
-          ctx,
-        };
-
-        is_valid &= cel_ctx.execute_programs()?;
-      }
-    } else if self.required {
-      handle_violation!(Required, "is required".to_string());
-    }
-
-    Ok(is_valid)
+    self.__validate(ctx, val.map(|v| v.borrow()))
   }
 
   #[inline(never)]

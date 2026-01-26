@@ -170,6 +170,8 @@ macro_rules! impl_testing_methods {
     }
 
     #[doc(hidden)]
+    #[inline(never)]
+    #[cold]
     fn cel_rules(&self) -> Vec<CelRule> {
       self.cel.iter().map(|p| p.rule.clone()).collect()
     }

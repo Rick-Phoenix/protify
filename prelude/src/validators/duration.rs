@@ -41,82 +41,8 @@ pub struct DurationValidator {
   pub error_messages: Option<ErrorMessages<DurationViolation>>,
 }
 
-impl Validator<Duration> for DurationValidator {
-  type Target = Duration;
-
-  impl_testing_methods!();
-
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
-
-    macro_rules! check_prop_some {
-      ($($id:ident),*) => {
-        $(self.$id.is_some()) ||*
-      };
-    }
-
-    if self.const_.is_some()
-      && (!self.cel.is_empty() || check_prop_some!(in_, not_in, lt, lte, gt, gte))
-    {
-      errors.push(ConsistencyError::ConstWithOtherRules);
-    }
-
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
-
-      for key in custom_messages.keys() {
-        macro_rules! check_unused_messages {
-          ($($name:ident),*) => {
-            paste! {
-              match key {
-                DurationViolation::Required => self.required,
-                DurationViolation::In => self.in_.is_some(),
-                DurationViolation::Const => self.const_.is_some(),
-                $(DurationViolation::[< $name:camel >] => self.$name.is_some(),)*
-                _ => true,
-              }
-            }
-          };
-        }
-
-        let is_used = check_unused_messages!(gt, gte, lt, lte, not_in);
-
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
-
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
-
-    #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
-
-    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.into());
-    }
-
-    if let Err(e) = check_comparable_rules(self.lt, self.lte, self.gt, self.gte) {
-      errors.push(e);
-    }
-
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
-
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+impl DurationValidator {
+  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<Duration>) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
 
     let mut is_valid = IsValid::Yes;
@@ -136,8 +62,6 @@ impl Validator<Duration> for DurationValidator {
     }
 
     if let Some(val) = val {
-      let val = *val.borrow();
-
       if let Some(const_val) = self.const_ {
         if val != const_val {
           handle_violation!(
@@ -231,6 +155,87 @@ impl Validator<Duration> for DurationValidator {
     }
 
     Ok(is_valid)
+  }
+}
+
+impl Validator<Duration> for DurationValidator {
+  type Target = Duration;
+
+  impl_testing_methods!();
+
+  #[inline(never)]
+  #[cold]
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+    let mut errors = Vec::new();
+
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some()
+      && (!self.cel.is_empty() || check_prop_some!(in_, not_in, lt, lte, gt, gte))
+    {
+      errors.push(ConsistencyError::ConstWithOtherRules);
+    }
+
+    if let Some(custom_messages) = self.error_messages.as_deref() {
+      let mut unused_messages: Vec<String> = Vec::new();
+
+      for key in custom_messages.keys() {
+        macro_rules! check_unused_messages {
+          ($($name:ident),*) => {
+            paste! {
+              match key {
+                DurationViolation::Required => self.required,
+                DurationViolation::In => self.in_.is_some(),
+                DurationViolation::Const => self.const_.is_some(),
+                $(DurationViolation::[< $name:camel >] => self.$name.is_some(),)*
+                _ => true,
+              }
+            }
+          };
+        }
+
+        let is_used = check_unused_messages!(gt, gte, lt, lte, not_in);
+
+        if !is_used {
+          unused_messages.push(format!("{key:?}"));
+        }
+      }
+
+      if !unused_messages.is_empty() {
+        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+      }
+    }
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(ConsistencyError::from));
+    }
+
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
+      errors.push(e.into());
+    }
+
+    if let Err(e) = check_comparable_rules(self.lt, self.lte, self.gt, self.gte) {
+      errors.push(e);
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
+  #[inline]
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    self.__validate(ctx, val.map(|v| *v.borrow()))
   }
 
   #[inline(never)]

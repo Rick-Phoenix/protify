@@ -28,6 +28,102 @@ pub struct FieldMaskValidator {
   pub error_messages: Option<ErrorMessages<FieldMaskViolation>>,
 }
 
+impl FieldMaskValidator {
+  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&FieldMask>) -> ValidationResult {
+    handle_ignore_always!(&self.ignore);
+
+    let mut is_valid = IsValid::Yes;
+
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        is_valid &= ctx.add_violation(
+          ViolationKind::FieldMask(FieldMaskViolation::$id),
+          self
+            .error_messages
+            .as_deref()
+            .and_then(|map| map.get(&FieldMaskViolation::$id))
+            .map(|m| Cow::Borrowed(m.as_ref()))
+            .unwrap_or_else(|| Cow::Owned($default)),
+        )?;
+      };
+    }
+
+    if let Some(val) = val {
+      if let Some(const_val) = &self.const_ {
+        let const_val_len = const_val.items.len();
+
+        let matches_const = if const_val_len != val.paths.len() {
+          false
+        } else if const_val_len <= 64 {
+          Self::validate_exact_small(const_val, &val.paths)
+        } else {
+          Self::validate_exact_large(const_val, &val.paths, const_val_len)
+        };
+
+        if !matches_const {
+          handle_violation!(
+            Const,
+            format!(
+              "must contain exactly these paths: [ {} ]",
+              val.paths.join(", ")
+            )
+          );
+        }
+
+        // Using `const` implies no other rules
+        return Ok(is_valid);
+      }
+
+      if let Some(allowed_paths) = &self.in_ {
+        for path in &val.paths {
+          if !allowed_paths.contains(path.as_str()) {
+            handle_violation!(
+              In,
+              format!(
+                "can only contain these paths: {}",
+                FixedStr::format_list(allowed_paths)
+              )
+            );
+
+            break;
+          }
+        }
+      }
+
+      if let Some(forbidden_paths) = &self.not_in {
+        for path in &val.paths {
+          if forbidden_paths.contains(path.as_str()) {
+            handle_violation!(
+              NotIn,
+              format!(
+                "cannot contain one of these paths: {}",
+                FixedStr::format_list(forbidden_paths)
+              )
+            );
+
+            break;
+          }
+        }
+      }
+
+      #[cfg(feature = "cel")]
+      if !self.cel.is_empty() {
+        let cel_ctx = ProgramsExecutionCtx {
+          programs: &self.cel,
+          value: val.clone(),
+          ctx,
+        };
+
+        is_valid &= cel_ctx.execute_programs()?;
+      }
+    } else if self.required {
+      handle_violation!(Required, "is required".to_string());
+    }
+
+    Ok(is_valid)
+  }
+}
+
 impl ProtoValidation for FieldMask {
   type Target = Self;
   type Stored = Self;
@@ -103,103 +199,12 @@ impl Validator<FieldMask> for FieldMaskValidator {
     }
   }
 
+  #[inline]
   fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    handle_ignore_always!(&self.ignore);
-
-    let mut is_valid = IsValid::Yes;
-
-    macro_rules! handle_violation {
-      ($id:ident, $default:expr) => {
-        is_valid &= ctx.add_violation(
-          ViolationKind::FieldMask(FieldMaskViolation::$id),
-          self
-            .error_messages
-            .as_deref()
-            .and_then(|map| map.get(&FieldMaskViolation::$id))
-            .map(|m| Cow::Borrowed(m.as_ref()))
-            .unwrap_or_else(|| Cow::Owned($default)),
-        )?;
-      };
-    }
-
-    if let Some(val) = val {
-      let val = val.borrow();
-
-      if let Some(const_val) = &self.const_ {
-        let const_val_len = const_val.items.len();
-
-        let matches_const = if const_val_len != val.paths.len() {
-          false
-        } else if const_val_len <= 64 {
-          Self::validate_exact_small(const_val, &val.paths)
-        } else {
-          Self::validate_exact_large(const_val, &val.paths, const_val_len)
-        };
-
-        if !matches_const {
-          handle_violation!(
-            Const,
-            format!(
-              "must contain exactly these paths: [ {} ]",
-              val.paths.join(", ")
-            )
-          );
-        }
-
-        // Using `const` implies no other rules
-        return Ok(is_valid);
-      }
-
-      if let Some(allowed_paths) = &self.in_ {
-        for path in &val.paths {
-          if !allowed_paths.contains(path.as_str()) {
-            handle_violation!(
-              In,
-              format!(
-                "can only contain these paths: {}",
-                FixedStr::format_list(allowed_paths)
-              )
-            );
-
-            break;
-          }
-        }
-      }
-
-      if let Some(forbidden_paths) = &self.not_in {
-        for path in &val.paths {
-          if forbidden_paths.contains(path.as_str()) {
-            handle_violation!(
-              NotIn,
-              format!(
-                "cannot contain one of these paths: {}",
-                FixedStr::format_list(forbidden_paths)
-              )
-            );
-
-            break;
-          }
-        }
-      }
-
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        let cel_ctx = ProgramsExecutionCtx {
-          programs: &self.cel,
-          value: val.clone(),
-          ctx,
-        };
-
-        is_valid &= cel_ctx.execute_programs()?;
-      }
-    } else if self.required {
-      handle_violation!(Required, "is required".to_string());
-    }
-
-    Ok(is_valid)
+    self.__validate(ctx, val.map(|v| v.borrow()))
   }
 
   #[inline(never)]

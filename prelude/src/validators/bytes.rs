@@ -64,133 +64,9 @@ pub struct BytesValidator {
 }
 
 impl BytesValidator {
-  const fn has_pattern(&self) -> bool {
-    #[cfg(feature = "regex")]
-    {
-      self.pattern.is_some()
-    }
-    #[cfg(not(feature = "regex"))]
-    {
-      false
-    }
-  }
-}
-
-impl Validator<Bytes> for BytesValidator {
-  type Target = Bytes;
-
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
-
-    macro_rules! check_prop_some {
-      ($($id:ident),*) => {
-        $(self.$id.is_some()) ||*
-      };
-    }
-
-    if self.const_.is_some()
-      && (!self.cel.is_empty()
-        || check_prop_some!(
-          len, min_len, max_len, prefix, suffix, contains, in_, not_in, well_known
-        )
-        || self.has_pattern())
-    {
-      errors.push(ConsistencyError::ConstWithOtherRules);
-    }
-
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
-
-      for key in custom_messages.keys() {
-        macro_rules! check_unused_messages {
-          ($($name:ident),*) => {
-            paste! {
-              match key {
-                BytesViolation::Required => self.required,
-                BytesViolation::In => self.in_.is_some(),
-                BytesViolation::Const => self.const_.is_some(),
-                BytesViolation::Ip
-                | BytesViolation::Ipv4
-                | BytesViolation::Ipv6
-                | BytesViolation::Uuid => self.well_known.is_some(),
-                #[cfg(feature = "regex")]
-                BytesViolation::Pattern => self.pattern.is_some(),
-                $(BytesViolation::[< $name:camel >] => self.$name.is_some(),)*
-                _ => true,
-              }
-            }
-          };
-        }
-
-        let is_used =
-          check_unused_messages!(len, min_len, max_len, contains, prefix, suffix, not_in);
-
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
-
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
-
-    #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
-
-    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.into());
-    }
-
-    if let Err(e) = check_length_rules(
-      Some(length_rule_value!("len", self.len)),
-      length_rule_value!("min_len", self.min_len),
-      length_rule_value!("max_len", self.max_len),
-    ) {
-      errors.push(e);
-    }
-
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
-
-  #[doc(hidden)]
-  fn cel_rules(&self) -> Vec<CelRule> {
-    self.cel.iter().map(|p| p.rule.clone()).collect()
-  }
-
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-    self.check_cel_programs_with(Bytes::default())
-  }
-
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
-    if self.cel.is_empty() {
-      Ok(())
-    } else {
-      // This one needs a special impl because Bytes does not support Into<Value>
-      test_programs(&self.cel, val.to_vec())
-    }
-  }
-
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&Bytes>) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
 
     let mut is_valid = IsValid::Yes;
 
@@ -208,14 +84,12 @@ impl Validator<Bytes> for BytesValidator {
       };
     }
 
-    if self.required && val.is_none_or(|v| v.borrow().is_empty()) {
+    if self.required && val.is_none_or(|v| v.is_empty()) {
       handle_violation!(Required, "is required".to_string());
       return Ok(is_valid);
     }
 
     if let Some(val) = val {
-      let val = val.borrow();
-
       if let Some(const_val) = &self.const_ {
         if *val != const_val {
           handle_violation!(
@@ -356,6 +230,137 @@ impl Validator<Bytes> for BytesValidator {
     }
 
     Ok(is_valid)
+  }
+}
+
+impl BytesValidator {
+  const fn has_pattern(&self) -> bool {
+    #[cfg(feature = "regex")]
+    {
+      self.pattern.is_some()
+    }
+    #[cfg(not(feature = "regex"))]
+    {
+      false
+    }
+  }
+}
+
+impl Validator<Bytes> for BytesValidator {
+  type Target = Bytes;
+
+  #[inline(never)]
+  #[cold]
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+    let mut errors = Vec::new();
+
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some()
+      && (!self.cel.is_empty()
+        || check_prop_some!(
+          len, min_len, max_len, prefix, suffix, contains, in_, not_in, well_known
+        )
+        || self.has_pattern())
+    {
+      errors.push(ConsistencyError::ConstWithOtherRules);
+    }
+
+    if let Some(custom_messages) = self.error_messages.as_deref() {
+      let mut unused_messages: Vec<String> = Vec::new();
+
+      for key in custom_messages.keys() {
+        macro_rules! check_unused_messages {
+          ($($name:ident),*) => {
+            paste! {
+              match key {
+                BytesViolation::Required => self.required,
+                BytesViolation::In => self.in_.is_some(),
+                BytesViolation::Const => self.const_.is_some(),
+                BytesViolation::Ip
+                | BytesViolation::Ipv4
+                | BytesViolation::Ipv6
+                | BytesViolation::Uuid => self.well_known.is_some(),
+                #[cfg(feature = "regex")]
+                BytesViolation::Pattern => self.pattern.is_some(),
+                $(BytesViolation::[< $name:camel >] => self.$name.is_some(),)*
+                _ => true,
+              }
+            }
+          };
+        }
+
+        let is_used =
+          check_unused_messages!(len, min_len, max_len, contains, prefix, suffix, not_in);
+
+        if !is_used {
+          unused_messages.push(format!("{key:?}"));
+        }
+      }
+
+      if !unused_messages.is_empty() {
+        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+      }
+    }
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(ConsistencyError::from));
+    }
+
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
+      errors.push(e.into());
+    }
+
+    if let Err(e) = check_length_rules(
+      Some(length_rule_value!("len", self.len)),
+      length_rule_value!("min_len", self.min_len),
+      length_rule_value!("max_len", self.max_len),
+    ) {
+      errors.push(e);
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
+  #[doc(hidden)]
+  fn cel_rules(&self) -> Vec<CelRule> {
+    self.cel.iter().map(|p| p.rule.clone()).collect()
+  }
+
+  #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
+  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+    self.check_cel_programs_with(Bytes::default())
+  }
+
+  #[cfg(feature = "cel")]
+  #[inline(never)]
+  #[cold]
+  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+    if self.cel.is_empty() {
+      Ok(())
+    } else {
+      // This one needs a special impl because Bytes does not support Into<Value>
+      test_programs(&self.cel, val.to_vec())
+    }
+  }
+
+  #[inline]
+  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    self.__validate(ctx, val.map(|v| v.borrow()))
   }
 
   #[inline(never)]

@@ -33,6 +33,61 @@ pub struct EnumValidator<T: ProtoEnum> {
   pub error_messages: Option<ErrorMessages<EnumViolation>>,
 }
 
+impl<T: ProtoEnum> EnumValidator<T> {
+  fn validate_as_int(&self, ctx: &mut ValidationCtx, val: i32) -> ValidationResult {
+    let mut is_valid = IsValid::Yes;
+
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        is_valid &= ctx.add_violation(
+          ViolationKind::Enum(EnumViolation::$id),
+          self
+            .error_messages
+            .as_deref()
+            .and_then(|map| map.get(&EnumViolation::$id))
+            .map(|m| Cow::Borrowed(m.as_ref()))
+            .unwrap_or_else(|| Cow::Owned($default)),
+        )?;
+      };
+    }
+
+    if let Some(const_val) = self.const_ {
+      if val != const_val {
+        handle_violation!(Const, format!("must be equal to {const_val}"));
+      }
+
+      // Using `const` implies no other rules
+      return Ok(is_valid);
+    }
+
+    if let Some(allowed_list) = &self.in_
+      && !allowed_list.items.contains(&val)
+    {
+      handle_violation!(
+        In,
+        format!(
+          "must be one of these values: {}",
+          i32::format_list(allowed_list)
+        )
+      );
+    }
+
+    if let Some(forbidden_list) = &self.not_in
+      && forbidden_list.items.contains(&val)
+    {
+      handle_violation!(
+        NotIn,
+        format!(
+          "cannot be one of these values: {}",
+          i32::format_list(forbidden_list)
+        )
+      );
+    }
+
+    Ok(is_valid)
+  }
+}
+
 impl<T: ProtoEnum> Default for EnumValidator<T> {
   #[inline]
   fn default() -> Self {
@@ -159,41 +214,10 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     if let Some(val) = val {
       let val = *val.borrow();
 
-      if let Some(const_val) = self.const_ {
-        if val != const_val {
-          handle_violation!(Const, format!("must be equal to {const_val}"));
-        }
-
-        // Using `const` implies no other rules
-        return Ok(is_valid);
-      }
+      is_valid &= self.validate_as_int(ctx, val)?;
 
       if self.defined_only && T::try_from(val).is_err() {
         handle_violation!(DefinedOnly, "must be a known enum value".to_string());
-      }
-
-      if let Some(allowed_list) = &self.in_
-        && !allowed_list.items.contains(&val)
-      {
-        handle_violation!(
-          In,
-          format!(
-            "must be one of these values: {}",
-            i32::format_list(allowed_list)
-          )
-        );
-      }
-
-      if let Some(forbidden_list) = &self.not_in
-        && forbidden_list.items.contains(&val)
-      {
-        handle_violation!(
-          NotIn,
-          format!(
-            "cannot be one of these values: {}",
-            i32::format_list(forbidden_list)
-          )
-        );
       }
 
       #[cfg(feature = "cel")]
