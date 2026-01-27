@@ -9,11 +9,13 @@ mod tests {
 }
 
 use ::bytes::Bytes;
+use paste::paste;
 use prelude::{proto_enum, proto_oneof};
 use prelude::{
-  proto_types::{Any, Duration, FieldMask, Timestamp},
+  proto_types::{Any, Duration, FieldMask, Timestamp, common::*, rpc::*},
   *,
 };
+use proto_types::Empty;
 use std::collections::HashMap;
 
 pub mod server_models;
@@ -23,6 +25,84 @@ define_proto_file!(
   TEST_SCHEMAS_FILE,
   name = "test_schemas.proto",
   package = TEST_SCHEMAS
+);
+
+macro_rules! common_enums {
+  ($($name:ident),*) => {
+    paste! {
+      #[proto_message]
+      #[proto(skip_checks(all))]
+      pub struct CommonEnums {
+        $(
+          #[proto(enum_($name))]
+          pub [< $name:snake >]: i32,
+        )*
+      }
+    }
+  };
+}
+
+common_enums!(Code, DayOfWeek, CalendarPeriod, Month);
+
+#[proto_message]
+#[proto(skip_checks(all))]
+pub struct NestedCommonMessages {
+  #[proto(message)]
+  pub prec_violation: Option<precondition_failure::Violation>,
+  #[proto(message)]
+  pub quota_violation: Option<quota_failure::Violation>,
+  #[proto(message)]
+  pub field_violation: Option<bad_request::FieldViolation>,
+  #[proto(message)]
+  pub link: Option<help::Link>,
+}
+
+macro_rules! common_messages {
+  ($($name:ident),*) => {
+    paste! {
+      #[proto_message]
+      #[proto(skip_checks(all))]
+      pub struct CommonMessages {
+        $(
+          #[proto(message)]
+          pub [< $name:snake >]: Option<$name>,
+        )*
+      }
+    }
+  };
+}
+
+common_messages!(
+  Date,
+  DateTime,
+  Empty,
+  Status,
+  Interval,
+  Money,
+  Color,
+  Fraction,
+  Decimal,
+  PostalAddress,
+  PhoneNumber,
+  Quaternion,
+  LocalizedText,
+  Expr,
+  LatLng,
+  TimeZone,
+  TimeOfDay,
+  ErrorInfo,
+  DebugInfo,
+  RetryInfo,
+  QuotaFailure,
+  PreconditionFailure,
+  BadRequest,
+  RequestInfo,
+  ResourceInfo,
+  Help,
+  LocalizedMessage,
+  HttpRequest,
+  HttpResponse,
+  HttpHeader
 );
 
 #[proto_oneof]

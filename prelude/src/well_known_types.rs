@@ -2,6 +2,38 @@ use proto_types::{Any, Code, Duration, Empty, FieldMask, Status, Timestamp};
 
 use crate::*;
 
+macro_rules! impl_no_op_validator {
+  ($($name:path),*) => {
+    $(
+      impl ProtoValidation for $name {
+        #[doc(hidden)]
+        type Builder = NoOpValidatorBuilder<Self>;
+        #[doc(hidden)]
+        type Stored = Self;
+        #[doc(hidden)]
+        type Target = Self;
+        #[doc(hidden)]
+        type Validator = NoOpValidator<Self>;
+
+        type UniqueStore<'a>
+          = LinearRefStore<'a, Self>
+        where
+          Self: 'a;
+      }
+
+      impl ValidatedMessage for $name {
+        #[inline(always)]
+        #[doc(hidden)]
+        fn validate_with_ctx(&self, _: &mut ValidationCtx) -> ValidationResult {
+          Ok(IsValid::Yes)
+        }
+      }
+    )*
+  };
+}
+
+impl_no_op_validator!(Empty, Status, Code);
+
 #[derive(Clone, Copy, Default)]
 pub struct NoOpValidator<T: ?Sized>(PhantomData<T>);
 
@@ -76,6 +108,30 @@ impl AsProtoType for () {
   }
 }
 
+impl ProtoValidation for () {
+  #[doc(hidden)]
+  type Builder = NoOpValidatorBuilder<Self>;
+  #[doc(hidden)]
+  type Stored = Self;
+  #[doc(hidden)]
+  type Target = Self;
+  #[doc(hidden)]
+  type Validator = NoOpValidator<Self>;
+
+  type UniqueStore<'a>
+    = LinearRefStore<'a, Self>
+  where
+    Self: 'a;
+}
+
+impl ValidatedMessage for () {
+  #[inline(always)]
+  #[doc(hidden)]
+  fn validate_with_ctx(&self, _: &mut ValidationCtx) -> ValidationResult {
+    Ok(IsValid::Yes)
+  }
+}
+
 impl AsProtoType for Empty {
   fn proto_type() -> ProtoType {
     ProtoType::Message(ProtoPath {
@@ -108,42 +164,12 @@ impl AsProtoType for Status {
 
 impl AsProtoType for Code {
   fn proto_type() -> ProtoType {
-    ProtoType::Message(ProtoPath {
+    ProtoType::Enum(ProtoPath {
       name: "Code".into(),
       package: "google.rpc".into(),
       file: "google/rpc/code.proto".into(),
     })
   }
-}
-
-macro_rules! impl_no_op_validator {
-  ($($name:path),*) => {
-    $(
-      impl ProtoValidation for $name {
-        #[doc(hidden)]
-        type Builder = NoOpValidatorBuilder<Self>;
-        #[doc(hidden)]
-        type Stored = Self;
-        #[doc(hidden)]
-        type Target = Self;
-        #[doc(hidden)]
-        type Validator = NoOpValidator<Self>;
-
-        type UniqueStore<'a>
-          = LinearRefStore<'a, Self>
-        where
-          Self: 'a;
-      }
-
-      impl ValidatedMessage for $name {
-        #[inline(always)]
-        #[doc(hidden)]
-        fn validate_with_ctx(&self, _: &mut ValidationCtx) -> ValidationResult {
-          Ok(IsValid::Yes)
-        }
-      }
-    )*
-  };
 }
 
 #[cfg(feature = "common-types")]
