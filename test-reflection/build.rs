@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 
-use builder::set_up_validators;
+use builder::DescriptorDataConfig;
 use prost_build::Config;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,7 +24,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .btree_map([".test_schemas.v1.BTreeMapTest.map"])
     .out_dir(&out_dir);
 
-  let desc_data = set_up_validators(&mut config, files, include_paths, &["test_schemas.v1"])?;
+  let desc_data = DescriptorDataConfig::new()
+    .collect_oneofs_data()
+    .set_up_validators(&mut config, files, include_paths, &["test_schemas.v1"])?;
 
   let skip_test_attr = "#[proto(skip_checks(all))]";
 

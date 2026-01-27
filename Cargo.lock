@@ -2071,7 +2071,6 @@ dependencies = [
 name = "test-server"
 version = "0.1.0"
 dependencies = [
- "builder",
  "deadpool-diesel",
  "deadpool-sync",
  "diesel",

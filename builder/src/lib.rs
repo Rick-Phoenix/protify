@@ -8,6 +8,57 @@ use prost_build::Config;
 use prost_reflect::{prost::Message as ProstMessage, prost_types::FileDescriptorSet};
 
 #[derive(Default)]
+pub struct DescriptorDataConfig {
+  collect_oneofs_data: bool,
+  collect_enums_data: bool,
+  collect_messages_data: bool,
+}
+
+impl DescriptorDataConfig {
+  pub fn set_up_validators(
+    &self,
+    config: &mut Config,
+    files: &[impl AsRef<Path>],
+    include_paths: &[impl AsRef<Path>],
+    packages: &[&str],
+  ) -> Result<DescriptorData, Box<dyn std::error::Error>> {
+    set_up_validators_inner(self, config, files, include_paths, packages)
+  }
+
+  #[must_use]
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  #[must_use]
+  pub const fn collect_all_data() -> Self {
+    Self {
+      collect_oneofs_data: true,
+      collect_enums_data: true,
+      collect_messages_data: true,
+    }
+  }
+
+  #[must_use]
+  pub const fn collect_oneofs_data(mut self) -> Self {
+    self.collect_oneofs_data = true;
+    self
+  }
+
+  #[must_use]
+  pub const fn collect_enums_data(mut self) -> Self {
+    self.collect_enums_data = true;
+    self
+  }
+
+  #[must_use]
+  pub const fn collect_messages_data(mut self) -> Self {
+    self.collect_messages_data = true;
+    self
+  }
+}
+
+#[derive(Default)]
 pub struct DescriptorData {
   pub oneofs: Vec<Oneof>,
   pub enums: Vec<Enum>,
@@ -99,6 +150,22 @@ pub fn set_up_validators(
   include_paths: &[impl AsRef<Path>],
   packages: &[&str],
 ) -> Result<DescriptorData, Box<dyn std::error::Error>> {
+  set_up_validators_inner(
+    &DescriptorDataConfig::default(),
+    config,
+    files,
+    include_paths,
+    packages,
+  )
+}
+
+fn set_up_validators_inner(
+  desc_data_config: &DescriptorDataConfig,
+  config: &mut Config,
+  files: &[impl AsRef<Path>],
+  include_paths: &[impl AsRef<Path>],
+  packages: &[&str],
+) -> Result<DescriptorData, Box<dyn std::error::Error>> {
   let out_dir = env::var("OUT_DIR")
     .map(PathBuf::from)
     .unwrap_or(env::temp_dir());
@@ -108,7 +175,7 @@ pub fn set_up_validators(
     .extern_path(".buf.validate", "::proto_types::protovalidate")
     .compile_well_known_types();
 
-  let temp_descriptor_path = out_dir.join("temp_file_descriptor_set.bin");
+  let temp_descriptor_path = out_dir.join("__temp_file_descriptor_set.bin");
   {
     let mut temp_config = prost_build::Config::new();
     temp_config.file_descriptor_set_path(&temp_descriptor_path);
@@ -130,13 +197,15 @@ pub fn set_up_validators(
     if packages.contains(&package) {
       let message_name = message_desc.full_name();
 
-      desc_data.messages.push(Message {
-        name: message_desc.name().to_string(),
-        parent_message: message_desc
-          .parent_message()
-          .map(|p| full_ish_name(p.full_name(), package).to_string()),
-        package: package.to_string(),
-      });
+      if desc_data_config.collect_messages_data {
+        desc_data.messages.push(Message {
+          name: message_desc.name().to_string(),
+          parent_message: message_desc
+            .parent_message()
+            .map(|p| full_ish_name(p.full_name(), package).to_string()),
+          package: package.to_string(),
+        });
+      }
 
       config.message_attribute(message_name, "#[derive(::prelude::ValidatedMessage)]");
       #[cfg(feature = "cel")]
@@ -151,11 +220,13 @@ pub fn set_up_validators(
       for oneof in message_desc.oneofs() {
         let parent_message = oneof.parent_message().full_name();
 
-        desc_data.oneofs.push(Oneof {
-          name: oneof.name().to_string(),
-          parent_message: full_ish_name(parent_message, package).to_string(),
-          package: package.to_string(),
-        });
+        if desc_data_config.collect_oneofs_data {
+          desc_data.oneofs.push(Oneof {
+            name: oneof.name().to_string(),
+            parent_message: full_ish_name(parent_message, package).to_string(),
+            package: package.to_string(),
+          });
+        }
 
         config.enum_attribute(oneof.full_name(), "#[derive(::prelude::ValidatedOneof)]");
         #[cfg(feature = "cel")]
@@ -176,13 +247,15 @@ pub fn set_up_validators(
     if packages.contains(&package) {
       let enum_full_ish_name = full_ish_name(enum_desc.full_name(), package);
 
-      desc_data.enums.push(Enum {
-        name: enum_desc.name().to_string(),
-        parent_message: enum_desc
-          .parent_message()
-          .map(|p| full_ish_name(p.full_name(), package).to_string()),
-        package: package.to_string(),
-      });
+      if desc_data_config.collect_enums_data {
+        desc_data.enums.push(Enum {
+          name: enum_desc.name().to_string(),
+          parent_message: enum_desc
+            .parent_message()
+            .map(|p| full_ish_name(p.full_name(), package).to_string()),
+          package: package.to_string(),
+        });
+      }
 
       config.enum_attribute(enum_desc.full_name(), "#[derive(::prelude::ProtoEnum)]");
       config.enum_attribute(

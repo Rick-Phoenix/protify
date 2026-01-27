@@ -21,7 +21,6 @@ tokio-stream = { version = "0.1", features = ["net"] }
 
 [build-dependencies]
 tonic-prost-build = { workspace = true }
-builder = { path = "../builder" }
 test-schemas = { path = "../test-schemas/" }
 
 [lints]

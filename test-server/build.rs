@@ -1,6 +1,5 @@
 use std::env;
 
-use builder::set_up_validators;
 use tonic_prost_build::Config;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,11 +17,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let mut config = Config::new();
 
+  config
+    .extern_path(".google.protobuf", "::proto_types")
+    .extern_path(".buf.validate", "::proto_types::protovalidate")
+    .compile_well_known_types();
+
   for (name, path) in pkg.extern_paths() {
     config.extern_path(name, path);
   }
-
-  let _ = set_up_validators(&mut config, files, include_paths, &["db_test"])?;
 
   config.compile_protos(files, include_paths)?;
 

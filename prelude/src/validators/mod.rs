@@ -79,7 +79,7 @@ pub type ValidationResult = Result<IsValid, FailFast>;
 // AND an assoc. type for the actual type being validated
 // so that it can be proxied by wrappers (like with Sint32, Fixed32, enums, etc...).
 // Same for `ValidatorBuilderFor`.
-pub trait Validator<T: ?Sized>: Sized + Send + Sync {
+pub trait Validator<T: ?Sized>: Send + Sync {
   type Target: ToOwned + ?Sized;
 
   #[inline(never)]

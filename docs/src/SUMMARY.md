@@ -7,6 +7,7 @@
 - Usage
     - From Proto
     - With Schema
+    - No_std usage
 - [Schema Features]
     - Messages
     - Oneofs
@@ -17,7 +18,6 @@
     - Files
     - Collecting Schemas
     - Generating Schemas
-    - No_std usage
 - Validation
     - Standard Validators
     - Custom Validators
