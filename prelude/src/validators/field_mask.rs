@@ -137,11 +137,6 @@ impl ProtoValidation for FieldMask {
     = LinearRefStore<'a, Self>
   where
     Self: 'a;
-
-  #[inline]
-  fn make_unique_store<'a>(_: &Self::Validator, cap: usize) -> Self::UniqueStore<'a> {
-    LinearRefStore::default_with_capacity(cap)
-  }
 }
 
 impl Validator<FieldMask> for FieldMaskValidator {

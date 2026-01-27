@@ -18,12 +18,8 @@ impl ProtoValidation for Duration {
     = CopyHybridStore<Self>
   where
     Self: 'a;
-
-  #[inline]
-  fn make_unique_store<'a>(_: &Self::Validator, cap: usize) -> Self::UniqueStore<'a> {
-    CopyHybridStore::default_with_capacity(cap)
-  }
 }
+
 impl<S: State> ValidatorBuilderFor<Duration> for DurationValidatorBuilder<S> {
   type Target = Duration;
   type Validator = DurationValidator;

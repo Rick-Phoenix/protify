@@ -65,7 +65,7 @@ where
 #[derive(Default)]
 pub struct FloatEpsilonStore<T>
 where
-  T: FloatCore + FloatEq<Tol = T>,
+  T: FloatCore + FloatEq<Tol = T> + Default,
 {
   seen: Vec<OrderedFloat<T>>,
   abs_tol: T,
@@ -74,7 +74,7 @@ where
 
 impl<T> FloatEpsilonStore<T>
 where
-  T: FloatCore + FloatEq<Tol = T>,
+  T: FloatCore + FloatEq<Tol = T> + Default,
 {
   pub(crate) fn new(cap: usize, abs: T, rel: T) -> Self {
     let clamped_cap = clamp_capacity_for_unique_items_collection::<T>(cap);
@@ -84,25 +84,6 @@ where
       abs_tol: abs,
       rel_tol: rel,
     }
-  }
-
-  pub(crate) fn check_neighbors(&self, idx: usize, item: T) -> bool {
-    // Idx at insertion point
-    if let Some(above) = self.seen.get(idx)
-      && float_eq!(above.0, item, abs <= self.abs_tol, r2nd <= self.rel_tol)
-    {
-      return true;
-    }
-
-    // Idx before insertion point
-    if idx > 0
-      && let Some(below) = self.seen.get(idx - 1)
-      && float_eq!(below.0, item, abs <= self.abs_tol, r2nd <= self.rel_tol)
-    {
-      return true;
-    }
-
-    false
   }
 }
 
@@ -114,31 +95,35 @@ where
 
   #[inline]
   fn default_with_capacity(cap: usize) -> Self {
-    let clamped_cap = clamp_capacity_for_unique_items_collection::<T>(cap);
-
-    Self {
-      seen: Vec::with_capacity(clamped_cap),
-      abs_tol: Default::default(),
-      rel_tol: Default::default(),
-    }
+    Self::new(cap, T::default(), T::default())
   }
 
   #[inline]
   fn insert(&mut self, item: &Self::Item) -> bool {
-    let wrapped = OrderedFloat(*item);
+    let item = OrderedFloat(*item);
 
-    match self.seen.binary_search(&wrapped) {
-      // Exact bit-for-bit match found
+    match self.seen.binary_search(&item) {
       Ok(_) => false,
-
-      // No exact match. 'idx' is the insertion point.
       Err(idx) => {
-        let is_duplicate = self.check_neighbors(idx, *item);
+        let is_duplicate = if let Some(above) = self.seen.get(idx)
+          && float_eq!(above.0, item, abs <= self.abs_tol, r2nd <= self.rel_tol)
+        {
+          true
+        }
+        // Idx before insertion point
+        else if idx > 0
+          && let Some(below) = self.seen.get(idx - 1)
+          && float_eq!(below.0, item, abs <= self.abs_tol, r2nd <= self.rel_tol)
+        {
+          true
+        } else {
+          false
+        };
 
         if is_duplicate {
           false
         } else {
-          self.seen.insert(idx, wrapped);
+          self.seen.insert(idx, item);
           true
         }
       }
@@ -153,7 +138,6 @@ pub struct UnsupportedStore<T: ?Sized> {
 
 #[allow(clippy::new_without_default, clippy::must_use_candidate)]
 impl<T: ?Sized> UnsupportedStore<T> {
-  #[inline(never)]
   #[cold]
   pub const fn new() -> Self {
     Self {
@@ -183,13 +167,13 @@ pub enum RefHybridStore<'a, T>
 where
   T: 'a + ?Sized,
 {
-  Small(Vec<&'a T>),
-  Large(HashSet<&'a T>),
+  Linear(Vec<&'a T>),
+  BSearch(Vec<&'a T>),
 }
 
 impl<'a, T> UniqueStore<'a> for RefHybridStore<'a, T>
 where
-  T: 'a + Eq + Hash + Ord + ?Sized,
+  T: 'a + Ord + ?Sized,
 {
   type Item = T;
 
@@ -198,36 +182,43 @@ where
     let clamped_cap = clamp_capacity_for_unique_items_collection::<&T>(cap);
 
     if cap <= 32 {
-      Self::Small(Vec::with_capacity(clamped_cap))
+      Self::Linear(Vec::with_capacity(clamped_cap))
     } else {
-      Self::Large(HashSet::with_capacity(clamped_cap))
+      Self::BSearch(Vec::with_capacity(clamped_cap))
     }
   }
 
   #[inline]
   fn insert(&mut self, item: &'a T) -> bool {
     match self {
-      Self::Small(vec) => match vec.binary_search(&item) {
+      Self::BSearch(vec) => match vec.binary_search(&item) {
         Ok(_) => false,
         Err(idx) => {
           vec.insert(idx, item);
           true
         }
       },
-      Self::Large(set) => set.insert(item),
+      Self::Linear(vec) => {
+        if vec.contains(&item) {
+          false
+        } else {
+          vec.push(item);
+          true
+        }
+      }
     }
   }
 }
 
 #[doc(hidden)]
 pub enum CopyHybridStore<T> {
-  Small(Vec<T>),
-  Large(HashSet<T>),
+  Linear(Vec<T>),
+  BSearch(Vec<T>),
 }
 
 impl<'a, T> UniqueStore<'a> for CopyHybridStore<T>
 where
-  T: 'a + Copy + Eq + Hash + Ord,
+  T: 'a + Copy + Ord,
 {
   type Item = T;
 
@@ -236,23 +227,30 @@ where
     let clamped_cap = clamp_capacity_for_unique_items_collection::<T>(cap);
 
     if cap <= 32 {
-      Self::Small(Vec::with_capacity(clamped_cap))
+      Self::Linear(Vec::with_capacity(clamped_cap))
     } else {
-      Self::Large(HashSet::with_capacity(clamped_cap))
+      Self::BSearch(Vec::with_capacity(clamped_cap))
     }
   }
 
   #[inline]
   fn insert(&mut self, item: &'a T) -> bool {
     match self {
-      Self::Small(vec) => match vec.binary_search(item) {
+      Self::BSearch(vec) => match vec.binary_search(item) {
         Ok(_) => false,
         Err(idx) => {
           vec.insert(idx, *item);
           true
         }
       },
-      Self::Large(set) => set.insert(*item),
+      Self::Linear(vec) => {
+        if vec.contains(item) {
+          false
+        } else {
+          vec.push(*item);
+          true
+        }
+      }
     }
   }
 }

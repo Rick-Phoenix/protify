@@ -19,6 +19,9 @@ macro_rules! impl_no_op_validator {
           = LinearRefStore<'a, Self>
         where
           Self: 'a;
+
+        #[doc(hidden)]
+        const HAS_DEFAULT_VALIDATOR: bool = false;
       }
 
       impl ValidatedMessage for $name {
@@ -98,40 +101,6 @@ impl AsProtoType for Any {
   }
 }
 
-impl AsProtoType for () {
-  fn proto_type() -> ProtoType {
-    ProtoType::Message(ProtoPath {
-      name: "Empty".into(),
-      package: "google.protobuf".into(),
-      file: "google/protobuf/empty.proto".into(),
-    })
-  }
-}
-
-impl ProtoValidation for () {
-  #[doc(hidden)]
-  type Builder = NoOpValidatorBuilder<Self>;
-  #[doc(hidden)]
-  type Stored = Self;
-  #[doc(hidden)]
-  type Target = Self;
-  #[doc(hidden)]
-  type Validator = NoOpValidator<Self>;
-
-  type UniqueStore<'a>
-    = LinearRefStore<'a, Self>
-  where
-    Self: 'a;
-}
-
-impl ValidatedMessage for () {
-  #[inline(always)]
-  #[doc(hidden)]
-  fn validate_with_ctx(&self, _: &mut ValidationCtx) -> ValidationResult {
-    Ok(IsValid::Yes)
-  }
-}
-
 impl AsProtoType for Empty {
   fn proto_type() -> ProtoType {
     ProtoType::Message(ProtoPath {
@@ -177,8 +146,20 @@ mod google_dot_type {
   use super::*;
   use proto_types::*;
 
+  macro_rules! file_name {
+    ($name:ident, ) => {
+      paste! {
+        concat!("google/type/", stringify!([ < $name:snake > ]), ".proto")
+      }
+    };
+
+    ($name:ident, $manual:literal) => {
+      concat!("google/type/", $manual, ".proto")
+    };
+  }
+
   macro_rules! impl_types {
-    ($($name:ident),*) => {
+    ($($name:ident $(=> $file:literal)?),*) => {
       paste! {
         $(
           impl AsProtoType for $name {
@@ -186,7 +167,7 @@ mod google_dot_type {
               ProtoType::Message(ProtoPath {
                 name: stringify!($name).into(),
                 package: "google.type".into(),
-                file: concat!("google/type/", stringify!([ < $name:snake > ]), ".proto").into(),
+                file: file_name!($name, $($file)?).into(),
               })
             }
           }
@@ -210,57 +191,21 @@ mod google_dot_type {
     LocalizedText,
     Expr,
     CalendarPeriod,
-    Month
+    Month,
+    DateTime => "datetime",
+    TimeZone => "datetime",
+    LatLng => "latlng",
+    TimeOfDay => "timeofday"
   );
 
-  impl_no_op_validator!(DayOfWeek, LatLng, TimeZone, TimeOfDay, DateTime);
+  impl_no_op_validator!(DayOfWeek);
 
   impl AsProtoType for DayOfWeek {
     fn proto_type() -> ProtoType {
-      ProtoType::Message(ProtoPath {
+      ProtoType::Enum(ProtoPath {
         name: "DayOfWeek".into(),
         package: "google.type".into(),
         file: "google/type/dayofweek.proto".into(),
-      })
-    }
-  }
-
-  impl AsProtoType for LatLng {
-    fn proto_type() -> ProtoType {
-      ProtoType::Message(ProtoPath {
-        name: "LatLng".into(),
-        package: "google.type".into(),
-        file: "google/type/latlng.proto".into(),
-      })
-    }
-  }
-
-  impl AsProtoType for TimeZone {
-    fn proto_type() -> ProtoType {
-      ProtoType::Message(ProtoPath {
-        name: "TimeZone".into(),
-        package: "google.type".into(),
-        file: "google/type/datetime.proto".into(),
-      })
-    }
-  }
-
-  impl AsProtoType for TimeOfDay {
-    fn proto_type() -> ProtoType {
-      ProtoType::Message(ProtoPath {
-        name: "TimeOfDay".into(),
-        package: "google.type".into(),
-        file: "google/type/timeofday.proto".into(),
-      })
-    }
-  }
-
-  impl AsProtoType for DateTime {
-    fn proto_type() -> ProtoType {
-      ProtoType::Message(ProtoPath {
-        name: "DateTime".into(),
-        package: "google.type".into(),
-        file: "google/type/datetime.proto".into(),
       })
     }
   }
@@ -279,7 +224,7 @@ mod rpc_types {
             ProtoType::Message(ProtoPath {
               name: stringify!($name).into(),
               package: "google.rpc".into(),
-              file: concat!("google/rpc/", $file).into(),
+              file: concat!("google/rpc/", $file, ".proto").into(),
             })
           }
         }

@@ -8,7 +8,7 @@ repository.workspace = true
 keywords.workspace = true
 
 [dependencies]
-proto-types = { workspace = true, features = ["default"] }
+proto-types = { workspace = true, features = ["default", "all_common", "rpc"] }
 prelude = { path = "../prelude/", features = ["reflection"] }
 prost = { workspace = true }
 paste = "1"

@@ -462,15 +462,6 @@ macro_rules! impl_int_validator {
           = CopyHybridStore<$rust_type>
         where
           Self: 'a;
-
-        #[inline]
-        fn make_unique_store<'a>(
-          _: &Self::Validator,
-          cap: usize,
-        ) -> Self::UniqueStore<'a>
-        {
-          CopyHybridStore::default_with_capacity(cap)
-        }
       }
     }
   };

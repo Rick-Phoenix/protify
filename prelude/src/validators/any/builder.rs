@@ -39,14 +39,9 @@ impl ProtoValidation for Any {
   type Builder = AnyValidatorBuilder;
 
   type UniqueStore<'a>
-    = LinearRefStore<'a, Self>
+    = RefHybridStore<'a, Self>
   where
     Self: 'a;
-
-  #[inline]
-  fn make_unique_store<'a>(_: &Self::Validator, cap: usize) -> Self::UniqueStore<'a> {
-    LinearRefStore::default_with_capacity(cap)
-  }
 }
 
 impl<S: State> ValidatorBuilderFor<Any> for AnyValidatorBuilder<S> {

@@ -17,6 +17,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let mut config = Config::new();
   config
+    .extern_path(".google.type", "::proto_types")
+    .extern_path(".google.rpc", "::proto_types")
     .file_descriptor_set_path(&descriptor_path)
     .bytes(["."])
     .btree_map([".test_schemas.v1.BTreeMapTest.map"])
