@@ -12,11 +12,11 @@ similar-asserts = { workspace = true }
 
 [dependencies]
 maplit = "1"
-prelude = { path = "../prelude/" }
+prelude = { path = "../prelude/", features = ["common-types", "rpc-types"] }
 prost = { workspace = true }
 paste = "1"
 bytes = { workspace = true }
-proto-types = { workspace = true, features = ["diesel-sqlite"] }
+proto-types = { workspace = true, features = ["diesel-sqlite", "all_common"] }
 diesel = { workspace = true }
 
 [lints]

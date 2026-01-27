@@ -2,6 +2,40 @@ use proto_types::{Any, Code, Duration, Empty, FieldMask, Status, Timestamp};
 
 use crate::*;
 
+#[derive(Clone, Copy, Default)]
+pub struct NoOpValidator<T: ?Sized>(PhantomData<T>);
+
+impl<T: ?Sized + Send + Sync + ToOwned> Validator<T> for NoOpValidator<T> {
+  type Target = T;
+
+  #[inline(always)]
+  fn validate_core<V>(&self, _ctx: &mut ValidationCtx, _val: Option<&V>) -> ValidationResult
+  where
+    V: Borrow<Self::Target> + ?Sized,
+  {
+    Ok(IsValid::Yes)
+  }
+}
+
+pub struct NoOpValidatorBuilder<T: ?Sized>(PhantomData<T>);
+
+impl<T: ?Sized> Default for NoOpValidatorBuilder<T> {
+  fn default() -> Self {
+    Self(Default::default())
+  }
+}
+
+impl<T> ValidatorBuilderFor<T> for NoOpValidatorBuilder<T>
+where
+  T: ?Sized + Send + Sync + ToOwned,
+{
+  type Target = T;
+  type Validator = NoOpValidator<T>;
+  fn build_validator(self) -> Self::Validator {
+    NoOpValidator(PhantomData)
+  }
+}
+
 impl AsProtoType for Duration {
   fn proto_type() -> ProtoType {
     ProtoType::Message(ProtoPath {
@@ -82,6 +116,36 @@ impl AsProtoType for Code {
   }
 }
 
+macro_rules! impl_no_op_validator {
+  ($($name:path),*) => {
+    $(
+      impl ProtoValidation for $name {
+        #[doc(hidden)]
+        type Builder = NoOpValidatorBuilder<Self>;
+        #[doc(hidden)]
+        type Stored = Self;
+        #[doc(hidden)]
+        type Target = Self;
+        #[doc(hidden)]
+        type Validator = NoOpValidator<Self>;
+
+        type UniqueStore<'a>
+          = LinearRefStore<'a, Self>
+        where
+          Self: 'a;
+      }
+
+      impl ValidatedMessage for $name {
+        #[inline(always)]
+        #[doc(hidden)]
+        fn validate_with_ctx(&self, _: &mut ValidationCtx) -> ValidationResult {
+          Ok(IsValid::Yes)
+        }
+      }
+    )*
+  };
+}
+
 #[cfg(feature = "common-types")]
 mod google_dot_type {
   use super::*;
@@ -100,6 +164,8 @@ mod google_dot_type {
               })
             }
           }
+
+          impl_no_op_validator!($name);
         )*
       }
     };
@@ -120,6 +186,8 @@ mod google_dot_type {
     CalendarPeriod,
     Month
   );
+
+  impl_no_op_validator!(DayOfWeek, LatLng, TimeZone, TimeOfDay, DateTime);
 
   impl AsProtoType for DayOfWeek {
     fn proto_type() -> ProtoType {
@@ -189,6 +257,8 @@ mod rpc_types {
             })
           }
         }
+
+        impl_no_op_validator!($name);
       )*
     };
   }
@@ -207,6 +277,13 @@ mod rpc_types {
     HttpRequest => "http",
     HttpResponse => "http",
     HttpHeader => "http"
+  );
+
+  impl_no_op_validator!(
+    quota_failure::Violation,
+    precondition_failure::Violation,
+    bad_request::FieldViolation,
+    help::Link
   );
 
   impl AsProtoType for quota_failure::Violation {
