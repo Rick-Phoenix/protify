@@ -18,7 +18,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   }
 
   #[inline]
-  fn into_validated_message(self) -> Result<Self::Message, ViolationErrors> {
+  fn into_validated_message(self) -> Result<Self::Message, ValidationErrors> {
     let msg = self.into_message();
 
     match msg.validate() {
@@ -28,7 +28,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   }
 
   #[inline]
-  fn from_validated_message(msg: Self::Message) -> Result<Self, ViolationErrors> {
+  fn from_validated_message(msg: Self::Message) -> Result<Self, ValidationErrors> {
     match msg.validate() {
       Ok(()) => Ok(Self::from(msg)),
       Err(e) => Err(e),

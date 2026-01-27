@@ -63,7 +63,7 @@ impl FieldKind {
 pub struct ValidationCtx {
   pub field_context: Option<FieldContext>,
   pub parent_elements: Vec<FieldPathElement>,
-  pub violations: ViolationErrors,
+  pub violations: ValidationErrors,
   pub fail_fast: bool,
 }
 
@@ -73,7 +73,7 @@ impl Default for ValidationCtx {
     Self {
       field_context: None,
       parent_elements: vec![],
-      violations: ViolationErrors::new(),
+      violations: ValidationErrors::new(),
       fail_fast: true,
     }
   }

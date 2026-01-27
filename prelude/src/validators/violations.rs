@@ -12,7 +12,7 @@ pub struct ViolationMeta {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ViolationErrors {
+pub struct ValidationErrors {
   metas: Vec<ViolationMeta>,
   violations: Vec<Violation>,
 }
@@ -164,18 +164,18 @@ impl ViolationCtx {
   }
 }
 
-impl From<ViolationErrors> for Violations {
+impl From<ValidationErrors> for Violations {
   #[inline]
-  fn from(value: ViolationErrors) -> Self {
+  fn from(value: ValidationErrors) -> Self {
     Self {
       violations: value.violations,
     }
   }
 }
 
-impl From<ViolationErrors> for Vec<Violation> {
+impl From<ValidationErrors> for Vec<Violation> {
   #[inline]
-  fn from(value: ViolationErrors) -> Self {
+  fn from(value: ValidationErrors) -> Self {
     value.violations
   }
 }
@@ -187,7 +187,7 @@ impl From<ViolationCtx> for Violation {
   }
 }
 
-impl IntoIterator for ViolationErrors {
+impl IntoIterator for ValidationErrors {
   type IntoIter = IntoIter;
   type Item = ViolationCtx;
 
@@ -199,7 +199,7 @@ impl IntoIterator for ViolationErrors {
   }
 }
 
-impl<'a> IntoIterator for &'a ViolationErrors {
+impl<'a> IntoIterator for &'a ValidationErrors {
   type Item = ViolationCtxRef<'a>;
 
   type IntoIter = Iter<'a>;
@@ -215,7 +215,7 @@ impl<'a> IntoIterator for &'a ViolationErrors {
   }
 }
 
-impl<'a> IntoIterator for &'a mut ViolationErrors {
+impl<'a> IntoIterator for &'a mut ValidationErrors {
   type Item = ViolationCtxMut<'a>;
 
   type IntoIter = IterMut<'a>;
@@ -230,7 +230,7 @@ impl<'a> IntoIterator for &'a mut ViolationErrors {
   }
 }
 
-impl Extend<ViolationCtx> for ViolationErrors {
+impl Extend<ViolationCtx> for ValidationErrors {
   fn extend<T: IntoIterator<Item = ViolationCtx>>(&mut self, iter: T) {
     let iter = iter.into_iter();
 
@@ -247,7 +247,7 @@ impl Extend<ViolationCtx> for ViolationErrors {
   }
 }
 
-impl ViolationErrors {
+impl ValidationErrors {
   #[inline]
   pub fn merge(&mut self, other: &mut Self) {
     self.metas.append(&mut other.metas);
@@ -327,7 +327,7 @@ impl ViolationErrors {
   }
 }
 
-impl Default for ViolationErrors {
+impl Default for ValidationErrors {
   #[inline]
   fn default() -> Self {
     Self::new()
