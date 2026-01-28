@@ -166,13 +166,18 @@ macro_rules! length_rule_value {
 /// # Examples
 ///
 /// ```rust
+/// use prelude::*;
 /// mod example {
-///   use prelude::*;
-///  
+///   use super::*;
+///
 ///   proto_package!(MY_PKG, name = "my_pkg");
 ///   define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 ///
 ///   pub use re_exported::Msg;
+///
+///   pub fn mod_path() -> &'static str {
+///     module_path!()
+///   }
 ///  
 ///   mod re_exported {
 ///     use super::MY_FILE;
@@ -188,6 +193,10 @@ macro_rules! length_rule_value {
 ///       pub id: i32
 ///     }
 ///   }
+/// }
+///
+/// fn main() {
+///   assert_eq!(example::Msg::proto_schema().rust_path, &format!("::{}::Msg", example::mod_path()));
 /// }
 /// ```
 #[macro_export]
@@ -206,15 +215,20 @@ macro_rules! inherit_proto_file {
 /// # Examples
 ///
 /// ```rust
+/// use prelude::*;
+///
 /// mod example {
-///   use prelude::*;
-///  
+///   use super::*;
 ///   proto_package!(MY_PKG, name = "my_pkg");
 ///   define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 ///  
 ///   pub mod submod {
 ///     use super::MY_FILE;
 ///     use prelude::*;
+///
+///     pub fn mod_path() -> &'static str {
+///       module_path!()
+///     }
 ///  
 ///     // The file is now in scope, and will be picked up automatically by all items defined in this module
 ///     // The items will have the extern path of the `module_path!()` output in here, so `::cratename::example::submod`
@@ -226,6 +240,10 @@ macro_rules! inherit_proto_file {
 ///       pub id: i32
 ///     }
 ///   }
+/// }
+///
+/// fn main() {
+///   assert_eq!(example::submod::Msg::proto_schema().rust_path, &format!("::{}::Msg", example::submod::mod_path()));
 /// }
 /// ```
 #[macro_export]

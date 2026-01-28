@@ -8,7 +8,7 @@ use regex::Regex;
 
 use super::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum FixedStr {
   Static(&'static str),
@@ -36,6 +36,12 @@ impl<'de> serde::Deserialize<'de> for FixedStr {
 }
 
 impl FixedStr {
+  #[must_use]
+  #[inline]
+  pub const fn is_cheaply_clonable(&self) -> bool {
+    matches!(self, Self::Shared(_) | Self::Static(_))
+  }
+
   #[must_use]
   pub fn into_cheaply_clonable(self) -> Self {
     match self {
@@ -81,10 +87,10 @@ impl AsRef<str> for FixedStr {
   }
 }
 
-impl<'a> PartialEq<&'a str> for FixedStr {
+impl<T: AsRef<str>> PartialEq<T> for FixedStr {
   #[inline]
-  fn eq(&self, other: &&'a str) -> bool {
-    **other == **self
+  fn eq(&self, other: &T) -> bool {
+    self.as_str() == other.as_ref()
   }
 }
 
