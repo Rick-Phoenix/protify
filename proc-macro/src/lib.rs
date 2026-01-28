@@ -226,6 +226,26 @@ pub fn file_schema(input: TokenStream) -> TokenStream {
   }
 }
 
+#[allow(clippy::doc_overindented_list_items)]
+/// Creates a new package handle, which is used to collect the proto schemas in a crate.
+///
+/// The first parameter of the macro is the ident that will be used for the generated constant that will hold the package handle, which will be used to generate the package and its proto files.
+///
+/// The other parameters are not positional and are as follows:
+///
+/// - `name` (required)
+///     Type: string
+///     Example: `proto_package!(MY_PKG, name = "my_pkg")`
+///     Description:
+///         The name of the package.
+///
+///
+/// - `no_cel_test`
+///     Type: Ident
+///     Example: `proto_package!(MY_PKG, name = "my_pkg", no_cel_test)`
+///     Description:
+///         By default, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
+/// ```
 #[proc_macro]
 pub fn proto_package(input: TokenStream) -> TokenStream {
   match package_macro_impl(input.into()) {
