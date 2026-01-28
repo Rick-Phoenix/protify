@@ -88,7 +88,7 @@ impl<'a> FallbackImpls<'a> {
         ItemKind::Oneof => quote! {
           impl ::prelude::CelOneof for #target_ident {
             #[doc(hidden)]
-            fn try_into_cel_recursive(self, depth: usize) -> Result<(String, ::prelude::cel::Value), ::prelude::proto_types::cel::CelConversionError> {
+            fn try_into_cel(self) -> Result<(String, ::prelude::cel::Value), ::prelude::proto_types::cel::CelConversionError> {
               unimplemented!()
             }
           }
@@ -103,14 +103,12 @@ impl<'a> FallbackImpls<'a> {
           }
         },
         ItemKind::Message => quote! {
-          impl #target_ident {
-            pub fn try_into_cel_recursive(self, _: usize) -> Result<::prelude::cel::Value, ::prelude::proto_types::cel::CelConversionError> {
-              unimplemented!()
-            }
-          }
+          impl ::prelude::CelValue for #target_ident {}
 
-          impl ::prelude::TryIntoCel for #target_ident {
-            fn try_into_cel(self) -> Result<::prelude::cel::Value, ::prelude::CelError> {
+          impl TryFrom<#target_ident> for ::prelude::cel::Value {
+            type Error = ::prelude::proto_types::cel::CelConversionError;
+
+            fn try_from(value: #target_ident) -> Result<Self, Self::Error> {
               unimplemented!()
             }
           }
