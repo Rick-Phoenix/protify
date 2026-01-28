@@ -407,12 +407,12 @@ fn message_schema_output() {
   assert_eq_pretty!(schema.name, "TestMessage");
   assert_eq_pretty!(schema.options, test_options());
 
-  let cel_rules: Vec<CelRule> = schema
+  let cel_rules: Vec<&CelRule> = schema
     .validators
-    .into_iter()
-    .flat_map(|v| v.cel_rules)
+    .iter()
+    .flat_map(|v| &v.cel_rules)
     .collect();
-  assert_eq_pretty!(cel_rules, &[msg_rule().rule, msg_rule().rule]);
+  assert_eq_pretty!(cel_rules, &[msg_rule().rule(), msg_rule().rule()]);
   assert_eq_pretty!(schema.reserved_numbers, &[1..2, 2..3, 3..9]);
   assert_eq_pretty!(schema.reserved_names, &["abc", "bcd"]);
 

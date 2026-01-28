@@ -277,7 +277,11 @@ macro_rules! impl_testing_methods {
     #[inline(never)]
     #[cold]
     fn cel_rules(&self) -> Vec<CelRule> {
-      self.cel.iter().map(|p| p.rule.clone()).collect()
+      self
+        .cel
+        .iter()
+        .map(|p| p.rule().clone())
+        .collect()
     }
   };
 }
@@ -297,10 +301,6 @@ macro_rules! cel_program {
       expression: $expr.into(),
     }
     .into()
-  };
-
-  ($rule:expr) => {
-    ::prelude::CelProgram::new($rule)
   };
 }
 

@@ -204,7 +204,11 @@ where
 
   #[doc(hidden)]
   fn cel_rules(&self) -> Vec<CelRule> {
-    let mut rules: Vec<CelRule> = self.cel.iter().map(|p| p.rule.clone()).collect();
+    let mut rules: Vec<CelRule> = self
+      .cel
+      .iter()
+      .map(|p| p.rule().clone())
+      .collect();
 
     rules.extend(self.items.iter().flat_map(|i| i.cel_rules()));
 

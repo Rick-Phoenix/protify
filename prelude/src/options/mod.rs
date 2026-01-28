@@ -223,7 +223,7 @@ impl OptionMessageBuilder {
     if !rules.is_empty() {
       let rule_options: Vec<OptionValue> = rules
         .into_iter()
-        .map(|program| program.rule.into())
+        .map(|program| program.rule().clone().into())
         .collect();
       self.set("cel", OptionValue::List(rule_options.into()));
     }

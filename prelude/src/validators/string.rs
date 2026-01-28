@@ -543,7 +543,11 @@ impl Validator<String> for StringValidator {
   #[inline(never)]
   #[cold]
   fn cel_rules(&self) -> Vec<CelRule> {
-    self.cel.iter().map(|p| p.rule.clone()).collect()
+    self
+      .cel
+      .iter()
+      .map(|p| p.rule().clone())
+      .collect()
   }
 
   #[inline(never)]

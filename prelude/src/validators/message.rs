@@ -106,7 +106,11 @@ where
   }
   #[doc(hidden)]
   fn cel_rules(&self) -> Vec<CelRule> {
-    self.cel.iter().map(|p| p.rule.clone()).collect()
+    self
+      .cel
+      .iter()
+      .map(|p| p.rule().clone())
+      .collect()
   }
 
   #[inline(never)]
@@ -223,7 +227,7 @@ where
     self
       .programs
       .iter()
-      .map(|p| p.rule.clone())
+      .map(|p| p.rule().clone())
       .collect()
   }
 

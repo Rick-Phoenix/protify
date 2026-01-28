@@ -15,17 +15,16 @@ pub struct CelRule {
   pub expression: FixedStr,
 }
 
-impl From<CelRule> for CelProgram {
+impl From<CelProgramInner> for CelRule {
   #[inline]
-  fn from(value: CelRule) -> Self {
-    Self::new(value)
+  fn from(value: CelProgramInner) -> Self {
+    value.rule
   }
 }
 
 impl From<CelProgram> for CelRule {
-  #[inline]
   fn from(value: CelProgram) -> Self {
-    value.rule
+    value.inner.rule.clone()
   }
 }
 
@@ -55,19 +54,28 @@ impl From<CelRule> for OptionValue {
   }
 }
 
-// Without the cel feature, this is just a wrapper for a cel rule
-
-#[cfg(not(feature = "cel"))]
-#[derive(Clone, Debug)]
+/// A struct that holds the data to initialize and execute a CEL program. It can be created from a [`CelRule`].
+///
+/// The program is compiled once and reused afterwards. This type can be cheaply cloned (from something like a Lazy static) to reuse it in different places.
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(from = "CelRule", into = "CelRule"))]
 pub struct CelProgram {
-  pub rule: CelRule,
+  pub(crate) inner: Arc<CelProgramInner>,
+}
+
+impl CelProgram {
+  /// Accesses the [`CelRule`] for this program.
+  #[must_use]
+  pub fn rule(&self) -> &CelRule {
+    &self.inner.rule
+  }
 }
 
 #[cfg(not(feature = "cel"))]
-impl CelProgram {
-  pub fn new(rule: CelRule) -> Self {
-    Self { rule }
-  }
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct CelProgramInner {
+  pub(crate) rule: CelRule,
 }
 
 #[cfg(not(feature = "cel"))]
@@ -88,26 +96,166 @@ mod cel_impls {
   use std::sync::OnceLock;
 
   #[derive(Debug)]
-  #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-  #[cfg_attr(feature = "serde", serde(from = "CelRule", into = "CelRule"))]
-  pub struct CelProgram {
-    pub rule: CelRule,
+  pub(crate) struct CelProgramInner {
+    pub(crate) rule: CelRule,
     program: OnceLock<Program>,
   }
 
-  impl Clone for CelProgram {
-    fn clone(&self) -> Self {
-      Self {
-        rule: self.rule.clone(),
-        program: OnceLock::new(),
-      }
-    }
-  }
-
-  impl PartialEq for CelProgram {
+  impl PartialEq for CelProgramInner {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
       self.rule == other.rule
+    }
+  }
+
+  impl From<CelRule> for CelProgram {
+    #[inline]
+    fn from(value: CelRule) -> Self {
+      Self::new(value)
+    }
+  }
+
+  fn initialize_context<'a, T>(value: T) -> Result<Context<'a>, CelError>
+  where
+    T: TryIntoCel,
+  {
+    let mut ctx = Context::default();
+
+    ctx.add_variable_from_value("this", value.__try_into_cel()?);
+    #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
+    ctx.add_variable_from_value("now", Value::Timestamp(Utc::now().into()));
+
+    Ok(ctx)
+  }
+
+  pub(crate) struct ProgramsExecutionCtx<'a, T> {
+    pub programs: &'a [CelProgram],
+    pub value: T,
+    pub ctx: &'a mut ValidationCtx,
+  }
+
+  impl<T> ProgramsExecutionCtx<'_, T>
+  where
+    T: TryIntoCel,
+  {
+    pub fn execute_programs(self) -> ValidationResult {
+      let Self {
+        programs,
+        value,
+        ctx,
+      } = self;
+
+      let mut is_valid = IsValid::Yes;
+
+      let cel_ctx = match initialize_context(value) {
+        Ok(cel_ctx) => cel_ctx,
+        Err(e) => {
+          let _ = ctx.add_cel_error_violation(e);
+          return Err(FailFast);
+        }
+      };
+
+      for program in programs {
+        match program.execute(&cel_ctx) {
+          Ok(was_successful) => {
+            if !was_successful {
+              is_valid &= ctx.add_cel_violation(&program.inner.rule)?;
+            }
+          }
+          Err(e) => is_valid &= ctx.add_cel_error_violation(e)?,
+        };
+      }
+
+      Ok(is_valid)
+    }
+  }
+
+  /// Tests the validity of CEL programs.
+  #[inline(never)]
+  #[cold]
+  pub fn test_programs<T>(programs: &[CelProgram], value: T) -> Result<(), Vec<CelError>>
+  where
+    T: TryIntoCel,
+  {
+    let mut errors: Vec<CelError> = Vec::new();
+
+    let ctx = match initialize_context(value) {
+      Ok(ctx) => ctx,
+      Err(e) => {
+        errors.push(e);
+        return Err(errors);
+      }
+    };
+
+    for program in programs {
+      if let Err(e) = program.execute(&ctx) {
+        errors.push(e);
+      }
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
+  impl CelProgramInner {
+    #[inline]
+    fn get_program(&self) -> &Program {
+      self
+        .program
+        .get_or_init(|| self.compile_program())
+    }
+
+    #[inline(never)]
+    #[cold]
+    fn compile_program(&self) -> Program {
+      Program::compile(&self.rule.expression).unwrap_or_else(|e| {
+        panic!(
+          "Failed to compile CEL program with id `{}`: {e}",
+          self.rule.id
+        )
+      })
+    }
+  }
+
+  impl CelProgram {
+    #[must_use]
+    #[inline]
+    pub fn new(rule: CelRule) -> Self {
+      Self {
+        inner: Arc::new(CelProgramInner {
+          rule,
+          program: OnceLock::new(),
+        }),
+      }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn get_program(&self) -> &Program {
+      self.inner.get_program()
+    }
+
+    pub fn execute(&self, ctx: &Context) -> Result<bool, CelError> {
+      let program = self.get_program();
+
+      let result = program
+        .execute(ctx)
+        .map_err(|e| CelError::ExecutionError {
+          rule_id: self.inner.rule.id.clone(),
+          source: Box::new(e),
+        })?;
+
+      if let Value::Bool(result) = result {
+        Ok(result)
+      } else {
+        Err(CelError::NonBooleanResult {
+          rule_id: self.inner.rule.id.clone(),
+          value: result.type_of(),
+        })
+      }
     }
   }
 
@@ -248,139 +396,6 @@ mod cel_impls {
     #[inline]
     fn from(value: Infallible) -> Self {
       match value {}
-    }
-  }
-
-  fn initialize_context<'a, T>(value: T) -> Result<Context<'a>, CelError>
-  where
-    T: TryIntoCel,
-  {
-    let mut ctx = Context::default();
-
-    ctx.add_variable_from_value("this", value.__try_into_cel()?);
-    #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
-    ctx.add_variable_from_value("now", Value::Timestamp(Utc::now().into()));
-
-    Ok(ctx)
-  }
-
-  pub struct ProgramsExecutionCtx<'a, T> {
-    pub programs: &'a [CelProgram],
-    pub value: T,
-    pub ctx: &'a mut ValidationCtx,
-  }
-
-  impl<T> ProgramsExecutionCtx<'_, T>
-  where
-    T: TryIntoCel,
-  {
-    pub fn execute_programs(self) -> ValidationResult {
-      let Self {
-        programs,
-        value,
-        ctx,
-      } = self;
-
-      let mut is_valid = IsValid::Yes;
-
-      let cel_ctx = match initialize_context(value) {
-        Ok(cel_ctx) => cel_ctx,
-        Err(e) => {
-          let _ = ctx.add_cel_error_violation(e);
-          return Err(FailFast);
-        }
-      };
-
-      for program in programs {
-        match program.execute(&cel_ctx) {
-          Ok(was_successful) => {
-            if !was_successful {
-              is_valid &= ctx.add_cel_violation(&program.rule)?;
-            }
-          }
-          Err(e) => is_valid &= ctx.add_cel_error_violation(e)?,
-        };
-      }
-
-      Ok(is_valid)
-    }
-  }
-
-  #[inline(never)]
-  #[cold]
-  pub fn test_programs<T>(programs: &[CelProgram], value: T) -> Result<(), Vec<CelError>>
-  where
-    T: TryIntoCel,
-  {
-    let mut errors: Vec<CelError> = Vec::new();
-
-    let ctx = match initialize_context(value) {
-      Ok(ctx) => ctx,
-      Err(e) => {
-        errors.push(e);
-        return Err(errors);
-      }
-    };
-
-    for program in programs {
-      if let Err(e) = program.execute(&ctx) {
-        errors.push(e);
-      }
-    }
-
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
-
-  impl CelProgram {
-    #[must_use]
-    #[inline]
-    pub const fn new(rule: CelRule) -> Self {
-      Self {
-        rule,
-        program: OnceLock::new(),
-      }
-    }
-
-    #[inline]
-    pub fn get_program(&self) -> &Program {
-      self
-        .program
-        .get_or_init(|| self.compile_program())
-    }
-
-    #[inline(never)]
-    #[cold]
-    fn compile_program(&self) -> Program {
-      Program::compile(&self.rule.expression).unwrap_or_else(|e| {
-        panic!(
-          "Failed to compile CEL program with id `{}`: {e}",
-          self.rule.id
-        )
-      })
-    }
-
-    pub fn execute(&self, ctx: &Context) -> Result<bool, CelError> {
-      let program = self.get_program();
-
-      let result = program
-        .execute(ctx)
-        .map_err(|e| CelError::ExecutionError {
-          rule_id: self.rule.id.clone(),
-          source: Box::new(e),
-        })?;
-
-      if let Value::Bool(result) = result {
-        Ok(result)
-      } else {
-        Err(CelError::NonBooleanResult {
-          rule_id: self.rule.id.clone(),
-          value: result.type_of(),
-        })
-      }
     }
   }
 }
