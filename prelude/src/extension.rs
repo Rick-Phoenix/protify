@@ -1,5 +1,6 @@
 use crate::*;
 
+/// A struct representing a protobuf Extension.
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Extension {
@@ -7,10 +8,12 @@ pub struct Extension {
   pub fields: Vec<Field>,
 }
 
+/// Implemented by the [`proto_extension`] macro.
 pub trait ProtoExtension {
   fn as_proto_extension() -> Extension;
 }
 
+/// Valid extension targets for a Proto3 file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(clippy::enum_variant_names)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -26,6 +29,7 @@ pub enum ExtensionTarget {
 }
 
 impl ExtensionTarget {
+  /// Returns the string representation.
   #[must_use]
   pub const fn as_str(&self) -> &'static str {
     match self {

@@ -1,5 +1,6 @@
 use crate::*;
 
+/// Struct that represents a protobuf field.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Field {
@@ -10,6 +11,7 @@ pub struct Field {
   pub validators: Vec<ValidatorSchema>,
 }
 
+/// A schema representation for a validator.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ValidatorSchema {

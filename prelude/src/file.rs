@@ -1,6 +1,7 @@
 use crate::*;
 use hashbrown::HashSet;
 
+/// Struct that represents a protobuf file and its contents.
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "std", derive(Template))]
@@ -17,12 +18,14 @@ pub struct ProtoFile {
   pub extensions: Vec<Extension>,
 }
 
+#[doc(hidden)]
 pub struct FileReference {
   pub name: &'static str,
   pub package: &'static str,
   pub extern_path: &'static str,
 }
 
+/// The protobuf edition for a file.
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Edition {
@@ -42,7 +45,7 @@ impl Display for Edition {
   }
 }
 
-#[doc(hidden)]
+/// HashSet wrapper for a file's imports. Skips insertion if the file is equal to the origin file.
 #[derive(PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FileImports {
@@ -67,6 +70,7 @@ impl IntoIterator for FileImports {
 }
 
 impl FileImports {
+  /// Creates a new instance.
   #[must_use]
   pub fn new(file: impl Into<FixedStr>) -> Self {
     Self {
