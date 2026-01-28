@@ -171,8 +171,8 @@ fn set_up_validators_inner(
     .unwrap_or(env::temp_dir());
 
   config
-    .extern_path(".google.protobuf", "::proto_types")
-    .extern_path(".buf.validate", "::proto_types::protovalidate")
+    .extern_path(".google.protobuf", "::prelude::proto_types")
+    .extern_path(".buf.validate", "::prelude::proto_types::protovalidate")
     .compile_well_known_types();
 
   let temp_descriptor_path = out_dir.join("__temp_file_descriptor_set.bin");
