@@ -5,7 +5,6 @@ struct ReflectionMsgData {
   pub fields_data: Vec<FieldDataKind>,
   pub top_level_validator: Validators,
   pub auto_tests: AutoTests,
-  pub msg_name: String,
   pub as_proto_type_impl: TokenStream2,
 }
 
@@ -234,7 +233,6 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
     fields_data,
     top_level_validator: top_level_validator.unwrap_or_default(),
     auto_tests,
-    msg_name,
     as_proto_type_impl,
   })
 }
@@ -284,7 +282,6 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
     fields_data,
     top_level_validator,
     mut auto_tests,
-    msg_name,
     as_proto_type_impl,
   } = extract_fields_data(item).unwrap_or_default_and_push_error(&mut errors);
 
@@ -305,11 +302,10 @@ pub fn reflection_message_derive(item: &mut ItemStruct) -> TokenStream2 {
   )]);
 
   let consistency_checks = errors.is_empty().then(|| {
-    generate_message_validators_consistency_checks(
+    generate_validators_consistency_checks(
       &item.ident,
       &fields_data,
       auto_tests,
-      &msg_name,
       &top_level_validator,
     )
   });

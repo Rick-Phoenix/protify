@@ -2,8 +2,8 @@ use super::*;
 
 #[test]
 fn bad_field_rules() {
-  let MessageTestError {
-    message_full_name,
+  let TestError {
+    item_name: message_full_name,
     field_errors,
     top_level_errors,
   } = BadFieldRules::check_validators_consistency().unwrap_err();
@@ -15,8 +15,8 @@ fn bad_field_rules() {
 
 #[test]
 fn bad_msg_rules() {
-  let MessageTestError {
-    message_full_name,
+  let TestError {
+    item_name: message_full_name,
     field_errors,
     top_level_errors,
   } = BadMsgRules::check_validators_consistency().unwrap_err();
@@ -28,12 +28,13 @@ fn bad_msg_rules() {
 
 #[test]
 fn bad_oneof_rules() {
-  let OneofErrors {
-    oneof_name,
+  let TestError {
+    item_name,
     field_errors: errors,
+    ..
   } = BadCelOneof::check_validators_consistency().unwrap_err();
 
-  assert_eq_pretty!(oneof_name, "BadCelOneof");
+  assert_eq_pretty!(item_name, "BadCelOneof");
   assert_eq_pretty!(errors.len(), 1);
   assert!(matches!(errors[0].errors[0], ConsistencyError::CelError(_)));
 }
@@ -57,8 +58,7 @@ pub struct LtGtError {
 
 #[test]
 fn lt_gt_error() {
-  let MessageTestError { field_errors, .. } =
-    LtGtError::check_validators_consistency().unwrap_err();
+  let TestError { field_errors, .. } = LtGtError::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(
     field_errors[0].errors[0],
@@ -105,8 +105,7 @@ pub struct FloatLtGtError {
 
 #[test]
 fn float_lt_gt_error() {
-  let MessageTestError { field_errors, .. } =
-    FloatLtGtError::check_validators_consistency().unwrap_err();
+  let TestError { field_errors, .. } = FloatLtGtError::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(
     field_errors[0].errors[0],
@@ -167,7 +166,7 @@ pub struct DurationLtGtError {
 
 #[test]
 fn duration_lt_gt_error() {
-  let MessageTestError { field_errors, .. } =
+  let TestError { field_errors, .. } =
     DurationLtGtError::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(
@@ -233,7 +232,7 @@ pub struct TimestampLtGtError {
 
 #[test]
 fn timestamp_lt_gt_error() {
-  let MessageTestError { field_errors, .. } =
+  let TestError { field_errors, .. } =
     TimestampLtGtError::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(
@@ -309,8 +308,7 @@ pub struct ListErrors {
 
 #[test]
 fn list_errors() {
-  let MessageTestError { field_errors, .. } =
-    ListErrors::check_validators_consistency().unwrap_err();
+  let TestError { field_errors, .. } = ListErrors::check_validators_consistency().unwrap_err();
 
   for (i, err) in field_errors.iter().enumerate() {
     if i == 7 {
@@ -359,7 +357,7 @@ pub struct LengthRulesErrors {
 
 #[test]
 fn length_rules_errors() {
-  let MessageTestError { field_errors, .. } =
+  let TestError { field_errors, .. } =
     LengthRulesErrors::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(
@@ -417,8 +415,7 @@ pub struct StringErrors {
 
 #[test]
 fn string_errors() {
-  let MessageTestError { field_errors, .. } =
-    StringErrors::check_validators_consistency().unwrap_err();
+  let TestError { field_errors, .. } = StringErrors::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(
     field_errors[0].errors[0],
@@ -449,7 +446,7 @@ pub struct ConstWithOtherRules {
 
 #[test]
 fn const_with_other_rules() {
-  let MessageTestError { field_errors, .. } =
+  let TestError { field_errors, .. } =
     ConstWithOtherRules::check_validators_consistency().unwrap_err();
 
   for err in field_errors {

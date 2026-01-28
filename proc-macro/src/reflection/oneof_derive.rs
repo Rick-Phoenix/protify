@@ -148,10 +148,11 @@ pub fn reflection_oneof_derive(item: &mut ItemEnum) -> TokenStream2 {
   )]);
 
   let consistency_checks = errors.is_empty().then(|| {
-    generate_oneof_consistency_checks(
+    generate_validators_consistency_checks(
       &item.ident,
       &fields_data,
-      auto_tests.skip_consistency_checks,
+      auto_tests,
+      &Validators::default(),
     )
   });
 

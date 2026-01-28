@@ -1,4 +1,4 @@
-use prelude::{ConsistencyError, MessageTestError, OneofErrors};
+use prelude::{ConsistencyError, TestError};
 
 use crate::proto::bad_cel_oneof_test::BadCelOneof;
 
@@ -6,13 +6,13 @@ use super::*;
 
 #[test]
 fn bad_field_rules() {
-  let MessageTestError {
-    message_full_name,
+  let TestError {
+    item_name: message_name,
     field_errors,
     top_level_errors,
   } = BadFieldRules::check_validators_consistency().unwrap_err();
 
-  assert_eq_pretty!(message_full_name, "test_schemas.v1.BadFieldRules");
+  assert_eq_pretty!(message_name, "BadFieldRules");
   assert_eq_pretty!(field_errors.len(), 1);
   // Top level rules, which don't apply here
   assert_eq_pretty!(top_level_errors.len(), 0);
@@ -20,22 +20,23 @@ fn bad_field_rules() {
 
 #[test]
 fn bad_msg_rules() {
-  let MessageTestError {
-    message_full_name,
+  let TestError {
+    item_name: message_name,
     field_errors,
     top_level_errors,
   } = BadMsgRules::check_validators_consistency().unwrap_err();
 
-  assert_eq_pretty!(message_full_name, "test_schemas.v1.BadMsgRules");
+  assert_eq_pretty!(message_name, "BadMsgRules");
   assert_eq_pretty!(field_errors.len(), 0);
   assert_eq_pretty!(top_level_errors.len(), 1);
 }
 
 #[test]
 fn bad_oneof_rules() {
-  let OneofErrors {
-    oneof_name,
+  let TestError {
+    item_name: oneof_name,
     field_errors: errors,
+    ..
   } = BadCelOneof::check_validators_consistency().unwrap_err();
 
   assert_eq_pretty!(oneof_name, "BadCelOneof");

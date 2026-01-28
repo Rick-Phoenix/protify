@@ -21,61 +21,25 @@ pub struct FieldError {
   pub errors: Vec<ConsistencyError>,
 }
 
-#[derive(Debug)]
-pub struct OneofErrors {
-  pub oneof_name: &'static str,
-  pub field_errors: Vec<FieldError>,
-}
-
-impl core::error::Error for OneofErrors {}
-
-impl Display for OneofErrors {
-  #[inline(never)]
-  #[cold]
-  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    let _ = writeln!(
-      f,
-      "❌ Validator consistency check for oneof `{}` has failed:",
-      self.oneof_name.bright_yellow()
-    );
-
-    for field_error in &self.field_errors {
-      let _ = writeln!(
-        f,
-        "  {}{}{}:",
-        self.oneof_name.bright_cyan(),
-        "::".bright_cyan(),
-        field_error.field.bright_cyan()
-      );
-
-      for err in &field_error.errors {
-        let _ = writeln!(f, "        - {err}");
-      }
-    }
-
-    Ok(())
-  }
-}
-
-pub struct MessageTestError {
-  pub message_full_name: &'static str,
+pub struct TestError {
+  pub item_name: &'static str,
   pub field_errors: Vec<FieldError>,
   pub top_level_errors: Vec<ConsistencyError>,
 }
 
-impl Display for MessageTestError {
+impl Display for TestError {
   #[inline(never)]
   #[cold]
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let Self {
-      message_full_name,
+      item_name: message_full_name,
       field_errors,
       top_level_errors,
     } = self;
 
     let _ = writeln!(
       f,
-      "❌ Validator consistency check for message `{}` has failed:",
+      "❌ Validator consistency check for `{}` has failed:",
       message_full_name.bright_yellow()
     );
 

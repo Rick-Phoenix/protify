@@ -24,7 +24,10 @@ pub fn generate_oneofs_tags_checks(
     });
 
   let oneofs_auto_test = (!auto_tests.skip_oneof_tags_check).then(|| {
-    let test_fn_ident = format_ident!("{}_oneofs_tags", to_snake_case(&item_ident.to_string()));
+    let test_fn_ident = format_ident!(
+      "{}_oneofs_tags_check",
+      to_snake_case(&item_ident.to_string())
+    );
 
     quote! {
       #[cfg(test)]
@@ -42,6 +45,7 @@ pub fn generate_oneofs_tags_checks(
 
     #[cfg(test)]
     impl #item_ident {
+      #[doc(hidden)]
       #[allow(unused)]
       #[track_caller]
       pub fn check_oneofs_tags() -> Result<(), String> {
@@ -53,11 +57,10 @@ pub fn generate_oneofs_tags_checks(
   }
 }
 
-pub fn generate_message_validators_consistency_checks(
+pub fn generate_validators_consistency_checks(
   item_ident: &Ident,
   fields_data: &[FieldDataKind],
   auto_tests: AutoTests,
-  message_name: &str,
   top_level_validators: &Validators,
 ) -> TokenStream2 {
   let consistency_checks = fields_data
@@ -96,15 +99,15 @@ pub fn generate_message_validators_consistency_checks(
     impl #item_ident {
       #[allow(unused)]
       #[track_caller]
-      pub fn check_validators_consistency() -> Result<(), ::prelude::MessageTestError> {
+      pub fn check_validators_consistency() -> Result<(), ::prelude::TestError> {
         let mut field_errors: Vec<::prelude::FieldError> = Vec::new();
         let mut top_level_errors: Vec<::prelude::ConsistencyError> = Vec::new();
 
         #(#consistency_checks)*
 
         if !field_errors.is_empty() || !top_level_errors.is_empty() {
-          return Err(::prelude::MessageTestError {
-              message_full_name: #message_name,
+          return Err(::prelude::TestError {
+              item_name: stringify!(#item_ident),
               field_errors,
               top_level_errors
             }
@@ -121,11 +124,10 @@ impl MessageCtx<'_> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
     let item_ident = self.proto_struct_ident();
 
-    let validators_checks = generate_message_validators_consistency_checks(
+    let validators_checks = generate_validators_consistency_checks(
       item_ident,
       &self.fields_data,
       self.message_attrs.auto_tests,
-      &self.message_attrs.name,
       &self.message_attrs.validators,
     );
 
