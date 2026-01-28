@@ -284,6 +284,37 @@ pub fn proto_package(input: TokenStream) -> TokenStream {
   }
 }
 
+/// Implements protobuf schema and validation features for a rust struct.
+///
+/// If the impl is not proxied, it implements [`prost::Message`](prelude::prost::Message) for the given struct, as well as [`ProtoMessage`](prelude::ProtoMessage), [`MessagePath`](prelude::MessagePath) and [`ValidatedMessage`](prelude::ValidatedMessage).
+///
+/// If the impl is proxied, it implements all of these for the proto-facing struct, as well as [`ProxiedMessage`](prelude::ProxiedMessage), and implements [`MessageProxy`](prelude::MessageProxy) for the proxy.
+///
+/// # Examples
+/// ```
+/// use prelude::*;
+///
+/// proto_package!(MY_PKG, name = "my_pkg");
+/// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+///
+/// #[proto_message]
+/// pub struct Msg {
+///   pub id: i32
+/// }
+///
+/// // Generates the `ProxiedMsgProto` struct
+/// #[proto_message(proxied)]
+/// pub struct ProxiedMsg {
+///   pub id: i32
+/// }
+///
+/// fn main() {
+///   // `MessageProxy` and `ProxiedMessage` methods
+///   let msg = ProxiedMsgProto::default();
+///   let proxy = msg.into_proxy();
+///   let msg_again = proxy.into_message();
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn proto_message(args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemStruct);
