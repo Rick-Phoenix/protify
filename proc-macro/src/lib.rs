@@ -59,6 +59,8 @@ pub fn attr_forwarding_derive_test(_: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
+/// Implements the [`CelOneof`](prelude::CelOneof) trait on an enum. Automatically implemented
+/// by the [`proto_oneof`] macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelOneof, attributes(cel))]
 pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
@@ -70,6 +72,8 @@ pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
   }
 }
 
+/// Implements the [`CelValue`](prelude::CelValue) trait on a struct. Automatically
+/// implemented by the [`proto_message`] macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelValue, attributes(cel))]
 pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
@@ -81,6 +85,7 @@ pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
   }
 }
 
+#[doc(hidden)]
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ValidatedOneof, attributes(proto))]
 pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
@@ -97,6 +102,7 @@ pub fn enum_derive(input: TokenStream) -> TokenStream {
   enum_derive::named_enum_derive(&item).into()
 }
 
+#[doc(hidden)]
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ValidatedMessage, attributes(proto))]
 pub fn validated_message_derive(input: TokenStream) -> TokenStream {
@@ -114,6 +120,21 @@ pub fn builder_state_macro(input: TokenStream) -> TokenStream {
   }
 }
 
+/// Creates a new proto file schema, and brings it into scope for the items that are defined in the same module.
+///
+/// # Examples
+/// ```
+/// use prelude::*;
+/// proto_package!(MY_PKG, name = "my_pkg");
+/// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+///
+/// #[proto_message]
+/// pub struct Msg {
+///   pub id: i32
+/// }
+///
+/// assert_eq!(Msg::proto_schema().file, "my_file.proto");
+/// ```
 #[proc_macro]
 pub fn define_proto_file(input: TokenStream) -> TokenStream {
   match process_file_macro(input.into()) {
@@ -122,46 +143,10 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
   }
 }
 
-#[allow(clippy::doc_overindented_list_items)]
 /// This macro can be used to define file schemas manually when the inventory feature is not available.
 ///
 /// The `file_schema` macro accepts all the inputs of the `define_proto_file` macro, plus the list of messages, enums and services, which are just bracketed lists of paths for each element.
 /// Nested messages and enums are defined by using `ParentMessage = { enums = [ NestedEnum ], messages = [ NestedMsg ] }` instead of just the message's name, as shown below.
-///
-/// Parameters:
-///
-/// - `name` (required)
-///     Type: string
-///     Example: `file_schema!(name = "my_file.proto")`
-///     Description:
-///         The name of the file.
-///
-/// - `options`
-///     - Type: Expr
-///     - Example: `file_schema!(name = "my_file.proto", options = vec![ my_option() ])`
-///     - Description:
-///         Specifies the options for the given file. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption).
-///
-/// - `imports`
-///     - Type: Expr
-///     - Example: `file_schema!(name = "my_file.proto", imports = vec![ "import1", "import2" ])`
-///     - Description:
-///         Specifies the imports for the given file. In most occasions, the necessary imports will be added automatically so this should only be used as a fallback mechanism. It should resolve to an implementor of `IntoIterator` with the items being either `String`, `Arc<str>`, `Box<str>` or `&'static str`.
-///
-///
-/// - `extensions`
-///     - Type: bracketed list of Paths
-///     - Example: `file_schema!(name = "my_file.proto", extensions = [ MyExtension ])`
-///     - Description:
-///         Specifies the extensions for the given file. The items inside the list should be structs marked with the `#[proto_extension]` macro or implementors of [`ProtoExtension`](crate::ProtoExtension).
-///
-///
-/// - `edition`
-///     - Type: [`Edition`](crate::Edition)
-///     - Example: `file_schema!(name = "my_file.proto", edition = Proto3)`
-///     - Description:
-///         A value from the [`Edition`](crate::Edition) enum. Supports editions from Proto3 onwards.
-///
 ///
 /// # Example
 ///
@@ -249,19 +234,6 @@ pub fn file_schema(input: TokenStream) -> TokenStream {
 ///
 /// The first parameter of the macro is the ident that will be used for the generated constant that will hold the package handle, which will be used to generate the package and its proto files.
 ///
-/// The other parameters are not positional and are as follows:
-///
-/// - `name` (required)
-///     Type: string
-///     Description:
-///         The name of the package.
-///
-///
-/// - `no_cel_test`
-///     Type: Ident
-///     Description:
-///         By default, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
-///
 /// # Examples
 /// ```
 /// use prelude::*;
@@ -328,6 +300,37 @@ pub fn message_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
+/// Implements the [`ProtoExtension`](prelude::ProtoExtension) trait for the given struct.
+///
+/// Since the item on which this macro is used is intended to be used only for schema purposes, the macro
+/// will generate the impl and then erase all of the fields of the struct, so as to not trigger any "unused"
+/// lints on the fields needlessly.
+///
+/// The only argument to this macro is the "target", which is an ident that must resolve to a valid protobuf extension target from Proto3 onwards, like MessageOptions, FileOptions and so on.
+///
+/// Each field must have a defined tag, and can also support options like fields in messages, enums or oneofs.
+///
+/// # Examples
+///
+/// ```
+/// use prelude::*;
+///
+/// proto_package!(MY_PKG, name = "my_pkg");
+///
+/// #[proto_extension(target = MessageOptions)]
+/// pub struct MyExt {
+///   #[proto(tag = 5000)]
+///   cool_opt: String
+/// }
+///
+/// define_proto_file!(
+///   MY_FILE,
+///   name = "my_file.proto",
+///   package = MY_PKG,
+///   // We can then use the extension in a file
+///   extensions = [ MyExt ]
+/// );
+/// ```
 #[proc_macro_attribute]
 pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
@@ -352,6 +355,52 @@ pub fn extension_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
+/// Implements [`ProtoService`] for the given enum.
+///
+/// Since the enum is only meant to be used for schema purposes, the macro will erase all the fields in it
+/// and change its type to emit a unit struct, so as to not trigger false positives for "unused" variants.
+///
+/// Each variant represents a protobuf method for the given service, and it must contain two named fields, `request` and `response`, with the target message for each.
+///
+/// The target of a method must implement [`MessagePath`](prelude::MessagePath), which is automatically implemented by the
+/// [`proto_message`] macro and for all types from the [`proto_types`](prelude::proto_types) crate.
+///
+/// # Examples
+///
+/// ```
+/// use prelude::*;
+///
+/// proto_package!(MY_PKG, name = "my_pkg");
+/// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+///
+/// #[proto_message]
+/// pub struct User {
+///   pub id: i32,
+///   pub name: String
+/// }
+///
+/// #[proto_message]
+/// pub struct UserId {
+///   pub id: i32
+/// }
+///
+/// #[proto_message]
+/// pub struct Status {
+///   pub success: bool
+/// }
+///
+/// #[proto_service]
+/// enum UserService {
+///   GetUser {
+///     request: UserId,
+///     response: User
+///   },
+///   UpdateUser {
+///     request: User,
+///     response: Status
+///   }
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn proto_service(_args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
