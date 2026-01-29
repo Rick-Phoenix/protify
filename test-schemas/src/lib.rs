@@ -383,7 +383,7 @@ pub struct DefaultValidatorTestMsg {
 #[proto_message]
 #[proto(skip_checks(all))]
 pub struct DefaultValidatorTestOneof {
-  #[proto(oneof(required, tags(1, 2)))]
+  #[proto(oneof(tags(1, 2)))]
   pub default_validator_oneof: Option<DefaultValidatorOneof>,
 }
 
@@ -404,7 +404,7 @@ pub enum DefaultValidatorOneof {
 #[proto_message]
 #[proto(skip_checks(all))]
 pub struct DefaultValidatorRequiredOneof {
-  #[proto(oneof(required, tags(1, 2)))]
+  #[proto(oneof(tags(1, 2)), validate = |v| v.required())]
   pub validator_required_oneof: Option<ValidatorRequiredOneof>,
 }
 

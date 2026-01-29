@@ -384,7 +384,7 @@ pub struct TestMessage {
   #[proto(enum_(TestEnum))]
   pub enum_field: i32,
 
-  #[proto(oneof(required, tags(200, 201)))]
+  #[proto(oneof(tags(200, 201)), validate = |v| v.required())]
   pub oneof_field: Option<OneofA>,
 }
 

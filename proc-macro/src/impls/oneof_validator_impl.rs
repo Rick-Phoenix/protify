@@ -107,7 +107,7 @@ pub fn generate_oneof_validator(
       #[doc(hidden)]
       type Validator = ::prelude::OneofValidator;
       #[doc(hidden)]
-      type ValidatorBuilder = ::prelude::OneofValidator;
+      type ValidatorBuilder = ::prelude::OneofValidatorBuilder;
 
       type UniqueStore<'a>
         = ::prelude::LinearRefStore<'a, Self>

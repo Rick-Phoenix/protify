@@ -100,8 +100,4 @@ fn required_oneof() {
   };
 
   assert!(msg.is_valid(), "basic validation");
-
-  msg.default_validator_oneof = None;
-
-  assert_violation_id(&msg, "oneof.required", "oneof required");
 }

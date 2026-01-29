@@ -34,7 +34,6 @@ For the scalar types, you can simply use their protobuf name (`sint32`, `bytes`)
         For more information, visit [reusing oneofs].
 
         Other supported attributes are:
-        - `required`: adds a validator for this oneof that checks if a value is set. The `(buf.validate.oneof).required` option will also be added to the schema of the oneof (only for the specific instance of the oneof, not is other places where it's being reused unless specified).
         - `proxied`: specifies that the oneof is proxied, so that the proto message will contain the proxied oneof with the `Proto` suffix and not the proxy itself. Only available for proxied impls.
         - `default`: allows the oneof to be used without being wrapped in `Option`. In this case, the default conversion from proto for the field will use [`Default::default()`] if the field is `None` in the proto item. [`Default`] should be implemented for the target oneof. Only available for proxied impls.
         - `(any other path)`: this path will be assumed to be a custom proxy for the given oneof. Only available for proxied impls.
@@ -103,7 +102,7 @@ The cardinality of the field should be inferred automatically in most cases from
     - Type: closure or expression, or a list of them surrounded by brackets
     - Example: `#[proto(validate = |v| v.cel(my_cel_rule))]` or `#[proto(validate = [ CustomValidator, *STATIC_VALIDATOR ])]`
     - Description:
-        Defines the validators for the given field. These will be executed inside the container's own [`validate`](crate::ValidatedMessage::validate) method. If a closure if used, the default validator builder for the given type will be passed as the argument, and the validator will be cached in a static Lazy. If another expression is used, it must resolve to an implementor of [`Validator`](crate::Validator) for the target type.
+        Defines the validators for the given field. These will be executed inside the container's own [`validate`](crate::ValidatedMessage::validate) method. If a closure if used, the default validator builder for the given type will be passed as the argument, and the validator will be cached in a static Lazy (except for the [`OneofValidator`](crate::OneofValidator)). If another expression is used, it must resolve to an implementor of [`Validator`](crate::Validator) for the target type.
 
 
 - `tag`

@@ -5,7 +5,6 @@ pub struct OneofInfo {
   pub path: Path,
   pub tags: Vec<ParsedNum>,
   pub default: bool,
-  pub required: bool,
 }
 
 pub fn tags_to_str(tags: &[ParsedNum]) -> String {
@@ -27,7 +26,6 @@ impl OneofInfo {
     let mut oneof_path = ItemPathEntry::default();
     let mut tags: Vec<ParsedNum> = Vec::new();
     let mut default = false;
-    let mut required = false;
 
     meta.parse_nested_meta(|meta| {
       let ident_str = meta.ident_str()?;
@@ -35,7 +33,6 @@ impl OneofInfo {
       match ident_str.as_str() {
         "default" => default = true,
         "proxied" => oneof_path = ItemPathEntry::Proxied,
-        "required" => required = true,
         "tags" => {
           tags = meta
             .parse_list::<PunctuatedItems<ParsedNum>>()?
@@ -48,10 +45,6 @@ impl OneofInfo {
 
       Ok(())
     })?;
-
-    if default && required {
-      return Err(meta.error("`default` and `required` cannot be used together"));
-    }
 
     if tags.is_empty() {
       return Err(meta.error("Tags for oneofs must be set manually. You can set them with `#[proto(oneof(tags(1, 2, 3)))]`"));
@@ -67,7 +60,6 @@ impl OneofInfo {
       path: oneof_path,
       tags,
       default,
-      required,
     })
   }
 }

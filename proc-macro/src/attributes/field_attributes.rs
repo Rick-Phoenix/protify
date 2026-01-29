@@ -5,11 +5,12 @@ use crate::*;
 #[derive(Clone, Copy)]
 pub enum ValidatorKind {
   Closure,
+  ClosureOneof,
   Reflection,
+  ReflectionOneof,
   Custom,
   Default,
   DefaultOneof,
-  RequiredOneof,
 }
 
 impl ValidatorKind {
@@ -38,7 +39,7 @@ impl ValidatorKind {
   /// [`Closure`]: ValidatorKind::Closure
   #[must_use]
   pub const fn is_closure(self) -> bool {
-    matches!(self, Self::Closure)
+    matches!(self, Self::Closure | Self::ClosureOneof)
   }
 }
 
@@ -92,17 +93,13 @@ impl Validators {
   pub fn adjust_closures(&mut self, proto_field: &ProtoField) -> syn::Result<()> {
     for validator in &mut self.validators {
       if validator.kind.is_closure() {
-        if proto_field.is_oneof() {
-          // We need the boolean at compile time for the default check, so this must be an attribute
-          bail_with_span!(
-            validator.span,
-            "Cannot use closures with oneofs. If you want to mark the oneof as required, use the attribute notation `#[proto(oneof(required))]`"
-          );
-        }
-
         let validator_target_type = proto_field.validator_target_type(validator.span);
 
         validator.expr = quote_spanned! {validator.span=> <#validator_target_type as ::prelude::ProtoValidation>::validator_from_closure(#validator) };
+
+        if proto_field.is_oneof() {
+          validator.kind = ValidatorKind::ClosureOneof;
+        }
       }
     }
 
@@ -368,7 +365,13 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     }
   };
 
-  if let Some(default) = proto_field.default_validator_expr(field_span) {
+  // These handle the default validator logic inside of them
+  let has_closure_validator = validators
+    .validators
+    .iter()
+    .any(|v| v.kind.is_closure());
+
+  if !has_closure_validator && let Some(default) = proto_field.default_validator_expr(field_span) {
     validators.validators.push(default);
   }
 

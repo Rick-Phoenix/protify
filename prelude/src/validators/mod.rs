@@ -338,6 +338,8 @@ pub mod field_mask;
 pub use field_mask::*;
 pub mod lookup;
 pub use lookup::*;
+mod oneof;
+pub use oneof::*;
 
 pub use any::*;
 pub use bool::*;

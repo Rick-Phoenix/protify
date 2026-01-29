@@ -77,7 +77,6 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
                 path: path_str.parse()?,
                 tags: vec![],
                 default: false,
-                required: false,
               }));
             }
             "enumeration" => {
@@ -96,16 +95,26 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
     let proto_name = rust_ident_to_proto_name(&ident_str);
     let type_info = TypeInfo::from_type(&field.ty)?;
 
-    if let Some(ProtoField::Oneof(mut oneof)) = proto_field {
+    if let Some(ProtoField::Oneof(oneof)) = proto_field {
       let oneof_desc = message_desc
         .oneofs()
         .find(|oneof| oneof.name() == proto_name)
         .ok_or_else(|| error!(ident, "Oneof `{proto_name}` missing in the descriptor"))?;
 
       if let Some(oneof_rules) = get_oneof_rules(&oneof_desc) {
-        oneof.required = oneof_rules.required();
-
         let proto_field = ProtoField::Oneof(oneof);
+
+        let validator_expr = if oneof_rules.required() {
+          Some(ValidatorTokens {
+            expr: quote_spanned! {field_span=>
+              ::prelude::OneofValidator::builder().required().build()
+            },
+            kind: ValidatorKind::ReflectionOneof,
+            span: field_span,
+          })
+        } else {
+          proto_field.default_validator_expr(field_span)
+        };
 
         fields_data.push(FieldDataKind::Normal(FieldData {
           span: field_span,
@@ -114,11 +123,9 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
           proto_name: proto_name.to_string(),
           ident_str,
           tag: None,
-          validators: Validators::from_single(
-            proto_field
-              .default_validator_expr(field_span)
-              .expect("Failed to get the default oneof validator, this shouldn't have happened"),
-          ),
+          validators: validator_expr
+            .map(|v| Validators::from_single(v))
+            .unwrap_or_default(),
           options: TokensOr::<TokenStream2>::vec(),
           proto_field,
           from_proto: None,

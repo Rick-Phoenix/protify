@@ -91,7 +91,10 @@ pub fn process_oneof_attrs(
 
   for validator in &validators {
     if validator.kind.is_closure() {
-      bail_with_span!(validator.span, "Closures are not supported for oneofs");
+      bail_with_span!(
+        validator.span,
+        "Closures are not supported for oneofs at the top level"
+      );
     }
   }
 
