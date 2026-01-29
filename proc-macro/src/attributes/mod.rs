@@ -38,6 +38,8 @@ impl AutoTests {
   }
 }
 
+mod validator_tokens;
+pub use validator_tokens::*;
 mod extension_field_attributes;
 pub use extension_field_attributes::*;
 mod enum_attributes;

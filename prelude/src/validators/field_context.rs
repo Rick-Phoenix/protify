@@ -108,6 +108,16 @@ impl Default for ValidationCtx {
 }
 
 impl ValidationCtx {
+  /// Sets the [`FieldContext`] to [`None`].
+  ///
+  /// Mainly useful for top level oneof validators, which do not have a proto
+  /// field context (tag, name, etc) of their own.
+  #[inline]
+  pub fn without_field_context(&mut self) -> &mut Self {
+    self.field_context = None;
+    self
+  }
+
   /// Mutates the [`FieldContext`].
   #[inline]
   pub fn with_field_context(&mut self, field_context: FieldContext) -> &mut Self {

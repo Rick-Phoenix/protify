@@ -4,7 +4,11 @@
   clippy::collapsible_else_if
 )]
 
-use std::{borrow::Cow, fmt::Display, ops::Range};
+use std::{
+  borrow::Cow,
+  fmt::Display,
+  ops::{Deref, Range},
+};
 
 use attributes::*;
 use bool_enum::bool_enum;
@@ -15,6 +19,7 @@ use syn::{
   Attribute, Error, Expr, Field, Fields, Ident, ItemEnum, ItemStruct, Lit, LitBool, LitStr, Meta,
   Path, RangeLimits, Token, Type, Variant, Visibility, bracketed,
   meta::ParseNestedMeta,
+  parse::ParseStream,
   parse::{Parse, Parser},
   parse_macro_input, parse_quote, parse_quote_spanned,
   spanned::Spanned,

@@ -103,6 +103,8 @@ The cardinality of the field should be inferred automatically in most cases from
     - Example: `#[proto(validate = |v| v.cel(my_cel_rule))]` or `#[proto(validate = [ CustomValidator, *STATIC_VALIDATOR ])]`
     - Description:
         Defines the validators for the given field. These will be executed inside the container's own [`validate`](crate::ValidatedMessage::validate) method. If a closure if used, the default validator builder for the given type will be passed as the argument, and the validator will be cached in a static Lazy (except for the [`OneofValidator`](crate::OneofValidator)). If another expression is used, it must resolve to an implementor of [`Validator`](crate::Validator) for the target type.
+        
+        NOTE: For messages (or vectors/maps of such messages) and oneofs that have their own validators, they will be triggered even if no field validator is specified.
 
 
 - `tag`

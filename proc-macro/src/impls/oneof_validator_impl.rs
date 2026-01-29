@@ -18,7 +18,7 @@ pub fn generate_oneof_validator(
       quote_spanned! {v.span=>
         is_valid &= ::prelude::Validator::<#oneof_ident>::validate_core(
           &(#v),
-          ctx,
+          ctx.without_field_context(),
           Some(self)
         )?;
       }

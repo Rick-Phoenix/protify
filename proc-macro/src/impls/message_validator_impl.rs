@@ -69,6 +69,7 @@ pub fn field_validator_tokens(
 
     let argument = match item_kind {
       ItemKind::Oneof => quote_spanned! {*span=> Some(v) },
+
       ItemKind::Message => match type_info.type_.as_ref() {
         RustType::Option(inner) => {
           if inner.is_box() {
@@ -251,6 +252,7 @@ pub fn generate_message_validator(
   let has_default_validator_tokens = if has_non_default_validators {
     quote! { true }
     // Means we only encountered boxed self for defaults, so it's false
+    // because if we got this far, `has_non_default_validators` must be false
   } else if default_check_tokens.is_empty() {
     quote! { false }
   } else {
