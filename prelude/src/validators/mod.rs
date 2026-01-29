@@ -36,44 +36,13 @@ impl ValidationResultExt for ValidationResult {
 #[derive(Debug, Clone, Copy)]
 pub struct FailFast;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum IsValid {
-  Yes = 1,
-  No = 0,
-}
-
-impl From<IsValid> for bool {
-  #[inline]
-  fn from(val: IsValid) -> Self {
-    match val {
-      IsValid::Yes => true,
-      IsValid::No => false,
-    }
-  }
-}
+bool_enum!(pub IsValid);
 
 impl IsValid {
   #[must_use]
   #[inline]
   pub fn is_valid(&self) -> bool {
     (*self).into()
-  }
-
-  #[must_use]
-  #[inline]
-  pub const fn merge(self, other: Self) -> Self {
-    match (self, other) {
-      (Self::Yes, Self::Yes) => Self::Yes,
-      _ => Self::No,
-    }
-  }
-}
-
-impl core::ops::BitAndAssign for IsValid {
-  #[inline]
-  fn bitand_assign(&mut self, rhs: Self) {
-    *self = self.merge(rhs);
   }
 }
 

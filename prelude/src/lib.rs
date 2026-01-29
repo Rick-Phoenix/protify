@@ -29,6 +29,7 @@ mod decl_macros;
 
 use ::bytes::Bytes;
 use alloc::{borrow::Cow, borrow::ToOwned, collections::BTreeSet};
+use bool_enum::bool_enum;
 use core::borrow::Borrow;
 use core::fmt::{Debug, Display};
 use core::{
