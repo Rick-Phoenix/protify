@@ -174,7 +174,7 @@ fn message_inference() {
 
 #[proto_oneof(proxied)]
 // Checks that forwarded attrs are working
-#[proto(attr(derive(Copy, AttrForwarding)))]
+#[proto(attr(derive(Copy, __AttrForwarding)))]
 #[proto(skip_checks(all))]
 pub enum ProxiedOneof {
   // Checks that forwarded attrs are working
@@ -188,7 +188,7 @@ pub enum ProxiedOneof {
 #[proto_message(proxied)]
 #[proto(skip_checks(all))]
 // Checks that forwarded attrs are working
-#[proto(attr(derive(Copy, AttrForwarding)))]
+#[proto(attr(derive(Copy, __AttrForwarding)))]
 pub struct ProxiedMsg {
   // Checks that forwarded attrs are working
   #[proto(attr(forward))]

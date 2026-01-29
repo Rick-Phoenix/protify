@@ -59,7 +59,7 @@ mod service_derive;
 mod well_known_type_impl;
 
 #[doc(hidden)]
-#[proc_macro_derive(AttrForwarding, attributes(forward))]
+#[proc_macro_derive(__AttrForwarding, attributes(forward))]
 pub fn attr_forwarding_derive_test(_: TokenStream) -> TokenStream {
   TokenStream::new()
 }
@@ -116,6 +116,7 @@ pub fn validated_message_derive(input: TokenStream) -> TokenStream {
   reflection::reflection_message_derive(&mut item).into()
 }
 
+#[doc(hidden)]
 #[proc_macro]
 pub fn impl_known_type(input: TokenStream) -> TokenStream {
   match well_known_type_impl::well_known_type_impl_macro(input.into()) {

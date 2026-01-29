@@ -58,9 +58,21 @@ use ordered_float::{FloatCore, OrderedFloat};
 use owo_colors::OwoColorize;
 #[doc(hidden)]
 use paste::paste;
+use proc_macro_impls::impl_known_type;
 pub mod macros {
   #[doc(inline)]
-  pub use proc_macro_impls::*;
+  #[cfg(feature = "cel")]
+  pub use proc_macro_impls::{CelOneof, CelValue};
+
+  #[doc(inline)]
+  #[cfg(feature = "reflection")]
+  pub use proc_macro_impls::{ProtoEnum, ValidatedMessage, ValidatedOneof};
+
+  #[doc(inline)]
+  pub use proc_macro_impls::{
+    Enum, Extension, Message, Oneof, Service, define_proto_file, file_schema, proto_enum,
+    proto_extension, proto_message, proto_oneof, proto_package, proto_service,
+  };
 }
 pub use proto_types;
 #[doc(inline)]
