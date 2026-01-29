@@ -24,7 +24,6 @@ where
   S: State,
   T: ValidatedOneof,
 {
-  type Target = T;
   type Validator = OneofValidator;
 
   #[inline]

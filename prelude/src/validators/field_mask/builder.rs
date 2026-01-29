@@ -23,7 +23,6 @@ impl<S: State> Default for FieldMaskValidatorBuilder<S> {
 }
 
 impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
-  type Target = FieldMask;
   type Validator = FieldMaskValidator;
   #[inline]
   fn build_validator(self) -> FieldMaskValidator {

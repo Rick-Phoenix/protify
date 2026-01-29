@@ -187,8 +187,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
 
 /// Utility trait for validator builders. Mainly used for default validators.
 pub trait ValidatorBuilderFor<T: ?Sized>: Default {
-  type Target: ?Sized;
-  type Validator: Validator<T, Target = Self::Target>;
+  type Validator: Validator<T>;
 
   /// Builds the associated [`Validator`].
   fn build_validator(self) -> Self::Validator;

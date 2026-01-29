@@ -97,7 +97,6 @@ where
 impl<S: builder::state::State, Num: IntWrapper> ValidatorBuilderFor<Num>
   for IntValidatorBuilder<Num, S>
 {
-  type Target = Num::RustType;
   type Validator = IntValidator<Num>;
 
   #[inline]

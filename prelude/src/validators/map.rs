@@ -193,7 +193,6 @@ where
   K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
   V::Stored: Sized + Clone + TryIntoCel,
 {
-  type Target = M::Target;
   type Validator = MapValidator<K, V>;
 
   #[inline]

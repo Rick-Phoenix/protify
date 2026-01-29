@@ -120,7 +120,6 @@ where
   T: ProtoValidation + Send + Sync,
   T::Stored: TryIntoCel + Sized + Clone,
 {
-  type Target = [T::Stored];
   type Validator = RepeatedValidator<T>;
 
   #[inline]

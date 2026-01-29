@@ -21,7 +21,6 @@ impl ProtoValidation for Duration {
 }
 
 impl<S: State> ValidatorBuilderFor<Duration> for DurationValidatorBuilder<S> {
-  type Target = Duration;
   type Validator = DurationValidator;
   #[inline]
   fn build_validator(self) -> DurationValidator {

@@ -64,7 +64,6 @@ impl<T> ValidatorBuilderFor<T> for NoOpValidatorBuilder<T>
 where
   T: ?Sized + Send + Sync + ToOwned,
 {
-  type Target = T;
   type Validator = NoOpValidator<T>;
   fn build_validator(self) -> Self::Validator {
     NoOpValidator(PhantomData)

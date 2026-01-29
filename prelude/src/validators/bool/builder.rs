@@ -34,7 +34,6 @@ impl ProtoValidation for bool {
   }
 }
 impl<S: State> ValidatorBuilderFor<bool> for BoolValidatorBuilder<S> {
-  type Target = bool;
   type Validator = BoolValidator;
   #[inline]
   fn build_validator(self) -> BoolValidator {

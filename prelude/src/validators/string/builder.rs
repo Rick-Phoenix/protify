@@ -27,7 +27,6 @@ impl ProtoValidation for String {
     Self: 'a;
 }
 impl<S: State> ValidatorBuilderFor<String> for StringValidatorBuilder<S> {
-  type Target = str;
   type Validator = StringValidator;
   #[inline]
   fn build_validator(self) -> StringValidator {

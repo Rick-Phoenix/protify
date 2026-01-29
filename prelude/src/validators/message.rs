@@ -72,7 +72,6 @@ impl<T, S: builder::State> ValidatorBuilderFor<T> for MessageValidatorBuilder<S>
 where
   T: ValidatedMessage + PartialEq + TryIntoCel,
 {
-  type Target = T;
   type Validator = MessageValidator;
 
   #[inline]

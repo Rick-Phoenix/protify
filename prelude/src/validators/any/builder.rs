@@ -46,7 +46,6 @@ impl ProtoValidation for Any {
 }
 
 impl<S: State> ValidatorBuilderFor<Any> for AnyValidatorBuilder<S> {
-  type Target = Any;
   type Validator = AnyValidator;
   #[inline]
   fn build_validator(self) -> AnyValidator {

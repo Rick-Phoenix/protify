@@ -28,7 +28,6 @@ impl ProtoValidation for Bytes {
 }
 
 impl<S: State> ValidatorBuilderFor<Bytes> for BytesValidatorBuilder<S> {
-  type Target = Bytes;
   type Validator = BytesValidator;
   #[inline]
   fn build_validator(self) -> BytesValidator {

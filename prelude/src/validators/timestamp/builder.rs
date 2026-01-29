@@ -27,7 +27,6 @@ impl ProtoValidation for Timestamp {
     Self: 'a;
 }
 impl<S: State> ValidatorBuilderFor<Timestamp> for TimestampValidatorBuilder<S> {
-  type Target = Timestamp;
   type Validator = TimestampValidator;
   #[inline]
   fn build_validator(self) -> TimestampValidator {

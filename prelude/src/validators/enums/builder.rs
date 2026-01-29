@@ -11,7 +11,6 @@ pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
 }
 
 impl<T: ProtoEnum, S: State> ValidatorBuilderFor<T> for EnumValidatorBuilder<T, S> {
-  type Target = i32;
   type Validator = EnumValidator<T>;
 
   fn build_validator(self) -> Self::Validator {
