@@ -8,6 +8,13 @@ pub struct MessageInfo {
 }
 
 impl MessageInfo {
+  pub fn is_self(&self, input_ident: &Ident) -> bool {
+    self
+      .path
+      .get_ident()
+      .is_some_and(|i| i == "Self" || i == input_ident)
+  }
+
   pub fn parse(meta: &ParseNestedMeta, type_info: Option<&TypeInfo>) -> syn::Result<Self> {
     let mut item_path = ItemPathEntry::default();
     let mut boxed = false;

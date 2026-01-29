@@ -37,10 +37,7 @@ pub fn field_validator_tokens(
     if !validators_data.has_non_default_validators {
       if kind.is_default() {
         if let Some(msg_info) = field_data.message_info()
-          && msg_info
-            .path
-            .get_ident()
-            .is_none_or(|i| i != input_ident)
+          && !msg_info.is_self(input_ident)
         {
           let path = &msg_info.path;
 
@@ -271,7 +268,6 @@ pub fn generate_message_validator(
 
   quote! {
     impl ::prelude::ValidatedMessage for #target_ident {
-      #[doc(hidden)]
       #inline_if_empty
       fn validate_with_ctx(&self, ctx: &mut ::prelude::ValidationCtx) -> ::prelude::ValidationResult {
         let mut is_valid = ::prelude::IsValid::Yes;
