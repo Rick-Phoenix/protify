@@ -11,16 +11,16 @@ The first parameter of the macro is the ident that will be used for the generate
 The other parameters are not positional and are as follows:
 
 - `name` (required)
-    Type: string
-    Example: `proto_package!(MY_PKG, name = "my_pkg")`
-    Description:
+    - Type: string
+    - Example: `proto_package!(MY_PKG, name = "my_pkg")`
+    - Description:
         The name of the package.
 
 
 - `no_cel_test`
-    Type: Ident
-    Example: `proto_package!(MY_PKG, name = "my_pkg", no_cel_test)`
-    Description:
+    - Type: Ident
+    - Example: `proto_package!(MY_PKG, name = "my_pkg", no_cel_test)`
+    - Description:
         By default, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
 
 You can then use the specified ident to refer to the package to generate the files or to link to other files.
@@ -33,22 +33,22 @@ The first argument is the ident that will be used to refer to the file handle.
 The other parameters are not positional and are as follows:
 
 - `name` (required)
-    Type: string
-    Example: `define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG)`
-    Description:
+    - Type: string
+    - Example: `define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG)`
+    - Description:
         The name of the file.
 
 - `package` (required)
-    Type: Ident
-    Example: `define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG)`
-    Description:
+    - Type: Ident
+    - Example: `define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG)`
+    - Description:
         The ident of the package handle.
 
 
 - `extern_path`
-    Type: string
-    Example: `define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG, extern_path = "module::path")`
-    Description:
+    - Type: string
+    - Example: `define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG, extern_path = "module::path")`
+    - Description:
         The rust path to reach the items described in this proto file, when applied from an external crate. The items in this file will inherit the path of their file + their own ident. For example, if a message `Msg1` is assigned to this file, its `extern_path` will be registered as `::module::path::Msg1`. 
         It defaults to `core::module_path!()` and should only be overridden for re-exported items where their path does not match their module's path.
 
@@ -56,7 +56,7 @@ The other parameters are not positional and are as follows:
     - Type: Expr
     - Example: `define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG, options = vec![ my_option() ])`
     - Description:
-        Specifies the options for the given file. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption).
+        Specifies the options for the given file. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption)>.
 
 
 - `imports`
@@ -79,6 +79,8 @@ The other parameters are not positional and are as follows:
     - Description:
         A value from the [`Edition`](crate::Edition) enum. Supports editions from Proto3 onwards.
 
+ℹ️ NOTE: All inputs except for `package` and `name` are ignored when the `inventory` feature is disabled. In such a scenario, the [`file_schema`](crate::file_schema) macro must be used to add the items manually.
+
 ### Reusing A File
 
 If you want to define items in different rust files that are descendants of the same module, and place them into the same proto file, you can use one of two macros to bring the file into scope.
@@ -87,42 +89,45 @@ If you want to define items in different rust files that are descendants of the 
 - The [`inherit_proto_file`](crate::inherit_proto_file) macro, which does the same but keeps the import path of the parent module (for re-exported items).
 
 ```rust
-use prelude::*;
+mod root {
+    use prelude::*;
 
-proto_package!(MY_PKG, name = "my_pkg");
-define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+    proto_package!(MY_PKG, name = "my_pkg");
+    define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
-pub mod submod {
-    use super::MY_FILE;
-    
-    // The file is now in scope, and will be picked up automatically by all items defined in this module
-    use_proto_file!(MY_FILE);
+    pub mod submod {
+        use super::*;
+        
+        // The file is now in scope, and will be picked up automatically by all items defined in this module
+        use_proto_file!(MY_FILE);
 
-    // This message will have the extern path of the `module_path!()` output in here, so `::cratename::submod`
-    #[proto_message]
-    pub struct Msg {
-       pub id: i32
+        // This message will have the extern path of the `module_path!()` output in here, so `::cratename::submod`
+        #[proto_message]
+        pub struct Msg {
+           pub id: i32
+        }
+    }
+
+    pub use re_exported::Msg;
+    mod re_exported {
+        use super::*;
+
+        // The file is now in scope, and will be picked up automatically by all items defined in this module
+        inherit_proto_file!(MY_FILE);
+
+        // This message will have the extern path of the parent module
+        #[proto_message]
+        pub struct Msg {
+            pub id: i32
+        }
     }
 }
-
-pub use re_exported::Msg;
-mod re_exported {
-    use super::MY_FILE;
-
-    // The file is now in scope, and will be picked up automatically by all items defined in this module
-    inherit_proto_file!(MY_FILE);
-
-    // This message will have the extern path of the parent module
-    #[proto_message]
-    pub struct Msg {
-        pub id: i32
-    }
-}
-
 ```
 
-⚠️ Warning
+### ⚠️ Caveats with glob imports
 
-Under the hood, the file macros generate a constant named `__PROTO_FILE` that is picked up by the macro output for each item. This constant is private to the module and hidden so that it cannot be brought into scope accidentally, but using global import from children modules like `use super::*` will bring it into scope. It's not recommended to rely on this method to bring the file into scope and to use the [`use_proto_file`](crate::use_proto_file) macro for more clarity.
+Under the hood, the file macros generate a constant named `__PROTO_FILE` that is picked up by the macro output for each item. This constant is private to the module and hidden so that it cannot be brought into scope accidentally, but using glob imports from children modules like `use super::*` will bring it into scope. 
+
+It's not recommended to rely on this method to bring the file into scope and to use the [`use_proto_file`](crate::use_proto_file) or [`inherit_proto_file`](crate::inherit_proto_file) macros for more clarity.
 
 In a case where you need to use a global import from the parent module but you want the items to be in a separate proto file, then you must make sure to define a new file with the [`define_proto_file`](crate::define_proto_file) macro, or the items will be picked up by the wrong file.

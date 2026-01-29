@@ -8,4 +8,4 @@ When a oneof is used in a message, a completely new oneof will be generated insi
 
 All validators and options defined on the oneof as a field will be local to that instance.
 
-⚠️ Since prost was not originally programmed to support reusable oneofs, it does not check if the tags used with it are wrong and would just produce silent errors at runtime. In order to avoid this, the `#[proto_message]` macro will automatically generate a test that checks if the tags specified on the oneof as a field match the oneof's tags.
+⚠️ WARNING: Since prost was not originally programmed to support reusable oneofs, it does not check if the tags used with it are wrong and would just produce silent errors at runtime. In order to avoid this, the `#[proto_message]` macro will automatically generate a test that checks if the tags specified on the oneof as a field match the oneof's tags.

@@ -6,7 +6,7 @@ Services are defined via the `#[proto_service]` macro, which should be applied t
     - Type: Expr
     - Example: `#[proto(options = vec![ my_option_1() ])]`
     - Description:
-        Specifies the options for the given service/handler. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption).
+        Specifies the options for the given service/handler. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption)>.
 
 - `deprecated`
     - Type: Ident

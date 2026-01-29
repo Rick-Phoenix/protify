@@ -40,7 +40,7 @@
     - Type: Expr
     - Example: `#[proto(options = vec![ my_option_1() ])]`
     - Description:
-        Specifies the options for the given message. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption).
+        Specifies the options for the given message. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption)>.
 
 - `name`
     - Type: string

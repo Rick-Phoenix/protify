@@ -10,6 +10,9 @@ keywords.workspace = true
 [lints]
 workspace = true
 
+[dev-dependencies]
+builder = { path = "../builder" }
+
 [dependencies]
 regex = { version = "1", optional = true, default-features = false, features = [
   "perf",

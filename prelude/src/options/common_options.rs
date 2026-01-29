@@ -1,5 +1,6 @@
 use crate::*;
 
+#[doc(hidden)]
 #[must_use]
 pub fn proto_deprecated() -> ProtoOption {
   ProtoOption {

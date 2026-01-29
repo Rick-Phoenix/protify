@@ -60,7 +60,7 @@ pub fn attr_forwarding_derive_test(_: TokenStream) -> TokenStream {
 }
 
 /// Implements the [`CelOneof`](prelude::CelOneof) trait on an enum. Automatically implemented
-/// by the [`proto_oneof`] macro when the `cel` feature is enabled.
+/// by the [`proto_oneof`](prelude::proto_oneof) macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelOneof, attributes(cel))]
 pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
@@ -73,7 +73,7 @@ pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements the [`CelValue`](prelude::CelValue) trait on a struct. Automatically
-/// implemented by the [`proto_message`] macro when the `cel` feature is enabled.
+/// implemented by the [`proto_message`](prelude::proto_message) macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelValue, attributes(cel))]
 pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
@@ -355,7 +355,7 @@ pub fn extension_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
-/// Implements [`ProtoService`] for the given enum.
+/// Implements [`ProtoService`](prelude::ProtoService) for the given enum.
 ///
 /// Since the enum is only meant to be used for schema purposes, the macro will erase all the fields in it
 /// and change its type to emit a unit struct, so as to not trigger false positives for "unused" variants.
@@ -363,7 +363,7 @@ pub fn extension_derive(_input: TokenStream) -> TokenStream {
 /// Each variant represents a protobuf method for the given service, and it must contain two named fields, `request` and `response`, with the target message for each.
 ///
 /// The target of a method must implement [`MessagePath`](prelude::MessagePath), which is automatically implemented by the
-/// [`proto_message`] macro and for all types from the [`proto_types`](prelude::proto_types) crate.
+/// [`proto_message`](prelude::proto_message) macro and for all types from the [`proto_types`](prelude::proto_types) crate.
 ///
 /// # Examples
 ///

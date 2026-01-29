@@ -7,7 +7,6 @@ This is how to set up the `build.rs` file in the consuming crate, which is this 
 (You can find the most up-to-date example in the `test-server` crate of the repo. I can't really keep this up-to-date as an example since it relies on file generation, so if this should become stale or incorrect, please open an issue or PR).
 
 ```rust,ignore
-
 use std::env;
 
 use tonic_prost_build::Config;
@@ -32,9 +31,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut config = Config::new();
 
     config
-        .extern_path(".google.protobuf", "::proto_types")
+        .extern_path(".google.protobuf", "::prelude::proto_types")
         // If we are using validators
-        .extern_path(".buf.validate", "::proto_types::protovalidate")
+        .extern_path(".buf.validate", "::prelude::proto_types::protovalidate")
+        // Required, if bytes fields are used
+        .bytes(["."])
         .compile_well_known_types();
 
     // We only need to build the services, and we will import

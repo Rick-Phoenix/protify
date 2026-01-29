@@ -28,13 +28,13 @@
     - Type: Expr
     - Example: `#[proto(options = vec![ my_option_1() ])]`
     - Description:
-        Specifies the options for the given oneof. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption).
+        Specifies the options for the given oneof. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption)>.
 
 - `name`
     - Type: string
     - Example: `#[proto(name = "abc")]`
     - Description:
-        Specifies the name of the oneof. Overrides the default behaviour, which uses the snake-case name of the enum.
+        Specifies the name of the oneof. Overrides the default behaviour, which uses the snake_case name of the enum.
 
 - `from_proto`
     - Type: function Path or closure
@@ -52,12 +52,13 @@
     - Type: Expr, or bracketed list of Exprs
     - Example: `#[proto(validate = [ CustomValidator, *STATIC_VALIDATOR ])]`
     - Description:
-        Defines the default validators for the given oneof. These will be executed inside the oneof's own [`validate`](crate::ValidatedMessage::validate) method, and whenever the oneof in another message, along with the validators defined for each variant. The expressions is it must resolve to an implementors of [`Validator`](crate::Validator) for the oneof.
+        Defines the default validators for the given oneof. These will be executed inside the oneof's own [`validate`](crate::ValidatedMessage::validate) method, and whenever the oneof in another message, along with the validators defined for each variant. The expressions is it must resolve to an implementor of [`Validator`](crate::Validator) for the oneof.
 
 - `skip_checks`
     - Type: list of Idents
     - Example: `#[proto(skip_checks(validators))]`
     - Description:
-        Disables the generation of tests. Currently, the allowed values are:
-            - `validators`: disables the automatic generation of a test that checks the validity of the validators used by the message. The `check_validators_consistency` will still be generated and be available for manual testing.
+        Disables the generation of tests. 
+        Currently, the allowed values are:
+        - `validators`: disables the automatic generation of a test that checks the validity of the validators used by the message. The `check_validators_consistency` method will still be generated and be available for manual testing.
 

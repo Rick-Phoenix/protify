@@ -4,7 +4,6 @@ When the `inventory` feature is enabled, generating files is done in a single st
 
 # No_std usage
 
-
 The inventory feature relies on the `inventory` crate being available, which is not the case in a no_std crate, and may also be undesirable for users with extreme binary size concerns, as the registry collection applied with inventory may increase the binary size slightly. 
 
 In cases such as these, we need a different method for collecting the schema items, which can use one of the following workarounds.
@@ -14,66 +13,75 @@ This is in theory the simplest way, but there is a big catch. Since rust-analyze
 
 2. The alternative is to use the [`file_schema`](crate::file_schema) and [`package_schema`](crate::package_schema) macros, which allow you to manually define the elements of a package.
 
-The `file_schema` macro accepts all the inputs of the `define_proto_file` macro, plus the list of messages, enums and services, which are just bracketed lists of paths for each element.
+The [`file_schema`](crate::file_schema) macro accepts all the inputs of the [`define_proto_file`](crate::define_proto_file) macro, plus the list of messages, enums and services, which are just bracketed lists of paths for each element.
 Nested messages and enums are defined by using `ParentMessage = { enums = [ NestedEnum ], messages = [ NestedMsg ] }` instead of just the message's name, as shown below.
 
-The `package_schema` macro simply accepts the name of the package as the first argument, and a bracketed list of idents for the files that it contains.
+The [`package_schema`](crate::package_schema) macro simply accepts the name of the package as the first argument, and a bracketed list of idents for the files that it contains.
 
-Example:
+# Example:
 
 ```rust
 use prelude::*;
 
-#[proto_message]
-struct Msg1 {
-    id: i32
-}
-
-#[proto_message]
-#[proto(parent_message = Msg1)]
-struct Nested {
-    id: i32
-}
-
-#[proto_message]
-struct Msg2 {
-    id: i32
-}
-
-#[proto_enum]
-enum Enum1 {
+// This would be the no_std crate where you define your models...
+mod imagine_this_is_the_models_crate {
+  use super::*;
+  
+  // The package and file handles are still needed here,
+  // but they do not collect the items automatically
+  // when the inventory feature is disabled, so we must
+  // create the schemas manually below...
+  proto_package!(MY_PKG, name = "my_pkg");
+  define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+  
+  #[proto_message]
+  pub struct Msg1 {
+    pub id: i32
+  }
+  #[proto_message]
+  #[proto(parent_message = Msg1)]
+  pub struct Nested {
+    pub id: i32
+  }
+  #[proto_message]
+  pub struct Msg2 {
+    pub id: i32
+  }
+  #[proto_enum]
+  pub enum Enum1 {
     Unspecified, A, B
-}
-
-#[proto_enum]
-#[proto(parent_message = Msg1)]
-enum NestedEnum {
+  }
+  #[proto_enum]
+  #[proto(parent_message = Msg1)]
+  pub enum NestedEnum {
     Unspecified, A, B
-}
-
-
-#[proto_service]
-enum MyService {
+  }
+  #[proto_service]
+  pub enum MyService {
     GetMsg {
-        request: Msg1,
-        response: Msg2
+      request: Msg1,
+      response: Msg2
     }
+  }
 }
 
-
-let manual_file = file_schema!(
+// From an external utility crate, or the build.rs file of the consuming crate:
+fn main() {
+  use imagine_this_is_the_models_crate::*;
+  let manual_file = file_schema!(
     name = "test.proto",
     messages = [
-        Msg2,
-        Msg1 = { messages = [ Nested ], enums = [ NestedEnum ] }
+      Msg2,
+      Msg1 = { messages = [ Nested ], enums = [ NestedEnum ] }
     ],
     services = [ MyService ],
     enums = [ Enum1 ],
     // Imports, options, etc...
-);
-
-let manual_pkg = package_schema!("my_pkg", files = [ manual_file ]);
-
+  );
+  let manual_pkg = package_schema!("my_pkg", files = [ manual_file ]);
+  // Now we can use the package handle to create the files,
+  // access the `extern_path`s and so on...
+}
 ```
 
 

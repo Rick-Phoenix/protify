@@ -34,10 +34,10 @@ For the scalar types, you can simply use their protobuf name (`sint32`, `bytes`)
         For more information, visit [reusing oneofs].
 
         Other supported attributes are:
-            - `required`: adds a validator for this oneof that checks if a value is set. The `(buf.validate.oneof).required` option will also be added to the schema of the oneof (only for the specific instance of the oneof, not is other places where it's being reused unless specified).
-            - `proxied`: specifies that the oneof is proxied, so that the proto message will contain the proxied oneof with the `Proto` suffix and not the proxy itself. Only available for proxied impls.
-            - `default`: allows the oneof to be used without being wrapped in `Option`. In this case, the default conversion from proto for the field will use `Default::default()` if the field is `None` in the proto item. `Default` should be implemented for the target oneof. Only available for proxied impls.
-            - `(any other path)`: this path will be assumed to be a custom proxy for the given oneof. Only available for proxied impls.
+        - `required`: adds a validator for this oneof that checks if a value is set. The `(buf.validate.oneof).required` option will also be added to the schema of the oneof (only for the specific instance of the oneof, not is other places where it's being reused unless specified).
+        - `proxied`: specifies that the oneof is proxied, so that the proto message will contain the proxied oneof with the `Proto` suffix and not the proxy itself. Only available for proxied impls.
+        - `default`: allows the oneof to be used without being wrapped in `Option`. In this case, the default conversion from proto for the field will use [`Default::default()`] if the field is `None` in the proto item. [`Default`] should be implemented for the target oneof. Only available for proxied impls.
+        - `(any other path)`: this path will be assumed to be a custom proxy for the given oneof. Only available for proxied impls.
 
 - `enum_`
     - Type: Ident or MetaList
@@ -72,7 +72,7 @@ The cardinality of the field should be inferred automatically in most cases from
     - Type: Expr
     - Example: `#[proto(options = vec![ my_option_1() ])]`
     - Description:
-        Specifies the options for the given field. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption).
+        Specifies the options for the given field. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption)>.
 
 - `name`
     - Type: string

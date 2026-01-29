@@ -2,6 +2,7 @@ use crate::*;
 
 use proto_types::protovalidate::*;
 
+/// Utility trait for [`ValidationResult`] that makes it easier to discern the validation status.
 pub trait ValidationResultExt {
   #[allow(private_interfaces)]
   const SEALED: Sealed;
@@ -15,6 +16,7 @@ impl ValidationResultExt for ValidationResult {
   #[allow(private_interfaces)]
   const SEALED: Sealed = Sealed;
 
+  /// Returns `true` if the result is [`Ok`] and [`IsValid::Yes`], and `false` otherwise.
   #[inline]
   fn is_valid(&self) -> bool {
     match self {
@@ -23,12 +25,14 @@ impl ValidationResultExt for ValidationResult {
     }
   }
 
+  /// Checks if the result is [`Err`] with [`FailFast`].
   #[inline]
   fn is_fail_fast(&self) -> bool {
     self.is_err()
   }
 }
 
+/// Unit struct to signal the `fail fast` setting and trigger early returns with [`ValidationResult`].
 #[derive(Debug, Clone, Copy)]
 pub struct FailFast;
 
