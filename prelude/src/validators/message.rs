@@ -165,7 +165,12 @@ where
         is_valid &= cel_ctx.execute_programs()?;
       }
     } else if self.required {
-      is_valid &= ctx.add_required_violation()?;
+      is_valid &= ctx.add_required_violation(
+        self
+          .required_error_message
+          .as_ref()
+          .map(|e| e.to_string()),
+      )?;
     }
 
     Ok(is_valid)
@@ -314,6 +319,9 @@ pub struct MessageValidator {
 
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
+
+  /// A custom error message to display for the `required` violation.
+  pub required_error_message: Option<FixedStr>,
 }
 
 impl From<MessageValidator> for ProtoOption {

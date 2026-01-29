@@ -82,6 +82,24 @@ impl<S: State> MessageValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a custom error message to display for the `required` violation.
+  #[inline]
+  pub fn required_error_message(
+    mut self,
+    msg: impl Into<FixedStr>,
+  ) -> MessageValidatorBuilder<SetRequiredErrorMessage<S>>
+  where
+    S::RequiredErrorMessage: IsUnset,
+    S::Required: IsSet,
+  {
+    self.data.required_error_message = Some(msg.into());
+
+    MessageValidatorBuilder {
+      _state: PhantomData,
+      data: self.data,
+    }
+  }
+
   /// Builds the validator.
   #[inline]
   pub fn build(self) -> MessageValidator {

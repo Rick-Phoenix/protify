@@ -16,6 +16,7 @@ pub struct FieldContext {
 }
 
 impl FieldContext {
+  /// Converts the [`FieldContext`] to the [`FieldPathElement`] representation.
   #[must_use]
   #[inline(never)]
   #[cold]
@@ -31,6 +32,8 @@ impl FieldContext {
   }
 }
 
+/// Specifies whether the target of the validation is a field as a whole,
+/// a value or key in a map field, or an item in a repeated field.
 #[derive(Clone, Default, Debug, Copy, PartialEq, Eq, Hash)]
 pub enum FieldKind {
   MapKey,
@@ -41,33 +44,57 @@ pub enum FieldKind {
 }
 
 impl FieldKind {
+  /// Returns `true` if the field kind is [`MapKey`].
+  ///
+  /// [`MapKey`]: FieldKind::MapKey
   #[must_use]
   #[inline]
   pub const fn is_map_key(&self) -> bool {
     matches!(self, Self::MapKey)
   }
 
+  /// Returns `true` if the field kind is [`MapValue`].
+  ///
+  /// [`MapValue`]: FieldKind::MapValue
   #[must_use]
   #[inline]
   pub const fn is_map_value(&self) -> bool {
     matches!(self, Self::MapValue)
   }
 
+  /// Returns `true` if the field kind is [`RepeatedItem`].
+  ///
+  /// [`RepeatedItem`]: FieldKind::RepeatedItem
   #[must_use]
   #[inline]
   pub const fn is_repeated_item(&self) -> bool {
     matches!(self, Self::RepeatedItem)
   }
+
+  /// Returns `true` if the field kind is [`Normal`].
+  ///
+  /// [`Normal`]: FieldKind::Normal
+  #[must_use]
+  #[inline]
+  pub const fn is_normal(&self) -> bool {
+    matches!(self, Self::Normal)
+  }
 }
 
+/// The context for a given validation execution.
 pub struct ValidationCtx {
   pub field_context: Option<FieldContext>,
   pub parent_elements: Vec<FieldPathElement>,
   pub violations: ValidationErrors,
+  /// Whether validation should be interrupted at the first failure.
   pub fail_fast: bool,
 }
 
 impl Default for ValidationCtx {
+  /// Default values for [`ValidationCtx`].
+  ///
+  /// NOTE: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
+  /// because this is by far the most desired behaviour for most applications.
   #[inline]
   fn default() -> Self {
     Self {
@@ -80,12 +107,14 @@ impl Default for ValidationCtx {
 }
 
 impl ValidationCtx {
+  /// Mutates the [`FieldContext`].
   #[inline]
   pub fn with_field_context(&mut self, field_context: FieldContext) -> &mut Self {
     self.field_context = Some(field_context);
     self
   }
 
+  /// Adds a new known violation to the list of errors.
   #[inline(never)]
   #[cold]
   pub fn add_violation(
@@ -116,6 +145,7 @@ impl ValidationCtx {
     }
   }
 
+  /// Extracts the [`FieldKind`]. If the [`FieldContext`] is absent (for a top level validator), it falls back to [`FieldKind::Normal`].
   #[inline]
   #[must_use]
   pub fn field_kind(&self) -> FieldKind {
@@ -126,6 +156,7 @@ impl ValidationCtx {
       .unwrap_or_default()
   }
 
+  /// Adds a new known violation to the list of errors, overriding the rule ID.
   #[inline(never)]
   #[cold]
   pub fn add_violation_with_custom_id(
@@ -157,25 +188,39 @@ impl ValidationCtx {
     }
   }
 
+  /// Adds a new violation belonging to a [`CelRule`].
   #[inline]
   #[cold]
   pub fn add_cel_violation(&mut self, rule: &CelRule) -> ValidationResult {
     self.add_violation_with_custom_id(&rule.id, ViolationKind::Cel, &rule.message)
   }
 
+  /// Adds a violation for a required oneof. If no custom error message is specified, the default will be used.
   #[inline]
   #[cold]
-  pub fn add_required_oneof_violation(&mut self) -> ValidationResult {
-    self.add_violation(
-      ViolationKind::RequiredOneof,
-      "at least one value must be set",
-    )
+  pub fn add_required_oneof_violation(
+    &mut self,
+    error_message: Option<String>,
+  ) -> ValidationResult {
+    if let Some(msg) = error_message {
+      self.add_violation(ViolationKind::RequiredOneof, msg)
+    } else {
+      self.add_violation(
+        ViolationKind::RequiredOneof,
+        "at least one value must be set",
+      )
+    }
   }
 
+  /// Adds a violation for a required field. If no custom error message is specified, the default will be used.
   #[inline]
   #[cold]
-  pub fn add_required_violation(&mut self) -> ValidationResult {
-    self.add_violation(ViolationKind::Required, "is required")
+  pub fn add_required_violation(&mut self, error_message: Option<String>) -> ValidationResult {
+    if let Some(msg) = error_message {
+      self.add_violation(ViolationKind::Required, msg)
+    } else {
+      self.add_violation(ViolationKind::Required, "is required")
+    }
   }
 
   #[cfg(feature = "cel")]

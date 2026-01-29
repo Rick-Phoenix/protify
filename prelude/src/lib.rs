@@ -304,7 +304,7 @@ impl<T: ValidatedOneof + ProtoValidation> Validator<T> for OneofValidator {
       }
       None => {
         if self.required {
-          ctx.add_required_oneof_violation()
+          ctx.add_required_oneof_violation(None)
         } else {
           Ok(IsValid::Yes)
         }
