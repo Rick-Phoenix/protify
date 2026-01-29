@@ -21,7 +21,7 @@ mod tolerances_tests;
 
 use ::bytes::Bytes;
 use paste::paste;
-use prelude::{test_utils::*, *};
+use prelude::*;
 use similar_asserts::assert_eq as assert_eq_pretty;
 use std::collections::HashMap;
 
@@ -54,4 +54,13 @@ pub enum SimpleEnum {
   Unspecified,
   A,
   B,
+}
+
+#[proto_oneof]
+#[proto(skip_checks(all))]
+pub enum SimpleOneof {
+  #[proto(tag = 1)]
+  A(i32),
+  #[proto(tag = 2)]
+  B(u32),
 }

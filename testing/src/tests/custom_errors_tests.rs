@@ -88,7 +88,7 @@ fn field_mask_validator() -> FieldMaskValidator {
 fn int_validator() -> IntValidator<i32> {
   IntValidator::<i32>::builder()
     .in_([10])
-    .not_in([1])
+    .not_in([0])
     .gt(0)
     .with_error_messages(impl_custom_messages!(Int32 => Gt, In, NotIn))
     .build()
@@ -97,7 +97,7 @@ fn int_validator() -> IntValidator<i32> {
 fn float_validator() -> FloatValidator<f32> {
   FloatValidator::<f32>::builder()
     .in_([10.0])
-    .not_in([1.0])
+    .not_in([0.0])
     .gt(0.0)
     .with_error_messages(impl_custom_messages!(Float => Gt, In, NotIn))
     .build()
@@ -143,6 +143,10 @@ struct CustomErrorMessages {
   repeated: Vec<i32>,
   #[proto(map(int32, int32), validate = map_validator())]
   map: HashMap<i32, i32>,
+  #[proto(oneof(tags(1, 2)), validate = |v| v.required().with_error_message("they're taking the hobbits to Isengard!"))]
+  required_oneof: Option<SimpleOneof>,
+  #[proto(message, validate = |v| v.required().required_error_message("they're taking the hobbits to Isengard!"))]
+  required_message: Option<DirectMsg>,
 }
 
 #[test]
@@ -157,16 +161,37 @@ fn custom_error_messages() {
     enum_: 10,
     duration: Some(Default::default()),
     timestamp: Some(Default::default()),
-    field_mask: Some(Default::default()),
+    field_mask: Some(FieldMask {
+      paths: vec!["abc".to_string()],
+    }),
     int: Default::default(),
     float: Default::default(),
     repeated: vec![0, 0],
     map: Default::default(),
+    required_oneof: None,
+    required_message: None,
   };
 
   let violations = msg.validate_all().unwrap_err().into_violations();
 
+  // 7 for strings
+  // + 5 for bytes
+  // + 2 for any
+  // + 3 for enum
+  // + 3 for duration
+  // + 2 for timestamp
+  // + 2 for fieldmask
+  // + 3 for ints
+  // + 3 for float
+  // + 2 for repeated
+  // + 1 for map
+  // + 1 for required oneof
+  // + 1 for required message
+  // = 35
+  assert_eq_pretty!(violations.len(), 35);
+
   for v in violations {
+    eprintln!("{}", v.rule_id());
     assert_eq_pretty!(v.message(), "they're taking the hobbits to Isengard!");
   }
 }
