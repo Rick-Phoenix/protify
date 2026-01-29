@@ -5,6 +5,9 @@ use proto_types::{Duration, Timestamp};
 
 use super::*;
 
+/// Validator for the [`Timestamp`] type.
+///
+/// Unlike other default validators, this validator supports one extra parameter, namely [`now_tolerance`](TimestampValidator::now_tolerance), which is used as the tolerance for `gt_now` checks.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -12,6 +15,7 @@ pub struct TimestampValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
   #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
@@ -44,9 +48,11 @@ pub struct TimestampValidator {
   /// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
   pub within: Option<Duration>,
 
+  /// Used only in the `gt_now` check. This is for cases when you may want to check if a value is "from now onwards", but a tiny delay between the value's creation (which is the indended "now" moment) and its validation (which is when the "now" is evaluated) would cause the validation to fail.
   #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
   pub now_tolerance: Duration,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<TimestampViolation>>,
 }
 

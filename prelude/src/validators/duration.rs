@@ -5,6 +5,7 @@ use proto_types::Duration;
 
 use super::*;
 
+/// Validator for the [`Duration`] type.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -12,6 +13,7 @@ pub struct DurationValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
   /// Specifies that the field must be set in order to be valid.
@@ -26,18 +28,19 @@ pub struct DurationValidator {
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Duration>,
 
-  /// Specifies that the value must be smaller than the indicated amount in order to pass validation.
+  /// Specifies that the duration must be shorter than the indicated amount in order to pass validation.
   pub lt: Option<Duration>,
 
-  /// Specifies that the value must be equal to or smaller than the indicated amount in order to pass validation.
+  /// Specifies that the duration must be equal to or shorter than the indicated amount in order to pass validation.
   pub lte: Option<Duration>,
 
-  /// Specifies that the value must be greater than the indicated amount in order to pass validation.
+  /// Specifies that the duration must be longer than the indicated amount in order to pass validation.
   pub gt: Option<Duration>,
 
-  /// Specifies that the value must be equal to or greater than the indicated amount in order to pass validation.
+  /// Specifies that the duration must be equal to or longer than the indicated amount in order to pass validation.
   pub gte: Option<Duration>,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<DurationViolation>>,
 }
 

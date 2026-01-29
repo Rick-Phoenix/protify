@@ -7,7 +7,9 @@ pub trait ValidationResultExt {
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
+  /// Returns `true` if the result is [`Ok`] and [`IsValid::Yes`], and `false` otherwise.
   fn is_valid(&self) -> bool;
+  /// Checks if the result is [`Err`] with [`FailFast`].
   fn is_fail_fast(&self) -> bool;
 }
 
@@ -16,7 +18,6 @@ impl ValidationResultExt for ValidationResult {
   #[allow(private_interfaces)]
   const SEALED: Sealed = Sealed;
 
-  /// Returns `true` if the result is [`Ok`] and [`IsValid::Yes`], and `false` otherwise.
   #[inline]
   fn is_valid(&self) -> bool {
     match self {
@@ -25,7 +26,6 @@ impl ValidationResultExt for ValidationResult {
     }
   }
 
-  /// Checks if the result is [`Err`] with [`FailFast`].
   #[inline]
   fn is_fail_fast(&self) -> bool {
     self.is_err()
@@ -64,6 +64,9 @@ pub type ValidationResult = Result<IsValid, FailFast>;
 /// Validators can optionally implement the [`schema`](Validator::schema) method, which allows them to be
 /// turned into protobuf options for file generation.
 pub trait Validator<T: ?Sized>: Send + Sync {
+  /// The target of the validation.
+  ///
+  /// The validator can validate any type which implements [`Borrow`] with this type.
   type Target: ToOwned + ?Sized;
 
   #[inline(never)]
@@ -72,18 +75,25 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     vec![]
   }
 
+  /// Returns the optional schema representation for this validator.
   #[inline(never)]
   #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
     None
   }
 
+  /// Checks if the inputs of the validators are valid.
   #[inline(never)]
   #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
     Ok(())
   }
 
+  /// Tests the CEL programs of this validator with the given value.
+  ///
+  /// # Panics
+  ///
+  /// Panics if one of the CEL expressions failed to compile.
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
@@ -101,6 +111,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     Ok(())
   }
 
+  /// Validates a value that implements [`Borrow`] with the Target, with the `fail_fast` setting set to true.
   #[inline]
   fn validate<V>(&self, val: &V) -> Result<(), ValidationErrors>
   where
@@ -117,6 +128,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     }
   }
 
+  /// Validates a value that implements [`Borrow`] with the Target, with the `fail_fast` setting set to true.
   #[inline]
   fn validate_option<V>(&self, val: Option<&V>) -> Result<(), ValidationErrors>
   where
@@ -133,6 +145,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     }
   }
 
+  /// Validates a value that implements [`Borrow`] with the Target, with customized settings.
   #[inline]
   fn validate_with_ctx<V>(&self, mut ctx: ValidationCtx, val: &V) -> Result<(), ValidationErrors>
   where
@@ -147,6 +160,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     }
   }
 
+  /// Validates a value that implements [`Borrow`] with the Target, with customized settings.
   #[inline]
   fn validate_option_with_ctx<V>(
     &self,
@@ -165,6 +179,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     }
   }
 
+  /// Validates a value that implements [`Borrow`] with the Target, with customized settings.
   fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized;
@@ -175,6 +190,7 @@ pub trait ValidatorBuilderFor<T: ?Sized>: Default {
   type Target: ?Sized;
   type Validator: Validator<T, Target = Self::Target>;
 
+  /// Builds the associated [`Validator`].
   fn build_validator(self) -> Self::Validator;
 }
 
@@ -185,28 +201,44 @@ pub trait ValidatorBuilderFor<T: ?Sized>: Default {
 /// The actual target of the validation is in a dedicated associated Type
 /// because this trait is sometimes implemented by wrappers/proxies like [`Sint32`].
 ///
-/// The `Stored` type is needed for compatibility with the [`RepeatedValidator`]
-/// and [`MapValidator`]. It is the same as the `Target` in most cases, but
-/// not for [`String`] specifically, because the Target is `str` (so that validation
-/// is performed on type that implement [`Borrow`] with `str`), but `Stored` is `String`.
-///
-/// `HAS_DEFAULT_VALIDATOR` determines if the type should always be validated by the [`RepeatedValidator`] and [`MapValidator`] even if no other validator is specified (it is handled automatically inside the macros' logic).
-///
 /// The `UniqueStore` is used for validation that verifies uniqueness of values.
 pub trait ProtoValidation {
+  /// The type that the implementor is actually going to be validated with.
+  ///
+  /// Defined as a separate type to allow target types to support more than one implementor
+  /// (for example, i32 can be the target for [`Sint32`], [`Sfixed32`] or for i32 itself).
   type Target: ?Sized;
+  /// The `Stored` type is needed for compatibility with the [`RepeatedValidator`]
+  /// and [`MapValidator`]. It is the same as the `Target` in most cases, but
+  /// not for [`String`] specifically, because the Target is `str` (so that validation
+  /// is performed on type that implement [`Borrow`] with `str`), but `Stored` is `String`.
   type Stored: Borrow<Self::Target>;
+  /// Represent the **default** validator for this type.
   type Validator: Validator<Self, Target = Self::Target> + Clone + Default;
+  /// Represent the builder for the default validator of this type, to enable the utility methods
+  /// [`validator_builder`](ProtoValidation::validator_builder) and
+  /// [`validator_from_closure`](ProtoValidation::validator_from_closure).
   type ValidatorBuilder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
 
+  /// Determines if the type should always be validated by the [`RepeatedValidator`] and [`MapValidator`] even if no other validator is specified (it is handled automatically inside the macros' logic).
+  ///
+  /// If a message or oneof has this set to true and they are used as a field in another message,
+  /// their [`validate`](ValidatedMessage::validate) function will be called even if no
+  /// other field validators are specified.
   const HAS_DEFAULT_VALIDATOR: bool = false;
   #[doc(hidden)]
   const HAS_SHALLOW_VALIDATION: bool = false;
 
+  /// A [`UniqueStore`] for this type, to use in uniqueness checks.
+  ///
+  /// Used by the [`RepeatedValidator`] for the `unique` rule.
   type UniqueStore<'a>: UniqueStore<'a, Item = Self::Target>
   where
     Self: 'a;
 
+  /// Creates a [`UniqueStore`] for this type, to use in uniqueness checks.
+  ///
+  /// Used by the [`RepeatedValidator`] for the `unique` rule.
   #[inline]
   fn make_unique_store<'a>(_validator: &Self::Validator, cap: usize) -> Self::UniqueStore<'a>
   where
@@ -215,12 +247,15 @@ pub trait ProtoValidation {
     Self::UniqueStore::default_with_capacity(cap)
   }
 
+  /// Returns the default validator builder for this type.
   #[inline]
   #[must_use]
   fn validator_builder() -> Self::ValidatorBuilder {
     Self::ValidatorBuilder::default()
   }
 
+  /// Builds the default validator for this type from a closure which receives the validator
+  /// builder as the argument.
   #[inline]
   fn validator_from_closure<F, FinalBuilder>(config_fn: F) -> Self::Validator
   where
@@ -238,6 +273,7 @@ pub(crate) trait IsDefault: Default + PartialEq {
     (*self) == Self::default()
   }
 }
+impl<T: Default + PartialEq> IsDefault for T {}
 
 /// Implements [`Validator`] for the wrapped function, similarly to [`FromFn`](core::iter::FromFn).
 ///
@@ -276,8 +312,6 @@ where
     _phantom: PhantomData,
   }
 }
-
-impl<T: Default + PartialEq> IsDefault for T {}
 
 /// Stores custom error messages in default validators.
 type ErrorMessages<T> = Box<BTreeMap<T, FixedStr>>;

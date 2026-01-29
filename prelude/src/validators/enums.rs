@@ -3,6 +3,7 @@ pub use builder::EnumValidatorBuilder;
 
 use super::*;
 
+/// Validator for enums implementing [`ProtoEnum`].
 #[non_exhaustive]
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -10,6 +11,7 @@ pub struct EnumValidator<T: ProtoEnum> {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
   #[cfg_attr(feature = "serde", serde(skip))]
@@ -18,7 +20,7 @@ pub struct EnumValidator<T: ProtoEnum> {
   /// Marks that this field will only accept values that are defined in the enum that it's referring to.
   pub defined_only: bool,
 
-  /// Specifies that the field must be set in order to be valid.
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   pub required: bool,
 
   /// Specifies that only the values in this list will be considered valid for this field.
@@ -30,6 +32,7 @@ pub struct EnumValidator<T: ProtoEnum> {
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<i32>,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<EnumViolation>>,
 }
 

@@ -11,6 +11,7 @@ use super::*;
 impl_proto_type!(Bytes, Bytes);
 impl_proto_type!(Vec<u8>, Bytes);
 
+/// Validator for the [`Bytes`] type.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -18,11 +19,13 @@ pub struct BytesValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
+  /// A well known byte format that the target should fit in.
   pub well_known: Option<WellKnownBytes>,
 
-  /// Specifies that the field must be set in order to be valid.
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   pub required: bool,
 
   /// Specifies that the given `bytes` field must be of this exact length.
@@ -60,6 +63,7 @@ pub struct BytesValidator {
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<Bytes>,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<BytesViolation>>,
 }
 

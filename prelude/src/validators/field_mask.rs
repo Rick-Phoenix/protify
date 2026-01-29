@@ -4,6 +4,7 @@ use proto_types::FieldMask;
 
 use super::*;
 
+/// Validator for the [`FieldMask`] type.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -11,20 +12,22 @@ pub struct FieldMaskValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
   /// Specifies that the field must be set in order to be valid.
   pub required: bool,
 
-  /// Specifies that only the values in this list will be considered valid for this field.
+  /// Specifies that only the paths in this list will be considered valid for this field.
   pub in_: Option<SortedList<FixedStr>>,
 
-  /// Specifies that the values in this list will be considered NOT valid for this field.
+  /// Specifies that the paths in this list will be considered NOT valid for this field.
   pub not_in: Option<SortedList<FixedStr>>,
 
-  /// Specifies that only this specific value will be considered valid for this field.
+  /// Specifies that the FieldMask should contain exactly these paths.
   pub const_: Option<SortedList<FixedStr>>,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<FieldMaskViolation>>,
 }
 

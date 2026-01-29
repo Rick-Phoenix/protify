@@ -3,6 +3,7 @@ pub mod state;
 use crate::validators::*;
 pub(crate) use state::*;
 
+/// Builder for [`IntValidator`].
 #[derive(Clone, Debug)]
 pub struct IntValidatorBuilder<Num, S = Empty>
 where
@@ -47,6 +48,9 @@ where
   S: State,
   Num: IntWrapper,
 {
+  /// Adds a map with custom error messages to the underlying validator.
+  ///
+  /// If a violation has no custom error message attached to it, it uses the default error message.
   #[inline]
   pub fn with_error_messages(
     mut self,
@@ -68,6 +72,7 @@ where
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> IntValidatorBuilder<Num, SetIgnore<S>>
   where
@@ -82,6 +87,7 @@ where
     }
   }
 
+  /// Specifies that this validator should be ignored if the value is either unset or equal to its protobuf zero value.
   #[inline]
   pub fn ignore_if_zero_value(mut self) -> IntValidatorBuilder<Num, SetIgnore<S>>
   where
@@ -96,6 +102,7 @@ where
     }
   }
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   #[allow(clippy::use_self, clippy::return_self_not_must_use)]
   pub fn cel(mut self, program: CelProgram) -> IntValidatorBuilder<Num, S> {
@@ -108,6 +115,7 @@ where
     }
   }
 
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   #[inline]
   pub fn required(mut self) -> IntValidatorBuilder<Num, SetRequired<S>>
   where
@@ -122,6 +130,7 @@ where
     }
   }
 
+  /// Specifies that only this specific value will be considered valid for this field.
   #[inline]
   pub fn const_(mut self, val: Num::RustType) -> IntValidatorBuilder<Num, SetConst<S>>
   where
@@ -136,6 +145,7 @@ where
     }
   }
 
+  /// Specifies that this field's value will be valid only if it is smaller than the specified amount
   #[inline]
   pub fn lt(mut self, val: Num::RustType) -> IntValidatorBuilder<Num, SetLt<S>>
   where
@@ -150,6 +160,7 @@ where
     }
   }
 
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
   #[inline]
   pub fn lte(mut self, val: Num::RustType) -> IntValidatorBuilder<Num, SetLte<S>>
   where
@@ -164,6 +175,7 @@ where
     }
   }
 
+  /// Specifies that this field's value will be valid only if it is greater than the specified amount
   #[inline]
   pub fn gt(mut self, val: Num::RustType) -> IntValidatorBuilder<Num, SetGt<S>>
   where
@@ -178,6 +190,7 @@ where
     }
   }
 
+  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
   #[inline]
   pub fn gte(mut self, val: Num::RustType) -> IntValidatorBuilder<Num, SetGte<S>>
   where
@@ -192,6 +205,7 @@ where
     }
   }
 
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[inline]
   pub fn not_in(
     mut self,
@@ -209,6 +223,7 @@ where
     }
   }
 
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[inline]
   pub fn in_(
     mut self,
@@ -226,6 +241,7 @@ where
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> IntValidator<Num> {
     self.data

@@ -171,6 +171,10 @@ mod cel_impls {
   }
 
   /// Tests the validity of CEL programs.
+  ///
+  /// # Panics
+  ///
+  /// Panics if one of the CEL expressions failed to compile.
   #[inline(never)]
   #[cold]
   pub fn test_programs<T>(programs: &[CelProgram], value: T) -> Result<(), Vec<CelError>>
@@ -221,6 +225,7 @@ mod cel_impls {
   }
 
   impl CelProgram {
+    /// Creates a new program from a [`CelRule`].
     #[must_use]
     #[inline]
     pub fn new(rule: CelRule) -> Self {
@@ -232,12 +237,22 @@ mod cel_impls {
       }
     }
 
+    /// Accesses the CEL program, compiling it on the first access.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the program failed to compile.
     #[inline]
     #[must_use]
     pub fn get_program(&self) -> &Program {
       self.inner.get_program()
     }
 
+    /// Executes the program with the given [`Context`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the program failed to compile.
     pub fn execute(&self, ctx: &Context) -> Result<bool, CelError> {
       let program = self.get_program();
 
@@ -260,6 +275,8 @@ mod cel_impls {
   }
 
   impl CelError {
+    /// Returns the rule id of the given error, if the error has a rule source and is not
+    /// a generic conversion error.
     #[must_use]
     #[inline]
     pub fn rule_id(&self) -> Option<&str> {
@@ -325,6 +342,8 @@ mod cel_impls {
     }
   }
 
+  /// Represents runtime errors that can occur with CEL programs.
+  #[non_exhaustive]
   #[derive(Debug, Clone, Error)]
   pub enum CelError {
     #[error("Expected CEL program with id `{rule_id}` to return a boolean result, got `{value:?}`")]

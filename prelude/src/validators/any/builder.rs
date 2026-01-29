@@ -4,6 +4,7 @@ use crate::validators::*;
 use proto_types::Any;
 pub(crate) use state::*;
 
+/// Builder for [`AnyValidator`].
 #[derive(Clone, Debug)]
 pub struct AnyValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
@@ -61,6 +62,7 @@ impl<S: State> ValidatorBuilderFor<Any> for AnyValidatorBuilder<S> {
 impl<S: State> AnyValidatorBuilder<S> {
   custom_error_messages_method!(Any);
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> AnyValidatorBuilder<S> {
     self.data.cel.push(program);
@@ -71,6 +73,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> AnyValidatorBuilder<SetIgnore<S>>
   where
@@ -84,6 +87,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set in order to be valid.
   #[inline]
   pub fn required(mut self) -> AnyValidatorBuilder<SetRequired<S>>
   where
@@ -97,6 +101,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only the type URLs in this list will be considered valid for this field.
   #[inline]
   pub fn in_(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetIn<S>>
   where
@@ -110,6 +115,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the type URLs in this list will be considered NOT valid for this field.
   #[inline]
   pub fn not_in(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetNotIn<S>>
   where
@@ -123,6 +129,7 @@ impl<S: State> AnyValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[must_use]
   #[inline]
   pub fn build(self) -> AnyValidator {

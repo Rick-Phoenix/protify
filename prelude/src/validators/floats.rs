@@ -6,6 +6,11 @@ use float_eq::float_eq;
 
 use super::*;
 
+/// Validator for [`f32`](core::f32) and [`f64`](core::f64).
+///
+/// Unlike other validators, this contains two special parameters, namely [`abs_tolerance`](FloatValidator::abs_tolerance) and [`rel_tolerance`](FloatValidator::rel_tolerance), which are used in all operations involving the target floats.
+///
+/// These two represent the `abs` and `2nd` parameters in the [`float_eq`] macro. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html)
 #[non_exhaustive]
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -16,21 +21,22 @@ where
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
   #[cfg_attr(feature = "serde", serde(skip))]
   _wrapper: PhantomData<Num>,
 
-  /// Specifies that the field must be set in order to be valid.
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   pub required: bool,
 
-  /// The absolute tolerance to use for equality operations
+  /// Represents the `abs` parameter in the [`float_eq`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
   pub abs_tolerance: Num,
 
-  /// The relative tolerance to use for equality operations, scaled to the precision of the number being validated
+  /// Represents the `r2nd` parameter in the [`float_eq`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
   pub rel_tolerance: Num,
 
-  /// Specifies that this field must be finite (i.e. it can't represent Infinity or NaN)
+  /// Specifies that this field must be finite (i.e. it can't represent Infinity or NaN).
   pub finite: bool,
 
   /// Specifies that only this specific value will be considered valid for this field.
@@ -54,6 +60,7 @@ where
   /// Specifies that the values in this list will be considered NOT valid for this field.
   pub not_in: Option<SortedList<OrderedFloat<Num>>>,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<Num::ViolationEnum>>,
 }
 
@@ -448,9 +455,6 @@ where
 
 impl_proto_type!(f32, Float);
 impl_proto_type!(f64, Double);
-
-#[allow(private_interfaces)]
-struct Sealed;
 
 pub trait FloatWrapper:
   AsProtoType

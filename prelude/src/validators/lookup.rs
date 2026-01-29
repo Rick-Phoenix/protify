@@ -255,10 +255,18 @@ where
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SortedList<T: Ord> {
   pub(crate) items: Arc<[T]>,
+}
+
+impl<T: Ord> Clone for SortedList<T> {
+  fn clone(&self) -> Self {
+    Self {
+      items: self.items.clone(),
+    }
+  }
 }
 
 pub trait IntoSortedList<T: Ord> {
@@ -273,7 +281,7 @@ impl<T: Ord> IntoSortedList<T> for SortedList<T> {
   }
 }
 
-impl<T: Ord + Clone> IntoSortedList<T> for &SortedList<T> {
+impl<T: Ord> IntoSortedList<T> for &SortedList<T> {
   #[inline]
   fn into_sorted_list(self) -> SortedList<T> {
     self.clone()

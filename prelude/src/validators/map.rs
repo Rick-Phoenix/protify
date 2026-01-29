@@ -9,6 +9,7 @@ use proto_types::protovalidate::{
 
 use super::*;
 
+/// Generic map trait.
 pub trait Map<K, V> {
   fn length(&self) -> usize;
 
@@ -77,6 +78,7 @@ where
   }
 }
 
+/// Map of values that support [`ProtoValidation`].
 pub trait ProtoMap<K, V>
 where
   K: ProtoValidation,
@@ -346,6 +348,7 @@ where
   }
 }
 
+/// Validator for types that implement [`ProtoMap`].
 #[non_exhaustive]
 #[derive(Debug)]
 #[cfg_attr(
@@ -387,6 +390,8 @@ where
   K: ProtoValidation,
   V: ProtoValidation,
 {
+  /// Validates the given map. Given as a separate method to avoid trait resolution issues given the implementation
+  /// for several kinds of map.
   pub fn validate_map<M>(&self, ctx: &mut ValidationCtx, val: Option<&M>) -> ValidationResult
   where
     M: Map<K::Stored, V::Stored> + Clone,

@@ -3,6 +3,7 @@ pub mod state;
 use crate::validators::*;
 pub(crate) use state::*;
 
+/// Builder for [`MessageValidator`].
 #[derive(Debug, Clone)]
 pub struct MessageValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
@@ -42,6 +43,7 @@ impl<S: State> From<MessageValidatorBuilder<S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<S: State> MessageValidatorBuilder<S> {
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> MessageValidatorBuilder<S> {
     self.data.cel.push(program);
@@ -52,6 +54,7 @@ impl<S: State> MessageValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> MessageValidatorBuilder<SetIgnore<S>>
   where
@@ -65,6 +68,7 @@ impl<S: State> MessageValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set in order to be valid.
   #[inline]
   pub fn required(mut self) -> MessageValidatorBuilder<SetRequired<S>>
   where
@@ -78,6 +82,7 @@ impl<S: State> MessageValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> MessageValidator {
     self.data

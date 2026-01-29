@@ -4,6 +4,7 @@ use crate::validators::*;
 use proto_types::FieldMask;
 pub(crate) use state::*;
 
+/// Builder for [`FieldMaskValidator`].
 #[derive(Clone, Debug)]
 pub struct FieldMaskValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
@@ -54,6 +55,7 @@ impl FieldMaskValidator {
 impl<S: State> FieldMaskValidatorBuilder<S> {
   custom_error_messages_method!(FieldMask);
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> FieldMaskValidatorBuilder<S> {
     self.data.cel.push(program);
@@ -64,6 +66,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> FieldMaskValidatorBuilder<SetIgnore<S>>
   where
@@ -77,6 +80,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set in order to be valid.
   #[inline]
   pub fn required(mut self) -> FieldMaskValidatorBuilder<SetRequired<S>>
   where
@@ -90,6 +94,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only the paths in this list will be considered valid for this field.
   #[inline]
   pub fn in_(mut self, val: impl IntoSortedList<FixedStr>) -> FieldMaskValidatorBuilder<SetIn<S>>
   where
@@ -103,6 +108,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the paths in this list will be considered NOT valid for this field.
   #[inline]
   pub fn not_in(
     mut self,
@@ -119,6 +125,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the FieldMask should contain exactly these paths.
   #[inline]
   pub fn const_(
     mut self,
@@ -135,6 +142,7 @@ impl<S: State> FieldMaskValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   #[must_use]
   pub fn build(self) -> FieldMaskValidator {

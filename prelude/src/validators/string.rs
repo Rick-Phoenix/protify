@@ -8,6 +8,12 @@ use regex::Regex;
 
 use super::*;
 
+/// Wrapper type for strings that are meant to be used immutably as part of validators.
+///
+/// It retains `&'static` for literal strings, clones the wrapper when the input is wrapped in `Arc`,
+/// and transforms owned strings into `Box<str>` to save size.
+///
+/// Supports [`From`] with String, Arc<str>, &Arc<str>, Box<str> and &'static str.
 #[derive(Debug, Clone, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum FixedStr {
@@ -36,17 +42,25 @@ impl<'de> serde::Deserialize<'de> for FixedStr {
 }
 
 impl FixedStr {
+  /// Checks if the [`FixedStr`] is `&'static str` or `Arc<str>`.
   #[must_use]
   #[inline]
   pub const fn is_cheaply_clonable(&self) -> bool {
     matches!(self, Self::Shared(_) | Self::Static(_))
   }
 
+  #[inline(never)]
+  fn box_to_arc(string: Box<str>) -> Arc<str> {
+    string.into()
+  }
+
+  /// Transforms `Box<str>` into `Arc<str>`, otherwise leaves the value as is.
   #[must_use]
+  #[inline]
   pub fn into_cheaply_clonable(self) -> Self {
     match self {
       Self::Static(_) | Self::Shared(_) => self,
-      Self::Boxed(boxed) => Self::Shared(boxed.into()),
+      Self::Boxed(boxed) => Self::Shared(Self::box_to_arc(boxed)),
     }
   }
 
@@ -148,6 +162,8 @@ impl From<&Arc<str>> for FixedStr {
   }
 }
 
+/// Validator for [`String`]s. Supports validation for all types that implement
+/// [`Borrow`] with [`str`](core::str).
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -155,11 +171,13 @@ pub struct StringValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// A well known string format (i.e. email, ip address) that the target value should be compatible with.
   pub well_known: Option<WellKnownStrings>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
-  /// Specifies that the field must be set in order to be valid.
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   pub required: bool,
 
   /// Specifies that the given string field must be of this exact length.
@@ -206,6 +224,7 @@ pub struct StringValidator {
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<FixedStr>,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<StringViolation>>,
 }
 

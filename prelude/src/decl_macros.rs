@@ -11,6 +11,9 @@ macro_rules! pluralize {
 macro_rules! custom_error_messages_method {
   ($kind:ident) => {
     paste! {
+      /// Adds a map with custom error messages to the underlying validator.
+      ///
+      /// If a violation has no custom error message attached to it, it uses the default error message.
       #[inline]
       pub fn with_error_messages(
         mut self,

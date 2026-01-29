@@ -4,6 +4,7 @@ use super::well_known_strings::WellKnownStrings;
 use crate::validators::*;
 pub(crate) use state::*;
 
+/// Builder for [`StringValidator`].
 #[derive(Clone, Debug)]
 pub struct StringValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
@@ -68,6 +69,7 @@ impl<S: State> From<StringValidatorBuilder<S>> for ProtoOption {
 impl<S: State> StringValidatorBuilder<S> {
   custom_error_messages_method!(String);
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> StringValidatorBuilder<S> {
     self.data.cel.push(program);
@@ -78,6 +80,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> StringValidatorBuilder<SetIgnore<S>>
   where
@@ -91,6 +94,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should be ignored if the value is either unset or equal to its protobuf zero value.
   #[inline]
   pub fn ignore_if_zero_value(mut self) -> StringValidatorBuilder<SetIgnore<S>>
   where
@@ -104,6 +108,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   #[inline]
   pub fn required(mut self) -> StringValidatorBuilder<SetRequired<S>>
   where
@@ -117,6 +122,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the given string field must be of this exact length.
   #[inline]
   pub fn len(mut self, val: usize) -> StringValidatorBuilder<SetLen<S>>
   where
@@ -130,6 +136,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the given string field must have a length that is equal to or higher than the given value.
   #[inline]
   pub fn min_len(mut self, val: usize) -> StringValidatorBuilder<SetMinLen<S>>
   where
@@ -143,6 +150,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the given string field must have a length that is equal to or lower than the given value.
   #[inline]
   pub fn max_len(mut self, val: usize) -> StringValidatorBuilder<SetMaxLen<S>>
   where
@@ -156,6 +164,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies the exact byte length that this field's value must have in order to be considered valid.
   #[inline]
   pub fn len_bytes(mut self, val: usize) -> StringValidatorBuilder<SetLenBytes<S>>
   where
@@ -169,6 +178,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies the minimum byte length for this field's value to be considered valid.
   #[inline]
   pub fn min_bytes(mut self, val: usize) -> StringValidatorBuilder<SetMinBytes<S>>
   where
@@ -182,6 +192,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies the minimum byte length for this field's value to be considered valid.
   #[inline]
   pub fn max_bytes(mut self, val: usize) -> StringValidatorBuilder<SetMaxBytes<S>>
   where
@@ -195,6 +206,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a regex pattern that this field's value should match in order to be considered valid.
   #[inline]
   #[cfg(feature = "regex")]
   #[track_caller]
@@ -210,6 +222,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies the prefix that this field's value should contain in order to be considered valid.
   #[inline]
   pub fn prefix<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetPrefix<S>>
   where
@@ -223,6 +236,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies the suffix that this field's value should contain in order to be considered valid.
   #[inline]
   pub fn suffix<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetSuffix<S>>
   where
@@ -236,6 +250,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a substring that this field's value should contain in order to be considered valid.
   #[inline]
   pub fn contains<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetContains<S>>
   where
@@ -249,6 +264,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a substring that this field's value must not contain in order to be considered valid.
   #[inline]
   pub fn not_contains<T: Into<FixedStr>>(
     mut self,
@@ -265,6 +281,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[inline]
   pub fn in_(mut self, val: impl IntoSortedList<FixedStr>) -> StringValidatorBuilder<SetIn<S>>
   where
@@ -278,6 +295,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[inline]
   pub fn not_in(mut self, val: impl IntoSortedList<FixedStr>) -> StringValidatorBuilder<SetNotIn<S>>
   where
@@ -291,6 +309,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only this specific value will be considered valid for this field.
   #[inline]
   pub fn const_<T: Into<FixedStr>>(mut self, val: T) -> StringValidatorBuilder<SetConst<S>>
   where
@@ -304,6 +323,7 @@ impl<S: State> StringValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> StringValidator {
     self.data

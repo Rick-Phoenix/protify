@@ -3,6 +3,7 @@ pub mod state;
 use crate::validators::*;
 pub(crate) use state::*;
 
+/// Builder for [`RepeatedValidator`].
 #[derive(Clone, Debug)]
 pub struct RepeatedValidatorBuilder<T, S: State = Empty>
 where
@@ -12,13 +13,9 @@ where
   _inner_type: PhantomData<T>,
 
   cel: Vec<CelProgram>,
-  /// Specifies the rules that will be applied to the individual items of this repeated field.
   items: Option<T::Validator>,
-  /// The minimum amount of items that this field must contain in order to be valid.
   min_items: Option<usize>,
-  /// The maximum amount of items that this field must contain in order to be valid.
   max_items: Option<usize>,
-  /// Specifies that this field must contain only unique values (only applies to scalar fields).
   unique: bool,
   ignore: Ignore,
 
@@ -60,6 +57,10 @@ impl<T, S: State> RepeatedValidatorBuilder<T, S>
 where
   T: ProtoValidation,
 {
+  /// Builds the validator.
+  ///
+  /// If the `items` validator is unset, but the target has `HAS_DEFAULT_VALIDATOR` from [`ProtoValidation`] set to true,
+  /// its default validator will be assigned.
   #[inline]
   pub fn build(self) -> RepeatedValidator<T> {
     let Self {
@@ -86,6 +87,11 @@ where
     }
   }
 
+  /// Adds a map with custom error messages to the underlying validator.
+  ///
+  /// If a violation has no custom error message attached to it, it uses the default error message.
+  ///
+  /// NOTE: The custom error messages for the individual items must be handled by their respective validator.
   #[inline]
   pub fn with_error_messages(
     self,
@@ -112,6 +118,10 @@ where
     }
   }
 
+  /// Adds a [`CelProgram`] to this validator.
+  ///
+  /// The program will be applied to the vector as a whole. To apply a program to the individual items,
+  /// use the items validator.
   #[inline]
   #[must_use]
   pub fn cel(mut self, program: CelProgram) -> Self {
@@ -120,7 +130,9 @@ where
     self
   }
 
-  /// Specifies the rules that will be applied to the individual items of this repeated field.
+  /// Sets the rules to apply to each item of this map.
+  ///
+  /// It receives a closure that that receives the item type's default validator builder as an argument.
   #[inline]
   pub fn items<F, FinalBuilder>(self, config_fn: F) -> RepeatedValidatorBuilder<T, SetItems<S>>
   where
@@ -144,6 +156,7 @@ where
     }
   }
 
+  /// Specifies that this validator's rules will be ignored if the vector is empty.
   #[inline]
   pub fn ignore_if_zero_value(self) -> RepeatedValidatorBuilder<T, SetIgnore<S>>
   where
@@ -162,7 +175,7 @@ where
     }
   }
 
-  /// Rules set for this field will always be ignored.
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(self) -> RepeatedValidatorBuilder<T, SetIgnore<S>>
   where
@@ -181,6 +194,7 @@ where
     }
   }
 
+  /// Specifies the minimum amount of items that this field must contain in order to be valid.
   #[inline]
   pub fn min_items(self, num: usize) -> RepeatedValidatorBuilder<T, SetMinItems<S>>
   where
@@ -199,6 +213,7 @@ where
     }
   }
 
+  /// Specifies the maximum amount of items that this field must contain in order to be valid.
   #[inline]
   pub fn max_items(self, num: usize) -> RepeatedValidatorBuilder<T, SetMaxItems<S>>
   where
@@ -217,6 +232,9 @@ where
     }
   }
 
+  /// Specifies that this field must contain only unique values.
+  ///
+  /// When the items validator is a [`FloatValidator`], the [`abs_tolerance`](FloatValidator::abs_tolerance) and [`rel_tolerance`](FloatValidator::rel_tolerance) fields are taken in consideration for the uniqueness check.
   #[inline]
   pub fn unique(self) -> RepeatedValidatorBuilder<T, SetUnique<S>>
   where

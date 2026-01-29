@@ -5,6 +5,7 @@ use proto_types::protovalidate::field_path_element::Subscript;
 
 use super::*;
 
+/// Validator for vectors of types that implement [`ProtoValidation`].
 #[non_exhaustive]
 #[derive(Debug)]
 #[cfg_attr(
@@ -22,16 +23,19 @@ where
   #[cfg_attr(feature = "serde", serde(skip))]
   _inner_type: PhantomData<T>,
 
+  /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
+  /// The validator to apply to each individual item inside the target vector.
   pub items: Option<T::Validator>,
   /// The minimum amount of items that this field must contain in order to be valid.
   pub min_items: Option<usize>,
   /// The maximum amount of items that this field must contain in order to be valid.
   pub max_items: Option<usize>,
-  /// Specifies that this field must contain only unique values (only applies to scalar fields).
+  /// Specifies that this field must contain only unique values.
   pub unique: bool,
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
-
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<RepeatedViolation>>,
 }
 

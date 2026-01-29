@@ -29,6 +29,7 @@ impl<S: State> ValidatorBuilderFor<Duration> for DurationValidatorBuilder<S> {
   }
 }
 
+/// Builder for [`DurationValidator`].
 #[derive(Clone, Debug)]
 pub struct DurationValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
@@ -70,6 +71,7 @@ impl<S: State> From<DurationValidatorBuilder<S>> for ProtoOption {
 impl<S: State> DurationValidatorBuilder<S> {
   custom_error_messages_method!(Duration);
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> DurationValidatorBuilder<S> {
     self.data.cel.push(program);
@@ -80,6 +82,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> DurationValidatorBuilder<SetIgnore<S>>
   where
@@ -93,6 +96,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set in order to be valid.
   #[inline]
   pub fn required(mut self) -> DurationValidatorBuilder<SetRequired<S>>
   where
@@ -106,6 +110,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[inline]
   pub fn in_(mut self, val: impl IntoSortedList<Duration>) -> DurationValidatorBuilder<SetIn<S>>
   where
@@ -119,6 +124,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[inline]
   pub fn not_in(
     mut self,
@@ -135,6 +141,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only this specific value will be considered valid for this field.
   #[inline]
   pub fn const_(mut self, val: Duration) -> DurationValidatorBuilder<SetConst<S>>
   where
@@ -148,6 +155,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the duration must be shorter than the indicated amount in order to pass validation.
   #[inline]
   pub fn lt(mut self, val: Duration) -> DurationValidatorBuilder<SetLt<S>>
   where
@@ -161,6 +169,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the duration must be equal to or shorter than the indicated amount in order to pass validation.
   #[inline]
   pub fn lte(mut self, val: Duration) -> DurationValidatorBuilder<SetLte<S>>
   where
@@ -174,6 +183,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the duration must be longer than the indicated amount in order to pass validation.
   #[inline]
   pub fn gt(mut self, val: Duration) -> DurationValidatorBuilder<SetGt<S>>
   where
@@ -187,6 +197,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the duration must be equal to or longer than the indicated amount in order to pass validation.
   #[inline]
   pub fn gte(mut self, val: Duration) -> DurationValidatorBuilder<SetGte<S>>
   where
@@ -200,6 +211,7 @@ impl<S: State> DurationValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> DurationValidator {
     self.data

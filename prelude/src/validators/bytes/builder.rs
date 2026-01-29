@@ -5,6 +5,7 @@ pub(crate) use state::*;
 
 use ::bytes::Bytes;
 
+/// Builder for [`BytesValidator`].
 #[derive(Clone, Debug)]
 pub struct BytesValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
@@ -109,6 +110,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 impl<S: State> BytesValidatorBuilder<S> {
   custom_error_messages_method!(Bytes);
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> BytesValidatorBuilder<SetIgnore<S>>
   where
@@ -122,6 +124,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should be ignored if the value is either unset or equal to its protobuf zero value.
   #[inline]
   pub fn ignore_if_zero_value(mut self) -> BytesValidatorBuilder<SetIgnore<S>>
   where
@@ -135,6 +138,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> BytesValidatorBuilder<S> {
     self.data.cel.push(program);
@@ -145,6 +149,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the given `bytes` field must be of this exact length.
   #[inline]
   pub fn len(mut self, val: usize) -> BytesValidatorBuilder<SetLen<S>>
   where
@@ -158,6 +163,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the given `bytes` field must have a length that is equal to or higher than the given value.
   #[inline]
   pub fn min_len(mut self, val: usize) -> BytesValidatorBuilder<SetMinLen<S>>
   where
@@ -171,6 +177,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the given `bytes` field must have a length that is equal to or lower than the given value.
   #[inline]
   pub fn max_len(mut self, val: usize) -> BytesValidatorBuilder<SetMaxLen<S>>
   where
@@ -184,6 +191,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a regex pattern that must be matches by the value to pass validation.
   #[cfg(feature = "regex")]
   #[inline]
   pub fn pattern(mut self, val: impl IntoBytesRegex) -> BytesValidatorBuilder<SetPattern<S>>
@@ -198,6 +206,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a prefix that the value must start with in order to pass validation.
   #[inline]
   pub fn prefix(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetPrefix<S>>
   where
@@ -211,6 +220,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a suffix that the value must end with in order to pass validation.
   #[inline]
   pub fn suffix(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetSuffix<S>>
   where
@@ -224,6 +234,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a subset of bytes that the value must contain in order to pass validation.
   #[inline]
   pub fn contains(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetContains<S>>
   where
@@ -237,6 +248,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[inline]
   pub fn not_in(mut self, list: impl IntoSortedList<Bytes>) -> BytesValidatorBuilder<SetNotIn<S>>
   where
@@ -251,6 +263,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[inline]
   pub fn in_(mut self, list: impl IntoSortedList<Bytes>) -> BytesValidatorBuilder<SetIn<S>>
   where
@@ -264,6 +277,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only this specific value will be considered valid for this field.
   #[inline]
   pub fn const_(mut self, val: impl IntoBytes) -> BytesValidatorBuilder<SetConst<S>>
   where
@@ -277,6 +291,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   #[inline]
   pub fn required(mut self) -> BytesValidatorBuilder<SetRequired<S>>
   where
@@ -290,6 +305,7 @@ impl<S: State> BytesValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> BytesValidator {
     self.data

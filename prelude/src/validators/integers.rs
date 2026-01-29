@@ -6,6 +6,7 @@ use proto_types::protovalidate::violations_data::*;
 
 use super::*;
 
+/// Validator for integer types, as well as proto int wrappers such as [`Sint32`].
 #[non_exhaustive]
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -16,12 +17,13 @@ where
   /// Adds custom validation using one or more [`CelRule`]s to this field.
   pub cel: Vec<CelProgram>,
 
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
   #[cfg_attr(feature = "serde", serde(skip))]
   _wrapper: PhantomData<Num>,
 
-  /// Specifies that the field must be set in order to be valid.
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   pub required: bool,
 
   /// Specifies that only this specific value will be considered valid for this field.
@@ -45,6 +47,7 @@ where
   /// Specifies that the values in this list will be considered NOT valid for this field.
   pub not_in: Option<SortedList<Num::RustType>>,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<Num::ViolationEnum>>,
 }
 
@@ -355,9 +358,7 @@ where
   }
 }
 
-#[allow(private_interfaces)]
-struct Sealed;
-
+/// Trait for types representing protobuf integer types.
 pub trait IntWrapper: AsProtoType + Default + Copy + Send + Sync {
   type RustType: PartialOrd
     + PartialEq

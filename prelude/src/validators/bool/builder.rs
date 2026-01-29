@@ -3,6 +3,7 @@ pub mod state;
 use crate::validators::*;
 pub(crate) use state::*;
 
+/// Builder for [`BoolValidator`].
 #[derive(Clone, Debug)]
 pub struct BoolValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
@@ -75,6 +76,7 @@ impl<S: State> From<BoolValidatorBuilder<S>> for ProtoOption {
 impl<S: State> BoolValidatorBuilder<S> {
   custom_error_messages_method!(Bool);
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
   where
@@ -88,6 +90,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should be ignored if the value is either unset or equal to its protobuf zero value.
   #[inline]
   pub fn ignore_if_zero_value(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
   where
@@ -101,6 +104,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   #[inline]
   pub fn required(mut self) -> BoolValidatorBuilder<SetRequired<S>>
   where
@@ -114,6 +118,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only this specific value will be considered valid for this field.
   #[inline]
   pub fn const_(mut self, val: bool) -> BoolValidatorBuilder<SetConst<S>>
   where
@@ -127,6 +132,7 @@ impl<S: State> BoolValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> BoolValidator {
     self.data

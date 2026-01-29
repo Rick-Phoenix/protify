@@ -3,6 +3,7 @@ pub mod state;
 use crate::validators::*;
 pub(crate) use state::*;
 
+/// Builder for [`MapValidator`].
 #[derive(Clone, Debug)]
 pub struct MapValidatorBuilder<K, V, S: State = Empty>
 where
@@ -74,6 +75,10 @@ where
   K: ProtoValidation,
   V: ProtoValidation,
 {
+  /// Builds the validator.
+  ///
+  /// If the values validator is unset, but the target has `HAS_DEFAULT_VALIDATOR` from [`ProtoValidation`] set to true,
+  /// its default validator will be assigned.
   #[inline]
   pub fn build(self) -> MapValidator<K, V> {
     let Self {
@@ -102,6 +107,11 @@ where
     }
   }
 
+  /// Adds a map with custom error messages to the underlying validator.
+  ///
+  /// If a violation has no custom error message attached to it, it uses the default error message.
+  ///
+  /// NOTE: The custom errors for items and keys must be handled in their respective validators.
   #[inline]
   pub fn with_error_messages(
     self,
@@ -129,6 +139,11 @@ where
     }
   }
 
+  /// Adds a [`CelProgram`] to this validator.
+  ///
+  /// The program will be applied to the map as a whole.
+  ///
+  /// To apply a program to the individual keys/values, use their respective validators.
   #[inline]
   #[must_use]
   pub fn cel(mut self, program: CelProgram) -> Self {
@@ -137,6 +152,7 @@ where
     self
   }
 
+  /// Specifies the minimum amount of key-value pairs that this field should have in order to be valid.
   #[inline]
   pub fn min_pairs(self, num: usize) -> MapValidatorBuilder<K, V, SetMinPairs<S>>
   where
@@ -156,6 +172,7 @@ where
     }
   }
 
+  /// Specifies the maximum amount of key-value pairs that this field should have in order to be valid.
   #[inline]
   pub fn max_pairs(self, num: usize) -> MapValidatorBuilder<K, V, SetMaxPairs<S>>
   where
@@ -175,7 +192,7 @@ where
     }
   }
 
-  /// Rules set for this field will always be ignored.
+  /// Specifies that this validator's rules will be ignored if the map is empty.
   #[inline]
   pub fn ignore_if_zero_value(self) -> MapValidatorBuilder<K, V, SetIgnore<S>>
   where
@@ -195,7 +212,7 @@ where
     }
   }
 
-  /// Rules set for this field will always be ignored.
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(self) -> MapValidatorBuilder<K, V, SetIgnore<S>>
   where
@@ -215,8 +232,10 @@ where
     }
   }
 
+  /// Sets the rules to apply to each key of this map.
+  ///
+  /// It receives a closure that that receives the key type's default validator builder as an argument.
   #[inline]
-  /// Sets the rules for the keys of this map field.
   pub fn keys<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetKeys<S>>
   where
     S::Keys: IsUnset,
@@ -239,8 +258,10 @@ where
     }
   }
 
+  /// Sets the rules to apply to each value of this map.
+  ///
+  /// It receives a closure that that receives the value type's default validator builder as an argument.
   #[inline]
-  /// Sets the rules for the values of this map field.
   pub fn values<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetValues<S>>
   where
     V: ProtoValidation,

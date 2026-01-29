@@ -3,6 +3,7 @@ pub mod state;
 use crate::validators::*;
 pub(crate) use state::*;
 
+/// Builder for [`EnumValidator`].
 #[derive(Clone, Debug)]
 pub struct EnumValidatorBuilder<T: ProtoEnum, S: State = Empty> {
   _state: PhantomData<S>,
@@ -50,6 +51,9 @@ impl<T: ProtoEnum, S: State> From<EnumValidatorBuilder<T, S>> for ProtoOption {
   clippy::return_self_not_must_use
 )]
 impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
+  /// Adds a map with custom error messages to the underlying validator.
+  ///
+  /// If a violation has no custom error message attached to it, it uses the default error message.
   #[inline]
   pub fn with_error_messages(
     mut self,
@@ -70,6 +74,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> EnumValidatorBuilder<T, S> {
     self.data.cel.push(program);
@@ -80,6 +85,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
@@ -93,6 +99,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Specifies that this validator should be ignored if the value is either unset or equal to its protobuf zero value.
   #[inline]
   pub fn ignore_if_zero_value(mut self) -> EnumValidatorBuilder<T, SetIgnore<S>>
   where
@@ -106,6 +113,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Marks that this field will only accept values that are defined in the enum that it's referring to.
   #[inline]
   pub fn defined_only(mut self) -> EnumValidatorBuilder<T, SetDefinedOnly<S>>
   where
@@ -119,6 +127,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   #[inline]
   pub fn required(mut self) -> EnumValidatorBuilder<T, SetRequired<S>>
   where
@@ -132,6 +141,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Specifies that only the values in this list will be considered valid for this field.
   #[inline]
   pub fn in_(mut self, val: impl IntoSortedList<i32>) -> EnumValidatorBuilder<T, SetIn<S>>
   where
@@ -145,6 +155,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Specifies that the values in this list will be considered NOT valid for this field.
   #[inline]
   pub fn not_in(mut self, val: impl IntoSortedList<i32>) -> EnumValidatorBuilder<T, SetNotIn<S>>
   where
@@ -158,6 +169,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Specifies that only this specific value will be considered valid for this field.
   #[inline]
   pub fn const_(mut self, val: i32) -> EnumValidatorBuilder<T, SetConst<S>>
   where
@@ -171,6 +183,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> EnumValidator<T> {
     self.data

@@ -3,16 +3,19 @@ pub use builder::BoolValidatorBuilder;
 
 use super::*;
 
+/// Validator for the [`bool`] type.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BoolValidator {
   /// Specifies that only this specific value will be considered valid for this field.
   pub const_: Option<bool>,
-  /// Specifies that the field must be set in order to be valid.
+  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   pub required: bool,
+  /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,
 
+  /// A map of custom error messages.
   pub error_messages: Option<ErrorMessages<BoolViolation>>,
 }
 
