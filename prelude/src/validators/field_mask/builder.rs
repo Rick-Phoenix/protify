@@ -5,7 +5,7 @@ use proto_types::FieldMask;
 pub(crate) use state::*;
 
 /// Builder for [`FieldMaskValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FieldMaskValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 

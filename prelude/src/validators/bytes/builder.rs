@@ -6,7 +6,7 @@ pub(crate) use state::*;
 use ::bytes::Bytes;
 
 /// Builder for [`BytesValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BytesValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
   data: BytesValidator,

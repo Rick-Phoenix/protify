@@ -4,7 +4,7 @@ use crate::validators::*;
 pub(crate) use state::*;
 
 /// Builder for [`IntValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct IntValidatorBuilder<Num, S = Empty>
 where
   S: State,

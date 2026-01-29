@@ -12,7 +12,7 @@ use super::*;
 ///
 /// These two represent the `abs` and `2nd` parameters in the [`float_eq`] macro. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html)
 #[non_exhaustive]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FloatValidator<Num>
 where

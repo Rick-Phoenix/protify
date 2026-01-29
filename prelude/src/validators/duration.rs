@@ -7,7 +7,7 @@ use super::*;
 
 /// Validator for the [`Duration`] type.
 #[non_exhaustive]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DurationValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.

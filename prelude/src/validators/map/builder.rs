@@ -4,7 +4,7 @@ use crate::validators::*;
 pub(crate) use state::*;
 
 /// Builder for [`MapValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct MapValidatorBuilder<K, V, S: State = Empty>
 where
   K: ProtoValidation,

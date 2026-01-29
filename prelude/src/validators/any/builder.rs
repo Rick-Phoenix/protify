@@ -5,7 +5,7 @@ use proto_types::Any;
 pub(crate) use state::*;
 
 /// Builder for [`AnyValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AnyValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 

@@ -5,7 +5,7 @@ pub(crate) use state::*;
 
 use proto_types::{Duration, Timestamp};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct TimestampValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 

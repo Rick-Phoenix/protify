@@ -191,7 +191,7 @@ where
 /// Contains rules that are equivalent to `(buf.validate.message).cel` options in protobuf.
 #[non_exhaustive]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct CelValidator {
   pub programs: Vec<CelProgram>,
 }
@@ -307,7 +307,7 @@ impl From<CelValidator> for ProtoOption {
 
 /// Defalt validator for messages used as fields of other messages.
 #[non_exhaustive]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.

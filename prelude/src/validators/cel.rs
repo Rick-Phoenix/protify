@@ -4,7 +4,7 @@ pub use cel_trait::*;
 use super::*;
 
 // This will be included even without the cel feature, as it is useful for schema purposes
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CelRule {
   /// The id of this specific rule.
@@ -57,7 +57,7 @@ impl From<CelRule> for OptionValue {
 /// A struct that holds the data to initialize and execute a CEL program. It can be created from a [`CelRule`].
 ///
 /// The program is compiled once and reused afterwards. This type can be cheaply cloned (from something like a Lazy static) to reuse it in different places.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(from = "CelRule", into = "CelRule"))]
 pub struct CelProgram {
@@ -73,7 +73,7 @@ impl CelProgram {
 }
 
 #[cfg(not(feature = "cel"))]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct CelProgramInner {
   pub(crate) rule: CelRule,
 }
@@ -100,6 +100,14 @@ mod cel_impls {
     pub(crate) rule: CelRule,
     program: OnceLock<Program>,
   }
+
+  impl Hash for CelProgramInner {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+      self.rule.hash(state);
+    }
+  }
+
+  impl Eq for CelProgramInner {}
 
   impl PartialEq for CelProgramInner {
     #[inline]

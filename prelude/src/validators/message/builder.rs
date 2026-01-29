@@ -4,7 +4,7 @@ use crate::validators::*;
 pub(crate) use state::*;
 
 /// Builder for [`MessageValidator`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MessageValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 

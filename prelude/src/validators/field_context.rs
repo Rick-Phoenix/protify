@@ -4,7 +4,7 @@ use proto_types::field_descriptor_proto::Type as ProtoPrimitive;
 use proto_types::protovalidate::field_path_element::Subscript;
 
 /// The context for the field being validated.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FieldContext {
   pub name: FixedStr,
   pub tag: i32,
@@ -82,6 +82,7 @@ impl FieldKind {
 }
 
 /// The context for a given validation execution.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ValidationCtx {
   pub field_context: Option<FieldContext>,
   pub parent_elements: Vec<FieldPathElement>,

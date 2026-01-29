@@ -5,7 +5,7 @@ use super::*;
 
 /// Validator for the [`bool`] type.
 #[non_exhaustive]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BoolValidator {
   /// Specifies that only this specific value will be considered valid for this field.

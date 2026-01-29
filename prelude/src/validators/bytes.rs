@@ -67,6 +67,59 @@ pub struct BytesValidator {
   pub error_messages: Option<ErrorMessages<BytesViolation>>,
 }
 
+impl Eq for BytesValidator {}
+
+impl Hash for BytesValidator {
+  fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+    self.cel.hash(state);
+    self.ignore.hash(state);
+    self.well_known.hash(state);
+    self.required.hash(state);
+    self.len.hash(state);
+    self.min_len.hash(state);
+    self.max_len.hash(state);
+    #[cfg(feature = "regex")]
+    self
+      .pattern
+      .as_ref()
+      .map(|r| r.as_str())
+      .hash(state);
+    self.prefix.hash(state);
+    self.suffix.hash(state);
+    self.contains.hash(state);
+    self.in_.hash(state);
+    self.not_in.hash(state);
+    self.const_.hash(state);
+    self.error_messages.hash(state);
+  }
+}
+
+impl PartialEq for BytesValidator {
+  fn eq(&self, other: &Self) -> bool {
+    #[cfg(feature = "regex")]
+    let baseline =
+      self.pattern.as_ref().map(|r| r.as_str()) == other.pattern.as_ref().map(|r| r.as_str());
+    #[cfg(not(feature = "regex"))]
+    let baseline = true;
+
+    baseline
+      && self.cel == other.cel
+      && self.ignore == other.ignore
+      && self.well_known == other.well_known
+      && self.required == other.required
+      && self.len == other.len
+      && self.min_len == other.min_len
+      && self.max_len == other.max_len
+      && self.prefix == other.prefix
+      && self.suffix == other.suffix
+      && self.contains == other.contains
+      && self.in_ == other.in_
+      && self.not_in == other.not_in
+      && self.const_ == other.const_
+      && self.error_messages == other.error_messages
+  }
+}
+
 impl BytesValidator {
   fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&Bytes>) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
@@ -456,7 +509,7 @@ impl From<BytesValidator> for ProtoOption {
 
 #[doc(hidden)]
 #[non_exhaustive]
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WellKnownBytes {
   #[cfg(feature = "regex")]

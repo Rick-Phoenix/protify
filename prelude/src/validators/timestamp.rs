@@ -9,7 +9,7 @@ use super::*;
 ///
 /// Unlike other default validators, this validator supports one extra parameter, namely [`now_tolerance`](TimestampValidator::now_tolerance), which is used as the tolerance for `gt_now` checks.
 #[non_exhaustive]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimestampValidator {
   /// Adds custom validation using one or more [`CelRule`]s to this field.

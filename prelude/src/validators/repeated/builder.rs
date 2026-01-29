@@ -4,7 +4,7 @@ use crate::validators::*;
 pub(crate) use state::*;
 
 /// Builder for [`RepeatedValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct RepeatedValidatorBuilder<T, S: State = Empty>
 where
   T: ProtoValidation,

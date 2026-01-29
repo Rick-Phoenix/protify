@@ -4,7 +4,7 @@ use crate::validators::*;
 pub(crate) use state::*;
 
 /// Builder for [`BoolValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BoolValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
   data: BoolValidator,

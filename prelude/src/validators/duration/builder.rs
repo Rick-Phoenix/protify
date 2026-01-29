@@ -29,7 +29,7 @@ impl<S: State> ValidatorBuilderFor<Duration> for DurationValidatorBuilder<S> {
 }
 
 /// Builder for [`DurationValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct DurationValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 

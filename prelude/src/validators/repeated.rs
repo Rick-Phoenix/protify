@@ -7,7 +7,7 @@ use super::*;
 
 /// Validator for vectors of types that implement [`ProtoValidation`].
 #[non_exhaustive]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(
   feature = "serde",
   derive(serde::Serialize, serde::Deserialize),

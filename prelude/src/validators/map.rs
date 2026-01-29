@@ -349,7 +349,7 @@ where
 
 /// Validator for types that implement [`ProtoMap`].
 #[non_exhaustive]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(
   feature = "serde",
   derive(serde::Serialize, serde::Deserialize),

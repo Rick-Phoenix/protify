@@ -8,7 +8,7 @@ use super::*;
 
 /// Validator for integer types, as well as proto int wrappers such as [`Sint32`].
 #[non_exhaustive]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct IntValidator<Num>
 where
@@ -376,7 +376,7 @@ pub trait IntWrapper: AsProtoType + Default + Copy + Send + Sync {
     + Sync
     + MaybeSerde
     + 'static;
-  type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync + MaybeSerde;
+  type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync + MaybeSerde + Hash;
   const LT_VIOLATION: Self::ViolationEnum;
   const LTE_VIOLATION: Self::ViolationEnum;
   const GT_VIOLATION: Self::ViolationEnum;

@@ -5,7 +5,7 @@ use super::*;
 
 /// Validator for enums implementing [`ProtoEnum`].
 #[non_exhaustive]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EnumValidator<T: ProtoEnum> {
   /// Adds custom validation using one or more [`CelRule`]s to this field.

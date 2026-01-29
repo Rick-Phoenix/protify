@@ -13,7 +13,7 @@ pub struct ViolationMeta {
   pub field_kind: FieldKind,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ValidationErrors {
   metas: Vec<ViolationMeta>,
   violations: Vec<Violation>,

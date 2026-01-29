@@ -228,6 +228,37 @@ pub struct StringValidator {
   pub error_messages: Option<ErrorMessages<StringViolation>>,
 }
 
+impl Hash for StringValidator {
+  fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+    self.cel.hash(state);
+    self.well_known.hash(state);
+    self.ignore.hash(state);
+    self.required.hash(state);
+    self.len.hash(state);
+    self.min_len.hash(state);
+    self.max_len.hash(state);
+    self.len_bytes.hash(state);
+    self.min_bytes.hash(state);
+    self.max_bytes.hash(state);
+    #[cfg(feature = "regex")]
+    self
+      .pattern
+      .as_ref()
+      .map(|r| r.as_str())
+      .hash(state);
+    self.prefix.hash(state);
+    self.suffix.hash(state);
+    self.contains.hash(state);
+    self.not_contains.hash(state);
+    self.in_.hash(state);
+    self.not_in.hash(state);
+    self.const_.hash(state);
+    self.error_messages.hash(state);
+  }
+}
+
+impl Eq for StringValidator {}
+
 impl PartialEq for StringValidator {
   fn eq(&self, other: &Self) -> bool {
     #[cfg(feature = "regex")]

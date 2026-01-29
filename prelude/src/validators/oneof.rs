@@ -4,7 +4,7 @@ pub use builder::OneofValidatorBuilder;
 use super::*;
 
 #[non_exhaustive]
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct OneofValidator {
   /// Specifies that at least one of the variants of the oneof must be set.
   pub required: bool,
