@@ -1,7 +1,7 @@
 use crate::*;
 
 #[doc(hidden)]
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub struct Empty;
 
 #[doc(hidden)]

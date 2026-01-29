@@ -107,6 +107,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
+  #[doc(hidden)]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     Ok(())
   }
@@ -221,7 +222,7 @@ pub trait ProtoValidation {
 
   /// Determines if the type should always be validated by the [`RepeatedValidator`] and [`MapValidator`] even if no other validator is specified (it is handled automatically inside the macros' logic).
   ///
-  /// If a message or oneof has this set to true and they are used as a field in another message,
+  /// If a message or oneof has this set to true and they are used as a field in another message that uses the [`proto_message`] macro,
   /// their [`validate`](ValidatedMessage::validate) function will be called even if no
   /// other field validators are specified.
   const HAS_DEFAULT_VALIDATOR: bool = false;
@@ -247,6 +248,14 @@ pub trait ProtoValidation {
   }
 
   /// Returns the default validator builder for this type.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use prelude::*;
+  ///
+  /// assert_eq!(StringValidator::builder(), String::validator_builder());
+  /// ```
   #[inline]
   #[must_use]
   fn validator_builder() -> Self::ValidatorBuilder {
@@ -255,6 +264,17 @@ pub trait ProtoValidation {
 
   /// Builds the default validator for this type from a closure which receives the validator
   /// builder as the argument.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use prelude::*;
+  ///
+  /// let validator = String::validator_from_closure(|v| v.min_len(3));
+  /// let validator2 = StringValidator::builder().min_len(3).build();
+  ///
+  /// assert_eq!(validator, validator2);
+  /// ```
   #[inline]
   fn validator_from_closure<F, FinalBuilder>(config_fn: F) -> Self::Validator
   where

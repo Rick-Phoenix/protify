@@ -228,6 +228,36 @@ pub struct StringValidator {
   pub error_messages: Option<ErrorMessages<StringViolation>>,
 }
 
+impl PartialEq for StringValidator {
+  fn eq(&self, other: &Self) -> bool {
+    #[cfg(feature = "regex")]
+    let baseline =
+      self.pattern.as_ref().map(|r| r.as_str()) == other.pattern.as_ref().map(|r| r.as_str());
+    #[cfg(not(feature = "regex"))]
+    let baseline = true;
+
+    baseline
+      && self.cel == other.cel
+      && self.well_known == other.well_known
+      && self.ignore == other.ignore
+      && self.required == other.required
+      && self.len == other.len
+      && self.min_len == other.min_len
+      && self.max_len == other.max_len
+      && self.len_bytes == other.len_bytes
+      && self.min_bytes == other.min_bytes
+      && self.max_bytes == other.max_bytes
+      && self.prefix == other.prefix
+      && self.suffix == other.suffix
+      && self.contains == other.contains
+      && self.not_contains == other.not_contains
+      && self.in_ == other.in_
+      && self.not_in == other.not_in
+      && self.const_ == other.const_
+      && self.error_messages == other.error_messages
+  }
+}
+
 impl StringValidator {
   fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&str>) -> ValidationResult {
     handle_ignore_always!(&self.ignore);

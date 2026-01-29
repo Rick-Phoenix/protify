@@ -5,7 +5,7 @@ use crate::validators::*;
 pub(crate) use state::*;
 
 /// Builder for [`StringValidator`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StringValidatorBuilder<S: State = Empty> {
   _state: PhantomData<S>,
 
