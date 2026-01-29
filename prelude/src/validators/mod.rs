@@ -69,13 +69,18 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   /// The validator can validate any type which implements [`Borrow`] with this type.
   type Target: ToOwned + ?Sized;
 
+  #[doc(hidden)]
   #[inline(never)]
   #[cold]
+  // This is necessary to gather rules from validators like repeated or map which need to gather nested rules
   fn cel_rules(&self) -> Vec<CelRule> {
     vec![]
   }
 
   /// Returns the optional schema representation for this validator.
+  ///
+  /// If a schema representation is present, whenever a validator is used by a message or a oneof,
+  /// its schema representation will be present in the generated protobuf files.
   #[inline(never)]
   #[cold]
   fn schema(&self) -> Option<ValidatorSchema> {
@@ -104,6 +109,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     Ok(())
   }
 
+  /// Checks the CEL programs of this validator with a predefined value.
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]

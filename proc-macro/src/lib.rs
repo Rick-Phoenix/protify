@@ -56,6 +56,7 @@ mod proto_types;
 #[cfg(feature = "reflection")]
 mod reflection;
 mod service_derive;
+mod well_known_type_impl;
 
 #[doc(hidden)]
 #[proc_macro_derive(AttrForwarding, attributes(forward))]
@@ -113,6 +114,14 @@ pub fn validated_message_derive(input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
 
   reflection::reflection_message_derive(&mut item).into()
+}
+
+#[proc_macro]
+pub fn impl_known_type(input: TokenStream) -> TokenStream {
+  match well_known_type_impl::well_known_type_impl_macro(input.into()) {
+    Ok(output) => output.into(),
+    Err(e) => e.into_compile_error().into(),
+  }
 }
 
 #[doc(hidden)]
