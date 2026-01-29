@@ -283,3 +283,16 @@ pub fn collect_validators(
 ) -> Vec<ValidatorSchema> {
   validators.into_iter().flatten().collect()
 }
+
+#[doc(hidden)]
+pub static DEFAULT_MESSAGE_VALIDATOR: Lazy<MessageValidator> =
+  Lazy::new(|| MessageValidator::default());
+
+#[doc(hidden)]
+pub static DEFAULT_ONEOF_VALIDATOR: Lazy<OneofValidator> = Lazy::new(|| OneofValidator::default());
+
+#[doc(hidden)]
+pub static DEFAULT_REQUIRED_ONEOF_VALIDATOR: Lazy<OneofValidator> = Lazy::new(|| OneofValidator {
+  required: true,
+  error_message: None,
+});

@@ -107,7 +107,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
         let validator_expr = if oneof_rules.required() {
           Some(ValidatorTokens {
             expr: quote_spanned! {field_span=>
-              ::prelude::OneofValidator::builder().required().build()
+              *::prelude::DEFAULT_REQUIRED_ONEOF_VALIDATOR
             },
             kind: ValidatorKind::ReflectionOneof,
             span: field_span,

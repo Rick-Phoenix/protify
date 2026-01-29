@@ -9,7 +9,8 @@ pub enum ValidatorKind {
   Reflection,
   ReflectionOneof,
   Custom,
-  Default,
+  DefaultCollection,
+  DefaultMessage,
   DefaultOneof,
 }
 
@@ -19,11 +20,17 @@ impl ValidatorKind {
   /// [`Default`]: ValidatorKind::Default
   #[must_use]
   pub const fn is_default(self) -> bool {
-    matches!(self, Self::Default | Self::DefaultOneof)
+    matches!(
+      self,
+      Self::DefaultCollection | Self::DefaultOneof | Self::DefaultMessage
+    )
   }
 
   pub const fn should_be_cached(self) -> bool {
-    matches!(self, Self::Closure | Self::Reflection | Self::Default)
+    matches!(
+      self,
+      Self::Closure | Self::Reflection | Self::DefaultCollection
+    )
   }
 
   /// Returns `true` if the validator kind is [`Custom`].

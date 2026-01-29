@@ -102,7 +102,7 @@ impl ProtoField {
       Self::Oneof(OneofInfo { .. }) => {
         return Some(ValidatorTokens {
           expr: quote_spanned! {span=>
-            ::prelude::OneofValidator::default()
+            *::prelude::DEFAULT_ONEOF_VALIDATOR
           },
           kind: ValidatorKind::DefaultOneof,
           span,
@@ -132,9 +132,13 @@ impl ProtoField {
       }
       Self::Optional(inner) | Self::Single(inner) => {
         if let ProtoType::Message(MessageInfo { .. }) = inner {
-          Some(quote_spanned! {span=>
-            ::prelude::MessageValidator::default()
-          })
+          return Some(ValidatorTokens {
+            expr: quote_spanned! {span=>
+              *::prelude::DEFAULT_MESSAGE_VALIDATOR
+            },
+            kind: ValidatorKind::DefaultMessage,
+            span,
+          });
         } else {
           None
         }
@@ -144,7 +148,7 @@ impl ProtoField {
     expr.map(|expr| ValidatorTokens {
       expr,
       span,
-      kind: ValidatorKind::Default,
+      kind: ValidatorKind::DefaultCollection,
     })
   }
 
