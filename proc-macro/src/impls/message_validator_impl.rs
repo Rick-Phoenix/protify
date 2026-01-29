@@ -246,7 +246,7 @@ pub fn generate_message_validator(
 
   let inline_if_empty = (!has_validators).then(|| quote! { #[inline(always)] });
 
-  let has_default_validator_tokens = if has_non_default_validators {
+  let has_default_validator = if has_non_default_validators {
     quote! { true }
     // Means we only encountered boxed self for defaults, so it's false
     // because if we got this far, `has_non_default_validators` must be false
@@ -293,7 +293,7 @@ pub fn generate_message_validator(
       where
         Self: 'a;
 
-      const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator_tokens;
+      const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
       #[doc(hidden)]
       const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
     }

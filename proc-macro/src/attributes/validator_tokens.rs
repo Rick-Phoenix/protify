@@ -13,9 +13,10 @@ pub enum ValidatorKind {
 }
 
 impl ValidatorKind {
-  /// Returns `true` if the validator kind is [`Default`].
-  ///
-  /// [`Default`]: ValidatorKind::Default
+  pub const fn should_check_consistency(self) -> bool {
+    !self.is_default() && !matches!(self, Self::ReflectionOneof | Self::ClosureOneof)
+  }
+
   #[must_use]
   pub const fn is_default(self) -> bool {
     matches!(
@@ -31,17 +32,11 @@ impl ValidatorKind {
     )
   }
 
-  /// Returns `true` if the validator kind is [`Custom`].
-  ///
-  /// [`Custom`]: ValidatorKind::Custom
   #[must_use]
   pub const fn is_custom(self) -> bool {
     matches!(self, Self::Custom)
   }
 
-  /// Returns `true` if the validator kind is [`Closure`].
-  ///
-  /// [`Closure`]: ValidatorKind::Closure
   #[must_use]
   pub const fn is_closure(self) -> bool {
     matches!(self, Self::Closure | Self::ClosureOneof)

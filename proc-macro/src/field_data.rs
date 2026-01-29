@@ -15,8 +15,7 @@ impl FieldData {
     let validators = self
       .validators
       .iter()
-      // Useless to check consistency for default validators
-      .filter(|v| !v.kind.is_default())
+      .filter(|v| v.kind.should_check_consistency())
       .map(|validator| {
         let ident_str = &self.ident_str;
         let validator_target_type = self.proto_field.validator_target_type(self.span);

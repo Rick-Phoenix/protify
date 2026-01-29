@@ -20,7 +20,7 @@ pub struct WrongTagsTest {
 
 #[test]
 fn wrong_oneof_tags_check() {
-  assert!(WrongTagsTest::check_oneofs_tags().is_err())
+  assert!(WrongTagsTest::__check_oneofs_tags().is_err())
 }
 
 #[proto_message]
@@ -32,5 +32,5 @@ pub struct CorrectTagsTest {
 
 #[test]
 fn correct_oneof_tags_check() {
-  assert!(CorrectTagsTest::check_oneofs_tags().is_ok());
+  assert!(CorrectTagsTest::__check_oneofs_tags().is_ok());
 }

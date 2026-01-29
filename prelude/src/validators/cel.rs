@@ -28,15 +28,6 @@ impl From<CelProgram> for CelRule {
   }
 }
 
-impl From<CelRule> for ProtoOption {
-  fn from(value: CelRule) -> Self {
-    Self {
-      name: "cel".into(),
-      value: value.into(),
-    }
-  }
-}
-
 impl From<CelRule> for OptionValue {
   fn from(value: CelRule) -> Self {
     Self::Message(

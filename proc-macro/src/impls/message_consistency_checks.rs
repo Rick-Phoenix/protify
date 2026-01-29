@@ -33,7 +33,7 @@ pub fn generate_oneofs_tags_checks(
       #[cfg(test)]
       #[test]
       fn #test_fn_ident() {
-        if let Err(e) = #item_ident::check_oneofs_tags() {
+        if let Err(e) = #item_ident::__check_oneofs_tags() {
           panic!("{e}")
         }
       }
@@ -48,7 +48,7 @@ pub fn generate_oneofs_tags_checks(
       #[doc(hidden)]
       #[allow(unused)]
       #[track_caller]
-      pub fn check_oneofs_tags() -> Result<(), String> {
+      pub fn __check_oneofs_tags() -> Result<(), String> {
         #(#oneofs_tags_checks)*
 
         Ok(())

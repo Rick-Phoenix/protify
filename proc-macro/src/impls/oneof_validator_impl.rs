@@ -67,7 +67,7 @@ pub fn generate_oneof_validator(
   } = validators_data;
 
   #[allow(clippy::if_same_then_else)]
-  let has_default_validator_tokens = if has_non_default_validators {
+  let has_default_validator = if has_non_default_validators {
     quote! { true }
     // This can never be true for oneofs, but we fall back to `true` just in case
   } else if default_check_tokens.is_empty() {
@@ -115,7 +115,7 @@ pub fn generate_oneof_validator(
       where
         Self: 'a;
 
-      const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator_tokens;
+      const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
       #[doc(hidden)]
       const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
     }

@@ -12,6 +12,9 @@ pub struct Field {
 }
 
 /// A schema representation for a validator.
+///
+/// It allows the validator to be turned into a protobuf representation
+/// that can be generated inside a message's options in the target protobuf file.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ValidatorSchema {
