@@ -16,7 +16,7 @@ impl ProtoValidation for bool {
   type Stored = Self;
   type Validator = BoolValidator;
   #[doc(hidden)]
-  type Builder = BoolValidatorBuilder;
+  type ValidatorBuilder = BoolValidatorBuilder;
 
   #[doc(hidden)]
   type UniqueStore<'a>

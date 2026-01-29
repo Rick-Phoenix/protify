@@ -221,7 +221,7 @@ where
   where
     S::Keys: IsUnset,
     FinalBuilder: ValidatorBuilderFor<K, Validator = K::Validator>,
-    F: FnOnce(K::Builder) -> FinalBuilder,
+    F: FnOnce(K::ValidatorBuilder) -> FinalBuilder,
   {
     let keys_opts = K::validator_from_closure(config_fn);
 
@@ -245,7 +245,7 @@ where
   where
     V: ProtoValidation,
     FinalBuilder: ValidatorBuilderFor<V, Validator = V::Validator>,
-    F: FnOnce(V::Builder) -> FinalBuilder,
+    F: FnOnce(V::ValidatorBuilder) -> FinalBuilder,
   {
     let values_opts = V::validator_from_closure(config_fn);
 

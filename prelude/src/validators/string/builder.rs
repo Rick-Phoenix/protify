@@ -18,7 +18,7 @@ impl ProtoValidation for String {
   type Stored = Self;
   type Validator = StringValidator;
   #[doc(hidden)]
-  type Builder = StringValidatorBuilder;
+  type ValidatorBuilder = StringValidatorBuilder;
 
   type UniqueStore<'a>
     = RefHybridStore<'a, str>

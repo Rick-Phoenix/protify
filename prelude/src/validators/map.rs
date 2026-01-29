@@ -124,7 +124,7 @@ where
   type Stored = BTreeMap<K::Stored, V::Stored>;
   type Validator = MapValidator<K, V>;
   #[doc(hidden)]
-  type Builder = MapValidatorBuilder<K, V>;
+  type ValidatorBuilder = MapValidatorBuilder<K, V>;
 
   #[doc(hidden)]
   type UniqueStore<'a>
@@ -160,7 +160,7 @@ where
   type Stored = HashMap<K::Stored, V::Stored, S>;
   type Validator = MapValidator<K, V>;
   #[doc(hidden)]
-  type Builder = MapValidatorBuilder<K, V>;
+  type ValidatorBuilder = MapValidatorBuilder<K, V>;
 
   #[doc(hidden)]
   type UniqueStore<'a>

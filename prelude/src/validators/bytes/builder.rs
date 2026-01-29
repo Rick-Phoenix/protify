@@ -18,7 +18,7 @@ impl ProtoValidation for Bytes {
   type Stored = Self;
   type Validator = BytesValidator;
   #[doc(hidden)]
-  type Builder = BytesValidatorBuilder;
+  type ValidatorBuilder = BytesValidatorBuilder;
 
   type UniqueStore<'a>
     = RefHybridStore<'a, Self>

@@ -36,7 +36,7 @@ impl ProtoValidation for Any {
   type Stored = Self;
   type Validator = AnyValidator;
   #[doc(hidden)]
-  type Builder = AnyValidatorBuilder;
+  type ValidatorBuilder = AnyValidatorBuilder;
 
   type UniqueStore<'a>
     = RefHybridStore<'a, Self>

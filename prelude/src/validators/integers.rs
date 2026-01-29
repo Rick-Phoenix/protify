@@ -456,7 +456,7 @@ macro_rules! impl_int_validator {
         type Stored = $rust_type;
         type Validator = IntValidator<$wrapper>;
         #[doc(hidden)]
-        type Builder = IntValidatorBuilder<$wrapper>;
+        type ValidatorBuilder = IntValidatorBuilder<$wrapper>;
 
         type UniqueStore<'a>
           = CopyHybridStore<$rust_type>

@@ -36,7 +36,7 @@ impl ValidationResultExt for ValidationResult {
 #[derive(Debug, Clone, Copy)]
 pub struct FailFast;
 
-bool_enum!(pub IsValid, doc = "Represents validation status.");
+bool_enum!(pub IsValid, doc = "A boolean-like enum that represents validation status. It supports all of the bit operators.");
 
 impl IsValid {
   #[must_use]
@@ -170,6 +170,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     V: Borrow<Self::Target> + ?Sized;
 }
 
+/// Utility trait for validator builders. Mainly used for default validators.
 pub trait ValidatorBuilderFor<T: ?Sized>: Default {
   type Target: ?Sized;
   type Validator: Validator<T, Target = Self::Target>;
@@ -177,11 +178,26 @@ pub trait ValidatorBuilderFor<T: ?Sized>: Default {
   fn build_validator(self) -> Self::Validator;
 }
 
+/// Trait implemented by targets of proto validators.
+///
+/// Implemented automatically with the [`proto_message`], [`proto_oneof`] and [`proto_enum`] macros.
+///
+/// The actual target of the validation is in a dedicated associated Type
+/// because this trait is sometimes implemented by wrappers/proxies like [`Sint32`].
+///
+/// The `Stored` type is needed for compatibility with the [`RepeatedValidator`]
+/// and [`MapValidator`]. It is the same as the `Target` in most cases, but
+/// not for [`String`] specifically, because the Target is `str` (so that validation
+/// is performed on type that implement [`Borrow`] with `str`), but `Stored` is `String`.
+///
+/// `HAS_DEFAULT_VALIDATOR` determines if the type should always be validated by the [`RepeatedValidator`] and [`MapValidator`] even if no other validator is specified (it is handled automatically inside the macros' logic).
+///
+/// The `UniqueStore` is used for validation that verifies uniqueness of values.
 pub trait ProtoValidation {
   type Target: ?Sized;
   type Stored: Borrow<Self::Target>;
   type Validator: Validator<Self, Target = Self::Target> + Clone + Default;
-  type Builder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
+  type ValidatorBuilder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
 
   const HAS_DEFAULT_VALIDATOR: bool = false;
   #[doc(hidden)]
@@ -201,14 +217,14 @@ pub trait ProtoValidation {
 
   #[inline]
   #[must_use]
-  fn validator_builder() -> Self::Builder {
-    Self::Builder::default()
+  fn validator_builder() -> Self::ValidatorBuilder {
+    Self::ValidatorBuilder::default()
   }
 
   #[inline]
   fn validator_from_closure<F, FinalBuilder>(config_fn: F) -> Self::Validator
   where
-    F: FnOnce(Self::Builder) -> FinalBuilder,
+    F: FnOnce(Self::ValidatorBuilder) -> FinalBuilder,
     FinalBuilder: ValidatorBuilderFor<Self, Validator = Self::Validator>,
   {
     let initial_builder = Self::validator_builder();

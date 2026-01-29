@@ -12,7 +12,7 @@ impl ProtoValidation for Duration {
   type Stored = Self;
   type Validator = DurationValidator;
   #[doc(hidden)]
-  type Builder = DurationValidatorBuilder;
+  type ValidatorBuilder = DurationValidatorBuilder;
 
   type UniqueStore<'a>
     = CopyHybridStore<Self>

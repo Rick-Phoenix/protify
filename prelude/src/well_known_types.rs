@@ -7,7 +7,7 @@ macro_rules! impl_no_op_validator {
     $(
       impl ProtoValidation for $name {
         #[doc(hidden)]
-        type Builder = NoOpValidatorBuilder<Self>;
+        type ValidatorBuilder = NoOpValidatorBuilder<Self>;
         #[doc(hidden)]
         type Stored = Self;
         #[doc(hidden)]

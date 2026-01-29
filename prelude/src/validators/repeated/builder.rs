@@ -127,7 +127,7 @@ where
     S::Items: IsUnset,
     T: ProtoValidation,
     FinalBuilder: ValidatorBuilderFor<T, Validator = T::Validator>,
-    F: FnOnce(T::Builder) -> FinalBuilder,
+    F: FnOnce(T::ValidatorBuilder) -> FinalBuilder,
   {
     let items_builder = T::validator_from_closure(config_fn);
 

@@ -89,7 +89,7 @@ where
   type Stored = Vec<T::Stored>;
   type Validator = RepeatedValidator<T>;
   #[doc(hidden)]
-  type Builder = RepeatedValidatorBuilder<T>;
+  type ValidatorBuilder = RepeatedValidatorBuilder<T>;
 
   #[doc(hidden)]
   type UniqueStore<'a>

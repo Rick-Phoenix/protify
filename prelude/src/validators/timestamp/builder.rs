@@ -19,7 +19,7 @@ impl ProtoValidation for Timestamp {
   type Stored = Self;
   type Validator = TimestampValidator;
   #[doc(hidden)]
-  type Builder = TimestampValidatorBuilder;
+  type ValidatorBuilder = TimestampValidatorBuilder;
 
   type UniqueStore<'a>
     = CopyHybridStore<Self>

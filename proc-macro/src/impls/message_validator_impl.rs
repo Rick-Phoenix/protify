@@ -288,7 +288,7 @@ pub fn generate_message_validator(
       #[doc(hidden)]
       type Validator = ::prelude::MessageValidator;
       #[doc(hidden)]
-      type Builder = ::prelude::MessageValidatorBuilder;
+      type ValidatorBuilder = ::prelude::MessageValidatorBuilder;
 
       type UniqueStore<'a>
         = ::prelude::LinearRefStore<'a, Self>

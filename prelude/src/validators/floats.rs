@@ -524,7 +524,7 @@ macro_rules! impl_float_wrapper {
         type Stored = Self;
         type Validator = FloatValidator<Self>;
         #[doc(hidden)]
-        type Builder = FloatValidatorBuilder<Self>;
+        type ValidatorBuilder = FloatValidatorBuilder<Self>;
 
         type UniqueStore<'a>
           = FloatEpsilonStore<Self>
