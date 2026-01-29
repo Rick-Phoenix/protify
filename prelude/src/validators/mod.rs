@@ -36,7 +36,7 @@ impl ValidationResultExt for ValidationResult {
 #[derive(Debug, Clone, Copy)]
 pub struct FailFast;
 
-bool_enum!(pub IsValid);
+bool_enum!(pub IsValid, doc = "Represents validation status.");
 
 impl IsValid {
   #[must_use]
@@ -46,12 +46,23 @@ impl IsValid {
   }
 }
 
+/// Alias for `Result<IsValid, FailFast>.`
 pub type ValidationResult = Result<IsValid, FailFast>;
 
-// Here we use a generic for the target of the validator
-// AND an assoc. type for the actual type being validated
-// so that it can be proxied by wrappers (like with Sint32, Fixed32, enums, etc...).
-// Same for `ValidatorBuilderFor`.
+/// The trait implemented by the validators, which can be structs or functions used with [`FnValidator`].
+///
+/// The generic type and the Target type are separated so that this can be used for wrapper types
+/// such as [`Sint32`] and others.
+///
+/// The `Target` is the actual type that will be validated.
+///
+/// The only required method is [`validate_core`](Validator::validate_core), all the other validation methods are
+/// automatically implemented.
+///
+/// The validation methods can receive any type which implements [`Borrow`] with the `Target`.
+///
+/// Validators can optionally implement the [`schema`](Validator::schema) method, which allows them to be
+/// turned into protobuf options for file generation.
 pub trait Validator<T: ?Sized>: Send + Sync {
   type Target: ToOwned + ?Sized;
 
@@ -212,6 +223,9 @@ pub(crate) trait IsDefault: Default + PartialEq {
   }
 }
 
+/// Implements [`Validator`] for the wrapped function, similarly to [`FromFn`](core::iter::FromFn).
+///
+/// It can be created with the [`from_fn`] function.
 pub struct FnValidator<F, T: ?Sized> {
   func: F,
   _phantom: PhantomData<T>,
@@ -234,6 +248,7 @@ where
   }
 }
 
+/// Creates a validator from a function, using [`FnValidator`].
 #[inline]
 pub const fn from_fn<T, F>(f: F) -> FnValidator<F, T>
 where
@@ -247,6 +262,8 @@ where
 }
 
 impl<T: Default + PartialEq> IsDefault for T {}
+
+/// Stores custom error messages in default validators.
 type ErrorMessages<T> = Box<BTreeMap<T, FixedStr>>;
 
 pub mod any;
