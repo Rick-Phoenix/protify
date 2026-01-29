@@ -21,12 +21,6 @@ keywords = ["protobuf", "validation", "schema"]
 [workspace.dependencies]
 cel = { version = "0.12", features = ["bytes"] }
 paste = "1"
-askama = { version = "0.14.0", default-features = false, features = [
-  "config",
-  "derive",
-  "std",
-] }
-bon = "3.7"
 maplit = "1"
 regex = "1"
 thiserror = "2"
@@ -39,19 +33,19 @@ proto-types = { version = "0.1.11", path = "../proto-types/proto-types/", defaul
 tonic = { version = "0.14", default-features = false }
 tonic-prost = "0.14"
 prost = { version = "0.14", default-features = false, features = ["derive"] }
-tonic-prost-build = "0.14.2"
+tonic-prost-build = "0.14"
 serde = { version = "1", features = ["derive"] }
 chrono = "0.4"
 protocheck-core = { path = "../protocheck/core" }
 protocheck-proc-macro = { path = "../protocheck/proc_macro/" }
 itertools = "0.14"
 constcat = "0.6"
-float_eq = "1.0"
+float_eq = "1"
 ordered-float = "5"
 bytes = "1"
 prost-build = "0.14"
 prost-reflect = "0.16"
-similar-asserts = "1.7"
+similar-asserts = "1"
 bool-enum = { path = "../bool-enum/" }
 
 [workspace.lints.clippy]
