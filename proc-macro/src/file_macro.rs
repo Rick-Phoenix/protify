@@ -200,14 +200,26 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut options = TokenStreamOr::new(|_| quote! { ::prelude::vec![] });
   let mut extern_path =
     TokensOr::<LitStr>::new(|span| quote_spanned! (span=> ::core::module_path!()));
-  let mut imports = TokenStreamOr::new(|_| quote! { [] });
+  let mut imports = TokenStreamOr::new(|_| quote! { ::prelude::Vec::<&'static str>::new() });
   let mut extensions: Vec<Path> = Vec::new();
   let mut edition = TokenStreamOr::new(|_| quote! { ::prelude::Edition::Proto3 });
+  let mut messages: Vec<MessageExpr> = Vec::new();
+  let mut enums: Vec<Path> = Vec::new();
+  let mut services: Vec<Path> = Vec::new();
 
   let parser = syn::meta::parser(|meta| {
     let ident_str = meta.ident_str()?;
 
     match ident_str.as_str() {
+      "messages" => {
+        messages = parse_bracketed::<PunctuatedItems<MessageExpr>>(meta.value()?)?.list;
+      }
+      "enums" => {
+        enums = parse_bracketed::<PathList>(meta.value()?)?.list;
+      }
+      "services" => {
+        services = parse_bracketed::<PathList>(meta.value()?)?.list;
+      }
       "name" => {
         name = Some(meta.parse_value::<LitStr>()?.value());
       }
@@ -248,24 +260,37 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   Ok(quote! {
     #[doc(hidden)]
     #[allow(unused)]
-    const #const_ident: ::prelude::FileReference = ::prelude::FileReference {
-      name: #file,
-      package: #package.name,
-      extern_path: #extern_path,
-    };
+    const __PROTO_FILE: ::prelude::FileReference = <#const_ident as ::prelude::FileSchema>::REFERENCE;
 
-    #[doc(hidden)]
-    #[allow(unused)]
-    const __PROTO_FILE: ::prelude::FileReference = #const_ident;
+    pub struct #const_ident;
+
+    impl ::prelude::FileSchema for #const_ident {
+      const REFERENCE: ::prelude::FileReference = ::prelude::FileReference {
+        name: #file,
+        package: #package.name,
+        extern_path: #extern_path,
+      };
+
+      fn file_schema() -> ::prelude::ProtoFile {
+        let mut file = ::prelude::ProtoFile::new(#file, #package.name);
+
+        file
+          .with_edition(#edition)
+          .with_messages([ #(#messages),* ])
+          .with_services([ #(#services::proto_schema()),* ])
+          .with_enums([ #(#enums::proto_schema()),* ])
+          .with_extensions([ #(#extensions::proto_schema()),* ])
+          .with_imports(#imports)
+          .with_options(#options);
+
+        file
+      }
+    }
 
     ::prelude::register_proto_data! {
       ::prelude::RegistryFile {
-        name: __PROTO_FILE.name,
-        package: __PROTO_FILE.package,
-        edition: #edition,
-        options: || #options.into_iter().collect(),
-        imports: || #imports.into_iter().collect(),
-        extensions: || ::prelude::vec![ #(<#extensions as ::prelude::ProtoExtension>::proto_schema()),* ]
+        file: || <#const_ident as ::prelude::FileSchema>::file_schema(),
+        package: #package.name
       }
     }
   })

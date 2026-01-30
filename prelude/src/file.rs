@@ -18,6 +18,11 @@ pub struct ProtoFile {
   pub extensions: Vec<Extension>,
 }
 
+pub trait FileSchema {
+  const REFERENCE: FileReference;
+  fn file_schema() -> ProtoFile;
+}
+
 #[doc(hidden)]
 pub struct FileReference {
   pub name: &'static str,

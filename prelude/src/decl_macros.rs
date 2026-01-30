@@ -207,7 +207,7 @@ macro_rules! inherit_proto_file {
   ($file:path) => {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: $crate::FileReference = $file;
+    const __PROTO_FILE: $crate::FileReference = <$file as ::prelude::FileSchema>::REFERENCE;
   };
 }
 
@@ -255,8 +255,8 @@ macro_rules! use_proto_file {
     #[doc(hidden)]
     #[allow(unused)]
     const __PROTO_FILE: $crate::FileReference = ::prelude::FileReference {
-      name: $file.name,
-      package: $file.package,
+      name: <$file as ::prelude::FileSchema>::REFERENCE.name,
+      package: <$file as ::prelude::FileSchema>::REFERENCE.package,
       extern_path: ::core::module_path!(),
     };
   };

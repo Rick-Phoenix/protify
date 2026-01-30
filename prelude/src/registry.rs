@@ -52,7 +52,7 @@ pub(crate) fn collect_package(package: &'static str) -> Package {
   let mut files: Map<FixedStr, ProtoFile> = Map::default();
 
   for file_entry in inventory::iter::<RegistryFile>().filter(|f| f.package == package) {
-    let file: ProtoFile = file_entry.into();
+    let file: ProtoFile = (file_entry.file)();
 
     match files.entry(file.name.clone()) {
       ordermap::map::Entry::Occupied(mut occupied) => {
@@ -186,33 +186,29 @@ pub struct RegistryService {
 
 #[doc(hidden)]
 pub struct RegistryFile {
-  pub name: &'static str,
   pub package: &'static str,
-  pub edition: Edition,
-  pub options: fn() -> Vec<ProtoOption>,
-  pub imports: fn() -> Vec<&'static str>,
-  pub extensions: fn() -> Vec<Extension>,
+  pub file: fn() -> ProtoFile,
 }
 
-#[allow(clippy::from_over_into)]
-impl Into<ProtoFile> for &RegistryFile {
-  fn into(self) -> ProtoFile {
-    let mut file = ProtoFile::new(self.name, self.package);
-
-    file.with_imports((self.imports)());
-
-    let extensions = (self.extensions)();
-
-    if !extensions.is_empty() {
-      file.with_extensions(extensions);
-    }
-
-    file.options = (self.options)();
-    file.edition = self.edition;
-
-    file
-  }
-}
+// #[allow(clippy::from_over_into)]
+// impl Into<ProtoFile> for &RegistryFile {
+//   fn into(self) -> ProtoFile {
+//     let mut file = ProtoFile::new(self.name, self.package);
+//
+//     file.with_imports((self.imports)());
+//
+//     let extensions = (self.extensions)();
+//
+//     if !extensions.is_empty() {
+//       file.with_extensions(extensions);
+//     }
+//
+//     file.options = (self.options)();
+//     file.edition = self.edition;
+//
+//     file
+//   }
+// }
 
 #[cfg(feature = "inventory")]
 inventory::collect!(RegistryMessage);
