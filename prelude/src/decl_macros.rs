@@ -54,26 +54,6 @@ macro_rules! register_proto_data {
   ($($tokens:tt)*) => {};
 }
 
-/// This macro can be used to manually create a package schema if the inventory feature is not available.
-///
-/// The first argument is the name of the package, and the second argument is a collection of the files to include.
-///
-/// ```
-/// use prelude::*;
-///
-/// let manual_file = file_schema!(
-///   name = "test.proto",
-/// );
-///
-/// let manual_pkg = package_schema!("my_pkg", files = [ manual_file ]);
-/// ```
-#[macro_export]
-macro_rules! package_schema {
-  ($name:expr, files = $files:expr) => {
-    $crate::Package::new($name).with_files($files)
-  };
-}
-
 /// This macro can be used to generate a [`ProtoOption`] with a concise syntax.
 ///
 /// The input can be a single `key => value`, where the key should support [`Into`] [`FixedStr`]  and the value should support [`Into`] [`OptionValue`], or a bracketed series or key-value pairs to generate an [`OptionValue::Message`] for the value.

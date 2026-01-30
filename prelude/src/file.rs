@@ -18,6 +18,15 @@ pub struct ProtoFile {
   pub extensions: Vec<Extension>,
 }
 
+fn sort_nested(message: &mut MessageSchema) {
+  message
+    .messages
+    .sort_unstable_by_key(|m| m.name.clone());
+  message
+    .enums
+    .sort_unstable_by_key(|e| e.name.clone());
+}
+
 pub trait FileSchema {
   const REFERENCE: FileReference;
   fn file_schema() -> ProtoFile;
@@ -133,6 +142,27 @@ impl FileImports {
 }
 
 impl ProtoFile {
+  pub(crate) fn sort_items(&mut self) {
+    self
+      .extensions
+      .sort_unstable_by_key(|e| e.target.as_str());
+
+    self
+      .messages
+      .sort_unstable_by_key(|m| m.name.clone());
+
+    for msg in self.messages.iter_mut() {
+      sort_nested(msg);
+    }
+
+    self
+      .enums
+      .sort_unstable_by_key(|e| e.short_name.clone());
+    self
+      .services
+      .sort_unstable_by_key(|s| s.name.clone());
+  }
+
   #[must_use]
   pub fn new(name: &'static str, package: &'static str) -> Self {
     Self {

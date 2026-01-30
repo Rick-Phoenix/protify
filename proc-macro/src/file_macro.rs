@@ -92,109 +92,14 @@ impl Parse for MessageExpr {
 custom_keyword!(messages);
 custom_keyword!(enums);
 
-fn parse_bracketed<T: Parse>(input: ParseStream) -> syn::Result<T> {
+pub(crate) fn parse_bracketed<T: Parse>(input: ParseStream) -> syn::Result<T> {
   let content;
   bracketed!(content in input);
   content.parse::<T>()
 }
 
-pub fn schema_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
-  let mut name: Option<String> = None;
-  let mut imports = TokenStreamOr::new(|_| quote! { [] });
-  let mut options = TokenStreamOr::new(|_| quote! { ::prelude::vec![] });
-  let mut extensions: Vec<Path> = Vec::new();
-  let mut edition = TokenStreamOr::new(|_| quote! { ::prelude::Edition::Proto3 });
-  let mut messages: Vec<MessageExpr> = Vec::new();
-  let mut enums: Vec<Path> = Vec::new();
-  let mut services: Vec<Path> = Vec::new();
-  // Only useful when rendering single files (for examples, etc),
-  // otherwise the package method sets the name automatically
-  let mut package = "package".to_string();
-
-  let parser = syn::meta::parser(|meta| {
-    let ident_str = meta.ident_str()?;
-
-    match ident_str.as_str() {
-      "package" => {
-        package = meta.parse_value::<LitStr>()?.value();
-      }
-      "messages" => {
-        messages = parse_bracketed::<PunctuatedItems<MessageExpr>>(meta.value()?)?.list;
-      }
-      "enums" => {
-        enums = parse_bracketed::<PathList>(meta.value()?)?.list;
-      }
-      "services" => {
-        services = parse_bracketed::<PathList>(meta.value()?)?.list;
-      }
-      "name" => {
-        name = Some(meta.parse_value::<LitStr>()?.value());
-      }
-      "options" => {
-        options.span = meta.input.span();
-        options.set(meta.expr_value()?.into_token_stream());
-      }
-      "imports" => {
-        imports.set(meta.parse_value::<Expr>()?.into_token_stream());
-      }
-      "extensions" => {
-        extensions = parse_bracketed::<PathList>(meta.value()?)?.list;
-      }
-      "edition" => {
-        edition.set(meta.parse_value::<Path>()?.into_token_stream());
-      }
-      _ => return Err(meta.error("Unknown attribute")),
-    };
-
-    Ok(())
-  });
-
-  parser.parse2(input)?;
-
-  let mut builder_tokens = TokenStream2::new();
-
-  if !messages.is_empty() {
-    builder_tokens.extend(quote! {
-      file.with_messages([ #(#messages),* ]);
-    });
-  }
-
-  if !services.is_empty() {
-    builder_tokens.extend(quote! {
-      file.with_services([ #(#services::proto_schema()),* ]);
-    });
-  }
-
-  if !enums.is_empty() {
-    builder_tokens.extend(quote! {
-      file.with_enums([ #(#enums::proto_schema()),* ]);
-    });
-  }
-
-  if !imports.is_default() {
-    builder_tokens.extend(quote! {
-      file.with_imports(#imports);
-    });
-  }
-
-  Ok(quote! {
-    {
-      let mut file = ::prelude::ProtoFile::new(#name, #package);
-
-      file
-        .with_edition(#edition)
-        .with_extensions([ #(#extensions::proto_schema()),* ])
-        .with_options(#options);
-
-      #builder_tokens
-
-      file
-    }
-  })
-}
-
 pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
-  let mut const_ident: Option<Ident> = None;
+  let mut file_ident: Option<Ident> = None;
   let mut name: Option<String> = None;
   let mut package: Option<Path> = None;
   let mut options = TokenStreamOr::new(|_| quote! { ::prelude::vec![] });
@@ -206,11 +111,15 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut messages: Vec<MessageExpr> = Vec::new();
   let mut enums: Vec<Path> = Vec::new();
   let mut services: Vec<Path> = Vec::new();
+  let mut no_emit = false;
 
   let parser = syn::meta::parser(|meta| {
     let ident_str = meta.ident_str()?;
 
     match ident_str.as_str() {
+      "no_emit" => {
+        no_emit = true;
+      }
       "messages" => {
         messages = parse_bracketed::<PunctuatedItems<MessageExpr>>(meta.value()?)?.list;
       }
@@ -243,7 +152,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
         edition.set(meta.parse_value::<Path>()?.into_token_stream());
       }
       _ => {
-        const_ident = Some(meta.ident()?.clone());
+        file_ident = Some(meta.ident()?.clone());
       }
     };
 
@@ -252,27 +161,39 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
   parser.parse2(input)?;
 
-  let const_ident = const_ident
-    .ok_or_else(|| error_call_site!("Missing const ident (must be the first argument)"))?;
+  let file_ident = file_ident
+    .ok_or_else(|| error_call_site!("Missing file ident (must be the first argument)"))?;
   let file = name.ok_or_else(|| error_call_site!("Missing `file` attribute"))?;
   let package = package.ok_or_else(|| error_call_site!("Missing `package` attribute"))?;
+
+  let inventory_call = (!no_emit).then(|| {
+    quote! {
+      ::prelude::register_proto_data! {
+        ::prelude::RegistryFile {
+          file: || <#file_ident as ::prelude::FileSchema>::file_schema(),
+          package: <#package as ::prelude::PackageSchema>::NAME
+        }
+      }
+    }
+  });
 
   Ok(quote! {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: ::prelude::FileReference = <#const_ident as ::prelude::FileSchema>::REFERENCE;
+    const __PROTO_FILE: ::prelude::FileReference = <#file_ident as ::prelude::FileSchema>::REFERENCE;
 
-    pub struct #const_ident;
+    #[allow(non_camel_case_types)]
+    pub(crate) struct #file_ident;
 
-    impl ::prelude::FileSchema for #const_ident {
+    impl ::prelude::FileSchema for #file_ident {
       const REFERENCE: ::prelude::FileReference = ::prelude::FileReference {
         name: #file,
-        package: #package.name,
+        package: <#package as ::prelude::PackageSchema>::NAME,
         extern_path: #extern_path,
       };
 
       fn file_schema() -> ::prelude::ProtoFile {
-        let mut file = ::prelude::ProtoFile::new(#file, #package.name);
+        let mut file = ::prelude::ProtoFile::new(#file, <#package as ::prelude::PackageSchema>::NAME);
 
         file
           .with_edition(#edition)
@@ -287,11 +208,6 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
       }
     }
 
-    ::prelude::register_proto_data! {
-      ::prelude::RegistryFile {
-        file: || <#const_ident as ::prelude::FileSchema>::file_schema(),
-        package: #package.name
-      }
-    }
+    #inventory_call
   })
 }

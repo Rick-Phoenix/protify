@@ -90,7 +90,7 @@ pub mod submod {
 
 #[test]
 fn test_extern_path() {
-  let pkg = EXTERN_PATH_TEST.get_package();
+  let pkg = EXTERN_PATH_TEST::get_package();
   let mut paths = pkg.extern_paths();
 
   let expected = [

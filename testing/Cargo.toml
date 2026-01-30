@@ -7,13 +7,12 @@ authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
-[dev-dependencies]
-similar-asserts = "1.7"
 
 [lints]
 workspace = true
 
 [dependencies]
+similar-asserts = "1.7"
 regex = { workspace = true }
 bytes = "1"
 maplit = "1"

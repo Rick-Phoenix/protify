@@ -74,8 +74,8 @@ pub mod macros {
 
   #[doc(inline)]
   pub use proc_macro_impls::{
-    Enum, Extension, Message, Oneof, Service, define_proto_file, file_schema, proto_enum,
-    proto_extension, proto_message, proto_oneof, proto_package, proto_service,
+    Enum, Extension, Message, Oneof, Service, define_proto_file, proto_enum, proto_extension,
+    proto_message, proto_oneof, proto_package, proto_service,
   };
 }
 pub use proto_types;

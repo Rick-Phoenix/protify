@@ -92,7 +92,7 @@ fn default_validator_oneof() {
 
 #[test]
 fn required_oneof() {
-  let mut msg = DefaultValidatorTestOneof {
+  let msg = DefaultValidatorTestOneof {
     default_validator_oneof: Some(DefaultValidatorOneof::A(SimpleMsg {
       id: 1,
       name: "abc".to_string(),

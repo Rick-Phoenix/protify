@@ -1,21 +1,26 @@
 use crate::*;
 
 pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
-  let mut const_ident: Option<Ident> = None;
+  let mut pkg_ident: Option<Ident> = None;
   let mut pkg_name: Option<String> = None;
   let mut include_cel_test = cfg!(feature = "cel");
+  let mut files: Vec<Path> = Vec::new();
 
   let parser = syn::meta::parser(|meta| {
     let ident = meta.ident_str()?;
 
     match ident.as_str() {
+      "files" => {
+        let _ = meta.value()?;
+        files = parse_bracketed::<PathList>(meta.input)?.list;
+      }
       "name" => {
         pkg_name = Some(meta.parse_value::<LitStr>()?.value());
       }
       "no_cel_test" => {
         include_cel_test = false;
       }
-      _ => const_ident = Some(meta.ident()?.clone()),
+      _ => pkg_ident = Some(meta.ident()?.clone()),
     };
 
     Ok(())
@@ -23,8 +28,8 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 
   parser.parse2(input)?;
 
-  let const_ident = const_ident
-    .ok_or_else(|| error_call_site!("Missing const ident (must be the first argument)"))?;
+  let pkg_ident = pkg_ident
+    .ok_or_else(|| error_call_site!("Missing package ident (must be the first argument)"))?;
 
   let pkg_name = pkg_name.ok_or_else(|| error_call_site!("package name is missing"))?;
   let converted_name = to_snake_case(&pkg_name.replace(".", "_"));
@@ -36,7 +41,7 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
       #[cfg(test)]
       #[test]
       fn #test_fn_ident() {
-        let pkg = #const_ident.get_package();
+        let pkg = <#pkg_ident as ::prelude::PackageSchema>::get_package();
 
         if let Err(e) = pkg.check_unique_cel_rules() {
           panic!("{e}");
@@ -46,7 +51,22 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
   });
 
   Ok(quote! {
-    pub const #const_ident: ::prelude::PackageHandle = ::prelude::PackageHandle::new(#pkg_name);
+    #[allow(non_camel_case_types)]
+    pub struct #pkg_ident;
+
+    impl ::prelude::PackageSchema for #pkg_ident {
+      const NAME: &str = #pkg_name;
+
+      fn files() -> ::prelude::Vec<::prelude::ProtoFile> {
+        ::prelude::vec![ #(<#files as ::prelude::FileSchema>::file_schema()),* ]
+      }
+    }
+
+    impl #pkg_ident {
+      pub fn get_package() -> ::prelude::Package {
+        <Self as ::prelude::PackageSchema>::get_package()
+      }
+    }
 
     #test_impl
   })

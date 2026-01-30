@@ -116,13 +116,15 @@ fn custom_validators_schema() {
 
 #[test]
 fn rendering_test() {
-  let pkg = RENDERING_PKG.get_package();
+  let pkg = RENDERING_PKG::get_package();
 
   let output1 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/proto_test"));
 
   pkg.render_files(&output1).unwrap();
 
-  let manual_file = file_schema!(
+  define_proto_file!(
+    ManualFile,
+    package = RENDERING_PKG,
     name = "rendering.proto",
     messages = [
       MsgWithCustomValidator,
@@ -135,10 +137,11 @@ fn rendering_test() {
     imports = [
       "some_pkg/some_import.proto",
       "custom_validator/validator.proto"
-    ]
+    ],
+    no_emit
   );
 
-  let manual_pkg = package_schema!("rendering", files = [manual_file]);
+  let manual_pkg = Package::new("rendering").with_files([ManualFile::file_schema()]);
   let output2 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/proto_test2"));
 
   manual_pkg.render_files(&output2).unwrap();
@@ -151,7 +154,7 @@ fn rendering_test() {
 
 #[test]
 fn file_schema_output() {
-  let pkg = RENDERING_PKG.get_package();
+  let pkg = RENDERING_PKG::get_package();
 
   let file = pkg.files.first().unwrap();
 
@@ -436,7 +439,7 @@ fn message_schema_output() {
       "msg_field",
       FieldType::Normal(ProtoType::Message(ProtoPath {
         name: "TestMessage.Nested1".into(),
-        package: RENDERING_PKG.name.into(),
+        package: RENDERING_PKG::NAME.into(),
         file: RENDERING::REFERENCE.name.into(),
       })),
     ),
@@ -451,7 +454,7 @@ fn message_schema_output() {
       "enum_field",
       FieldType::Normal(ProtoType::Enum(ProtoPath {
         name: "TestMessage.TestEnum".into(),
-        package: RENDERING_PKG.name.into(),
+        package: RENDERING_PKG::NAME.into(),
         file: RENDERING::REFERENCE.name.into(),
       })),
     ),

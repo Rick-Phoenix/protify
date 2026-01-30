@@ -5,7 +5,7 @@ use tonic_prost_build::Config;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("cargo:rerun-if-changed=../test-schemas/src/server_models.rs");
 
-  let pkg = test_schemas::server_models::DB_TEST.get_package();
+  let pkg = test_schemas::server_models::DB_TEST::get_package();
 
   pkg
     .render_files(concat!(env!("CARGO_MANIFEST_DIR"), "/proto"))

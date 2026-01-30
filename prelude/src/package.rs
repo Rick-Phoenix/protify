@@ -2,24 +2,34 @@ use hashbrown::hash_map::{Entry, HashMap};
 
 use crate::*;
 
-pub struct PackageHandle {
-  pub name: &'static str,
+pub trait PackageSchema {
+  const NAME: &str;
+  fn files() -> Vec<ProtoFile>;
+
+  #[must_use]
+  fn get_package() -> Package {
+    #[cfg(feature = "inventory")]
+    {
+      collect_package(Self::NAME)
+    }
+
+    #[cfg(not(feature = "inventory"))]
+    {
+      let mut files = Self::files();
+
+      for file in &mut files {
+        file.sort_items();
+      }
+
+      Package {
+        name: Self::NAME.into(),
+        files,
+      }
+    }
+  }
 }
 
-impl PackageHandle {
-  #[must_use]
-  pub const fn new(name: &'static str) -> Self {
-    Self { name }
-  }
-
-  #[cfg(feature = "inventory")]
-  #[must_use]
-  pub fn get_package(&self) -> Package {
-    collect_package(self.name)
-  }
-}
-
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Package {
   pub name: FixedStr,

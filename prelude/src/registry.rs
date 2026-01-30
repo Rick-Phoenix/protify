@@ -54,14 +54,7 @@ pub(crate) fn collect_package(package: &'static str) -> Package {
   for file_entry in inventory::iter::<RegistryFile>().filter(|f| f.package == package) {
     let file: ProtoFile = (file_entry.file)();
 
-    match files.entry(file.name.clone()) {
-      ordermap::map::Entry::Occupied(mut occupied) => {
-        occupied.get_mut().merge_with(file);
-      }
-      ordermap::map::Entry::Vacant(vacant) => {
-        vacant.insert(file);
-      }
-    };
+    files.insert(file.name.clone(), file);
   }
 
   for msg_entry in inventory::iter::<RegistryMessage>().filter(|rm| rm.package == package) {
@@ -130,29 +123,7 @@ pub(crate) fn collect_package(package: &'static str) -> Package {
   let files: Vec<ProtoFile> = files
     .into_values()
     .map(|mut file| {
-      file
-        .extensions
-        .sort_unstable_by_key(|e| e.target.as_str());
-
-      file
-        .messages
-        .sort_unstable_by_key(|m| m.name.clone());
-
-      for msg in file.messages.iter_mut() {
-        msg
-          .messages
-          .sort_unstable_by_key(|m| m.name.clone());
-        msg
-          .enums
-          .sort_unstable_by_key(|e| e.short_name.clone());
-      }
-
-      file
-        .enums
-        .sort_unstable_by_key(|e| e.short_name.clone());
-      file
-        .services
-        .sort_unstable_by_key(|s| s.name.clone());
+      file.sort_items();
 
       file
     })
@@ -189,26 +160,6 @@ pub struct RegistryFile {
   pub package: &'static str,
   pub file: fn() -> ProtoFile,
 }
-
-// #[allow(clippy::from_over_into)]
-// impl Into<ProtoFile> for &RegistryFile {
-//   fn into(self) -> ProtoFile {
-//     let mut file = ProtoFile::new(self.name, self.package);
-//
-//     file.with_imports((self.imports)());
-//
-//     let extensions = (self.extensions)();
-//
-//     if !extensions.is_empty() {
-//       file.with_extensions(extensions);
-//     }
-//
-//     file.options = (self.options)();
-//     file.edition = self.edition;
-//
-//     file
-//   }
-// }
 
 #[cfg(feature = "inventory")]
 inventory::collect!(RegistryMessage);

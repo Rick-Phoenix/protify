@@ -11,7 +11,12 @@ use prelude::{BTreeMap, proto_enum, proto_extension, proto_oneof, proto_service}
 
 use prelude::{define_proto_file, proto_message, proto_package};
 
-proto_package!(NO_STD_PKG, name = "no_std_models", no_cel_test);
+proto_package!(
+  NO_STD_PKG,
+  name = "no_std_models",
+  no_cel_test,
+  files = [FILE]
+);
 define_proto_file!(FILE, name = "no_std_models.proto", package = NO_STD_PKG);
 
 #[proto_service]
