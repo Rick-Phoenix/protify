@@ -21,3 +21,4 @@ doc_mod!(correctness);
 doc_mod!(proxied);
 doc_mod!(collecting_items);
 doc_mod!(generating_files);
+doc_mod!(cel_validation);
