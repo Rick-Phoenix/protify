@@ -9,6 +9,7 @@ macro_rules! doc_mod {
   };
 }
 
+doc_mod!(code_elimination);
 doc_mod!(reusing_oneofs);
 doc_mod!(usage_with_tonic);
 doc_mod!(reflection_usage);
