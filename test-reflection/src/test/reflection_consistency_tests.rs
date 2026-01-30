@@ -10,7 +10,7 @@ fn bad_field_rules() {
     item_name: message_name,
     field_errors,
     top_level_errors,
-  } = BadFieldRules::check_validators_consistency().unwrap_err();
+  } = BadFieldRules::check_validators().unwrap_err();
 
   assert_eq_pretty!(message_name, "BadFieldRules");
   assert_eq_pretty!(field_errors.len(), 1);
@@ -24,7 +24,7 @@ fn bad_msg_rules() {
     item_name: message_name,
     field_errors,
     top_level_errors,
-  } = BadMsgRules::check_validators_consistency().unwrap_err();
+  } = BadMsgRules::check_validators().unwrap_err();
 
   assert_eq_pretty!(message_name, "BadMsgRules");
   assert_eq_pretty!(field_errors.len(), 0);
@@ -37,7 +37,7 @@ fn bad_oneof_rules() {
     item_name: oneof_name,
     field_errors: errors,
     ..
-  } = BadCelOneof::check_validators_consistency().unwrap_err();
+  } = BadCelOneof::check_validators().unwrap_err();
 
   assert_eq_pretty!(oneof_name, "BadCelOneof");
   assert_eq_pretty!(errors.len(), 1);

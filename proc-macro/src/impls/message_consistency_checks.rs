@@ -85,7 +85,7 @@ pub fn generate_validators_consistency_checks(
       #[cfg(test)]
       #[test]
       fn #test_fn_ident() {
-        if let Err(e) = #item_ident::check_validators_consistency() {
+        if let Err(e) = #item_ident::check_validators() {
           panic!("{e}")
         }
       }
@@ -99,7 +99,7 @@ pub fn generate_validators_consistency_checks(
     impl #item_ident {
       #[allow(unused)]
       #[track_caller]
-      pub fn check_validators_consistency() -> Result<(), ::prelude::TestError> {
+      pub fn check_validators() -> Result<(), ::prelude::TestError> {
         let mut field_errors: Vec<::prelude::FieldError> = Vec::new();
         let mut top_level_errors: Vec<::prelude::ConsistencyError> = Vec::new();
 

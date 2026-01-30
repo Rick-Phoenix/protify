@@ -9,8 +9,8 @@ This macro will implement the following:
 - [`MessagePath`](prelude::MessagePath)
 - [`ValidatedMessage`](prelude::ValidatedMessage)
 - [`CelValue`](prelude::CelValue) (if the `cel` feature is enabled)
-- A method called `check_validators_consistency` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
-- (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators_consistency` method and panics on failure.
+- A method called `check_validators` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
+- (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators` method and panics on failure.
 - A test that checks if the oneof tags used in this message (if there are any) are correct.
 
 If the impl is not proxied, these traits and methods will target the struct directly.
@@ -129,4 +129,4 @@ fn main() {
     - Example: `#[proto(skip_checks(validators))]`
     - Description:
         Disables the generation of tests. Currently, the allowed values are:
-            - `validators`: disables the automatic generation of a test that checks the validity of the validators used by the message. The `check_validators_consistency` will still be generated and be available for manual testing.
+            - `validators`: disables the automatic generation of a test that checks the validity of the validators used by the message. The `check_validators` will still be generated and be available for manual testing.
