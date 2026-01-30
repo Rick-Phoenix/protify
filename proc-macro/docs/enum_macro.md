@@ -1,4 +1,46 @@
-# Enum Reference
+Enables protobuf schema and validation features for the target enum.
+
+It implements [`ProtoEnumSchema`](prelude::ProtoEnumSchema), [`ProtoValidation`](prelude::ProtoValidation) and [`AsProtoType`](prelude::AsProtoType) for the target enum.
+
+If a tag for a variant is not manually defined, it will be automatically generated based on the tags that have already been used and those that are part of the reserved numbers.
+
+# Example
+```rust
+use prelude::*;
+
+proto_package!(MY_PKG, name = "my_pkg");
+define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+
+#[proto_enum]
+#[proto(reserved_numbers(1..10))]
+pub enum MyEnum {
+  // Assigns 0 automatically
+  Unspecified,
+  // Manually assigned tag
+  A = 10,
+  // Tag is generated automatically,
+  // taking into account reserved
+  // and used tags
+  B
+}
+
+fn main() {
+  // Implemented trait methods
+  assert_eq!(MyEnum::proto_name(), "MyEnum");
+  let x = MyEnum::from_int_or_default(20);
+  assert!(x.is_unspecified());
+  assert_eq!(x.as_int(), 0);
+
+  let schema = MyEnum::proto_schema();
+
+  let variant_b = schema.variants.last().unwrap();
+  
+  // Proto variants will have the prefix with the enum name
+  assert_eq!(variant_b.name, "MY_ENUM_B");
+  assert_eq!(variant_b.tag, 11);
+}
+```
+
 
 ## Container attributes:
 

@@ -1,4 +1,3 @@
-# Fields Reference
 
 ## Type Attribute
 

@@ -288,52 +288,10 @@ pub fn proto_package(input: TokenStream) -> TokenStream {
   }
 }
 
-/// Implements protobuf schema and validation features for a rust struct.
+#[doc = include_str!("../docs/message_macro.md")]
 ///
-/// This macro will implement the following:
-/// - Clone
-/// - PartialEq
-/// - [`prost::Message`](prelude::prost::Message)
-/// - [`ProtoMessage`](prelude::ProtoMessage)
-/// - [`AsProtoType`](prelude::AsProtoType)
-/// - [`MessagePath`](prelude::MessagePath)
-/// - [`ValidatedMessage`](prelude::ValidatedMessage)
-/// - [`CelValue`](prelude::CelValue) (if the `cel` feature is enabled)
-/// - A method called `check_validators_consistency` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
-/// - (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators_consistency` method and panics on failure.
-/// - A test that checks if the oneof tags used in this message (if there are any) are correct.
-///
-/// If the impl is not proxied, these traits and methods will target the struct directly.
-///
-/// If the impl is proxied:
-/// - A new struct with a `Proto` suffix will be generated (i.e. MyMsg -> MyMsgProto) and these traits and methods will target that. An impl for [`ProxiedMessage`](prelude::ProxiedMessage) will also be generated.
-/// - The proxy will implement [`MessageProxy`](prelude::MessageProxy).
-///
-/// # Examples
-/// ```
-/// use prelude::*;
-///
-/// proto_package!(MY_PKG, name = "my_pkg");
-/// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
-///
-/// #[proto_message]
-/// pub struct Msg {
-///   pub id: i32
-/// }
-///
-/// // Generates the `ProxiedMsgProto` struct
-/// #[proto_message(proxied)]
-/// pub struct ProxiedMsg {
-///   pub id: i32
-/// }
-///
-/// fn main() {
-///   // `MessageProxy` and `ProxiedMessage` methods
-///   let msg = ProxiedMsgProto::default();
-///   let proxy = msg.into_proxy();
-///   let msg_again = proxy.into_message();
-/// }
-/// ```
+/// # Field attributes
+#[doc = include_str!("../docs/field_ref.md")]
 #[proc_macro_attribute]
 pub fn proto_message(args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemStruct);
@@ -347,37 +305,7 @@ pub fn message_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
-/// Implements the [`ProtoExtension`](prelude::ProtoExtension) trait for the given struct.
-///
-/// Since the item on which this macro is used is intended to be used only for schema purposes, the macro
-/// will generate the impl and then erase all of the fields of the struct, so as to not trigger any "unused"
-/// lints on the fields needlessly.
-///
-/// The only argument to this macro is the "target", which is an ident that must resolve to a valid protobuf extension target from Proto3 onwards, like MessageOptions, FileOptions and so on.
-///
-/// Each field must have a defined tag, and can also support options like fields in messages, enums or oneofs.
-///
-/// # Examples
-///
-/// ```
-/// use prelude::*;
-///
-/// proto_package!(MY_PKG, name = "my_pkg");
-///
-/// #[proto_extension(target = MessageOptions)]
-/// pub struct MyExt {
-///   #[proto(tag = 5000)]
-///   cool_opt: String
-/// }
-///
-/// define_proto_file!(
-///   MY_FILE,
-///   name = "my_file.proto",
-///   package = MY_PKG,
-///   // We can then use the extension in a file
-///   extensions = [ MyExt ]
-/// );
-/// ```
+#[doc = include_str!("../docs/extension_macro.md")]
 #[proc_macro_attribute]
 pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
   let mut item = parse_macro_input!(input as ItemStruct);
@@ -402,52 +330,7 @@ pub fn extension_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
-/// Implements [`ProtoService`](prelude::ProtoService) for the given enum.
-///
-/// Since the enum is only meant to be used for schema purposes, the macro will erase all the fields in it
-/// and change its type to emit a unit struct, so as to not trigger false positives for "unused" variants.
-///
-/// Each variant represents a protobuf method for the given service, and it must contain two named fields, `request` and `response`, with the target message for each.
-///
-/// The target of a method must implement [`MessagePath`](prelude::MessagePath), which is automatically implemented by the
-/// [`proto_message`](prelude::proto_message) macro and for all types from the [`proto_types`](prelude::proto_types) crate.
-///
-/// # Examples
-///
-/// ```
-/// use prelude::*;
-///
-/// proto_package!(MY_PKG, name = "my_pkg");
-/// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
-///
-/// #[proto_message]
-/// pub struct User {
-///   pub id: i32,
-///   pub name: String
-/// }
-///
-/// #[proto_message]
-/// pub struct UserId {
-///   pub id: i32
-/// }
-///
-/// #[proto_message]
-/// pub struct Status {
-///   pub success: bool
-/// }
-///
-/// #[proto_service]
-/// enum UserService {
-///   GetUser {
-///     request: UserId,
-///     response: User
-///   },
-///   UpdateUser {
-///     request: User,
-///     response: Status
-///   }
-/// }
-/// ```
+#[doc = include_str!("../docs/service_macro.md")]
 #[proc_macro_attribute]
 pub fn proto_service(_args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
@@ -466,44 +349,7 @@ pub fn service_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
-/// Implenents [`ProtoEnumSchema`](prelude::ProtoEnumSchema) on an enum, and injects the prost attributes to make it protobuf-compatible.
-///
-/// # Examples
-/// ```
-/// use prelude::*;
-///
-/// proto_package!(MY_PKG, name = "my_pkg");
-/// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
-///
-/// #[proto_enum]
-/// #[proto(reserved_numbers(1..10))]
-/// pub enum MyEnum {
-///   // Assigns 0 automatically
-///   Unspecified,
-///   // Manually assigned tag
-///   A = 10,
-///   // Tag is generated automatically,
-///   // taking into account reserved
-///   // and used tags
-///   B
-/// }
-///
-/// fn main() {
-///   // Implemented trait methods
-///   assert_eq!(MyEnum::proto_name(), "MyEnum");
-///   let x = MyEnum::from_int_or_default(20);
-///   assert!(x.is_unspecified());
-///   assert_eq!(x.as_int(), 0);
-///
-///   let schema = MyEnum::proto_schema();
-///
-///   let variant_b = schema.variants.last().unwrap();
-///   
-///   // Proto variants will have the prefix with the enum name
-///   assert_eq!(variant_b.name, "MY_ENUM_B");
-///   assert_eq!(variant_b.tag, 11);
-/// }
-/// ```
+#[doc = include_str!("../docs/enum_macro.md")]
 #[proc_macro_attribute]
 pub fn proto_enum(_args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
@@ -517,54 +363,10 @@ pub fn enum_empty_derive(_input: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
-/// Implements protobuf schema and validation features for a rust enum.
+#[doc = include_str!("../docs/oneof_macro.md")]
 ///
-/// This macro will implement the following:
-/// - Clone
-/// - PartialEq
-/// - [`prost::Oneof`](prelude::prost::Oneof)
-/// - [`ProtoOneof`](prelude::ProtoOneof)
-/// - [`ValidatedOneof`](prelude::ValidatedOneof)
-/// - [`CelOneof`](prelude::CelOneof) (if the `cel` feature is enabled)
-/// - A method called `check_validators_consistency` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
-/// - (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators_consistency` method and panics on failure.
-///
-/// If the impl is not proxied, these traits and methods will target the struct directly.
-///
-/// If the impl is proxied:
-/// - A new struct with a `Proto` suffix will be generated (i.e. MyOneof -> MyOneofProto) and these traits and methods will target that. An impl for [`ProxiedOneof`](prelude::ProxiedOneof) will also be generated.
-/// - The proxy will implement [`OneofProxy`](prelude::OneofProxy).
-///
-/// # Examples
-/// ```
-/// use prelude::*;
-///
-/// #[proto_oneof]
-/// pub enum NormalOneof {
-///   #[proto(tag = 1)]
-///   A(i32),
-///   #[proto(tag = 2)]
-///   B(u32)
-/// }
-///
-/// // Generates `ProxiedOneofProto` as the proto-facing version
-/// #[proto_oneof(proxied)]
-/// pub enum ProxiedOneof {
-///   #[proto(tag = 1)]
-///   A(i32),
-///   #[proto(tag = 2)]
-///   B(u32)
-/// }
-///
-/// fn main() {
-///   use prelude::*;
-///
-///   // `ProxiedOneof` and `OneofProxy` methods
-///   let oneof = ProxiedOneofProto::A(1);
-///   let proxy = oneof.into_proxy();
-///   let oneof_again = proxy.into_oneof();
-/// }
-/// ```
+/// # Variant attributes
+#[doc = include_str!("../docs/field_ref.md")]
 #[proc_macro_attribute]
 pub fn proto_oneof(args: TokenStream, input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);

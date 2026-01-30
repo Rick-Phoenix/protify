@@ -1,4 +1,51 @@
-# Oneof Reference
+Implements protobuf schema and validation features for a rust enum.
+
+This macro will implement the following:
+- Clone
+- PartialEq
+- [`prost::Oneof`](prelude::prost::Oneof)
+- [`ProtoOneof`](prelude::ProtoOneof)
+- [`ValidatedOneof`](prelude::ValidatedOneof)
+- [`CelOneof`](prelude::CelOneof) (if the `cel` feature is enabled)
+- A method called `check_validators_consistency` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
+- (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators_consistency` method and panics on failure.
+
+If the impl is not proxied, these traits and methods will target the struct directly.
+
+If the impl is proxied:
+- A new struct with a `Proto` suffix will be generated (i.e. MyOneof -> MyOneofProto) and these traits and methods will target that. An impl for [`ProxiedOneof`](prelude::ProxiedOneof) will also be generated.
+- The proxy will implement [`OneofProxy`](prelude::OneofProxy).
+
+# Examples
+```rust
+use prelude::*;
+
+#[proto_oneof]
+pub enum NormalOneof {
+  #[proto(tag = 1)]
+  A(i32),
+  #[proto(tag = 2)]
+  B(u32)
+}
+
+// Generates `ProxiedOneofProto` as the proto-facing version
+#[proto_oneof(proxied)]
+pub enum ProxiedOneof {
+  #[proto(tag = 1)]
+  A(i32),
+  #[proto(tag = 2)]
+  B(u32)
+}
+
+fn main() {
+  use prelude::*;
+
+  // `ProxiedOneof` and `OneofProxy` methods
+  let oneof = ProxiedOneofProto::A(1);
+  let proxy = oneof.into_proxy();
+  let oneof_again = proxy.into_oneof();
+}
+```
 
 ## Macro attributes
 
@@ -61,4 +108,3 @@
         Disables the generation of tests. 
         Currently, the allowed values are:
         - `validators`: disables the automatic generation of a test that checks the validity of the validators used by the message. The `check_validators_consistency` method will still be generated and be available for manual testing.
-

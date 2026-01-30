@@ -272,6 +272,7 @@ mod regex_impls {
   }
 }
 
+#[doc(hidden)]
 #[cfg(feature = "serde")]
 pub trait MaybeSerde: serde::Serialize + serde::de::DeserializeOwned {}
 

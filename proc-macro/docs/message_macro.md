@@ -1,4 +1,49 @@
-# Message Reference
+Implements protobuf schema and validation features for a rust struct.
+
+This macro will implement the following:
+- Clone
+- PartialEq
+- [`prost::Message`](prelude::prost::Message)
+- [`ProtoMessage`](prelude::ProtoMessage)
+- [`AsProtoType`](prelude::AsProtoType)
+- [`MessagePath`](prelude::MessagePath)
+- [`ValidatedMessage`](prelude::ValidatedMessage)
+- [`CelValue`](prelude::CelValue) (if the `cel` feature is enabled)
+- A method called `check_validators_consistency` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
+- (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators_consistency` method and panics on failure.
+- A test that checks if the oneof tags used in this message (if there are any) are correct.
+
+If the impl is not proxied, these traits and methods will target the struct directly.
+
+If the impl is proxied:
+- A new struct with a `Proto` suffix will be generated (i.e. MyMsg -> MyMsgProto) and these traits and methods will target that. An impl for [`ProxiedMessage`](prelude::ProxiedMessage) will also be generated.
+- The proxy will implement [`MessageProxy`](prelude::MessageProxy).
+
+# Examples
+```rust
+use prelude::*;
+
+proto_package!(MY_PKG, name = "my_pkg");
+define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+
+#[proto_message]
+pub struct Msg {
+  pub id: i32
+}
+
+// Generates the `ProxiedMsgProto` struct
+#[proto_message(proxied)]
+pub struct ProxiedMsg {
+  pub id: i32
+}
+
+fn main() {
+  // `MessageProxy` and `ProxiedMessage` methods
+  let msg = ProxiedMsgProto::default();
+  let proxy = msg.into_proxy();
+  let msg_again = proxy.into_message();
+}
+```
 
 ## Macro attributes
 
