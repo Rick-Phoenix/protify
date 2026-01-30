@@ -2,11 +2,11 @@ use hashbrown::hash_map::{Entry, HashMap};
 
 use crate::*;
 
-pub struct PackageReference {
+pub struct PackageHandle {
   pub name: &'static str,
 }
 
-impl PackageReference {
+impl PackageHandle {
   #[must_use]
   pub const fn new(name: &'static str) -> Self {
     Self { name }

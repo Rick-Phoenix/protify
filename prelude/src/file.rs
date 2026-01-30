@@ -29,7 +29,6 @@ pub struct FileReference {
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Edition {
-  Proto2,
   #[default]
   Proto3,
   E2023,
@@ -38,7 +37,6 @@ pub enum Edition {
 impl Display for Edition {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match self {
-      Self::Proto2 => write!(f, "syntax = \"proto2\""),
       Self::Proto3 => write!(f, "syntax = \"proto3\""),
       Self::E2023 => write!(f, "edition = \"2023\""),
     }

@@ -8,7 +8,7 @@ use prelude::*;
 proto_package!(MY_PKG, name = "my_pkg");
 ```
 
-The ident that is used as the first argument will be the ident for this [`PackageReference`](crate::PackageReference) instance. There should be only one of such an instance for each package.
+The ident that is used as the first argument will be the ident for this [`PackageHandle`](crate::PackageHandle) instance. There should be only one of such an instance for each package.
 
 ℹ️ **NOTE**: By default, this macro also generates a test that ensures that there aren't CEL rules with the same ID within the same message scope. If you want to disable this, you can provide `no_cel_test` as one of the arguments. 
 
@@ -74,7 +74,7 @@ To learn more about each element, visit the reference for messages, extensions, 
 
 # Collecting A Package
 
-When the `inventory` feature is enabled, all the elements in a package are collected automatically. To get the fully built package, all you need to do is to call the [`get_package`](crate::PackageReference::get_package) method, and that's it.
+When the `inventory` feature is enabled, all the elements in a package are collected automatically. To get the fully built package, all you need to do is to call the [`get_package`](crate::PackageHandle::get_package) method, and that's it.
 
 This will give you access to the [`render_files`](crate::Package::render_files) method, which is what you need to generate the `.proto` files associated with that package, or the [`extern_paths`](crate::Package::extern_paths) method, which is what you can use to map messages to their Rust path when using `tonic`.
 
