@@ -1,4 +1,4 @@
-# Correctness
+# Enforcing Correctness
 
 This crate tries to enforce correctness as at compile/testing time, so that badly set up validators do not make their way into runtime.
 
@@ -11,11 +11,11 @@ The [`Validator`](crate::Validator) trait holds a method called [`check_consiste
 
 Whereas the [`EnumValidator`](crate::EnumValidator) will perform checks like ensuring that all the values in the `in` rule are actually defined in the target enum.
 
-All validators as a whole will:
+All provided validators as a whole will:
 
 - Check the validity of CEL expressions used in them
 - Check if a custom error message is defined but never used
-- Check if the `const` rule is used among with other rules (which would be ignored)
+- Check if the `const` rule is used along with other rules (which would be ignored)
 
 There is a particular emphasis on checking the validity of CEL expressions because they are written as plain text and are very easy to get wrong, and they **will panic** at initialization if they fail to compile.
 

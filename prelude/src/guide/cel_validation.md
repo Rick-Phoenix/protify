@@ -51,4 +51,4 @@ pub struct TellMeWhereIsGandalf {
 
 # Enforcing Unique IDs
 
-The instances of [`Package`] provide methods with which to ensure that there aren't rules with the same ID in the same message scope. Refer to the [`correctness`](crate::guide::correctness) section or the [`proto_package`](crate::proto_package) documentation for more details about that.
+The instances of [`Package`](crate::Package) provide methods with which to ensure that there aren't rules with the same ID in the same message scope. Refer to the [`correctness`](crate::guide::correctness) section or the [`proto_package`](crate::proto_package) documentation for more details about that.

@@ -10,11 +10,11 @@ macro_rules! doc_mod {
 }
 
 doc_mod!(reusing_oneofs);
-doc_mod!(server_usage);
+doc_mod!(usage_with_tonic);
 doc_mod!(reflection_usage);
 doc_mod!(validators);
 doc_mod!(correctness);
-doc_mod!(proxied_implementations);
+doc_mod!(proxies);
 doc_mod!(package_setup);
 doc_mod!(cel_validation);
 doc_mod!(roadmap);

@@ -1,6 +1,6 @@
-# Server Usage
+# Usage With Tonic
 
-The recommended workflow with this library is to define the proto items in a separate workspace crate (which I will refer to as the "models" crate) and export the package handle, so that the consuming crate (like a tonic server) can use the handle to generate the files and to generate the services from those files, while importing the pre-built messages from the models crate.
+The recommended workflow with this library is to define the proto items in a separate workspace crate (which I will refer to as the "models" crate) using the workflow described in the [package setup](crate::guide::package_setup) section, and export the package handle, so that the consuming crate (like a tonic server) can use the handle to generate the files and to generate the services from those files, while importing the pre-built messages from the models crate.
 
 This is how to set up the `build.rs` file in the consuming crate, which is this case will be a tonic server.
 

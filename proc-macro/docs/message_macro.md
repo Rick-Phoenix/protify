@@ -19,7 +19,7 @@ If the impl is proxied:
 - A new struct with a `Proto` suffix will be generated (i.e. MyMsg -> MyMsgProto) and these traits and methods will target that. An impl for [`ProxiedMessage`](prelude::ProxiedMessage) will also be generated.
 - The proxy will implement [`MessageProxy`](prelude::MessageProxy).
 
-To learn more about proxied implementations, visit the dedicated [section](crate::guide::proxied_implementations).
+To learn more about proxied implementations, visit the dedicated [section](crate::guide::proxies).
 
 # Examples
 ```rust
