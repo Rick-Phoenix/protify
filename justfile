@@ -2,12 +2,15 @@
 open-docs:
     mdbook serve --open
 
-check-code-elimination:
-    cargo asm --release -p testing --example code_elimination trigger_validation
+check-asm-output:
+    cargo asm --release -p testing --test code_elimination trigger_validation
 
 [working-directory(".")]
-test-all: test-shared-schemas test-schemas test-no-std test-proc-macro
+test-all: test-shared-schemas test-schemas test-no-std test-proc-macro test-code-elimination
     cargo test -p prelude -- --nocapture
+
+test-code-elimination:
+    cargo test -p testing --release code_elimination
 
 test-proc-macro:
     cargo test -p proc-macro-impls -- --nocapture

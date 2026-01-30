@@ -43,6 +43,8 @@ enum OneofWithNoValidator {
   Recursive(Box<MsgWithNoValidator>),
 }
 
+// Run `just check-asm-output` to view the asm output of this function.
+//
 // If the validator is being correctly detected as empty, the assembly output should be more or less like this:
 //
 // .section .text.trigger_validation,"ax",@progbits
@@ -52,11 +54,24 @@ enum OneofWithNoValidator {
 // trigger_validation:
 // .cfi_startproc
 // ret
-
 #[unsafe(no_mangle)]
 #[inline(never)]
 fn trigger_validation(msg: &MsgWithNoValidator) {
   let _ = msg.validate();
 }
 
-fn main() {}
+// Dummy fn that should crash the test if there is a regression
+// about code elimination
+unsafe extern "C" {
+  fn __this_code_should_have_been_eliminated();
+}
+
+#[test]
+fn code_elimination_test() {
+  if MsgWithNoValidator::HAS_DEFAULT_VALIDATOR
+    || OneofWithNoValidator::HAS_DEFAULT_VALIDATOR
+    || SecondDegreeRecursion::HAS_DEFAULT_VALIDATOR
+  {
+    unsafe { __this_code_should_have_been_eliminated() }
+  }
+}
