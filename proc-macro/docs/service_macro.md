@@ -41,4 +41,13 @@ enum UserService {
     response: Status
   }
 }
+
+let proto_rep = UserService::proto_schema();
+
+assert_eq!(proto_rep.render_schema().unwrap(), 
+r"
+service UserService {
+  rpc GetUser (UserId) returns (User);
+  rpc UpdateUser (User) returns (Status);
+}".trim_start());
 ```

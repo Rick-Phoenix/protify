@@ -8,3 +8,9 @@
 ] {%- endif -%};
   {% endfilter +%}
 {% endmacro %}
+
+{% macro empty_line_if(condition) %}
+{% if condition %}
+{{ "\n" }}  
+{% endif %}  
+{% endmacro %}

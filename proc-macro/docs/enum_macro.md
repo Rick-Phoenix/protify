@@ -24,21 +24,31 @@ pub enum MyEnum {
   B
 }
 
-fn main() {
-  // Implemented trait methods
-  assert_eq!(MyEnum::proto_name(), "MyEnum");
-  let x = MyEnum::from_int_or_default(20);
-  assert!(x.is_unspecified());
-  assert_eq!(x.as_int(), 0);
+// Implemented trait methods
+assert_eq!(MyEnum::proto_name(), "MyEnum");
+let x = MyEnum::from_int_or_default(20);
+assert!(x.is_unspecified());
+assert_eq!(x.as_int(), 0);
 
-  let schema = MyEnum::proto_schema();
+let schema = MyEnum::proto_schema();
 
-  let variant_b = schema.variants.last().unwrap();
-  
-  // Proto variants will have the prefix with the enum name
-  assert_eq!(variant_b.name, "MY_ENUM_B");
-  assert_eq!(variant_b.tag, 11);
-}
+let variant_b = schema.variants.last().unwrap();
+
+// Proto variants will have the prefix with the enum name
+assert_eq!(variant_b.name, "MY_ENUM_B");
+assert_eq!(variant_b.tag, 11);
+
+let proto_repr = schema.render_schema().unwrap();
+
+assert_eq!(proto_repr, 
+r"
+enum MyEnum {
+  reserved 1 to 9;
+
+  MY_ENUM_UNSPECIFIED = 0;
+  MY_ENUM_A = 10;
+  MY_ENUM_B = 11;
+}".trim_start());
 ```
 
 

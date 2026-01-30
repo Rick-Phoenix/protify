@@ -32,7 +32,7 @@ expand-reflection: gen-schemas
     cargo expand --features reflection -p test-reflection > expanded.rs
 
 test-renders:
-    cargo test -p testing test_renders -- -q --nocapture
+    cargo test -p testing rendering_test -- -q --nocapture
 
 update-changelog version:
     git cliff --tag {{ version }}

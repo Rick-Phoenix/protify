@@ -1,3 +1,5 @@
+{% import "render_macros.j2" as macros %}
+
 enum {{+ short_name +}} {
 {% if let Some(names) = self.render_reserved_names() ~%}
   {{+ names ~}}
@@ -7,10 +9,10 @@ enum {{+ short_name +}} {
   {{+ numbers ~}}
 {%~ endif %}
 
-{%~ for option in self.options +%}
+{%~ for option in self.options.iter() +%}
   option {{+ option.name +}} = {{+ option.value | indent(2) }};
-{% endfor +%}
-
+{% endfor %}
+{% call macros::empty_line_if(!self.options.is_empty()) %}{% endcall %}
 {%~ for variant in variants ~%}
   {{+ variant.name +}} = {{+ variant.tag }}
   {% filter indent(2) ~%}

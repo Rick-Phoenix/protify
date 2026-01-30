@@ -16,6 +16,14 @@ pub struct Service {
   pub package: FixedStr,
 }
 
+impl Service {
+  /// Renders the schema representation.
+  #[cfg(feature = "std")]
+  pub fn render_schema(&self) -> Result<String, askama::Error> {
+    self.render()
+  }
+}
+
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ServiceHandler {

@@ -72,11 +72,13 @@ pub struct Oneof {
 }
 
 impl Oneof {
-  pub(crate) fn options_with_validators(&self) -> impl Iterator<Item = &options::ProtoOption> {
+  pub(crate) fn options_with_validators(&self) -> Vec<ProtoOption> {
     self
       .options
-      .iter()
-      .chain(self.validators.iter().map(|v| &v.schema))
+      .clone()
+      .into_iter()
+      .chain(self.validators.iter().map(|v| v.schema.clone()))
+      .collect()
   }
 
   #[must_use]

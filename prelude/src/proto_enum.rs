@@ -59,6 +59,12 @@ pub struct EnumVariant {
 }
 
 impl Enum {
+  /// Renders the protobuf representation.
+  #[cfg(feature = "std")]
+  pub fn render_schema(&self) -> Result<String, askama::Error> {
+    self.render()
+  }
+
   pub(crate) fn render_reserved_names(&self) -> Option<String> {
     render_reserved_names(&self.reserved_names)
   }

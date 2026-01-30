@@ -43,29 +43,26 @@ let msg1 = Msg1::proto_schema().render_schema().unwrap();
 let msg2 = Msg2::proto_schema().render_schema().unwrap();
 
 assert_eq!(msg1, 
-r"message Msg1 {
-
+r"
+message Msg1 {
   oneof oneof_1 {
-
     int32 thing_a = 1;
     uint32 thing_b = 2;
   }
-}"
-);
+}".trim_start());
 
 // Notice how the oneof has a different name
 // And an option that is local to it
 assert_eq!(msg2, 
-r"message Msg2 {
-
+r"
+message Msg2 {
   oneof oneof_2 {
     option (buf.validate.oneof).required = true;
 
     int32 thing_a = 1;
     uint32 thing_b = 2;
   }
-}"
-);
+}".trim_start());
 ```
 
 # ⚠️ Avoiding Tag Mismatches
