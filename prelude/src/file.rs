@@ -10,8 +10,8 @@ pub struct ProtoFile {
   pub name: FixedStr,
   pub package: FixedStr,
   pub imports: FileImports,
-  pub messages: Vec<Message>,
-  pub enums: Vec<Enum>,
+  pub messages: Vec<MessageSchema>,
+  pub enums: Vec<EnumSchema>,
   pub options: Vec<ProtoOption>,
   pub edition: Edition,
   pub services: Vec<Service>,
@@ -189,7 +189,7 @@ impl ProtoFile {
     self
   }
 
-  pub fn with_messages<I: IntoIterator<Item = Message>>(&mut self, messages: I) -> &mut Self {
+  pub fn with_messages<I: IntoIterator<Item = MessageSchema>>(&mut self, messages: I) -> &mut Self {
     for mut message in messages {
       message.register_imports(&mut self.imports);
       message.file = self.name.clone();
@@ -200,7 +200,7 @@ impl ProtoFile {
     self
   }
 
-  pub fn with_enums<I: IntoIterator<Item = Enum>>(&mut self, enums: I) -> &mut Self {
+  pub fn with_enums<I: IntoIterator<Item = EnumSchema>>(&mut self, enums: I) -> &mut Self {
     for mut enum_ in enums {
       enum_.file = self.name.clone();
 

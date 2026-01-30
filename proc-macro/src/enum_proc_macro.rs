@@ -319,8 +319,8 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
         #from_str_impl
       }
 
-      fn proto_schema() -> ::prelude::Enum {
-        ::prelude::Enum {
+      fn proto_schema() -> ::prelude::EnumSchema {
+        ::prelude::EnumSchema {
           short_name: #proto_name.into(),
           name: <Self as ::prelude::ProtoEnum>::proto_name().into(),
           file: __PROTO_FILE.name.into(),

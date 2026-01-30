@@ -44,7 +44,7 @@ pub trait ProtoMessage: Default + MessagePath {
   const PACKAGE: &str;
   const SHORT_NAME: &str;
 
-  fn proto_schema() -> Message;
+  fn proto_schema() -> MessageSchema;
 
   fn proto_name() -> &'static str;
   fn full_name() -> &'static str;
@@ -55,14 +55,14 @@ pub trait ProtoMessage: Default + MessagePath {
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "message.proto.j2"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Message {
+pub struct MessageSchema {
   pub short_name: FixedStr,
   pub name: FixedStr,
   pub package: FixedStr,
   pub file: FixedStr,
   pub entries: Vec<MessageEntry>,
   pub messages: Vec<Self>,
-  pub enums: Vec<Enum>,
+  pub enums: Vec<EnumSchema>,
   pub options: Vec<ProtoOption>,
   pub reserved_names: Vec<FixedStr>,
   pub reserved_numbers: Vec<Range<i32>>,
@@ -70,7 +70,7 @@ pub struct Message {
   pub rust_path: FixedStr,
 }
 
-impl Message {
+impl MessageSchema {
   #[cfg(feature = "std")]
   /// Renders the message in its protobuf representation.
   pub fn render_schema(&self) -> Result<String, askama::Error> {
@@ -106,7 +106,7 @@ impl Message {
   }
 
   #[must_use]
-  pub fn with_nested_enums(mut self, enums: impl IntoIterator<Item = Enum>) -> Self {
+  pub fn with_nested_enums(mut self, enums: impl IntoIterator<Item = EnumSchema>) -> Self {
     self.enums.extend(enums);
     self
   }
@@ -168,7 +168,7 @@ impl MessageEntry {
   }
 }
 
-impl Message {
+impl MessageSchema {
   pub(crate) fn render_reserved_names(&self) -> Option<String> {
     render_reserved_names(&self.reserved_names)
   }

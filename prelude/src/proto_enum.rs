@@ -22,7 +22,7 @@ pub trait ProtoEnum: TryFrom<i32> + Copy + Default + Into<i32> + Send + Sync {
 
 pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
   fn proto_path() -> ProtoPath;
-  fn proto_schema() -> Enum;
+  fn proto_schema() -> EnumSchema;
 
   fn as_proto_name(&self) -> &'static str;
   fn from_proto_name(name: &str) -> Option<Self>;
@@ -38,7 +38,7 @@ pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "enum.proto.j2"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Enum {
+pub struct EnumSchema {
   pub short_name: FixedStr,
   pub name: FixedStr,
   pub package: FixedStr,
@@ -58,7 +58,7 @@ pub struct EnumVariant {
   pub options: Vec<ProtoOption>,
 }
 
-impl Enum {
+impl EnumSchema {
   /// Renders the protobuf representation.
   #[cfg(feature = "std")]
   pub fn render_schema(&self) -> Result<String, askama::Error> {

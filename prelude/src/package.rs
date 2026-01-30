@@ -26,8 +26,8 @@ pub struct Package {
   pub files: Vec<ProtoFile>,
 }
 
-fn insert_message_extern_path(message: &Message, entries: &mut Vec<(String, String)>) {
-  let Message {
+fn insert_message_extern_path(message: &MessageSchema, entries: &mut Vec<(String, String)>) {
+  let MessageSchema {
     name: full_name,
     package,
     rust_path,
@@ -49,8 +49,8 @@ fn insert_message_extern_path(message: &Message, entries: &mut Vec<(String, Stri
   }
 }
 
-fn insert_enum_extern_path(enum_: &Enum, entries: &mut Vec<(String, String)>) {
-  let Enum {
+fn insert_enum_extern_path(enum_: &EnumSchema, entries: &mut Vec<(String, String)>) {
+  let EnumSchema {
     name: full_name,
     rust_path,
     package,
@@ -139,7 +139,7 @@ impl Package {
 }
 
 #[cfg(feature = "cel")]
-fn check_unique_rules_in_msg(message: Message) -> Result<(), String> {
+fn check_unique_rules_in_msg(message: MessageSchema) -> Result<(), String> {
   let mut rules: HashMap<FixedStr, CelRule> = HashMap::default();
   let mut duplicates: HashMap<FixedStr, Vec<CelRule>> = HashMap::default();
 

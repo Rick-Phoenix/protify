@@ -193,8 +193,8 @@ impl MessageCtx<'_> {
           #name_method
         }
 
-        fn proto_schema() -> ::prelude::Message {
-          ::prelude::Message {
+        fn proto_schema() -> ::prelude::MessageSchema {
+          ::prelude::MessageSchema {
             short_name: #proto_name.into(),
             name: <Self as ::prelude::ProtoMessage>::proto_name().into(),
             file: __PROTO_FILE.name.into(),

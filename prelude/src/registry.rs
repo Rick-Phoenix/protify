@@ -7,10 +7,10 @@ type Map<K, V> = OrderMap<K, V, DefaultHashBuilder>;
 
 fn process_msg(
   msg_name: &FixedStr,
-  messages: &mut Map<FixedStr, Message>,
-  enums: &mut Map<FixedStr, Enum>,
+  messages: &mut Map<FixedStr, MessageSchema>,
+  enums: &mut Map<FixedStr, EnumSchema>,
   parent_messages_map: &mut Map<FixedStr, NestedItems>,
-) -> Message {
+) -> MessageSchema {
   let mut msg = messages
     .swap_remove(msg_name)
     .unwrap_or_else(|| panic!("Could not find message {msg_name}"));
@@ -45,8 +45,8 @@ struct NestedItems {
 #[cfg(feature = "inventory")]
 #[must_use]
 pub(crate) fn collect_package(package: &'static str) -> Package {
-  let mut messages: Map<FixedStr, Message> = Map::default();
-  let mut enums: Map<FixedStr, Enum> = Map::default();
+  let mut messages: Map<FixedStr, MessageSchema> = Map::default();
+  let mut enums: Map<FixedStr, EnumSchema> = Map::default();
   let mut parent_messages_map: Map<FixedStr, NestedItems> = Map::default();
   let mut root_messages: Vec<FixedStr> = Vec::new();
   let mut files: Map<FixedStr, ProtoFile> = Map::default();
@@ -168,14 +168,14 @@ pub(crate) fn collect_package(package: &'static str) -> Package {
 pub struct RegistryMessage {
   pub package: &'static str,
   pub parent_message: Option<fn() -> &'static str>,
-  pub message: fn() -> Message,
+  pub message: fn() -> MessageSchema,
 }
 
 #[doc(hidden)]
 pub struct RegistryEnum {
   pub package: &'static str,
   pub parent_message: Option<fn() -> &'static str>,
-  pub enum_: fn() -> Enum,
+  pub enum_: fn() -> EnumSchema,
 }
 
 #[doc(hidden)]
