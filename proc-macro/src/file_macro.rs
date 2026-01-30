@@ -161,7 +161,7 @@ pub fn schema_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
   if !services.is_empty() {
     builder_tokens.extend(quote! {
-      file.with_services([ #(#services::as_proto_service()),* ]);
+      file.with_services([ #(#services::proto_schema()),* ]);
     });
   }
 
@@ -183,7 +183,7 @@ pub fn schema_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
       file
         .with_edition(#edition)
-        .with_extensions([ #(#extensions::as_proto_extension()),* ])
+        .with_extensions([ #(#extensions::proto_schema()),* ])
         .with_options(#options);
 
       #builder_tokens
@@ -265,7 +265,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
         edition: #edition,
         options: || #options.into_iter().collect(),
         imports: || #imports.into_iter().collect(),
-        extensions: || ::prelude::vec![ #(<#extensions as ::prelude::ProtoExtension>::as_proto_extension()),* ]
+        extensions: || ::prelude::vec![ #(<#extensions as ::prelude::ProtoExtension>::proto_schema()),* ]
       }
     }
   })

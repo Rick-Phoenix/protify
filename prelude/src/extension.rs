@@ -10,7 +10,7 @@ pub struct Extension {
 
 /// Implemented by the [`proto_extension`] macro.
 pub trait ProtoExtension {
-  fn as_proto_extension() -> Extension;
+  fn proto_schema() -> Extension;
 }
 
 /// Valid extension targets for a Proto3 file.

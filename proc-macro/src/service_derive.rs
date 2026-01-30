@@ -113,12 +113,12 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
     ::prelude::register_proto_data! {
       ::prelude::RegistryService {
         package: __PROTO_FILE.package,
-        service: || <#ident as ::prelude::ProtoService>::as_proto_service()
+        service: || <#ident as ::prelude::ProtoService>::proto_schema()
       }
     }
 
     impl ::prelude::ProtoService for #ident {
-      fn as_proto_service() -> ::prelude::Service {
+      fn proto_schema() -> ::prelude::Service {
         ::prelude::Service {
           name: #service_name.into(),
           file: __PROTO_FILE.name.into(),

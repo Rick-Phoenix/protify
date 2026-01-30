@@ -207,7 +207,7 @@ pub struct TestExtension {
 
 #[test]
 fn extension_schema_output() {
-  let schema = TestExtension::as_proto_extension();
+  let schema = TestExtension::proto_schema();
 
   assert_eq_pretty!(schema.fields.len(), 2);
 
@@ -247,7 +247,7 @@ pub enum TestService {
 
 #[test]
 fn service_schema_output() {
-  let schema = TestService::as_proto_service();
+  let schema = TestService::proto_schema();
 
   assert_eq_pretty!(schema.options, test_options());
 

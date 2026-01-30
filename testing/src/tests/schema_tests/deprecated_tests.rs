@@ -256,7 +256,7 @@ enum DeprecatedService1 {
 
 #[test]
 fn deprecated_service1() {
-  let schema = DeprecatedService1::as_proto_service();
+  let schema = DeprecatedService1::proto_schema();
 
   assert_eq_pretty!(schema.options[0], proto_deprecated());
 }
@@ -272,7 +272,7 @@ enum DeprecatedService2 {
 
 #[test]
 fn deprecated_service2() {
-  let schema = DeprecatedService2::as_proto_service();
+  let schema = DeprecatedService2::proto_schema();
 
   assert_eq_pretty!(schema.options[0], proto_deprecated());
 }
@@ -289,7 +289,7 @@ enum DeprecatedService3 {
 
 #[test]
 fn deprecated_service3() {
-  let schema = DeprecatedService3::as_proto_service();
+  let schema = DeprecatedService3::proto_schema();
 
   assert!(
     schema.options.is_empty(),
@@ -308,7 +308,7 @@ enum DeprecatedHandler1 {
 
 #[test]
 fn deprecated_handler1() {
-  let schema = DeprecatedHandler1::as_proto_service();
+  let schema = DeprecatedHandler1::proto_schema();
 
   assert_eq_pretty!(schema.handlers[0].options[0], proto_deprecated());
 }
@@ -324,7 +324,7 @@ enum DeprecatedHandler2 {
 
 #[test]
 fn deprecated_handler2() {
-  let schema = DeprecatedHandler2::as_proto_service();
+  let schema = DeprecatedHandler2::proto_schema();
 
   assert_eq_pretty!(schema.handlers[0].options[0], proto_deprecated());
 }
@@ -341,7 +341,7 @@ enum DeprecatedHandler3 {
 
 #[test]
 fn deprecated_handler3() {
-  let schema = DeprecatedHandler3::as_proto_service();
+  let schema = DeprecatedHandler3::proto_schema();
 
   assert!(
     schema.handlers[0].options.is_empty(),

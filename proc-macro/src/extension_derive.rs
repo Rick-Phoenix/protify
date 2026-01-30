@@ -58,7 +58,7 @@ pub fn process_extension_derive(
 
   Ok(quote! {
     impl ::prelude::ProtoExtension for #ident {
-      fn as_proto_extension() -> ::prelude::Extension {
+      fn proto_schema() -> ::prelude::Extension {
         ::prelude::Extension {
           target: ::prelude::ExtensionTarget::#target,
           fields: ::prelude::vec![ #(#fields_tokens),* ]
