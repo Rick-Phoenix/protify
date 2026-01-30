@@ -71,6 +71,7 @@ pub struct Message {
 }
 
 impl Message {
+  #[cfg(feature = "std")]
   /// Renders the message in its protobuf representation.
   pub fn render_schema(&self) -> Result<String, askama::Error> {
     self.render()

@@ -99,6 +99,7 @@ pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
   reflection::reflection_oneof_derive(&mut item).into()
 }
 
+#[doc(hidden)]
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ProtoEnum, attributes(proto))]
 pub fn enum_derive(input: TokenStream) -> TokenStream {
@@ -135,6 +136,8 @@ pub fn builder_state_macro(input: TokenStream) -> TokenStream {
 }
 
 /// Creates a new proto file schema, and brings it into scope for the items that are defined in the same module.
+///
+#[doc = include_str!("../docs/file_macro.md")]
 ///
 /// # Examples
 /// ```
@@ -248,6 +251,21 @@ pub fn file_schema(input: TokenStream) -> TokenStream {
 ///
 /// The first parameter of the macro is the ident that will be used for the generated constant that will hold the package handle, which will be used to generate the package and its proto files.
 ///
+///The other parameters are not positional and are as follows:
+///
+/// - `name` (required)
+///   - Type: string
+///   - Example: `proto_package!(MY_PKG, name = "my_pkg")`
+///   - Description:
+///       The name of the package.
+///
+///
+///   - `no_cel_test`
+///   - Type: Ident
+///   - Example: `proto_package!(MY_PKG, name = "my_pkg", no_cel_test)`
+///   - Description:
+///       By default, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
+///
 /// # Examples
 /// ```
 /// use prelude::*;
@@ -272,9 +290,24 @@ pub fn proto_package(input: TokenStream) -> TokenStream {
 
 /// Implements protobuf schema and validation features for a rust struct.
 ///
-/// If the impl is not proxied, it implements [`prost::Message`](prelude::prost::Message) for the given struct, as well as [`ProtoMessage`](prelude::ProtoMessage), [`MessagePath`](prelude::MessagePath) and [`ValidatedMessage`](prelude::ValidatedMessage).
+/// This macro will implement the following:
+/// - Clone
+/// - PartialEq
+/// - [`prost::Message`](prelude::prost::Message)
+/// - [`ProtoMessage`](prelude::ProtoMessage)
+/// - [`AsProtoType`](prelude::AsProtoType)
+/// - [`MessagePath`](prelude::MessagePath)
+/// - [`ValidatedMessage`](prelude::ValidatedMessage)
+/// - [`CelValue`](prelude::CelValue) (if the `cel` feature is enabled)
+/// - A method called `check_validators_consistency` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
+/// - (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators_consistency` method and panics on failure.
+/// - A test that checks if the oneof tags used in this message (if there are any) are correct.
 ///
-/// If the impl is proxied, it implements all of these for the proto-facing struct, as well as [`ProxiedMessage`](prelude::ProxiedMessage), and implements [`MessageProxy`](prelude::MessageProxy) for the proxy.
+/// If the impl is not proxied, these traits and methods will target the struct directly.
+///
+/// If the impl is proxied:
+/// - A new struct with a `Proto` suffix will be generated (i.e. MyMsg -> MyMsgProto) and these traits and methods will target that. An impl for [`ProxiedMessage`](prelude::ProxiedMessage) will also be generated.
+/// - The proxy will implement [`MessageProxy`](prelude::MessageProxy).
 ///
 /// # Examples
 /// ```
@@ -486,7 +519,21 @@ pub fn enum_empty_derive(_input: TokenStream) -> TokenStream {
 
 /// Implements protobuf schema and validation features for a rust enum.
 ///
-/// Implements [`prost::Oneof`](prelude::prost::Oneof) for the enum, as well as [`ProtoOneof`](prelude::ProtoOneof) and [`ValidatedOneof`](prelude::ValidatedOneof). In case of a proxied oneof, it implements [`ProxiedOneof`](prelude::ProxiedOneof) for the proto-facing enum and [`OneofProxy`](prelude::OneofProxy) for the proxy.
+/// This macro will implement the following:
+/// - Clone
+/// - PartialEq
+/// - [`prost::Oneof`](prelude::prost::Oneof)
+/// - [`ProtoOneof`](prelude::ProtoOneof)
+/// - [`ValidatedOneof`](prelude::ValidatedOneof)
+/// - [`CelOneof`](prelude::CelOneof) (if the `cel` feature is enabled)
+/// - A method called `check_validators_consistency` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
+/// - (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators_consistency` method and panics on failure.
+///
+/// If the impl is not proxied, these traits and methods will target the struct directly.
+///
+/// If the impl is proxied:
+/// - A new struct with a `Proto` suffix will be generated (i.e. MyOneof -> MyOneofProto) and these traits and methods will target that. An impl for [`ProxiedOneof`](prelude::ProxiedOneof) will also be generated.
+/// - The proxy will implement [`OneofProxy`](prelude::OneofProxy).
 ///
 /// # Examples
 /// ```

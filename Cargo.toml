@@ -19,6 +19,10 @@ repository = "https://github.com/Rick-Phoenix/protoschema"
 keywords = ["protobuf", "validation", "schema"]
 
 [workspace.dependencies]
+askama = { version = "0.15", default-features = false, features = [
+  "derive",
+  "config",
+] }
 cel = { version = "0.12", features = ["bytes"] }
 paste = "1"
 maplit = "1"

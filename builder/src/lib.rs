@@ -7,6 +7,12 @@ use std::{env, path::PathBuf};
 use prost_build::Config;
 use prost_reflect::{prost::Message as ProstMessage, prost_types::FileDescriptorSet};
 
+/// Configures a [`DescriptorData`] instance to gather information from a protobuf descriptor,
+/// which can be useful to apply attributes programmatically to the target items.
+///
+/// You can then collect the data while also setting up the validators with the [`set_up_validators`](DescriptorDataConfig::set_up_validators) method.
+///
+/// Should you wish to not collect any data at all, you can call the omonimous function [`set_up_validators`] exported to the root, which will set up the validators and return an empty [`DescriptorData`] instance.
 #[derive(Default)]
 pub struct DescriptorDataConfig {
   collect_oneofs_data: bool,
@@ -15,6 +21,8 @@ pub struct DescriptorDataConfig {
 }
 
 impl DescriptorDataConfig {
+  /// Sets up the validators for the specified packages, while also collecting the data that was requested
+  /// in the configuration. Refer to the omonimous [`set_up_validators`] function's documentation to learn more about the implementations provided by this method.
   pub fn set_up_validators(
     &self,
     config: &mut Config,
@@ -25,11 +33,13 @@ impl DescriptorDataConfig {
     set_up_validators_inner(self, config, files, include_paths, packages)
   }
 
+  /// Creates a new instance.
   #[must_use]
   pub fn new() -> Self {
     Self::default()
   }
 
+  /// Collects data for all items: oneofs, enums and messages.
   #[must_use]
   pub const fn collect_all_data() -> Self {
     Self {
@@ -39,18 +49,21 @@ impl DescriptorDataConfig {
     }
   }
 
+  /// Toggles collection of data for oneofs.
   #[must_use]
   pub const fn collect_oneofs_data(mut self) -> Self {
     self.collect_oneofs_data = true;
     self
   }
 
+  /// Toggles collection of data for enums.
   #[must_use]
   pub const fn collect_enums_data(mut self) -> Self {
     self.collect_enums_data = true;
     self
   }
 
+  /// Toggles collection of data for messages.
   #[must_use]
   pub const fn collect_messages_data(mut self) -> Self {
     self.collect_messages_data = true;
@@ -58,6 +71,9 @@ impl DescriptorDataConfig {
   }
 }
 
+/// A struct holding collected data from a protobuf descriptor.
+/// This data can then be used to selectively apply attributes programmatically
+/// through the helpers from the prost [`Config`].
 #[derive(Default)]
 pub struct DescriptorData {
   pub oneofs: Vec<Oneof>,
@@ -65,18 +81,21 @@ pub struct DescriptorData {
   pub messages: Vec<Message>,
 }
 
+/// Data about a protobuf oneof.
 pub struct Oneof {
   pub name: String,
   pub parent_message: String,
   pub package: String,
 }
 
+/// Data about a protobuf message.
 pub struct Message {
   pub name: String,
   pub parent_message: Option<String>,
   pub package: String,
 }
 
+/// Data about a protobuf enum.
 pub struct Enum {
   pub name: String,
   pub parent_message: Option<String>,
@@ -84,6 +103,7 @@ pub struct Enum {
 }
 
 impl Message {
+  /// Extracts the fully qualified name of the message, which includes the names of the ancestor messages (if there are any), as well as the parent package.
   #[must_use]
   pub fn full_name(&self) -> String {
     let Self {
@@ -105,6 +125,7 @@ impl Message {
 }
 
 impl Enum {
+  /// Extracts the fully qualified name of the enum, which includes the names of the ancestor messages (if there are any), as well as the parent package.
   #[must_use]
   pub fn full_name(&self) -> String {
     let Self {
@@ -126,6 +147,7 @@ impl Enum {
 }
 
 impl Oneof {
+  /// Extracts the fully qualified name of the oneof, which includes the name of the parent message, as well as the parent package.
   #[must_use]
   pub fn full_name(&self) -> String {
     let Self {
@@ -144,6 +166,17 @@ fn full_ish_name<'a>(item: &'a str, package: &'a str) -> &'a str {
     .unwrap_or(item)
 }
 
+/// Sets up the validators defined via `protovalidate` annotations in the target packages, and returns an empty [`DescriptorData`] instance.
+///
+/// If you wish to collect data from the descriptor while setting up the validators, look into the [`DescriptorDataConfig`] struct.
+///
+/// All of the selected messages will implement [`ValidatedMessage`](crate::ValidatedMessage), the selected enums will impement [`ProtoEnum`](crate::ProtoEnum), and the selected oneofs will implement [`ValidatedOneof`](crate::ValidatedOneof), and all of them will impement [`ProtoValidation`](crate::ProtoValidation).
+///
+/// If the `cel` feature is enabled, [`CelValue`](crate::CelValue) and [`CelOneof`](crate::CelOneof) will also be implemented for messages and oneofs.
+///
+/// Just like the non-reflection-based version of this crate, this will also automatically generate a `check_validators_consistency` method on each message and oneof, as well as a test that automatically calls this method and panics on failure, in order to ensure that validators represent valid configurations.
+///
+/// Should you wish to disable these checks, you can disable them with the `skip_checks(validators)` attribute, which you can easily set up programmatically by taking advantage of the data collection performed by the [`DescriptorDataConfig`] struct.
 pub fn set_up_validators(
   config: &mut Config,
   files: &[impl AsRef<Path>],
@@ -268,8 +301,9 @@ fn set_up_validators_inner(
   Ok(desc_data)
 }
 
-/// A helper to use when gathering the names of proto files to pass to [`prost_build::Config::compile_protos`].
-/// Recursively collects all .proto files in a given directory and its subdirectories.
+/// A small utility that recursively collects all .proto files in a given directory and its subdirectories.
+///
+/// Useful if you want to avoid passing each individual .proto file to the prost config.
 pub fn get_proto_files_recursive(base_dir: impl Into<PathBuf>) -> io::Result<Vec<String>> {
   let base_dir: PathBuf = base_dir.into();
   let mut proto_files = Vec::new();

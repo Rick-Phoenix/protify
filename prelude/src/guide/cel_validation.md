@@ -14,7 +14,7 @@ The wrapper itself holds an [`Arc`](std::sync::Arc) and is therefore cheap to cl
 
 If a program is used in different places, it's a good idea to initialize it once and then clone it.
 
-This crate exports a Lazy struct that can be used for this purpose, which is a type alias for [`LazyLock`](std::sync::LazyLock) when the `std` feature is enabled, and otherwise exports a wrapper for [`OnceBox`](once_cell::race::OnceBox).
+This crate exports a Lazy struct that can be used for this purpose, which is a type alias for [`LazyLock`](std::sync::LazyLock) when the `std` feature is enabled, and otherwise implements a wrapper for [`OnceBox`](once_cell::race::OnceBox).
 
 ### Example
 
@@ -36,6 +36,8 @@ pub struct TheyAreTakingTheHobbitsTo {
 
 #[proto_message]
 pub struct ABalrogOfMorgoth {
+    // Here we are just cloning an Arc pointer to the lazily initialized program,
+    // not the program itself
     #[proto(message, validate = |v| v.cel(REUSABLE_PROGRAM.clone()))]
     pub what_did_you_say: Option<TheyAreTakingTheHobbitsTo>
 }
@@ -46,3 +48,7 @@ pub struct TellMeWhereIsGandalf {
     pub for_i_much_desire_to_speak_with_him: Option<TheyAreTakingTheHobbitsTo>
 }
 ```
+
+# Enforcing Unique IDs
+
+The instances of [`Package`] provide methods with which to ensure that there aren't rules with the same ID in the same message scope. Refer to the [`correctness`](crate::guide::correctness) section or the [`proto_package`](crate::proto_package) documentation for more details about that.

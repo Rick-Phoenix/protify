@@ -1,10 +1,8 @@
 # Server Usage
 
-The recommended workflow is to define the proto items in a separate workspace crate (which I will refer to as the "models" crate) and export the package handle, so that the consuming crate (like a tonic server) can use the handle to generate the files and to generate the services from those files, while importing the pre-built messages from the models crate.
+The recommended workflow with this library is to define the proto items in a separate workspace crate (which I will refer to as the "models" crate) and export the package handle, so that the consuming crate (like a tonic server) can use the handle to generate the files and to generate the services from those files, while importing the pre-built messages from the models crate.
 
 This is how to set up the `build.rs` file in the consuming crate, which is this case will be a tonic server.
-
-(You can find the most up-to-date example in the `test-server` crate of the repo. I can't really keep this up-to-date as an example since it relies on file generation, so if this should become stale or incorrect, please open an issue or PR).
 
 ```rust,ignore
 use std::env;
@@ -31,6 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut config = Config::new();
 
     config
+        // You can use `proto_types` directly or its re-export
         .extern_path(".google.protobuf", "::prelude::proto_types")
         // If we are using validators
         .extern_path(".buf.validate", "::prelude::proto_types::protovalidate")
@@ -42,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // the pre-built messages directly from our models crate
     // 
     // We use the `extern_paths` helper from the package so that
-    // each entry is automatically mapped
+    // each message is automatically mapped to its Rust path
     for (name, path) in pkg.extern_paths() {
         config.extern_path(name, path);
     }
@@ -55,3 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+Then, we can just use our services and messages like in any normal tonic app. The only difference is that the services will be in the generated code, but the messages will be directly imported by the models crate. 
+
+You can take a look at the `test-server` crate in the repo for a full example of this which also includes working with `diesel` and an sqlite database with the same models.

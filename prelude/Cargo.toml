@@ -35,10 +35,7 @@ ordered-float = { version = "5", default-features = false }
 proto-types = { workspace = true, features = ["protovalidate"] }
 paste = "1"
 bytes = { version = "1", default-features = false }
-askama = { version = "0.15", default-features = false, features = [
-  "derive",
-  "config",
-], optional = true }
+askama = { workspace = true, optional = true }
 thiserror = { version = "2", default-features = false }
 log = "0.4"
 owo-colors = { version = "4" }
