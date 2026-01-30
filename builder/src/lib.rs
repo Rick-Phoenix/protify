@@ -1,3 +1,5 @@
+#![doc = ::document_features::document_features!()]
+
 use std::fmt::Write;
 use std::fs;
 use std::io::{self, Read};

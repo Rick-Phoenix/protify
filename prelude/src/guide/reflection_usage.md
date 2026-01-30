@@ -4,9 +4,9 @@ The preferred usage for this crate is to define the items in rust, and to genera
 
 To do that, you must first add the builder to the build-dependencies.
 
-For convenience, the builder exports the [`DescriptorDataConfig`](::builder::DescriptorDataConfig) struct, which you can use to gather information about the elements of a package while the validators are being set (which can often be useful to handle things like oneof attributes which aren't very ergonomic to set up in prost in a programmatic way).
+For convenience, the builder exports the [`DescriptorDataConfig`](builder::DescriptorDataConfig) struct, which you can use to gather information about the elements of a package while the validators are being set (which can often be useful to handle things like oneof attributes which aren't very ergonomic to set up in prost in a programmatic way).
 
-The [`DescriptorDataConfig::set_up_validators`] method can then be used to set up the validators for the target packages. If you desire to just set up the validators without gathering any other data, you can just call the [`set_up_validators`] function exported from the root of the crate.
+The [`DescriptorDataConfig::set_up_validators`](builder::DescriptorDataConfig::set_up_validators) method can then be used to set up the validators for the target packages. If you desire to just set up the validators without gathering any other data, you can just call the omonimous [`set_up_validators`](builder::set_up_validators) function exported from the root of the crate.
 
 ```rust,ignore
 use std::{env, path::PathBuf};

@@ -16,6 +16,8 @@ If the impl is proxied:
 - A new struct with a `Proto` suffix will be generated (i.e. MyOneof -> MyOneofProto) and these traits and methods will target that. An impl for [`ProxiedOneof`](prelude::ProxiedOneof) will also be generated.
 - The proxy will implement [`OneofProxy`](prelude::OneofProxy).
 
+To learn more about proxied implementations, visit the dedicated [section](crate::guide::proxied_implementations).
+
 # Examples
 ```rust
 use prelude::*;

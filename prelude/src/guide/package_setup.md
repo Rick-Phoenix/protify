@@ -70,7 +70,7 @@ pub enum MyEnum {
 }
 ```
 
-To learn more about each element, visit the reference for messages, extensions, oneofs
+To learn more about each element, visit the reference for [messages](crate::proto_message), [extensions](crate::proto_extension), [oneofs](crate::proto_oneof) and [enums](crate::proto_enum).
 
 # Collecting A Package
 
@@ -78,11 +78,11 @@ When the `inventory` feature is enabled, all the elements in a package are colle
 
 This will give you access to the [`render_files`](crate::Package::render_files) method, which is what you need to generate the `.proto` files associated with that package, or the [`extern_paths`](crate::Package::extern_paths) method, which is what you can use to map messages to their Rust path when using `tonic`.
 
-However, since this relies on the `inventory` crate which is not available in a `no_std` environment, if we are in such a scenario we need to use a manual workaround to collect the full package.
+However, since this relies on the [inventory](https://crates.io/crates/inventory) crate which is not available in a `no_std` environment, if we are in such a scenario we need to use a manual workaround to collect the full package.
 
-## No_std usage
+# no_std usage
 
-The inventory feature relies on the `inventory` crate being available, which is not the case in a no_std crate, and may also be undesirable for users with extreme binary size concerns, as the registry collection applied with inventory may increase the binary size slightly. 
+The inventory feature relies on the [inventory](https://crates.io/crates/inventory) crate being available, which is not the case in a no_std crate, and may also be undesirable for users with extreme binary size concerns, as the registry collection applied with inventory may increase the binary size slightly. 
 
 In cases such as these, we need a different method for collecting the schema items, which can use one of the following workarounds.
 

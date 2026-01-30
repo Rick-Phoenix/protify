@@ -56,7 +56,7 @@ chrono = { version = "0.4", default-features = false, features = [
 ], optional = true }
 tonic = { workspace = true, optional = true }
 prost = { workspace = true }
-document-features = { version = "0.2", optional = true }
+document-features = { workspace = true, optional = true }
 
 [features]
 default = ["std", "regex", "cel", "chrono", "inventory"]

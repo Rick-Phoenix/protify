@@ -8,4 +8,4 @@
 
 - Proxy structs/enums do not support generics or lifetimes.
 
-> Refer to the [roadmap](crate::guide::roadmap) to learn more about planned and unplanned features.
+Refer to the [roadmap](crate::guide::roadmap) to learn more about planned and unplanned features.

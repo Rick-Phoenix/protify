@@ -10,10 +10,13 @@ keywords.workspace = true
 [dependencies]
 prost-build = { workspace = true }
 prost-reflect = { workspace = true }
+document-features = { workspace = true }
 
 [lints]
 workspace = true
 
 [features]
 default = ["cel"]
+
+## Enables CEL-based validation
 cel = []

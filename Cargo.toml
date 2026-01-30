@@ -23,6 +23,7 @@ askama = { version = "0.15", default-features = false, features = [
   "derive",
   "config",
 ] }
+document-features = "0.2"
 cel = { version = "0.12", features = ["bytes"] }
 paste = "1"
 maplit = "1"

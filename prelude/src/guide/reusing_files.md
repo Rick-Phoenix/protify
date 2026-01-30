@@ -15,10 +15,14 @@ mod root {
     pub mod submod {
         use super::*;
         
-        // The file is now in scope, and will be picked up automatically by all items defined in this module
+        // The file is now in scope, and 
+        // will be picked up automatically 
+        // by all items defined in this module
         use_proto_file!(MY_FILE);
 
-        // This message will have the extern path of the `module_path!()` output in here, so `::cratename::submod`
+        // This message will have the extern path
+        // of the `module_path!()` output in here, 
+        // so `::cratename::submod`
         #[proto_message]
         pub struct Msg {
            pub id: i32
@@ -29,10 +33,13 @@ mod root {
     mod re_exported {
         use super::*;
 
-        // The file is now in scope, and will be picked up automatically by all items defined in this module
+        // The file is now in scope, and 
+        // will be picked up automatically by 
+        // all items defined in this module
         inherit_proto_file!(MY_FILE);
 
-        // This message will have the extern path of the parent module
+        // This message will have the extern path
+        // of the parent module
         #[proto_message]
         pub struct Msg {
             pub id: i32

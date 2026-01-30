@@ -1,4 +1,6 @@
-//! # Summary
+//! # Guide
+//!
+//! 1. [Creating A Package](crate::guide::package_setup)
 
 macro_rules! doc_mod {
   ($name:ident) => {
@@ -12,7 +14,7 @@ doc_mod!(server_usage);
 doc_mod!(reflection_usage);
 doc_mod!(validators);
 doc_mod!(correctness);
-doc_mod!(proxied);
+doc_mod!(proxied_implementations);
 doc_mod!(package_setup);
 doc_mod!(cel_validation);
 doc_mod!(roadmap);
