@@ -32,6 +32,8 @@ where
   /// The maximum amount of items that this field must contain in order to be valid.
   pub max_items: Option<usize>,
   /// Specifies that this field must contain only unique values.
+  ///
+  /// When the items validator is a [`FloatValidator`], the [`abs_tolerance`](FloatValidator::abs_tolerance) and [`rel_tolerance`](FloatValidator::rel_tolerance) fields are taken in consideration for the uniqueness check.
   pub unique: bool,
   /// The conditions upon which this validator should be skipped.
   pub ignore: Ignore,

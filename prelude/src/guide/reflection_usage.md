@@ -3,8 +3,8 @@
 The preferred usage for this crate is by defining items in rust, but it is also possible to use the features implemented by protocheck, starting from pre-built proto files.
 
 To do that, you must first add the builder to the build-dependencies.
-In this example, we are calling the simple version of the [`set_up_validators`](builder::set_up_validators) function, which simply applies the validators to the specified packages, while not collecting any extra data.
-If you need to selectively apply attributes to certain items, you can use the [`DescriptorDataConfig`](builder::DescriptorDataConfig) struct to make the helper collect the list of oneofs, enums and messages and return it, so that you can use it to selectively apply attributes to some of them.
+In this example, we are calling the simple version of the [`set_up_validators`](::builder::set_up_validators) function, which simply applies the validators to the specified packages, while not collecting any extra data.
+If you need to selectively apply attributes to certain items, you can use the [`DescriptorDataConfig`](::builder::DescriptorDataConfig) struct to make the helper collect the list of oneofs, enums and messages and return it, so that you can use it to selectively apply attributes to some of them.
 
 ```rust,ignore
 use std::{env, path::PathBuf};

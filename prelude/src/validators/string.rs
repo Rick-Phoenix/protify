@@ -13,7 +13,7 @@ use super::*;
 /// It retains `&'static` for literal strings, clones the wrapper when the input is wrapped in `Arc`,
 /// and transforms owned strings into `Box<str>` to save size.
 ///
-/// Supports [`From`] with String, Arc<str>, &Arc<str>, Box<str> and &'static str.
+/// Supports [`From`] with [`String`], `Arc<str>`, `&Arc<str>`, `Box<str>` and `&'static str`.
 #[derive(Debug, Clone, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum FixedStr {

@@ -66,6 +66,7 @@ macro_rules! well_known_impl {
     paste::paste! {
       #[inline]
       #[doc = $doc]
+      #[allow(rustdoc::bare_urls)]
       pub fn [< $name:snake >](mut self) -> BytesValidatorBuilder<SetWellKnown<S>>
         where
           S::WellKnown: IsUnset,

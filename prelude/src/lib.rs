@@ -1,8 +1,12 @@
-// no_std support is planned at a certain point, but not yet implemented
 #![no_std]
 #![deny(clippy::alloc_instead_of_core)]
 #![deny(clippy::std_instead_of_alloc)]
 #![deny(clippy::std_instead_of_core)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 
 #[cfg(any(test, feature = "std"))]
 extern crate std;

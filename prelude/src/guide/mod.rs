@@ -25,3 +25,4 @@ doc_mod!(reusing_oneofs);
 doc_mod!(extension_ref);
 doc_mod!(server_usage);
 doc_mod!(reflection_usage);
+doc_mod!(validators);

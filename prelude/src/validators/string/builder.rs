@@ -333,6 +333,8 @@ macro_rules! well_known_impl {
   ($name:ident, $doc:literal) => {
     paste::paste! {
       #[doc = $doc]
+      #[inline]
+      #[allow(rustdoc::bare_urls)]
       pub fn [< $name:snake >](mut self) -> StringValidatorBuilder<SetWellKnown<S>>
         where
           S::WellKnown: IsUnset,

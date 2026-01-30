@@ -118,7 +118,7 @@ where
     }
   }
 
-  /// Sets a value that represents the `abs` parameter in the [`float_eq`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+  /// Sets a value that represents the `abs` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
   #[inline]
   pub fn abs_tolerance(mut self, val: Num) -> FloatValidatorBuilder<Num, SetAbsTolerance<S>>
   where
@@ -133,7 +133,7 @@ where
     }
   }
 
-  /// Sets a value that represents the `r2nd` parameter in the [`float_eq`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+  /// Sets a value that represents the `r2nd` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
   #[inline]
   pub fn rel_tolerance(mut self, val: Num) -> FloatValidatorBuilder<Num, SetRelTolerance<S>>
   where

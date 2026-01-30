@@ -3,7 +3,7 @@ pub use builder::BoolValidatorBuilder;
 
 use super::*;
 
-/// Validator for the [`bool`] type.
+/// Validator for the [`prim@bool`] type.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

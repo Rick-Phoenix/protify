@@ -71,6 +71,11 @@ pub struct Message {
 }
 
 impl Message {
+  /// Renders the message in its protobuf representation.
+  pub fn render_schema(&self) -> Result<String, askama::Error> {
+    self.render()
+  }
+
   pub(crate) fn options_with_validators(&self) -> Vec<ProtoOption> {
     self
       .options

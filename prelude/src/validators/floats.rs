@@ -10,7 +10,7 @@ use super::*;
 ///
 /// Unlike other validators, this contains two special parameters, namely [`abs_tolerance`](FloatValidator::abs_tolerance) and [`rel_tolerance`](FloatValidator::rel_tolerance), which are used in all operations involving the target floats.
 ///
-/// These two represent the `abs` and `2nd` parameters in the [`float_eq`] macro. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html)
+/// These two represent the `abs` and `2nd` parameters in the [`float_eq!`] macro. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html)
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -30,10 +30,10 @@ where
   /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
   pub required: bool,
 
-  /// Represents the `abs` parameter in the [`float_eq`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+  /// Represents the `abs` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
   pub abs_tolerance: Num,
 
-  /// Represents the `r2nd` parameter in the [`float_eq`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+  /// Represents the `r2nd` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
   pub rel_tolerance: Num,
 
   /// Specifies that this field must be finite (i.e. it can't represent Infinity or NaN).

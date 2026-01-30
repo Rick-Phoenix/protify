@@ -1,6 +1,6 @@
 # Generating Files
 
-When the `inventory` feature is enabled, generating files is done in a single step. You just take the package handle created by the [`proto_package`](crate::proto_package) macro, and call the [`render_files`](crate::package::render_files) method with the desided root directory of the package, and that's it.
+When the `inventory` feature is enabled, generating files is done in a single step. You just take the package handle created by the [`proto_package`](crate::proto_package) macro, and call the [`render_files`](crate::Package::render_files) method with the desided root directory of the package, and that's it.
 
 # No_std usage
 
