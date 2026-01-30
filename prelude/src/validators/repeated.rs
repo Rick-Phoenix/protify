@@ -94,7 +94,6 @@ where
   #[doc(hidden)]
   type Stored = Vec<T::Stored>;
   type Validator = RepeatedValidator<T>;
-  #[doc(hidden)]
   type ValidatorBuilder = RepeatedValidatorBuilder<T>;
 
   #[doc(hidden)]
@@ -113,6 +112,7 @@ where
     UnsupportedStore::new()
   }
 
+  #[doc(hidden)]
   const HAS_DEFAULT_VALIDATOR: bool = T::HAS_DEFAULT_VALIDATOR;
 }
 

@@ -205,8 +205,6 @@ pub trait ValidatorBuilderFor<T: ?Sized>: Default {
 ///
 /// The actual target of the validation is in a dedicated associated Type
 /// because this trait is sometimes implemented by wrappers/proxies like [`Sint32`].
-///
-/// The `UniqueStore` is used for validation that verifies uniqueness of values.
 pub trait ProtoValidation {
   /// The type that the implementor is actually going to be validated with.
   ///
@@ -225,7 +223,7 @@ pub trait ProtoValidation {
   /// [`validator_from_closure`](ProtoValidation::validator_from_closure).
   type ValidatorBuilder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
 
-  /// Determines if the type should always be validated by the [`RepeatedValidator`] and [`MapValidator`] even if no other validator is specified (it is handled automatically inside the macros' logic).
+  /// Determines if the type holds its own validators. Can be true of implementors of [`ValidatedMessage`] or [`ValidatedOneof`] if they have validators defined in them or one of the item in their recursive chain of validation has this set to true.
   ///
   /// If a message or oneof has this set to true and they are used as a field in another message that uses the [`proto_message`] macro,
   /// their [`validate`](ValidatedMessage::validate) function will be called even if no
@@ -237,6 +235,7 @@ pub trait ProtoValidation {
   /// A [`UniqueStore`] for this type, to use in uniqueness checks.
   ///
   /// Used by the [`RepeatedValidator`] for the `unique` rule.
+  #[doc(hidden)]
   type UniqueStore<'a>: UniqueStore<'a, Item = Self::Target>
   where
     Self: 'a;
@@ -245,6 +244,7 @@ pub trait ProtoValidation {
   ///
   /// Used by the [`RepeatedValidator`] for the `unique` rule.
   #[inline]
+  #[doc(hidden)]
   fn make_unique_store<'a>(_validator: &Self::Validator, cap: usize) -> Self::UniqueStore<'a>
   where
     Self: 'a,

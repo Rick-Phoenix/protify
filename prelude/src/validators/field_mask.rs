@@ -133,13 +133,16 @@ impl ProtoValidation for FieldMask {
   #[doc(hidden)]
   type Stored = Self;
   type Validator = FieldMaskValidator;
-  #[doc(hidden)]
   type ValidatorBuilder = FieldMaskValidatorBuilder;
 
+  #[doc(hidden)]
   type UniqueStore<'a>
     = LinearRefStore<'a, Self>
   where
     Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: bool = false;
 }
 
 impl Validator<FieldMask> for FieldMaskValidator {

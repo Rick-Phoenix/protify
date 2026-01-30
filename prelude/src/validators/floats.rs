@@ -527,14 +527,15 @@ macro_rules! impl_float_wrapper {
         #[doc(hidden)]
         type Stored = Self;
         type Validator = FloatValidator<Self>;
-        #[doc(hidden)]
         type ValidatorBuilder = FloatValidatorBuilder<Self>;
 
+        #[doc(hidden)]
         type UniqueStore<'a>
           = FloatEpsilonStore<Self>
         where
           Self: 'a;
 
+        #[doc(hidden)]
         #[inline]
         fn make_unique_store<'a>(
           validator: &Self::Validator,

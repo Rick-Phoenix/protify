@@ -18,13 +18,16 @@ impl ProtoValidation for String {
   #[doc(hidden)]
   type Stored = Self;
   type Validator = StringValidator;
-  #[doc(hidden)]
   type ValidatorBuilder = StringValidatorBuilder;
 
+  #[doc(hidden)]
   type UniqueStore<'a>
     = RefHybridStore<'a, str>
   where
     Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: bool = false;
 }
 impl<S: State> ValidatorBuilderFor<String> for StringValidatorBuilder<S> {
   type Validator = StringValidator;

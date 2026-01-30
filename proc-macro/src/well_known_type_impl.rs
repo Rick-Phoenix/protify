@@ -143,10 +143,11 @@ pub fn well_known_type_impl_macro(input: TokenStream2) -> syn::Result<TokenStrea
         #[doc(hidden)]
         type Validator = NoOpValidator<Self>;
 
+        #[doc(hidden)]
         type UniqueStore<'a>
-        = #unique_store_tokens
-      where
-        Self: 'a;
+          = #unique_store_tokens
+          where
+            Self: 'a;
 
         #[doc(hidden)]
         const HAS_DEFAULT_VALIDATOR: bool = false;

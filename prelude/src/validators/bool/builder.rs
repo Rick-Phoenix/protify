@@ -16,7 +16,6 @@ impl ProtoValidation for bool {
   #[doc(hidden)]
   type Stored = Self;
   type Validator = BoolValidator;
-  #[doc(hidden)]
   type ValidatorBuilder = BoolValidatorBuilder;
 
   #[doc(hidden)]
@@ -24,6 +23,9 @@ impl ProtoValidation for bool {
     = CopyHybridStore<Self>
   where
     Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: Self = false;
 
   #[inline]
   #[doc(hidden)]

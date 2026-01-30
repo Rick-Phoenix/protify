@@ -18,13 +18,16 @@ impl ProtoValidation for Timestamp {
   #[doc(hidden)]
   type Stored = Self;
   type Validator = TimestampValidator;
-  #[doc(hidden)]
   type ValidatorBuilder = TimestampValidatorBuilder;
 
+  #[doc(hidden)]
   type UniqueStore<'a>
     = CopyHybridStore<Self>
   where
     Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: bool = false;
 }
 impl<S: State> ValidatorBuilderFor<Timestamp> for TimestampValidatorBuilder<S> {
   type Validator = TimestampValidator;

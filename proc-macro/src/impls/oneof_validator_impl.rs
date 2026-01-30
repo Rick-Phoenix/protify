@@ -110,6 +110,7 @@ pub fn generate_oneof_validator(
       #[doc(hidden)]
       type ValidatorBuilder = ::prelude::OneofValidatorBuilder;
 
+      #[doc(hidden)]
       type UniqueStore<'a>
         = ::prelude::LinearRefStore<'a, Self>
       where

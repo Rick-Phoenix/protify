@@ -125,7 +125,6 @@ where
   #[doc(hidden)]
   type Stored = BTreeMap<K::Stored, V::Stored>;
   type Validator = MapValidator<K, V>;
-  #[doc(hidden)]
   type ValidatorBuilder = MapValidatorBuilder<K, V>;
 
   #[doc(hidden)]
@@ -144,6 +143,7 @@ where
     UnsupportedStore::new()
   }
 
+  #[doc(hidden)]
   const HAS_DEFAULT_VALIDATOR: bool = V::HAS_DEFAULT_VALIDATOR;
 }
 
@@ -161,7 +161,6 @@ where
   #[doc(hidden)]
   type Stored = HashMap<K::Stored, V::Stored, S>;
   type Validator = MapValidator<K, V>;
-  #[doc(hidden)]
   type ValidatorBuilder = MapValidatorBuilder<K, V>;
 
   #[doc(hidden)]
@@ -180,6 +179,7 @@ where
     UnsupportedStore::new()
   }
 
+  #[doc(hidden)]
   const HAS_DEFAULT_VALIDATOR: bool = V::HAS_DEFAULT_VALIDATOR;
 }
 

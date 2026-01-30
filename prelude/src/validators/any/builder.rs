@@ -36,13 +36,16 @@ impl ProtoValidation for Any {
   #[doc(hidden)]
   type Stored = Self;
   type Validator = AnyValidator;
-  #[doc(hidden)]
   type ValidatorBuilder = AnyValidatorBuilder;
 
+  #[doc(hidden)]
   type UniqueStore<'a>
     = RefHybridStore<'a, Self>
   where
     Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: bool = false;
 }
 
 impl<S: State> ValidatorBuilderFor<Any> for AnyValidatorBuilder<S> {

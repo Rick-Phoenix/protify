@@ -455,13 +455,16 @@ macro_rules! impl_int_validator {
         #[doc(hidden)]
         type Stored = $rust_type;
         type Validator = IntValidator<$wrapper>;
-        #[doc(hidden)]
         type ValidatorBuilder = IntValidatorBuilder<$wrapper>;
 
+        #[doc(hidden)]
         type UniqueStore<'a>
           = CopyHybridStore<$rust_type>
         where
           Self: 'a;
+
+        #[doc(hidden)]
+        const HAS_DEFAULT_VALIDATOR: bool = false;
       }
     }
   };

@@ -273,15 +273,17 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
       type Target = i32;
       #[doc(hidden)]
       type Stored = i32;
-      #[doc(hidden)]
       type Validator = ::prelude::EnumValidator<#enum_ident>;
-      #[doc(hidden)]
       type ValidatorBuilder = ::prelude::EnumValidatorBuilder<#enum_ident>;
 
+      #[doc(hidden)]
       type UniqueStore<'a>
         = ::prelude::CopyHybridStore<i32>
       where
         Self: 'a;
+
+      #[doc(hidden)]
+      const HAS_DEFAULT_VALIDATOR: bool = false;
     }
 
     impl ::prelude::AsProtoType for #enum_ident {

@@ -11,13 +11,16 @@ impl ProtoValidation for Duration {
   #[doc(hidden)]
   type Stored = Self;
   type Validator = DurationValidator;
-  #[doc(hidden)]
   type ValidatorBuilder = DurationValidatorBuilder;
 
+  #[doc(hidden)]
   type UniqueStore<'a>
     = CopyHybridStore<Self>
   where
     Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: bool = false;
 }
 
 impl<S: State> ValidatorBuilderFor<Duration> for DurationValidatorBuilder<S> {

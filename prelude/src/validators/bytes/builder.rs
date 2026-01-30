@@ -18,13 +18,16 @@ impl ProtoValidation for Bytes {
   #[doc(hidden)]
   type Stored = Self;
   type Validator = BytesValidator;
-  #[doc(hidden)]
   type ValidatorBuilder = BytesValidatorBuilder;
 
+  #[doc(hidden)]
   type UniqueStore<'a>
     = RefHybridStore<'a, Self>
   where
     Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: bool = false;
 }
 
 impl<S: State> ValidatorBuilderFor<Bytes> for BytesValidatorBuilder<S> {
