@@ -109,7 +109,6 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     Ok(())
   }
 
-  /// Checks the CEL programs of this validator with a predefined value.
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]

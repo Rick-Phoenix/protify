@@ -1,12 +1,22 @@
 # Correctness
 
-This crate tries to enforce correctness as much as possible at compile/testing time, and it does so in the following ways:
+This crate tries to enforce correctness as at compile/testing time, so that badly set up validators do not make their way into runtime.
 
-1. Each validator holds a method called [`check_consistency`](crate::Validator::check_consistency) which checks if the inputs inside of it make sense or were caused by an error. All default validators implement this method and perform these checks on all sorts of inputs with a key focus on CEL rules which are written as plain text and are very easy to get wrong. Custom validators can optionally implement this method too.
+The [`Validator`](crate::Validator) trait holds a method called [`check_consistency`](crate::Validator::check_consistency) which checks if the inputs inside of it make sense or were caused by an error. All provided validators implement this method and perform a variety of checks on their inputs, and all custom validators can optionally implement it too. For example, the [`StringValidator`](crate::StringValidator) will:
 
-When using validators in a message or in a oneof, a method for checking all of these validators will be automatically generated and unless indicated otherwise, a test will also be automatically generated, that will call such method and panic on failure.
+- Check if `max_len` is less than `min_len`
+- Check if `prefix` or `suffix` match the `not_contains` rule
+- Check if an item is both in the lists of allowed and forbidden values
+- ...and many others
 
-2. In order to improve debuggability, the package handle will contain a method that checks if there are CEL rules with the same ID within the same message and unless otherwise specified, it will also generate a test that calls such method and panics on failure.
+Whereas the [`EnumValidator`](crate::EnumValidator) will perform checks like ensuring that all the values in the `in` rule are actually defined in the target enum.
 
-3. Tests are automatically generated for the accuracy of oneof tags (check reusing oneofs section).
+All validators as a whole will:
 
+- Check the validity of CEL expressions used in them
+- Check if a custom error message is defined but never used
+- Check if the `const` rule is used among with other rules (which would be ignored)
+
+There is a particular emphasis on checking the validity of CEL expressions because they are written as plain text and are very easy to get wrong, and they **will panic** at initialization if they fail to compile.
+
+Unless specified otherwise with the `skip_checks` attribute, the macros will generate a test that calls this method for every validator assigned to a message/oneof, and panics on failure.
