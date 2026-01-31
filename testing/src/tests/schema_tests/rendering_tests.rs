@@ -258,8 +258,8 @@ fn service_schema_output() {
 
   assert_eq_pretty!(service1.name, "Service1");
   assert_eq_pretty!(service1.request.name, "TestMessage");
-  assert_eq_pretty!(service1.request.file, RENDERING::REFERENCE.name);
-  assert_eq_pretty!(service1.request.package, RENDERING::REFERENCE.package);
+  assert_eq_pretty!(service1.request.file, RENDERING::NAME);
+  assert_eq_pretty!(service1.request.package, RENDERING::PACKAGE);
   assert_eq_pretty!(service1.response.name, "TestMessage.Nested1");
   assert_eq_pretty!(service1.options, test_options());
 }
@@ -440,7 +440,7 @@ fn message_schema_output() {
       FieldType::Normal(ProtoType::Message(ProtoPath {
         name: "TestMessage.Nested1".into(),
         package: RENDERING_PKG::NAME.into(),
-        file: RENDERING::REFERENCE.name.into(),
+        file: RENDERING::NAME.into(),
       })),
     ),
     (
@@ -455,7 +455,7 @@ fn message_schema_output() {
       FieldType::Normal(ProtoType::Enum(ProtoPath {
         name: "TestMessage.TestEnum".into(),
         package: RENDERING_PKG::NAME.into(),
-        file: RENDERING::REFERENCE.name.into(),
+        file: RENDERING::NAME.into(),
       })),
     ),
   ];

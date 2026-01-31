@@ -30,6 +30,7 @@ mod root {
     }
 
     pub use re_exported::Msg;
+
     mod re_exported {
         use super::*;
 

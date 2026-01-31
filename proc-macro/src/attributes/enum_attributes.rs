@@ -8,6 +8,8 @@ pub struct EnumAttrs {
   pub parent_message: Option<Ident>,
   pub name: ParsedStr,
   pub deprecated: bool,
+  pub file: Option<Ident>,
+  pub module_path: Option<TokenStream2>,
 }
 
 pub fn process_derive_enum_attrs(
@@ -20,6 +22,8 @@ pub fn process_derive_enum_attrs(
   let mut proto_name: Option<ParsedStr> = None;
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;
+  let mut file: Option<Ident> = None;
+  let mut module_path: Option<TokenStream2> = None;
 
   for attr in attrs {
     let ident = if let Some(ident) = attr.path().get_ident() {
@@ -37,6 +41,12 @@ pub fn process_derive_enum_attrs(
           let ident = meta.path.require_ident()?.to_string();
 
           match ident.as_str() {
+            "file" => {
+              file = Some(meta.parse_value()?);
+            }
+            "module_path" => {
+              module_path = Some(meta.parse_value()?);
+            }
             "deprecated" => {
               let boolean = meta.parse_value::<LitBool>()?;
 
@@ -88,5 +98,7 @@ pub fn process_derive_enum_attrs(
     parent_message,
     name,
     deprecated,
+    file,
+    module_path,
   })
 }

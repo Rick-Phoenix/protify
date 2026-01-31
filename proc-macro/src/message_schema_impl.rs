@@ -60,6 +60,8 @@ impl MessageCtx<'_> {
       parent_message,
       deprecated,
       validators,
+      file,
+      module_path,
       ..
     } = &self.message_attrs;
 
@@ -125,10 +127,33 @@ impl MessageCtx<'_> {
         }
       });
 
+    let file_name = if let Some(ident) = file {
+      quote! { <#ident as ::prelude::FileSchema>::NAME }
+    } else {
+      quote! { __PROTO_FILE.name }
+    };
+
+    let package = if let Some(ident) = file {
+      quote! { <#ident as ::prelude::FileSchema>::PACKAGE }
+    } else {
+      quote! { __PROTO_FILE.package }
+    };
+
+    let module_path = module_path.as_ref().map_or_else(
+      || {
+        if let Some(ident) = file {
+          quote! { <#ident as ::prelude::FileSchema>::EXTERN_PATH }
+        } else {
+          quote! { __PROTO_FILE.extern_path }
+        }
+      },
+      |path_override| path_override.to_token_stream(),
+    );
+
     quote! {
       ::prelude::register_proto_data! {
         ::prelude::RegistryMessage {
-          package: __PROTO_FILE.package,
+          package: #package,
           parent_message: #registry_parent_message,
           message: || <#proto_struct as ::prelude::ProtoMessage>::proto_schema()
         }
@@ -163,14 +188,14 @@ impl MessageCtx<'_> {
         fn proto_path() -> ::prelude::ProtoPath {
           ::prelude::ProtoPath {
             name: <Self as ::prelude::ProtoMessage>::proto_name().into(),
-            file: __PROTO_FILE.name.into(),
-            package: __PROTO_FILE.package.into(),
+            file: #file_name.into(),
+            package: #package.into(),
           }
         }
       }
 
       impl ::prelude::ProtoMessage for #proto_struct {
-        const PACKAGE: &str = __PROTO_FILE.package;
+        const PACKAGE: &str = #package;
         const SHORT_NAME: &str = #proto_name;
 
         fn type_url() -> &'static str {
@@ -197,8 +222,8 @@ impl MessageCtx<'_> {
           ::prelude::MessageSchema {
             short_name: #proto_name.into(),
             name: <Self as ::prelude::ProtoMessage>::proto_name().into(),
-            file: __PROTO_FILE.name.into(),
-            package: __PROTO_FILE.package.into(),
+            file: #file_name.into(),
+            package: #package.into(),
             reserved_names: vec![ #(#reserved_names.into()),* ],
             reserved_numbers: #reserved_numbers,
             options: #options_tokens.into_iter().collect(),
@@ -206,7 +231,7 @@ impl MessageCtx<'_> {
             enums: vec![],
             entries: vec![ #entries_tokens ],
             validators: ::prelude::collect_validators([ #(::prelude::Validator::<#proto_struct>::schema(&#validators)),* ]),
-            rust_path:  format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str).into()
+            rust_path:  format!("::{}::{}", #module_path, #rust_ident_str).into()
           }
         }
       }

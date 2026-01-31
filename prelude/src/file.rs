@@ -28,7 +28,9 @@ fn sort_nested(message: &mut MessageSchema) {
 }
 
 pub trait FileSchema {
-  const REFERENCE: FileReference;
+  const NAME: &str;
+  const PACKAGE: &str;
+  const EXTERN_PATH: &str;
   fn file_schema() -> ProtoFile;
 }
 

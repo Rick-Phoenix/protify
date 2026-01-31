@@ -17,6 +17,8 @@ pub struct MessageAttrs {
   pub auto_tests: AutoTests,
   pub deprecated: bool,
   pub validators: Validators,
+  pub file: Option<Ident>,
+  pub module_path: Option<TokenStream2>,
 }
 
 impl MessageAttrs {
@@ -70,6 +72,8 @@ pub fn process_message_attrs(
   let mut validators = Validators::default();
   let mut auto_tests = AutoTests::default();
   let mut forwarded_attrs: Vec<Meta> = Vec::new();
+  let mut file: Option<Ident> = None;
+  let mut module_path: Option<TokenStream2> = None;
 
   for attr in attrs {
     let ident = if let Some(ident) = attr.path().get_ident() {
@@ -87,6 +91,12 @@ pub fn process_message_attrs(
           let ident = meta.path.require_ident()?.to_string();
 
           match ident.as_str() {
+            "file" => {
+              file = Some(meta.parse_value()?);
+            }
+            "module_path" => {
+              module_path = Some(meta.parse_value()?);
+            }
             "attr" => {
               forwarded_attrs = meta.parse_list::<PunctuatedItems<Meta>>()?.list;
             }
@@ -171,5 +181,7 @@ pub fn process_message_attrs(
     deprecated,
     validators,
     forwarded_attrs,
+    file,
+    module_path,
   })
 }

@@ -10,11 +10,13 @@ define_proto_file!(
 );
 
 #[proto_message]
+#[proto(skip_checks(all))]
 pub struct NormalMsg {
   pub id: i32,
 }
 
 #[proto_message]
+#[proto(skip_checks(all))]
 #[proto(parent_message = NormalMsg)]
 pub struct NormalNestedMsg {
   pub id: i32,
@@ -43,12 +45,63 @@ pub(crate) mod re_exported {
   inherit_proto_file!(FILE);
 
   #[proto_message]
+  #[proto(skip_checks(all))]
   pub struct ReExportedMsg {
     pub id: i32,
   }
 
   #[proto_enum]
   pub enum ReExportedEnum {
+    Unspecified,
+    A,
+    B,
+  }
+}
+
+pub mod other_file {
+  use super::*;
+
+  define_proto_file!(
+    OTHER_FILE,
+    name = "other_file.proto",
+    package = EXTERN_PATH_TEST
+  );
+}
+
+#[allow(unused)]
+pub use overrides::MsgWithFileAndPathOverride;
+
+pub mod overrides {
+  use super::other_file::OTHER_FILE;
+  use super::*;
+
+  #[proto_message]
+  #[proto(module_path = "testing")]
+  #[proto(file = OTHER_FILE)]
+  #[proto(skip_checks(all))]
+  pub struct MsgWithFileAndPathOverride {
+    pub id: i32,
+  }
+
+  #[proto_message]
+  #[proto(file = OTHER_FILE)]
+  #[proto(skip_checks(all))]
+  pub struct MsgWithFileOverride {
+    pub id: i32,
+  }
+
+  #[proto_enum]
+  #[proto(module_path = "testing")]
+  #[proto(file = OTHER_FILE)]
+  pub enum EnumWithFileAndPathOverride {
+    Unspecified,
+    A,
+    B,
+  }
+
+  #[proto_enum]
+  #[proto(file = OTHER_FILE)]
+  pub enum EnumWithFileOverride {
     Unspecified,
     A,
     B,
@@ -62,11 +115,13 @@ pub mod submod {
   use_proto_file!(FILE);
 
   #[proto_message]
+  #[proto(skip_checks(all))]
   pub struct SubmodMsg {
     pub id: i32,
   }
 
   #[proto_message]
+  #[proto(skip_checks(all))]
   #[proto(parent_message = SubmodMsg)]
   pub struct SubmodNestedMsg {
     pub id: i32,
@@ -86,6 +141,47 @@ pub mod submod {
     A,
     B,
   }
+}
+
+#[test]
+fn test_file_assignment() {
+  use re_exported::*;
+  use submod::*;
+  macro_rules! check_file {
+    ($($name:ident),*) => {
+      $(
+        assert_eq_pretty!($name::proto_schema().file, "file.proto");
+      )*
+    };
+  }
+
+  check_file!(
+    NormalMsg,
+    NormalNestedMsg,
+    NormalEnum,
+    NormalNestedMsg,
+    ReExportedMsg,
+    ReExportedEnum,
+    SubmodMsg,
+    SubmodNestedMsg,
+    SubmodEnum,
+    SubmodNestedEnum
+  );
+
+  macro_rules! check_other_file {
+    ($($name:ident),*) => {
+      $(
+        assert_eq_pretty!(overrides::$name::proto_schema().file, "other_file.proto");
+      )*
+    };
+  }
+
+  check_other_file!(
+    MsgWithFileAndPathOverride,
+    MsgWithFileOverride,
+    EnumWithFileAndPathOverride,
+    EnumWithFileOverride
+  );
 }
 
 #[test]
@@ -127,6 +223,22 @@ fn test_extern_path() {
     (
       ".extern_path_test.NormalMsg.NormalNestedEnum",
       "::testing::NormalNestedEnum",
+    ),
+    (
+      ".extern_path_test.MsgWithFileAndPathOverride",
+      "::testing::MsgWithFileAndPathOverride",
+    ),
+    (
+      ".extern_path_test.MsgWithFileOverride",
+      concat!("::", module_path!(), "::other_file::MsgWithFileOverride"),
+    ),
+    (
+      ".extern_path_test.EnumWithFileAndPathOverride",
+      "::testing::EnumWithFileAndPathOverride",
+    ),
+    (
+      ".extern_path_test.EnumWithFileOverride",
+      concat!("::", module_path!(), "::other_file::EnumWithFileOverride"),
     ),
   ];
 

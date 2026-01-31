@@ -114,6 +114,8 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
         parent_message,
         name: proto_name,
         deprecated,
+        file,
+        module_path,
         ..
       },
   } = extract_enum_data(&mut item).unwrap_or_else(|e| {
@@ -232,6 +234,29 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 
   let options_tokens = options_tokens(Span::call_site(), &enum_options, deprecated);
 
+  let file_name = if let Some(ident) = &file {
+    quote! { <#ident as ::prelude::FileSchema>::NAME }
+  } else {
+    quote! { __PROTO_FILE.name }
+  };
+
+  let package = if let Some(ident) = &file {
+    quote! { <#ident as ::prelude::FileSchema>::PACKAGE }
+  } else {
+    quote! { __PROTO_FILE.package }
+  };
+
+  let module_path = module_path.as_ref().map_or_else(
+    || {
+      if let Some(ident) = &file {
+        quote! { <#ident as ::prelude::FileSchema>::EXTERN_PATH }
+      } else {
+        quote! { __PROTO_FILE.extern_path }
+      }
+    },
+    |path_override| path_override.to_token_stream(),
+  );
+
   quote! {
     #[repr(i32)]
     #[derive(::prelude::macros::Enum, Hash, PartialEq, Eq, Debug, Clone, Copy)]
@@ -240,7 +265,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
     ::prelude::register_proto_data! {
       ::prelude::RegistryEnum {
         parent_message: #parent_message_registry,
-        package: __PROTO_FILE.package,
+        package: #package,
         enum_: || <#enum_ident as ::prelude::ProtoEnumSchema>::proto_schema()
       }
     }
@@ -304,8 +329,8 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
       fn proto_path() -> ::prelude::ProtoPath {
         ::prelude::ProtoPath {
           name: <Self as ::prelude::ProtoEnum>::proto_name().into(),
-          file: __PROTO_FILE.name.into(),
-          package: __PROTO_FILE.package.into(),
+          file: #file_name.into(),
+          package: #package.into(),
         }
       }
 
@@ -323,13 +348,13 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
         ::prelude::EnumSchema {
           short_name: #proto_name.into(),
           name: <Self as ::prelude::ProtoEnum>::proto_name().into(),
-          file: __PROTO_FILE.name.into(),
-          package: __PROTO_FILE.package.into(),
+          file: #file_name.into(),
+          package: #package.into(),
           variants: ::prelude::vec! [ #variants_tokens ],
           reserved_names: ::prelude::vec![ #(#reserved_names.into()),* ],
           reserved_numbers: #reserved_numbers,
           options: #options_tokens.into_iter().collect(),
-          rust_path:  ::prelude::format!("::{}::{}", __PROTO_FILE.extern_path, #rust_ident_str).into()
+          rust_path:  ::prelude::format!("::{}::{}", #module_path, #rust_ident_str).into()
         }
       }
     }

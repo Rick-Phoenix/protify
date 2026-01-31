@@ -180,17 +180,19 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   Ok(quote! {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: ::prelude::FileReference = <#file_ident as ::prelude::FileSchema>::REFERENCE;
+    const __PROTO_FILE: ::prelude::FileReference = ::prelude::FileReference {
+      name: #file,
+      package: <#package as ::prelude::PackageSchema>::NAME,
+      extern_path: #extern_path,
+    };
 
     #[allow(non_camel_case_types)]
     pub(crate) struct #file_ident;
 
     impl ::prelude::FileSchema for #file_ident {
-      const REFERENCE: ::prelude::FileReference = ::prelude::FileReference {
-        name: #file,
-        package: <#package as ::prelude::PackageSchema>::NAME,
-        extern_path: #extern_path,
-      };
+      const NAME: &str = #file;
+      const PACKAGE: &str = <#package as ::prelude::PackageSchema>::NAME;
+      const EXTERN_PATH: &str = #extern_path;
 
       fn file_schema() -> ::prelude::ProtoFile {
         let mut file = ::prelude::ProtoFile::new(#file, <#package as ::prelude::PackageSchema>::NAME);

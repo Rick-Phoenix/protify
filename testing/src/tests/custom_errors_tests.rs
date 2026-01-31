@@ -191,7 +191,6 @@ fn custom_error_messages() {
   assert_eq_pretty!(violations.len(), 35);
 
   for v in violations {
-    eprintln!("{}", v.rule_id());
     assert_eq_pretty!(v.message(), "they're taking the hobbits to Isengard!");
   }
 }
