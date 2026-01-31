@@ -1,5 +1,5 @@
 use crate::*;
-use syn::{braced, bracketed, custom_keyword, parse::ParseStream};
+use syn::{braced, custom_keyword, parse::ParseStream};
 
 enum MessageExpr {
   Single(Path),
@@ -91,12 +91,6 @@ impl Parse for MessageExpr {
 
 custom_keyword!(messages);
 custom_keyword!(enums);
-
-pub(crate) fn parse_bracketed<T: Parse>(input: ParseStream) -> syn::Result<T> {
-  let content;
-  bracketed!(content in input);
-  content.parse::<T>()
-}
 
 pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut file_ident: Option<Ident> = None;
