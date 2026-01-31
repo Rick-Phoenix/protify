@@ -141,7 +141,7 @@ fn rendering_test() {
     no_emit
   );
 
-  let manual_pkg = Package::new("rendering").with_files([ManualFile::file_schema()]);
+  let manual_pkg = Package::new("rendering").with_files(RENDERING_PKG::files());
   let output2 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/proto_test2"));
 
   manual_pkg.render_files(&output2).unwrap();

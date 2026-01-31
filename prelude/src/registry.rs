@@ -5,6 +5,7 @@ use crate::*;
 
 type Map<K, V> = OrderMap<K, V, DefaultHashBuilder>;
 
+#[track_caller]
 fn process_msg(
   msg_name: &FixedStr,
   messages: &mut Map<FixedStr, MessageSchema>,
@@ -44,6 +45,7 @@ struct NestedItems {
 
 #[cfg(feature = "inventory")]
 #[must_use]
+#[track_caller]
 pub(crate) fn collect_package(package: &'static str) -> Package {
   let mut messages: Map<FixedStr, MessageSchema> = Map::default();
   let mut enums: Map<FixedStr, EnumSchema> = Map::default();

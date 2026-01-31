@@ -7,6 +7,7 @@ pub trait PackageSchema {
   fn files() -> Vec<ProtoFile>;
 
   #[must_use]
+  #[track_caller]
   fn get_package() -> Package {
     #[cfg(feature = "inventory")]
     {

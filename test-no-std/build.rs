@@ -6,6 +6,11 @@ use prost_build::Config;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("cargo:rerun-if-changed=../no-std-models/src/lib.rs");
 
+  // Because we are overriding the dependency by activating the
+  // inventory feature, this works just like a std-compatible crate.
+  // This is the easiest method to get the models from a no-std crate.
+  // It doesn't require manual collection,
+  // but it causes annoying behaviour with rust-analyzer
   no_std_models::NO_STD_PKG::get_package()
     .render_files(concat!(env!("CARGO_MANIFEST_DIR"), "/proto"))
     .unwrap();

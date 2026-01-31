@@ -14,8 +14,11 @@ use prelude::{define_proto_file, proto_message, proto_package};
 proto_package!(
   NO_STD_PKG,
   name = "no_std_models",
-  no_cel_test,
-  files = [FILE]
+  // NOTE: We don't gather the files manually here
+  // even if the inventory feature is disabled,
+  // because we are going to enable it from the `build.rs`
+  // file of the `test-no-std` crate
+  no_cel_test
 );
 define_proto_file!(FILE, name = "no_std_models.proto", package = NO_STD_PKG);
 

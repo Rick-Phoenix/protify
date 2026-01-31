@@ -135,23 +135,7 @@ pub fn builder_state_macro(input: TokenStream) -> TokenStream {
   }
 }
 
-/// Creates a new proto file schema, and brings it into scope for the items that are defined in the same module.
-///
 #[doc = include_str!("../docs/file_macro.md")]
-///
-/// # Examples
-/// ```
-/// use prelude::*;
-/// proto_package!(MY_PKG, name = "my_pkg");
-/// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
-///
-/// #[proto_message]
-/// pub struct Msg {
-///   pub id: i32
-/// }
-///
-/// assert_eq!(Msg::proto_schema().file, "my_file.proto");
-/// ```
 #[proc_macro]
 pub fn define_proto_file(input: TokenStream) -> TokenStream {
   match process_file_macro(input.into()) {
@@ -162,6 +146,8 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
 
 #[allow(clippy::doc_overindented_list_items)]
 /// Creates a new package handle, which is used to collect the proto schemas in a crate.
+///
+/// For a comprehensive guide of how to set up a package, visit the [`package setup`](prelude::guide::package_setup) section.
 ///
 /// The first parameter of the macro is the ident that will be used for the generated constant that will hold the package handle, which will be used to generate the package and its proto files.
 ///
@@ -180,6 +166,8 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
 ///   - Description:
 ///       By default, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
 ///
+/// As explained in the [`package setup`](prelude::guide::package_setup) section, when the `inventory` feature is disabled, the files of a given package must be added manually, inside a bracketed list.
+///
 /// # Examples
 /// ```
 /// use prelude::*;
@@ -188,11 +176,9 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
 /// // Test for conflicting CEL rules in the same scope
 /// proto_package!(WITHOUT_TEST, name = "without_test", no_cel_test);
 ///
-/// // We create the package handle
-/// proto_package!(MY_PKG, name = "my_pkg");
-/// // And use it to assign newly defined files
+/// // If the `inventory` feature is disabled, we add the files manually
+/// proto_package!(MY_PKG, name = "my_pkg", files = [ MY_FILE ]);
 /// define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
-///
 /// ```
 #[proc_macro]
 pub fn proto_package(input: TokenStream) -> TokenStream {
