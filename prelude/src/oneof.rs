@@ -1,5 +1,6 @@
 use crate::*;
 
+/// Implemented for proxied oneofs by the [`proto_oneof`] macro.
 pub trait ProxiedOneof: From<Self::Proxy> + Into<Self::Proxy> {
   type Proxy: OneofProxy<Oneof = Self> + From<Self> + Into<Self>;
 
@@ -9,6 +10,7 @@ pub trait ProxiedOneof: From<Self::Proxy> + Into<Self::Proxy> {
   }
 }
 
+/// Implemented for oneof proxies by the [`proto_oneof`] macro.
 pub trait OneofProxy: From<Self::Oneof> + Into<Self::Oneof> {
   type Oneof: ProtoOneof + From<Self> + Into<Self>;
 
@@ -18,15 +20,7 @@ pub trait OneofProxy: From<Self::Oneof> + Into<Self::Oneof> {
   }
 }
 
-impl<T: OneofProxy> ProtoOneof for T {
-  const NAME: &str = T::Oneof::NAME;
-  const TAGS: &[i32] = T::Oneof::TAGS;
-
-  fn proto_schema() -> Oneof {
-    T::Oneof::proto_schema()
-  }
-}
-
+/// Trait responsible for generating the schema representation of a oneof.
 pub trait ProtoOneof {
   const NAME: &str;
   const TAGS: &[i32];
@@ -58,10 +52,14 @@ pub trait ProtoOneof {
   }
 }
 
+/// Trait responsible for executing validators that have been assigned to a oneof.
+///
+/// Implemented by the [`proto_oneof`] macro.
 pub trait ValidatedOneof: ProtoValidation + Clone {
   fn validate(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 
+/// Schema representation for a protobuf oneof.
 #[derive(Debug, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Oneof {
@@ -72,7 +70,9 @@ pub struct Oneof {
 }
 
 impl Oneof {
-  pub(crate) fn options_with_validators(&self) -> Vec<ProtoOption> {
+  /// Collects all the options of the oneof, including those created by the schema representations of validators.
+  #[must_use]
+  pub fn options_with_validators(&self) -> Vec<ProtoOption> {
     self
       .options
       .clone()
@@ -81,18 +81,21 @@ impl Oneof {
       .collect()
   }
 
+  /// Mutates the name of the oneof.
   #[must_use]
   pub fn with_name(mut self, name: impl Into<FixedStr>) -> Self {
     self.name = name.into();
     self
   }
 
+  /// Adds [`ValidatorSchema`]s to this oneof.
   #[must_use]
   pub fn with_validators<I: IntoIterator<Item = ValidatorSchema>>(mut self, validators: I) -> Self {
     self.validators.extend(validators);
     self
   }
 
+  /// Adds [`ProtoOption`]s to this oneof.
   #[must_use]
   pub fn with_options<I: IntoIterator<Item = ProtoOption>>(mut self, options: I) -> Self {
     self.options.extend(options);

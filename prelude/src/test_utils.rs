@@ -1,5 +1,6 @@
 use crate::*;
 
+/// An error that can occur while checking the correctness of the inputs for validators.
 #[non_exhaustive]
 #[derive(Debug, Error, PartialEq)]
 pub enum ConsistencyError {
@@ -15,12 +16,14 @@ pub enum ConsistencyError {
   UnusedCustomMessages(Vec<String>),
 }
 
+/// Represents an error that occurred in a validator defined at the field level.
 #[derive(Debug)]
 pub struct FieldError {
   pub field: &'static str,
   pub errors: Vec<ConsistencyError>,
 }
 
+/// The context of an error that occurred while running a correctness check during testing.
 pub struct TestError {
   pub item_name: &'static str,
   pub field_errors: Vec<FieldError>,
@@ -66,6 +69,7 @@ impl Display for TestError {
   }
 }
 
+/// An error that occurs when items are present in lists of allowed and forbidden values at the same time.
 #[derive(Debug, PartialEq, Eq)]
 pub struct OverlappingListsError {
   pub overlapping: Vec<String>,

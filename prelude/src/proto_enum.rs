@@ -1,6 +1,12 @@
 use crate::*;
 
+/// Trait for enums with a protobuf representation.
+///
+/// It provides some methods that can be useful when converting to/from integers.
+///
+/// Implemented by the [`proto_enum`] macro.
 pub trait ProtoEnum: TryFrom<i32> + Copy + Default + Into<i32> + Send + Sync {
+  /// Returns the name of the enum, preceded by the parent message, if there is one (i.e. "ParentMessage.EnumName").
   fn proto_name() -> &'static str;
 
   #[inline]
@@ -8,11 +14,13 @@ pub trait ProtoEnum: TryFrom<i32> + Copy + Default + Into<i32> + Send + Sync {
     self.into()
   }
 
+  /// Checks if the enum's integer representation is 0, which signifies the `UNSPECIFIED` variant in the protobuf convention.
   #[inline]
   fn is_unspecified(&self) -> bool {
     self.as_int() == 0
   }
 
+  /// Attempts conversion from a plain integer, falling back to the variant 0 (unspecified) upon failure.
   #[inline]
   #[must_use]
   fn from_int_or_default(int: i32) -> Self {
@@ -20,6 +28,11 @@ pub trait ProtoEnum: TryFrom<i32> + Copy + Default + Into<i32> + Send + Sync {
   }
 }
 
+/// Trait for enums with a protobuf representation.
+///
+/// It provides methods that enables the generation of the protobuf schema representation for an enum.
+///
+/// Implemented by the [`proto_enum`] macro.
 pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
   fn proto_path() -> ProtoPath;
   fn proto_schema() -> EnumSchema;
@@ -34,6 +47,7 @@ pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
   }
 }
 
+/// A struct representing a protobuf enum.
 #[derive(Debug, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "enum.proto.j2"))]
@@ -50,6 +64,7 @@ pub struct EnumSchema {
   pub rust_path: FixedStr,
 }
 
+/// A struct representing a protobuf enum variant.
 #[derive(Debug, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EnumVariant {

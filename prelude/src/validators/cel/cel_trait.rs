@@ -37,6 +37,9 @@ where
   }
 }
 
+/// A trait that enables conversion into [`cel::Value`](::cel::Value).
+///
+/// Implemented by the [`proto_message`] macro.
 #[cfg(feature = "cel")]
 pub trait CelValue: Clone + TryInto<::cel::Value, Error = CelConversionError> {
   #[inline]
@@ -45,6 +48,9 @@ pub trait CelValue: Clone + TryInto<::cel::Value, Error = CelConversionError> {
   }
 }
 
+/// A trait that enables conversion into [`cel::Value`](::cel::Value).
+///
+/// Implemented by the [`proto_oneof`] macro.
 #[cfg(feature = "cel")]
 pub trait CelOneof: Sized + TryInto<::cel::Value, Error = CelConversionError> {
   fn try_into_cel(self) -> Result<(String, ::cel::Value), CelConversionError>;

@@ -1,5 +1,6 @@
 use crate::{validators::CelRule, *};
 
+/// Implemented for proxied messages by the [`proto_message`] macro.
 pub trait ProxiedMessage: From<Self::Proxy> + Into<Self::Proxy> {
   type Proxy: MessageProxy<Message = Self> + From<Self> + Into<Self>;
 
@@ -9,6 +10,7 @@ pub trait ProxiedMessage: From<Self::Proxy> + Into<Self::Proxy> {
   }
 }
 
+/// Implemented for message proxies by the [`proto_message`] macro.
 pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   type Message: ProtoMessage + ValidatedMessage + From<Self> + Into<Self>;
 
@@ -17,6 +19,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
     self.into()
   }
 
+  /// Consumes the proxy and converts into the related message, and then validates the result.
   #[inline]
   fn into_validated_message(self) -> Result<Self::Message, ValidationErrors> {
     let msg = self.into_message();
@@ -27,6 +30,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
     }
   }
 
+  /// Validates the message, and converts to the proxy if the validation is successful.
   #[inline]
   fn from_validated_message(msg: Self::Message) -> Result<Self, ValidationErrors> {
     match msg.validate() {
@@ -36,21 +40,34 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   }
 }
 
+/// A trait that returns the protobuf path of a given message.
+///
+/// It must be implemented for the targets of the enums annotated with the [`proto_service`] macro.
 pub trait MessagePath {
   fn proto_path() -> ProtoPath;
 }
 
+/// A trait that is responsible for generating a protobuf schema representation for a rust struct.
+///
+/// Implemented by the [`proto_message`] macro.
 pub trait ProtoMessage: Default + MessagePath {
+  /// The package to which this message belongs.
   const PACKAGE: &str;
+  /// The short name of the message. It excludes the names of the parent message and package.
   const SHORT_NAME: &str;
 
+  /// Returns the protobuf schema representation.
   fn proto_schema() -> MessageSchema;
 
+  /// Returns the name of the message, with the name of the parent message if there is one (i.e. "ParentMessage.ChildMessage").
   fn proto_name() -> &'static str;
+  /// Returns the full name of the message, which includes the name of the ancestor messages (if there are any) and the package to which it belongs (i.e. "package.Parent.Child").
   fn full_name() -> &'static str;
+  /// Returns the type url for this type, which is the full name preceded by a '/'.
   fn type_url() -> &'static str;
 }
 
+/// A struct that represents a protobuf message.
 #[derive(Debug, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "message.proto.j2"))]
@@ -86,6 +103,7 @@ impl MessageSchema {
       .collect()
   }
 
+  /// Returns an iterator that flattens the fields of the message and those contained in its oneofs.
   pub fn fields(&self) -> impl Iterator<Item = &Field> {
     self.entries.iter().flat_map(|entry| {
       let (field_opt, oneof_vec) = match entry {
@@ -99,12 +117,14 @@ impl MessageSchema {
     })
   }
 
+  /// Adds one or more nested [`MessageSchema`]s to this message.
   #[must_use]
   pub fn with_nested_messages(mut self, messages: impl IntoIterator<Item = Self>) -> Self {
     self.messages.extend(messages);
     self
   }
 
+  /// Adds one or more nested [`EnumSchema`]s to this message.
   #[must_use]
   pub fn with_nested_enums(mut self, enums: impl IntoIterator<Item = EnumSchema>) -> Self {
     self.enums.extend(enums);
@@ -112,6 +132,7 @@ impl MessageSchema {
   }
 }
 
+/// An entry in a message, which can be a field or a oneof containing several fields.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum MessageEntry {
@@ -149,6 +170,7 @@ impl MessageEntry {
     matches!(self, Self::Oneof { .. })
   }
 
+  /// Attempts to match the enum to a [`Field`] instance.
   #[must_use]
   pub const fn as_field(&self) -> Option<&Field> {
     if let Self::Field(v) = self {
@@ -158,6 +180,7 @@ impl MessageEntry {
     }
   }
 
+  /// Attempts to match the enum to a [`Oneof`] instance.
   #[must_use]
   pub const fn as_oneof(&self) -> Option<&Oneof> {
     if let Self::Oneof(v) = self {

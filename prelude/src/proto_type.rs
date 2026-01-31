@@ -1,10 +1,17 @@
 use crate::*;
 use proto_types::field_descriptor_proto::Type as DescriptorType;
 
+/// A trait that specifies the protobuf type to which a rust type should be mapped.
+///
+/// Automatically implemented for all primitive types, as well as the targets of the [`proto_message`], [`proto_oneof`] and [`proto_enum`] macros, and all the types exported from the [`proto-types`](crate::proto_types) crate.
 pub trait AsProtoType {
+  /// The protobuf type to which this rust type should be mapped.
   fn proto_type() -> ProtoType;
 }
 
+/// A trait that specifies the protobuf field type to which a rust type should be mapped (i.e. single, optional, repeated, map).
+///
+/// Automatically implemented for the types that implement [`AsProtoType`].
 pub trait AsProtoField {
   fn as_proto_field() -> FieldType;
 }
@@ -32,6 +39,7 @@ impl<T: AsProtoType> AsProtoField for T {
   }
 }
 
+/// The types in which a protobuf field can be represented.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FieldType {
@@ -46,12 +54,15 @@ pub enum FieldType {
 
 pub(crate) struct Sealed;
 
+/// A trait that defines the kind of protobuf map key that a rust type maps to.
 pub trait AsProtoMapKey {
   fn as_proto_map_key() -> ProtoMapKey;
+
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 }
 
+/// An enum representing the types that are supported as map keys in protobuf.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ProtoMapKey {
@@ -70,6 +81,7 @@ pub enum ProtoMapKey {
 }
 
 impl ProtoMapKey {
+  /// Converts to [`ProtoType`].
   #[must_use]
   pub fn into_type(self) -> ProtoType {
     self.into()
@@ -120,6 +132,7 @@ impl Display for ProtoMapKey {
   }
 }
 
+/// An enum representing the scalar types in protobuf.
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ProtoScalar {
@@ -185,6 +198,7 @@ impl Display for ProtoScalar {
   }
 }
 
+/// An enum representing a protobuf type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ProtoType {
@@ -295,6 +309,7 @@ impl ProtoPath {
   }
 }
 
+/// A struct that represents a path to an item (message or enum) in a protobuf package.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ProtoPath {

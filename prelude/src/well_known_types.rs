@@ -37,6 +37,7 @@ pub struct NoOpValidator<T: ?Sized>(PhantomData<T>);
 impl<T: ?Sized + Send + Sync + ToOwned> Validator<T> for NoOpValidator<T> {
   type Target = T;
 
+  #[doc(hidden)]
   #[inline(always)]
   fn validate_core<V>(&self, _ctx: &mut ValidationCtx, _val: Option<&V>) -> ValidationResult
   where
@@ -50,6 +51,7 @@ impl<T: ?Sized + Send + Sync + ToOwned> Validator<T> for NoOpValidator<T> {
 pub struct NoOpValidatorBuilder<T: ?Sized>(PhantomData<T>);
 
 impl<T: ?Sized> Default for NoOpValidatorBuilder<T> {
+  #[inline(always)]
   fn default() -> Self {
     Self(Default::default())
   }
@@ -60,6 +62,7 @@ where
   T: ?Sized + Send + Sync + ToOwned,
 {
   type Validator = NoOpValidator<T>;
+  #[inline(always)]
   fn build_validator(self) -> Self::Validator {
     NoOpValidator(PhantomData)
   }
@@ -126,7 +129,7 @@ mod google_dot_type {
   );
 }
 
-#[cfg(feature = "common-types")]
+#[cfg(feature = "rpc-types")]
 mod rpc_types {
   use super::*;
   use proto_types::{

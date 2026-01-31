@@ -1,9 +1,13 @@
 use crate::*;
 
+/// A trait that enables the generation of a protobuf service schema.
+///
+/// Implemented by the enums annotated with the [`proto_service`] macro.
 pub trait ProtoService {
   fn proto_schema() -> Service;
 }
 
+/// A struct representing a protobuf service.
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "service.proto.j2"))]
@@ -24,6 +28,7 @@ impl Service {
   }
 }
 
+/// A struct that represents a protobuf service handler.
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ServiceHandler {

@@ -7,6 +7,8 @@ use proto_types::{Duration, Timestamp, protovalidate::Ignore};
 use crate::*;
 
 /// A struct representing a protobuf option.
+///
+/// The [`proto_option`] macro can be used to create them with a concise syntax.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ProtoOption {
