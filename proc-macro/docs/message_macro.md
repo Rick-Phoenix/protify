@@ -57,6 +57,18 @@ fn main() {
 
 ## Container attributes:
 
+- `file`
+    - Type: Ident
+    - Example: `#[proto(file = MY_FILE)]`
+    - Description:
+        Assigns a specific file to this item. By default, the `module_path` will be inherited from the target file, and can be overridden with the `module_path` attribute. For more info about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
+
+- `module_path`
+    - Type: literal string or [`module_path!`](core::module_path)
+    - Example: `#[proto(module_path = core::module_path!())]` or `#[proto(module_path = "module::path")]`
+    - Description:
+        Overrides the `module_path` for this item, which is otherwise inherited by the assigned proto file. For more info about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
+
 - `derive`
     - Type: list of Paths
     - Example: `#[proto(derive(Copy))]`

@@ -1,6 +1,8 @@
 Creates a new proto file schema, and brings it into scope for the items that are defined in the same module.
 
-A file must always be in scope for any given item definition (oneof, enum, message).
+A file must always be in scope for any given item definition (oneof, enum, message). This can be done by using this macro, the [`use_proto_file`](prelude::use_proto_file) and [`inherit_proto_file`](prelude::inherit_proto_file) macros, or by using the `file` attribute on enums or messages.
+
+For more information about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
 
 The first argument is the ident that will be used for the file handle, which will be a unit struct that implements [`FileSchema`](prelude::FileSchema).
 
@@ -85,9 +87,6 @@ use prelude::*;
 // We must also add the file manually
 proto_package!(MY_PKG, name = "my_pkg", files = [ MY_FILE ]);
 
-// NOTE: Even if we are adding these elements manually,
-// a file must still be in the module scope of where
-// the items are defined.
 define_proto_file!(
   MY_FILE, 
   name = "my_file.proto", 

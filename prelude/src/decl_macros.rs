@@ -146,6 +146,8 @@ macro_rules! length_rule_value {
 ///
 /// It **retains** the `extern_path` of the original file, so it should be used only if the items are meant to be re-exported by the module where the original file is defined.
 ///
+/// For more information about how to manage proto files, visit the [dedicated section](crate::guide::managing_files).
+///
 /// # Examples
 ///
 /// ```rust
@@ -198,6 +200,8 @@ macro_rules! inherit_proto_file {
 /// Brings a pre-defined proto file handle in scope so that it can be picked up by the proto items defined in the module where it's called.
 ///
 /// The items defined in the module where this is called will have the `extern_path` set to the output of `module_path!()`. For re-exported items that are meant to inherit the same path as the parent module, use the [`inherit_proto_file`] macro instead.
+///
+/// For more information about how to manage proto files, visit the [dedicated section](crate::guide::managing_files).
 ///
 /// # Examples
 ///

@@ -27,7 +27,7 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 Once a file is brought into scope, we can define the items that will be assigned to it.
 
-For more information on how to reuse the same file for different children of the same module, refer to the [`reusing_files`](crate::guide::reusing_files) section.
+For more information on how to reuse the same file for different modules, refer to the [`managing files`](crate::guide::managing_files) section.
 
 ```rust
 use prelude::*;

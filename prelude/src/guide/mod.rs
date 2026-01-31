@@ -21,4 +21,4 @@ doc_mod!(cel_validation);
 doc_mod!(roadmap);
 doc_mod!(limitations);
 doc_mod!(tips);
-doc_mod!(reusing_files);
+doc_mod!(managing_files);

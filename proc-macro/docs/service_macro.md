@@ -13,7 +13,10 @@ The target of a method must implement [`MessagePath`](prelude::MessagePath), whi
 use prelude::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
+
+// A file must be in scope to be picked up by the service schema
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+
 #[proto_message]
 pub struct User {
   pub id: i32,
