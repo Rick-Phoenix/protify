@@ -4,7 +4,8 @@ use once_cell::race::OnceBox;
 use crate::*;
 
 /// A lazy initializer, to use for static validators.
-/// It functions as a wrapper to [`OnceBox`](once_cell::race::OnceBox) that initializes at first deref like `LazyLock`.
+///
+/// It functions as a wrapper to [`OnceBox`](once_cell::race::OnceBox) that initializes at first deref like [`LazyLock`](std::sync::LazyLock).
 pub struct Lazy<T, F = fn() -> T> {
   cell: OnceBox<T>,
   init: F,

@@ -137,19 +137,15 @@ where
   f(input)
 }
 
-#[doc(hidden)]
-#[allow(clippy::wrong_self_convention)]
+/// Helper trait to convert a type to [`Bytes`].
+///
+/// It retains `& 'static` when possible, otherwise clones or allocates.
 pub trait IntoBytes {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed;
-
   fn into_bytes(self) -> Bytes;
 }
 
 impl<const N: usize> IntoBytes for &'static [u8; N] {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed = Sealed;
-
+  #[doc(hidden)]
   #[inline]
   fn into_bytes(self) -> Bytes {
     Bytes::from_static(self)
@@ -157,30 +153,24 @@ impl<const N: usize> IntoBytes for &'static [u8; N] {
 }
 
 impl IntoBytes for &'static [u8] {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed = Sealed;
-
   #[inline]
+  #[doc(hidden)]
   fn into_bytes(self) -> Bytes {
     Bytes::from_static(self)
   }
 }
 
 impl IntoBytes for Bytes {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed = Sealed;
-
   #[inline]
+  #[doc(hidden)]
   fn into_bytes(self) -> Bytes {
     self
   }
 }
 
 impl IntoBytes for &Bytes {
-  #[allow(private_interfaces)]
-  const SEALED: Sealed = Sealed;
-
   #[inline]
+  #[doc(hidden)]
   fn into_bytes(self) -> Bytes {
     self.clone()
   }
@@ -191,22 +181,16 @@ pub use regex_impls::*;
 
 #[cfg(feature = "regex")]
 mod regex_impls {
-  use super::*;
-
   use regex::Regex;
   use regex::bytes::Regex as BytesRegex;
 
+  /// Utility trait to create a [`Regex`].
   pub trait IntoRegex {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed;
-
     fn into_regex(self) -> Regex;
   }
 
   impl IntoRegex for &str {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed = Sealed;
-
+    #[doc(hidden)]
     #[track_caller]
     #[inline]
     fn into_regex(self) -> Regex {
@@ -215,35 +199,27 @@ mod regex_impls {
   }
 
   impl IntoRegex for Regex {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed = Sealed;
-
+    #[doc(hidden)]
     fn into_regex(self) -> Regex {
       self
     }
   }
 
   impl IntoRegex for &Regex {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed = Sealed;
-
+    #[doc(hidden)]
     #[inline]
     fn into_regex(self) -> Regex {
       self.clone()
     }
   }
 
+  /// Utility trait to create a [`Regex`](BytesRegex).
   pub trait IntoBytesRegex {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed;
-
     fn into_regex(self) -> BytesRegex;
   }
 
   impl IntoBytesRegex for &str {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed = Sealed;
-
+    #[doc(hidden)]
     #[track_caller]
     #[inline]
     fn into_regex(self) -> BytesRegex {
@@ -252,9 +228,7 @@ mod regex_impls {
   }
 
   impl IntoBytesRegex for BytesRegex {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed = Sealed;
-
+    #[doc(hidden)]
     #[inline]
     fn into_regex(self) -> BytesRegex {
       self
@@ -262,9 +236,7 @@ mod regex_impls {
   }
 
   impl IntoBytesRegex for &BytesRegex {
-    #[allow(private_interfaces)]
-    const SEALED: Sealed = Sealed;
-
+    #[doc(hidden)]
     #[inline]
     fn into_regex(self) -> BytesRegex {
       self.clone()
