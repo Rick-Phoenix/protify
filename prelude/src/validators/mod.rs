@@ -340,43 +340,77 @@ where
 /// Stores custom error messages in default validators.
 type ErrorMessages<T> = Box<BTreeMap<T, FixedStr>>;
 
-pub mod any;
-pub mod bool;
 mod builder_internals;
+use builder_internals::*;
+
+pub mod any;
+#[doc(hidden)]
+pub use any::*;
+
+pub mod bool;
+#[doc(hidden)]
+pub use bool::*;
+
 pub mod bytes;
+#[doc(hidden)]
+pub use bytes::*;
+
 mod cel;
+#[doc(hidden)]
+pub use cel::*;
+
 pub mod duration;
+#[doc(hidden)]
+pub use duration::*;
+
 pub mod enums;
-pub mod field_context;
+#[doc(hidden)]
+pub use enums::*;
+
+mod field_context;
+#[doc(hidden)]
+pub use field_context::*;
+
 pub mod map;
+#[doc(hidden)]
+pub use map::*;
+
 pub mod message;
+#[doc(hidden)]
+pub use message::*;
+
 pub mod repeated;
+#[doc(hidden)]
+pub use repeated::*;
+
 pub mod string;
+#[doc(hidden)]
+pub use string::*;
+
 pub mod timestamp;
+#[doc(hidden)]
+pub use timestamp::*;
 
 pub mod floats;
+#[doc(hidden)]
 pub use floats::*;
+
 pub mod integers;
+#[doc(hidden)]
 pub use integers::*;
+
 pub mod field_mask;
+#[doc(hidden)]
 pub use field_mask::*;
+
 pub mod lookup;
+#[doc(hidden)]
 pub use lookup::*;
+
 mod oneof;
+#[doc(hidden)]
 pub use oneof::*;
 
-pub use any::*;
-pub use bool::*;
-use builder_internals::*;
-pub use bytes::*;
-pub use cel::*;
-pub use duration::*;
-pub use enums::*;
-pub use field_context::*;
-pub use map::*;
-pub use message::*;
-pub use repeated::*;
-pub use string::*;
-pub use timestamp::*;
 mod violations;
+#[doc(hidden)]
 pub use violations::*;

@@ -33,11 +33,9 @@ pub use ::cel;
 mod decl_macros;
 
 use alloc::{borrow::Cow, borrow::ToOwned, collections::BTreeSet};
-use bool_enum::bool_enum;
-use core::borrow::Borrow;
-use core::fmt::{Debug, Display};
 use core::{
-  fmt::Write,
+  borrow::Borrow,
+  fmt::{Debug, Display, Write},
   hash::Hash,
   marker::{PhantomData, Sized},
   ops::Deref,
@@ -52,17 +50,20 @@ use std::collections::HashMap;
 
 #[cfg(feature = "std")]
 use askama::Template;
+use bool_enum::bool_enum;
 use float_eq::{FloatEq, float_eq};
+use ordered_float::{FloatCore, OrderedFloat};
+use owo_colors::OwoColorize;
+use paste::paste;
+use proc_macro_impls::impl_known_type;
+use thiserror::Error;
+
 #[doc(hidden)]
 #[cfg(feature = "inventory")]
 pub use inventory;
+
 #[doc(inline)]
 pub use macros::*;
-use ordered_float::{FloatCore, OrderedFloat};
-use owo_colors::OwoColorize;
-#[doc(hidden)]
-use paste::paste;
-use proc_macro_impls::impl_known_type;
 pub mod macros {
   #[doc(inline)]
   #[cfg(feature = "cel")]
@@ -78,43 +79,71 @@ pub mod macros {
     proto_message, proto_oneof, proto_package, proto_service,
   };
 }
+
 pub use proto_types;
 #[doc(inline)]
 pub use proto_types::protovalidate::{FieldPathElement, Violations};
-use thiserror::Error;
+
 mod oneof;
-mod options;
-pub mod validators;
+#[doc(hidden)]
+pub use oneof::*;
+
 #[cfg(not(feature = "std"))]
 use hashbrown::HashSet;
 #[cfg(feature = "std")]
 use std::collections::HashSet;
-mod field;
-mod file;
-mod package;
-mod proto_enum;
-mod proto_message;
-mod proto_type;
+
 mod rendering_utils;
-mod service;
-pub mod test_utils;
-#[doc(inline)]
-pub use test_utils::*;
-mod well_known_types;
-pub use field::*;
-pub use file::*;
-pub use oneof::*;
-pub use options::*;
-pub use package::*;
-pub use proto_enum::*;
-pub use proto_message::*;
-pub use proto_type::*;
 use rendering_utils::*;
+
+#[doc(hidden)]
+pub use field::*;
+mod field;
+
+mod proto_enum;
+#[doc(hidden)]
+pub use proto_enum::*;
+
+mod file;
+#[doc(hidden)]
+pub use file::*;
+
+mod package;
+#[doc(hidden)]
+pub use package::*;
+
+mod proto_type;
+#[doc(hidden)]
+pub use proto_type::*;
+
+mod service;
+#[doc(hidden)]
 pub use service::*;
+
+mod test_utils;
+#[doc(hidden)]
+pub use test_utils::*;
+
+mod options;
+#[doc(hidden)]
+pub use options::*;
+
+mod well_known_types;
+
+mod proto_message;
+#[doc(hidden)]
+pub use proto_message::*;
+
+pub mod validators;
+#[doc(hidden)]
 pub use validators::*;
+
 mod registry;
+#[doc(hidden)]
 pub use registry::*;
+
 mod extension;
+#[doc(hidden)]
 pub use extension::*;
 
 #[cfg(feature = "serde")]
