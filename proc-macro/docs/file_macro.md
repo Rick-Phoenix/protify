@@ -39,7 +39,7 @@ The other parameters are not positional and are as follows:
     - Type: Expr
     - Example: `define_proto_file!(MY_FILE, imports = vec![ "import1", "import2" ])`
     - Description:
-        Specifies the imports for the given file. In most occasions, the necessary imports will be added automatically so this should only be used as a fallback mechanism. It should resolve to an implementor of `IntoIterator` with the items being either `String`, `Arc<str>`, `Box<str>` or `&'static str`.
+        Specifies the imports for the given file. In most occasions, the necessary imports will be **added automatically** so this should only be used as a fallback mechanism. It should resolve to an implementor of `IntoIterator` with the items being either `String`, `Arc<str>`, `Box<str>` or `&'static str`.
 
 
 - `extensions`

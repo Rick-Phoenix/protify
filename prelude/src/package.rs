@@ -2,10 +2,18 @@ use hashbrown::hash_map::{Entry, HashMap};
 
 use crate::*;
 
+/// The trait that generates a [`Package`] instance.
+///
+/// Implemented by the unit struct created by the [`proto_package`] macro.
 pub trait PackageSchema {
   const NAME: &str;
   fn files() -> Vec<ProtoFile>;
 
+  /// Collects the contents of a [`Package`] and returns it.
+  ///
+  /// When the `inventory` feature is enabled, items are collected automatically, so this method works without any additional setup.
+  ///
+  /// When the feature is disabled (such as in a no_std scenario), some extra steps are needed. You can find out more about it in the [package setup](crate::guide::package_setup) section.
   #[must_use]
   #[track_caller]
   fn get_package() -> Package {
@@ -30,6 +38,7 @@ pub trait PackageSchema {
   }
 }
 
+/// A struct representing a protobuf package.
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Package {
@@ -74,6 +83,28 @@ fn insert_enum_extern_path(enum_: &EnumSchema, entries: &mut Vec<(String, String
 }
 
 impl Package {
+  /// This method returns a list of tuples where the first element is the fully qualified name of the protobuf element (enum or message), and the second is its rust path.
+  ///
+  /// It is meant to be used when setting up [`tonic_prost_build`]. For more information, visit the [`usage with tonic`](crate::guide::usage_with_tonic) section.
+  ///
+  /// # Example
+  /// ```
+  /// use prelude::*;
+  ///
+  /// use tonic_prost_build::Config;
+  ///
+  /// // This would be defined in a separate crate
+  /// proto_package!(MY_PKG, name = "my_pkg");
+  ///
+  /// // In the `build.rs` file of the consuming crate
+  /// let mut config = Config::new();
+  ///
+  /// // Now all the items in this package will be imported directly from their
+  /// // crate of origin, and not generated from their protos
+  /// for (name, path) in MY_PKG::get_package().extern_paths() {
+  ///   config.extern_path(name, path);
+  /// }
+  /// ```
   #[must_use]
   pub fn extern_paths(&self) -> Vec<(String, String)> {
     let mut entries = Vec::new();
@@ -91,6 +122,8 @@ impl Package {
     entries
   }
 
+  /// Renders the files that belong to this [`Package`], starting from the output root
+  /// given as the only argument.
   #[cfg(feature = "std")]
   pub fn render_files<P>(&self, output_root: P) -> std::io::Result<()>
   where
@@ -111,6 +144,7 @@ impl Package {
     Ok(())
   }
 
+  /// Creates a new instance.
   #[must_use]
   pub fn new(name: impl Into<FixedStr>) -> Self {
     Self {
@@ -119,11 +153,13 @@ impl Package {
     }
   }
 
+  /// Extracts a file schema from this package.
   #[must_use]
   pub fn get_file(&self, name: &str) -> Option<&ProtoFile> {
     self.files.iter().find(|f| f.name == name)
   }
 
+  /// Adds the given files to this package.
   #[must_use]
   pub fn with_files(mut self, files: impl IntoIterator<Item = ProtoFile>) -> Self {
     self.files.extend(files.into_iter().map(|mut f| {
@@ -133,6 +169,7 @@ impl Package {
     self
   }
 
+  /// Verifies that this package doesn't contain CEL rules with the same ID in the scope of the same message.
   #[cfg(feature = "cel")]
   pub fn check_unique_cel_rules(self) -> Result<(), String> {
     for mut message in self.files.into_iter().flat_map(|f| f.messages) {

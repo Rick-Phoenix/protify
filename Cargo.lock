@@ -1454,6 +1454,7 @@ dependencies = [
  "similar-asserts",
  "thiserror 2.0.17",
  "tonic",
+ "tonic-prost-build",
 ]
 
 [[package]]

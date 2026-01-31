@@ -17,6 +17,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dev-dependencies]
 builder = { path = "../builder" }
 maplit = "1"
+tonic-prost-build = { workspace = true }
 
 [dependencies]
 bool-enum = { workspace = true }
