@@ -11,6 +11,13 @@ members = [
 ]
 resolver = "3"
 
+[profile.dev]
+debug = 1
+
+[profile.dev.package."*"]
+opt-level = 1
+debug = false
+
 [workspace.package]
 edition = "2024"
 license = "MPL-2.0"
