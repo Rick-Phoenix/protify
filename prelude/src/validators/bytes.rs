@@ -121,7 +121,7 @@ impl PartialEq for BytesValidator {
 }
 
 impl BytesValidator {
-  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&Bytes>) -> ValidationResult {
+  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&[u8]>) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
 
@@ -148,7 +148,7 @@ impl BytesValidator {
 
     if let Some(val) = val {
       if let Some(const_val) = &self.const_ {
-        if *val != const_val {
+        if *val != *const_val {
           handle_violation!(
             Const,
             format!("must be equal to {}", const_val.escape_ascii())
@@ -247,7 +247,7 @@ impl BytesValidator {
       }
 
       if let Some(well_known) = &self.well_known {
-        let byte_str = core::str::from_utf8(val.as_ref()).unwrap_or("");
+        let byte_str = core::str::from_utf8(val).unwrap_or("");
 
         match well_known {
           #[cfg(feature = "regex")]
@@ -304,7 +304,7 @@ impl BytesValidator {
 }
 
 impl Validator<Bytes> for BytesValidator {
-  type Target = Bytes;
+  type Target = [u8];
 
   #[inline(never)]
   #[cold]
@@ -401,18 +401,21 @@ impl Validator<Bytes> for BytesValidator {
   #[inline(never)]
   #[cold]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-    self.check_cel_programs_with(Bytes::default())
+    self.check_cel_programs_with(vec![])
   }
 
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
-  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+  fn check_cel_programs_with(
+    &self,
+    val: <Self::Target as ToOwned>::Owned,
+  ) -> Result<(), Vec<CelError>> {
     if self.cel.is_empty() {
       Ok(())
     } else {
       // This one needs a special impl because Bytes does not support Into<Value>
-      test_programs(&self.cel, val.to_vec())
+      test_programs(&self.cel, val)
     }
   }
 

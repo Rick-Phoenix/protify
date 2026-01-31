@@ -14,7 +14,7 @@ pub struct BytesValidatorBuilder<S: State = Empty> {
 
 impl ProtoValidation for Bytes {
   #[doc(hidden)]
-  type Target = Self;
+  type Target = [u8];
   #[doc(hidden)]
   type Stored = Self;
   type Validator = BytesValidator;
@@ -22,7 +22,7 @@ impl ProtoValidation for Bytes {
 
   #[doc(hidden)]
   type UniqueStore<'a>
-    = RefHybridStore<'a, Self>
+    = RefHybridStore<'a, [u8]>
   where
     Self: 'a;
 

@@ -145,7 +145,7 @@ impl ProtoType {
     match self {
       Self::String => quote_spanned! {span=> String },
       Self::Bool => quote_spanned! {span=> bool },
-      Self::Bytes => quote_spanned! {span=> ::bytes::Bytes },
+      Self::Bytes => quote_spanned! {span=> ::prelude::Bytes },
       Self::Enum(path) | Self::Message(MessageInfo { path, .. }) => path.to_token_stream(),
       Self::Int32 => quote_spanned! {span=> i32 },
       Self::Sint32 => quote_spanned! {span=> ::prelude::Sint32 },
@@ -223,7 +223,7 @@ impl ProtoType {
     match self {
       Self::String => quote_spanned! {span=> String },
       Self::Bool => quote_spanned! {span=> bool },
-      Self::Bytes => quote_spanned! {span=> ::bytes::Bytes },
+      Self::Bytes => quote_spanned! {span=> ::prelude::Bytes },
       Self::Enum(path) | Self::Message(MessageInfo { path, .. }) => path.to_token_stream(),
       Self::Int32 => quote_spanned! {span=> i32 },
       Self::Sint32 => quote_spanned! {span=> ::prelude::Sint32 },
@@ -276,7 +276,7 @@ impl ProtoType {
     match self {
       Self::String => quote_spanned! {span=> String },
       Self::Bool => quote_spanned! {span=> bool },
-      Self::Bytes => quote_spanned! {span=> ::bytes::Bytes },
+      Self::Bytes => quote_spanned! {span=> ::prelude::Bytes },
       Self::Enum(_) | Self::Int32 | Self::Sint32 | Self::Sfixed32 => quote_spanned! {span=> i32 },
       Self::Message(MessageInfo { boxed, path, .. }) => {
         if *boxed {
