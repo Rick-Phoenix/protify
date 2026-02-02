@@ -302,7 +302,8 @@ pub trait MaybeSerde {}
 #[cfg(not(feature = "serde"))]
 impl<T> MaybeSerde for T {}
 
-#[inline]
+#[inline(never)]
+#[cold]
 #[doc(hidden)]
 pub fn filter_validators(
   validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
@@ -310,7 +311,8 @@ pub fn filter_validators(
   validators.into_iter().flatten()
 }
 
-#[inline]
+#[inline(never)]
+#[cold]
 #[doc(hidden)]
 pub fn collect_validators(
   validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
@@ -330,3 +332,19 @@ pub static DEFAULT_REQUIRED_ONEOF_VALIDATOR: Lazy<OneofValidator> = Lazy::new(||
   required: true,
   error_message: None,
 });
+
+#[inline(never)]
+#[cold]
+#[doc(hidden)]
+pub fn collect_options<I>(options: I, deprecated: bool) -> Vec<ProtoOption>
+where
+  I: IntoIterator<Item = ProtoOption>,
+{
+  let mut output: Vec<ProtoOption> = options.into_iter().collect();
+
+  if deprecated {
+    output.push(proto_deprecated());
+  }
+
+  output
+}

@@ -62,7 +62,7 @@ pub fn process_message_attrs(
 ) -> Result<MessageAttrs, Error> {
   let mut reserved_names: Vec<String> = Vec::new();
   let mut reserved_numbers = ReservedNumbers::default();
-  let mut options = TokensOr::<TokenStream2>::vec();
+  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
   let mut proto_name: Option<ParsedStr> = None;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;

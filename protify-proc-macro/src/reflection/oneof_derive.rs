@@ -111,7 +111,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
         field_desc.number().cast_signed(),
       )),
       validators: Validators::from_single(validator),
-      options: TokenStreamOr::vec(),
+      options: TokensOr::<TokenStream2>::new(|_| quote! { [] }),
       proto_field,
       from_proto: None,
       into_proto: None,

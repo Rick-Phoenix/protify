@@ -26,21 +26,3 @@ pub fn wrap_with_imports(tokens: &TokenStream2) -> TokenStream2 {
 pub fn wrap_multiple_with_imports(tokens: &[TokenStream2]) -> TokenStream2 {
   wrap_with_imports(&quote! { #(#tokens)* })
 }
-
-pub fn options_tokens(
-  span: Span,
-  options: &TokensOr<TokenStream2>,
-  deprecated: bool,
-) -> TokenStream2 {
-  if deprecated {
-    quote_spanned! {span=>
-      {
-        let mut options: Vec<::protify::ProtoOption> = #options;
-        options.push(::protify::proto_deprecated());
-        options
-      }
-    }
-  } else {
-    options.to_token_stream()
-  }
-}

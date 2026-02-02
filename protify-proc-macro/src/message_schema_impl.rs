@@ -36,13 +36,11 @@ pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
   } else {
     let field_type_tokens = proto_field.proto_field_target_type(*span);
 
-    let options_tokens = options_tokens(*span, options, *deprecated);
-
     quote_spanned! {*span=>
       ::protify::Field {
         name: #proto_name.into(),
         tag: #tag,
-        options: #options_tokens.into_iter().collect(),
+        options: ::protify::collect_options(#options, #deprecated),
         type_: #field_type_tokens,
         validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
       }
@@ -110,8 +108,6 @@ impl MessageCtx<'_> {
     };
 
     let rust_ident_str = proto_struct.to_string();
-
-    let options_tokens = options_tokens(Span::call_site(), message_options, *deprecated);
 
     let proxy_struct_impl = self
       .shadow_struct_ident
@@ -226,7 +222,7 @@ impl MessageCtx<'_> {
             package: #package.into(),
             reserved_names: vec![ #(#reserved_names.into()),* ],
             reserved_numbers: #reserved_numbers,
-            options: #options_tokens.into_iter().collect(),
+            options: ::protify::collect_options(#message_options, #deprecated),
             messages: vec![],
             enums: vec![],
             entries: vec![ #entries_tokens ],

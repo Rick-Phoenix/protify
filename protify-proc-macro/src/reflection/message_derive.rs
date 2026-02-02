@@ -126,7 +126,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
           validators: validator_expr
             .map(|v| Validators::from_single(v))
             .unwrap_or_default(),
-          options: TokensOr::<TokenStream2>::vec(),
+          options: TokensOr::<TokenStream2>::new(|_| quote! { [] }),
           proto_field,
           from_proto: None,
           into_proto: None,
@@ -175,7 +175,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
           span: Span::call_site(),
         }),
         validators: Validators::from_single(validator),
-        options: TokensOr::<TokenStream2>::vec(),
+        options: TokensOr::<TokenStream2>::new(|_| quote! { [] }),
         proto_field,
         from_proto: None,
         into_proto: None,

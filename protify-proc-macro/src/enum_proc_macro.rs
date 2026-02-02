@@ -158,10 +158,8 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
       ..
     } = var;
 
-    let options_tokens = options_tokens(*span, options, *deprecated);
-
     quote_spanned! {*span=>
-      ::protify::EnumVariant { name: #name.into(), options: #options_tokens.into_iter().collect(), tag: #tag, }
+      ::protify::EnumVariant { name: #name.into(), options: ::protify::collect_options(#options, #deprecated), tag: #tag, }
     }
   });
 
@@ -231,8 +229,6 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
   };
 
   let first_variant_ident = &variants_data.first().as_ref().unwrap().ident;
-
-  let options_tokens = options_tokens(Span::call_site(), &enum_options, deprecated);
 
   let file_name = if let Some(ident) = &file {
     quote! { <#ident as ::protify::FileSchema>::NAME }
@@ -353,7 +349,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
           variants: ::protify::vec! [ #variants_tokens ],
           reserved_names: ::protify::vec![ #(#reserved_names.into()),* ],
           reserved_numbers: #reserved_numbers,
-          options: #options_tokens.into_iter().collect(),
+          options: ::protify::collect_options(#enum_options, #deprecated),
           rust_path:  ::protify::format!("::{}::{}", #module_path, #rust_ident_str).into()
         }
       }

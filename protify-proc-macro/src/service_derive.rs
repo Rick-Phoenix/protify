@@ -92,19 +92,15 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
       span,
     } = data;
 
-    let options_tokens = options_tokens(*span, options, *deprecated);
-
     quote_spanned! {*span=>
       ::protify::ServiceHandler {
         name: #name.into(),
         request: <#request as ::protify::MessagePath>::proto_path(),
         response: <#response as ::protify::MessagePath>::proto_path(),
-        options: #options_tokens.into_iter().collect()
+        options: ::protify::collect_options(#options, #deprecated)
       }
     }
   });
-
-  let options_tokens = options_tokens(Span::call_site(), &service_options, deprecated);
 
   Ok(quote! {
     #[derive(::protify::macros::Service)]
@@ -124,7 +120,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
           file: __PROTO_FILE.name.into(),
           package: __PROTO_FILE.package.into(),
           handlers: ::protify::vec![ #(#handlers_tokens),* ],
-          options: #options_tokens.into_iter().collect()
+          options: ::protify::collect_options(#service_options, #deprecated)
         }
       }
     }

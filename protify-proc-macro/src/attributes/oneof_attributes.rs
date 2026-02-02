@@ -47,7 +47,7 @@ pub fn process_oneof_attrs(
   macro_attrs: OneofMacroAttrs,
   attrs: &[Attribute],
 ) -> Result<OneofAttrs, Error> {
-  let mut options = TokensOr::<TokenStream2>::vec();
+  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
   let mut name: Option<String> = None;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;

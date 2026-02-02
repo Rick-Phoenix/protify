@@ -67,7 +67,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
 
   let mut validators = Validators::default();
   let mut tag: Option<ParsedNum> = None;
-  let mut options = TokensOr::<TokenStream2>::vec();
+  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
   let mut name: Option<String> = None;
   let mut proto_field: Option<ProtoField> = None;
   let mut is_ignored = false;
