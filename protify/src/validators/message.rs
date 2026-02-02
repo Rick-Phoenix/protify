@@ -4,6 +4,11 @@ pub use builder::MessageValidatorBuilder;
 use super::*;
 
 pub trait ValidatedMessage: ProtoValidation + Default + Clone {
+  /// Executes validation on this message, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any.
+  ///
+  /// Unlike the [`validate`](ValidatedMessage::validate) method, it sets `fail_fast` to `false`, so that
+  /// validation will continue even if a violation has already been found.
   #[inline]
   fn validate_all(&self) -> Result<(), ValidationErrors> {
     if !Self::HAS_DEFAULT_VALIDATOR {
@@ -26,6 +31,10 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
     }
   }
 
+  /// Executes validation on this message, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any.
+  ///
+  /// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
   #[inline]
   fn validate(&self) -> Result<(), ValidationErrors> {
     if !Self::HAS_DEFAULT_VALIDATOR {
@@ -43,6 +52,10 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
     }
   }
 
+  /// Executes validation on this message, triggering the validators that have been assigned to it
+  /// via macro attributes, and returns `true` if the validation was successful.
+  ///
+  /// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
   #[inline]
   fn is_valid(&self) -> bool {
     if Self::HAS_DEFAULT_VALIDATOR {
@@ -52,6 +65,10 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
     }
   }
 
+  /// Executes validation on this message, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any, and returns the value if validation was successful.
+  ///
+  /// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
   #[inline]
   fn validated(self) -> Result<Self, ValidationErrors> {
     if !Self::HAS_DEFAULT_VALIDATOR {
@@ -64,6 +81,8 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
     }
   }
 
+  /// Executes validation on this message, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any.
   fn validate_with_ctx(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 
@@ -102,6 +121,7 @@ where
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
   }
+
   #[doc(hidden)]
   fn cel_rules(&self) -> Vec<CelRule> {
     self
