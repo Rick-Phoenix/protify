@@ -2,14 +2,14 @@ gen-readme:
     cargo run -p gen-readme
 
 check-asm-output:
-    cargo asm --release -p testing --test code_elimination trigger_validation
+    cargo asm --release -p protify --test code_elimination trigger_validation
 
 [working-directory(".")]
 test-all: test-shared-schemas test-schemas test-no-std test-proc-macro test-code-elimination
     cargo test -p protify -- --nocapture
 
 test-code-elimination:
-    cargo test -p testing --release code_elimination
+    cargo test -p protify --release code_elimination
 
 test-proc-macro:
     cargo test -p protify-proc-macro -- --nocapture
@@ -19,7 +19,6 @@ test-no-std:
     cargo test -p test-no-std -- --nocapture
 
 test-schemas:
-    cargo test -p testing -- --nocapture
     cargo test -p test-schemas -- --nocapture
 
 test-shared-schemas: gen-schemas
@@ -34,7 +33,7 @@ expand-reflection: gen-schemas
     cargo expand --features reflection -p test-reflection > expanded.rs
 
 test-renders:
-    cargo test -p testing rendering_test -- -q --nocapture
+    cargo test -p test-schemas rendering_test -- -q --nocapture
 
 update-changelog version:
     git cliff --tag {{ version }}

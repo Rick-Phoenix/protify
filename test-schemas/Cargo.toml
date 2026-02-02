@@ -13,6 +13,7 @@ similar-asserts = { workspace = true }
 [dependencies]
 maplit = "1"
 protify = { path = "../protify/", features = ["common-types", "rpc-types"] }
+protify-proc-macro = { path = "../protify-proc-macro" }
 prost = { workspace = true, features = ["std"] }
 paste = "1"
 bytes = { workspace = true }

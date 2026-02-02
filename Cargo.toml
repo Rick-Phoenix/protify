@@ -5,7 +5,6 @@ members = [
   "protify-proc-macro",
   "test-reflection",
   "test-server",
-  "testing",
   "protify-build",
   "no-std-models",
   "test-no-std",

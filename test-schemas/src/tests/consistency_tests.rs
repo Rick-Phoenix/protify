@@ -1,4 +1,5 @@
-use super::*;
+use super::assert_eq_pretty;
+use crate::*;
 
 #[test]
 fn bad_field_rules() {
