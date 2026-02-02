@@ -100,8 +100,8 @@ pub fn generate_validators_consistency_checks(
       #[allow(unused)]
       #[track_caller]
       pub fn check_validators() -> Result<(), ::protify::TestError> {
-        let mut field_errors: Vec<::protify::FieldError> = Vec::new();
-        let mut top_level_errors: Vec<::protify::ConsistencyError> = Vec::new();
+        let mut field_errors: ::protify::Vec<::protify::FieldError> = ::protify::Vec::new();
+        let mut top_level_errors: ::protify::Vec<::protify::ConsistencyError> = ::protify::Vec::new();
 
         #(#consistency_checks)*
 

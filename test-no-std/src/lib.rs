@@ -1,3 +1,7 @@
+#![no_std]
+
+extern crate alloc;
+
 #[cfg(feature = "reflection")]
 mod proto {
   include!(concat!(env!("OUT_DIR"), "/no_std_models.rs"));
@@ -6,7 +10,6 @@ mod proto {
 #[allow(clippy::redundant_clone)]
 #[cfg(test)]
 mod test {
-  use maplit::btreemap;
   use protify::ValidatedMessage;
 
   #[cfg(feature = "reflection")]
@@ -14,6 +17,20 @@ mod test {
 
   #[cfg(not(feature = "reflection"))]
   use no_std_models::*;
+
+  macro_rules! btreemap {
+  ($($key:expr => $val:expr),*) => {
+		{
+			let mut map = alloc::collections::BTreeMap::new();
+
+			$(
+				map.insert($key, $val);
+			)*
+
+			map
+		}
+	};
+}
 
   #[test]
   fn name() {
