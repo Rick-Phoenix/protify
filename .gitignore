@@ -1,5 +1,4 @@
 **/target/*
-*.proto
 expanded.rs
 
 docs/book

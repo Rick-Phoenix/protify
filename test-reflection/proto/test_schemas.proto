@@ -1,0 +1,2483 @@
+syntax = "proto3";
+
+package test_schemas.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "google/rpc/code.proto";
+import "google/rpc/error_details.proto";
+import "google/rpc/http.proto";
+import "google/rpc/status.proto";
+import "google/type/calendar_period.proto";
+import "google/type/color.proto";
+import "google/type/date.proto";
+import "google/type/datetime.proto";
+import "google/type/dayofweek.proto";
+import "google/type/decimal.proto";
+import "google/type/expr.proto";
+import "google/type/fraction.proto";
+import "google/type/interval.proto";
+import "google/type/latlng.proto";
+import "google/type/localized_text.proto";
+import "google/type/money.proto";
+import "google/type/month.proto";
+import "google/type/phone_number.proto";
+import "google/type/postal_address.proto";
+import "google/type/quaternion.proto";
+import "google/type/timeofday.proto";
+
+
+enum DummyEnum {
+  DUMMY_ENUM_A = 0;
+  DUMMY_ENUM_B = 1;
+  DUMMY_ENUM_C = 2;
+}
+
+enum TestEnum {
+  TEST_ENUM_UNSPECIFIED = 0;
+  TEST_ENUM_ONE = 1;
+  TEST_ENUM_TWO = 2;
+}
+
+message AnyRules {
+  google.protobuf.Any in_test = 1 [
+    (buf.validate.field) = {
+      any: {
+        in: [
+          "/type_url"
+        ]
+      }
+    }
+  ];
+  google.protobuf.Any not_in_test = 2 [
+    (buf.validate.field) = {
+      any: {
+        not_in: [
+          "/type_url"
+        ]
+      }
+    }
+  ];
+  google.protobuf.Any cel_test = 3 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this.value == b'a'"
+        }
+      ]
+    }
+  ];
+  google.protobuf.Any required_test = 4 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  google.protobuf.Any ignore_always_test = 5 [
+    (buf.validate.field) = {
+      any: {
+        not_in: [
+          "/type_url"
+        ]
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message BTreeMapTest {
+  map<int32, int32> map = 1 [
+    (buf.validate.field) = {
+      map: {
+        min_pairs: 1, 
+        max_pairs: 2
+      }
+    }
+  ];
+}
+
+message BadCelOneofTest {
+  oneof bad_cel_oneof {
+    int32 id = 1 [
+      (buf.validate.field) = {
+        cel: [
+          {
+            id: "abc", 
+            message: "hi", 
+            expression: "hi"
+          }
+        ]
+      }
+    ];
+    string name = 2;
+  }
+}
+
+message BadFieldRules {
+  int32 id = 1 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "abc", 
+          message: "hi", 
+          expression: "hi"
+        }
+      ]
+    }
+  ];
+}
+
+message BadMsgRules {
+  option (buf.validate.message) = {
+    cel: [
+      {
+        id: "abc", 
+        message: "hi", 
+        expression: "hi"
+      }
+    ]
+  };
+
+  int32 id = 1;
+}
+
+message BoolRules {
+  bool const_test = 1 [
+    (buf.validate.field) = {
+      bool: {
+        const: true
+      }
+    }
+  ];
+  optional bool required_test = 2 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  optional bool ignore_if_zero_value_test = 3 [
+    (buf.validate.field) = {
+      bool: {
+        const: true
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  bool ignore_always_test = 4 [
+    (buf.validate.field) = {
+      bool: {
+        const: true
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message BoxedMsg {
+  BoxedMsg msg = 1;
+  int32 id = 2 [
+    (buf.validate.field) = {
+      int32: {
+        const: 1
+      }
+    }
+  ];
+}
+
+message BytesRules {
+  bytes const_test = 1 [
+    (buf.validate.field) = {
+      bytes: {
+        const: "a"
+      }
+    }
+  ];
+  bytes len_test = 2 [
+    (buf.validate.field) = {
+      bytes: {
+        len: 1
+      }
+    }
+  ];
+  bytes min_len_test = 3 [
+    (buf.validate.field) = {
+      bytes: {
+        min_len: 1
+      }
+    }
+  ];
+  bytes max_len_test = 4 [
+    (buf.validate.field) = {
+      bytes: {
+        max_len: 1
+      }
+    }
+  ];
+  bytes pattern_test = 5 [
+    (buf.validate.field) = {
+      bytes: {
+        pattern: "a"
+      }
+    }
+  ];
+  bytes prefix_test = 6 [
+    (buf.validate.field) = {
+      bytes: {
+        prefix: "a"
+      }
+    }
+  ];
+  bytes suffix_test = 7 [
+    (buf.validate.field) = {
+      bytes: {
+        suffix: "a"
+      }
+    }
+  ];
+  bytes contains_test = 8 [
+    (buf.validate.field) = {
+      bytes: {
+        contains: "a"
+      }
+    }
+  ];
+  bytes ip_test = 9 [
+    (buf.validate.field) = {
+      bytes: {
+        ip: true
+      }
+    }
+  ];
+  bytes ipv4_test = 10 [
+    (buf.validate.field) = {
+      bytes: {
+        ipv4: true
+      }
+    }
+  ];
+  bytes ipv6_test = 11 [
+    (buf.validate.field) = {
+      bytes: {
+        ipv6: true
+      }
+    }
+  ];
+  bytes uuid_test = 12 [
+    (buf.validate.field) = {
+      bytes: {
+        uuid: true
+      }
+    }
+  ];
+  bytes cel_test = 13 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this == b'a'"
+        }
+      ]
+    }
+  ];
+  optional bytes required_test = 14 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  optional bytes ignore_if_zero_value_test = 15 [
+    (buf.validate.field) = {
+      bytes: {
+        const: "a"
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  bytes ignore_always_test = 16 [
+    (buf.validate.field) = {
+      bytes: {
+        const: "b"
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message CommonEnums {
+  google.rpc.Code code = 1;
+  google.type.DayOfWeek day_of_week = 2;
+  google.type.CalendarPeriod calendar_period = 3;
+  google.type.Month month = 4;
+}
+
+message CommonMessages {
+  google.type.Date date = 1;
+  google.type.DateTime date_time = 2;
+  google.protobuf.Empty empty = 3;
+  google.rpc.Status status = 4;
+  google.type.Interval interval = 5;
+  google.type.Money money = 6;
+  google.type.Color color = 7;
+  google.type.Fraction fraction = 8;
+  google.type.Decimal decimal = 9;
+  google.type.PostalAddress postal_address = 10;
+  google.type.PhoneNumber phone_number = 11;
+  google.type.Quaternion quaternion = 12;
+  google.type.LocalizedText localized_text = 13;
+  google.type.Expr expr = 14;
+  google.type.LatLng lat_lng = 15;
+  google.type.TimeZone time_zone = 16;
+  google.type.TimeOfDay time_of_day = 17;
+  google.rpc.ErrorInfo error_info = 18;
+  google.rpc.DebugInfo debug_info = 19;
+  google.rpc.RetryInfo retry_info = 20;
+  google.rpc.QuotaFailure quota_failure = 21;
+  google.rpc.PreconditionFailure precondition_failure = 22;
+  google.rpc.BadRequest bad_request = 23;
+  google.rpc.RequestInfo request_info = 24;
+  google.rpc.ResourceInfo resource_info = 25;
+  google.rpc.Help help = 26;
+  google.rpc.LocalizedMessage localized_message = 27;
+  google.rpc.HttpRequest http_request = 28;
+  google.rpc.HttpResponse http_response = 29;
+  google.rpc.HttpHeader http_header = 30;
+}
+
+message ConstRulesTest {
+  string string = 1 [
+    (buf.validate.field) = {
+      string: {
+        min_len: 3, 
+        const: "abc"
+      }
+    }
+  ];
+  bytes bytes = 2 [
+    (buf.validate.field) = {
+      bytes: {
+        min_len: 3, 
+        const: "abc"
+      }
+    }
+  ];
+  int32 int = 3 [
+    (buf.validate.field) = {
+      int32: {
+        gt: 2, 
+        const: 3
+      }
+    }
+  ];
+  float float = 4 [
+    (buf.validate.field) = {
+      float: {
+        gt: 2, 
+        const: 3
+      }
+    }
+  ];
+  google.protobuf.Duration duration = 5 [
+    (buf.validate.field) = {
+      duration: {
+        const: { seconds: 1, nanos: 0 }, 
+        gt: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Timestamp timestamp = 6 [
+    (buf.validate.field) = {
+      timestamp: {
+        gt: { seconds: 0, nanos: 0 }, 
+        const: { seconds: 1, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.FieldMask field_mask = 7 [
+    (buf.validate.field) = {
+      field_mask: {
+        const: {
+          paths: ["abc"]
+        }, 
+        in: ["abc"]
+      }
+    }
+  ];
+  TestEnum enum_field = 8 [
+    (buf.validate.field) = {
+      enum: {
+        const: 1, 
+        defined_only: true
+      }
+    }
+  ];
+}
+
+message DefaultValidatorRequiredOneof {
+  oneof validator_required_oneof {
+    option (buf.validate.oneof).required = true;
+
+    int32 a = 1;
+    uint32 b = 2;
+  }
+}
+
+message DefaultValidatorTestCel {
+  option (buf.validate.message) = {
+    cel: [
+      {
+        id: "id_is_1", 
+        message: "abc", 
+        expression: "this.id == 1"
+      }
+    ]
+  };
+
+  int32 id = 1;
+}
+
+message DefaultValidatorTestMap {
+  map<int32, DefaultValidatorTestCel> map_test = 1;
+}
+
+message DefaultValidatorTestMsg {
+  DefaultValidatorTestCel msg_with_default_validator = 1;
+}
+
+message DefaultValidatorTestOneof {
+  oneof default_validator_oneof {
+    SimpleMsg a = 1;
+    uint32 b = 2;
+  }
+}
+
+message DefaultValidatorTestVec {
+  repeated DefaultValidatorTestCel repeated_test = 1;
+}
+
+message DoubleRules {
+  optional double required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  double lt_test = 2 [
+    (buf.validate.field) = {
+      double: {
+        lt: 1
+      }
+    }
+  ];
+  double lte_test = 3 [
+    (buf.validate.field) = {
+      double: {
+        lte: 1
+      }
+    }
+  ];
+  double gt_test = 4 [
+    (buf.validate.field) = {
+      double: {
+        gt: 1
+      }
+    }
+  ];
+  double gte_test = 5 [
+    (buf.validate.field) = {
+      double: {
+        gte: 1
+      }
+    }
+  ];
+  double in_test = 6 [
+    (buf.validate.field) = {
+      double: {
+        in: [1]
+      }
+    }
+  ];
+  double not_in_test = 7 [
+    (buf.validate.field) = {
+      double: {
+        not_in: [1]
+      }
+    }
+  ];
+  double cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  double const_test = 9 [
+    (buf.validate.field) = {
+      double: {
+        const: 1
+      }
+    }
+  ];
+  optional double ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      double: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  double ignore_always_test = 11 [
+    (buf.validate.field) = {
+      double: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+  double finite_test = 12 [
+    (buf.validate.field) = {
+      double: {
+        finite: true
+      }
+    }
+  ];
+}
+
+message DummyMsg {
+  int32 id = 1;
+}
+
+message DurationRules {
+  google.protobuf.Duration const_test = 1 [
+    (buf.validate.field) = {
+      duration: {
+        const: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Duration lt_test = 2 [
+    (buf.validate.field) = {
+      duration: {
+        lt: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Duration lte_test = 3 [
+    (buf.validate.field) = {
+      duration: {
+        lte: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Duration gt_test = 4 [
+    (buf.validate.field) = {
+      duration: {
+        gt: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Duration gte_test = 5 [
+    (buf.validate.field) = {
+      duration: {
+        gte: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Duration in_test = 6 [
+    (buf.validate.field) = {
+      duration: {
+        in: [
+          { seconds: 0, nanos: 0 }
+        ]
+      }
+    }
+  ];
+  google.protobuf.Duration not_in_test = 7 [
+    (buf.validate.field) = {
+      duration: {
+        not_in: [
+          { seconds: 0, nanos: 0 }
+        ]
+      }
+    }
+  ];
+  google.protobuf.Duration required_test = 8 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  google.protobuf.Duration ignore_always_test = 9 [
+    (buf.validate.field) = {
+      duration: {
+        const: { seconds: 0, nanos: 0 }
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+  google.protobuf.Duration cel_test = 10 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this < duration('5m')"
+        }
+      ]
+    }
+  ];
+}
+
+message EnumRules {
+  TestEnum const_test = 1 [
+    (buf.validate.field) = {
+      enum: {
+        const: 1
+      }
+    }
+  ];
+  TestEnum in_test = 2 [
+    (buf.validate.field) = {
+      enum: {
+        in: [1]
+      }
+    }
+  ];
+  TestEnum not_in_test = 3 [
+    (buf.validate.field) = {
+      enum: {
+        not_in: [1]
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  TestEnum defined_only_test = 4 [
+    (buf.validate.field) = {
+      enum: {
+        defined_only: true
+      }
+    }
+  ];
+  TestEnum cel_test = 5 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this == 1"
+        }
+      ]
+    }
+  ];
+  optional TestEnum required_test = 6 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  TestEnum ignore_always_test = 7 [
+    (buf.validate.field) = {
+      enum: {
+        not_in: [1]
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message FailFastTest {
+  string string = 3 [
+    (buf.validate.field) = {
+      string: {
+        max_len: 1, 
+        not_in: ["abc"]
+      }
+    }
+  ];
+  bytes bytes = 4 [
+    (buf.validate.field) = {
+      bytes: {
+        max_len: 1, 
+        not_in: ["abc"]
+      }
+    }
+  ];
+  int32 int = 5 [
+    (buf.validate.field) = {
+      int32: {
+        gt: 1, 
+        not_in: [1]
+      }
+    }
+  ];
+  float float = 6 [
+    (buf.validate.field) = {
+      float: {
+        gt: 1, 
+        not_in: [1]
+      }
+    }
+  ];
+  google.protobuf.Duration duration = 7 [
+    (buf.validate.field) = {
+      duration: {
+        gt: { seconds: 0, nanos: 0 }, 
+        not_in: [
+          { seconds: 0, nanos: 0 }
+        ]
+      }
+    }
+  ];
+  google.protobuf.Timestamp timestamp = 8 [
+    (buf.validate.field) = {
+      timestamp: {
+        within: { seconds: 10, nanos: 0 }, 
+        gt_now: true
+      }
+    }
+  ];
+  google.protobuf.FieldMask field_mask = 9 [
+    (buf.validate.field) = {
+      field_mask: {
+        in: ["abc"], 
+        not_in: ["abcde"]
+      }
+    }
+  ];
+  TestEnum enum_field = 10 [
+    (buf.validate.field) = {
+      enum: {
+        defined_only: true, 
+        not_in: [45]
+      }
+    }
+  ];
+  oneof simple_oneof {
+    int32 a = 1 [
+      (buf.validate.field) = {
+        int32: {
+          const: 1
+        }
+      }
+    ];
+    uint32 b = 2;
+  }
+  SimpleMsg message = 11;
+}
+
+message FieldMaskRules {
+  google.protobuf.FieldMask const_test = 1 [
+    (buf.validate.field) = {
+      field_mask: {
+        const: {
+          paths: [
+            "tom_bombadil"
+          ]
+        }
+      }
+    }
+  ];
+  google.protobuf.FieldMask in_test = 2 [
+    (buf.validate.field) = {
+      field_mask: {
+        in: [
+          "tom_bombadil"
+        ]
+      }
+    }
+  ];
+  google.protobuf.FieldMask not_in_test = 3 [
+    (buf.validate.field) = {
+      field_mask: {
+        not_in: [
+          "tom_bombadil"
+        ]
+      }
+    }
+  ];
+  google.protobuf.FieldMask cel_test = 4 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this.paths[0] == 'tom_bombadil'"
+        }
+      ]
+    }
+  ];
+  google.protobuf.FieldMask required_test = 5 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  google.protobuf.FieldMask ignore_always_test = 6 [
+    (buf.validate.field) = {
+      field_mask: {
+        not_in: [
+          "tom_bombadil"
+        ]
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message Fixed32Rules {
+  optional fixed32 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  fixed32 lt_test = 2 [
+    (buf.validate.field) = {
+      fixed32: {
+        lt: 1
+      }
+    }
+  ];
+  fixed32 lte_test = 3 [
+    (buf.validate.field) = {
+      fixed32: {
+        lte: 1
+      }
+    }
+  ];
+  fixed32 gt_test = 4 [
+    (buf.validate.field) = {
+      fixed32: {
+        gt: 1
+      }
+    }
+  ];
+  fixed32 gte_test = 5 [
+    (buf.validate.field) = {
+      fixed32: {
+        gte: 1
+      }
+    }
+  ];
+  fixed32 in_test = 6 [
+    (buf.validate.field) = {
+      fixed32: {
+        in: [1]
+      }
+    }
+  ];
+  fixed32 not_in_test = 7 [
+    (buf.validate.field) = {
+      fixed32: {
+        not_in: [1]
+      }
+    }
+  ];
+  fixed32 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  fixed32 const_test = 9 [
+    (buf.validate.field) = {
+      fixed32: {
+        const: 1
+      }
+    }
+  ];
+  optional fixed32 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      fixed32: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  fixed32 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      fixed32: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message Fixed64Rules {
+  optional fixed64 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  fixed64 lt_test = 2 [
+    (buf.validate.field) = {
+      fixed64: {
+        lt: 1
+      }
+    }
+  ];
+  fixed64 lte_test = 3 [
+    (buf.validate.field) = {
+      fixed64: {
+        lte: 1
+      }
+    }
+  ];
+  fixed64 gt_test = 4 [
+    (buf.validate.field) = {
+      fixed64: {
+        gt: 1
+      }
+    }
+  ];
+  fixed64 gte_test = 5 [
+    (buf.validate.field) = {
+      fixed64: {
+        gte: 1
+      }
+    }
+  ];
+  fixed64 in_test = 6 [
+    (buf.validate.field) = {
+      fixed64: {
+        in: [1]
+      }
+    }
+  ];
+  fixed64 not_in_test = 7 [
+    (buf.validate.field) = {
+      fixed64: {
+        not_in: [1]
+      }
+    }
+  ];
+  fixed64 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  fixed64 const_test = 9 [
+    (buf.validate.field) = {
+      fixed64: {
+        const: 1
+      }
+    }
+  ];
+  optional fixed64 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      fixed64: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  fixed64 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      fixed64: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message FloatRules {
+  optional float required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  float lt_test = 2 [
+    (buf.validate.field) = {
+      float: {
+        lt: 1
+      }
+    }
+  ];
+  float lte_test = 3 [
+    (buf.validate.field) = {
+      float: {
+        lte: 1
+      }
+    }
+  ];
+  float gt_test = 4 [
+    (buf.validate.field) = {
+      float: {
+        gt: 1
+      }
+    }
+  ];
+  float gte_test = 5 [
+    (buf.validate.field) = {
+      float: {
+        gte: 1
+      }
+    }
+  ];
+  float in_test = 6 [
+    (buf.validate.field) = {
+      float: {
+        in: [1]
+      }
+    }
+  ];
+  float not_in_test = 7 [
+    (buf.validate.field) = {
+      float: {
+        not_in: [1]
+      }
+    }
+  ];
+  float cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  float const_test = 9 [
+    (buf.validate.field) = {
+      float: {
+        const: 1
+      }
+    }
+  ];
+  optional float ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      float: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  float ignore_always_test = 11 [
+    (buf.validate.field) = {
+      float: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+  float finite_test = 12 [
+    (buf.validate.field) = {
+      float: {
+        finite: true
+      }
+    }
+  ];
+}
+
+message Int32Rules {
+  optional int32 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  int32 lt_test = 2 [
+    (buf.validate.field) = {
+      int32: {
+        lt: 1
+      }
+    }
+  ];
+  int32 lte_test = 3 [
+    (buf.validate.field) = {
+      int32: {
+        lte: 1
+      }
+    }
+  ];
+  int32 gt_test = 4 [
+    (buf.validate.field) = {
+      int32: {
+        gt: 1
+      }
+    }
+  ];
+  int32 gte_test = 5 [
+    (buf.validate.field) = {
+      int32: {
+        gte: 1
+      }
+    }
+  ];
+  int32 in_test = 6 [
+    (buf.validate.field) = {
+      int32: {
+        in: [1]
+      }
+    }
+  ];
+  int32 not_in_test = 7 [
+    (buf.validate.field) = {
+      int32: {
+        not_in: [1]
+      }
+    }
+  ];
+  int32 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  int32 const_test = 9 [
+    (buf.validate.field) = {
+      int32: {
+        const: 1
+      }
+    }
+  ];
+  optional int32 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      int32: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  int32 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      int32: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message Int64Rules {
+  optional int64 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  int64 lt_test = 2 [
+    (buf.validate.field) = {
+      int64: {
+        lt: 1
+      }
+    }
+  ];
+  int64 lte_test = 3 [
+    (buf.validate.field) = {
+      int64: {
+        lte: 1
+      }
+    }
+  ];
+  int64 gt_test = 4 [
+    (buf.validate.field) = {
+      int64: {
+        gt: 1
+      }
+    }
+  ];
+  int64 gte_test = 5 [
+    (buf.validate.field) = {
+      int64: {
+        gte: 1
+      }
+    }
+  ];
+  int64 in_test = 6 [
+    (buf.validate.field) = {
+      int64: {
+        in: [1]
+      }
+    }
+  ];
+  int64 not_in_test = 7 [
+    (buf.validate.field) = {
+      int64: {
+        not_in: [1]
+      }
+    }
+  ];
+  int64 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  int64 const_test = 9 [
+    (buf.validate.field) = {
+      int64: {
+        const: 1
+      }
+    }
+  ];
+  optional int64 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      int64: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  int64 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      int64: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message MapTests {
+  map<string, string> string_test = 1 [
+    (buf.validate.field) = {
+      map: {
+        min_pairs: 1, 
+        keys: {
+          string: {
+            const: "abc"
+          }
+        }, 
+        values: {
+          string: {
+            const: "abc"
+          }
+        }
+      }
+    }
+  ];
+  map<sint32, sint32> wrappers_test = 2 [
+    (buf.validate.field) = {
+      map: {
+        min_pairs: 1, 
+        keys: {
+          sint32: {
+            const: 1
+          }
+        }, 
+        values: {
+          sint32: {
+            const: 1
+          }
+        }
+      }
+    }
+  ];
+  map<int32, int32> min_pairs_test = 3 [
+    (buf.validate.field) = {
+      map: {
+        min_pairs: 1
+      }
+    }
+  ];
+  map<int32, int32> max_pairs_test = 4 [
+    (buf.validate.field) = {
+      map: {
+        max_pairs: 1
+      }
+    }
+  ];
+  map<int32, int32> keys_test = 5 [
+    (buf.validate.field) = {
+      map: {
+        keys: {
+          int32: {
+            gte: 2
+          }, 
+          cel: [
+            {
+              id: "key_rule", 
+              message: "abc", 
+              expression: "this <= 15"
+            }
+          ]
+        }
+      }
+    }
+  ];
+  map<int32, int32> values_test = 6 [
+    (buf.validate.field) = {
+      map: {
+        values: {
+          int32: {
+            gte: 2
+          }, 
+          cel: [
+            {
+              id: "value_rule", 
+              message: "abc", 
+              expression: "this <= 15"
+            }
+          ]
+        }
+      }
+    }
+  ];
+  map<int32, int32> cel_test = 7 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "1 in this && this[1] == 1"
+        }
+      ], 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+}
+
+message MaxItems {
+  repeated int32 items = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        max_items: 1
+      }
+    }
+  ];
+}
+
+message MinItems {
+  repeated int32 items = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        min_items: 3
+      }
+    }
+  ];
+}
+
+message NestedCommonMessages {
+  google.rpc.PreconditionFailure.Violation prec_violation = 1;
+  google.rpc.QuotaFailure.Violation quota_violation = 2;
+  google.rpc.BadRequest.FieldViolation field_violation = 3;
+  google.rpc.Help.Link link = 4;
+}
+
+message OneofTests {
+  oneof test_oneof {
+    string string = 1 [
+      (buf.validate.field) = {
+        cel: [
+          {
+            id: "string_cel_rule", 
+            message: "abc", 
+            expression: "this != 'b'"
+          }
+        ]
+      }
+    ];
+    OneofTests boxed_msg = 2 [
+      (buf.validate.field) = {
+        cel: [
+          {
+            id: "recursive_cel_rule", 
+            message: "abc", 
+            expression: "this.string != 'c'"
+          }
+        ]
+      }
+    ];
+  }
+}
+
+message RepeatedTests {
+  repeated string string_test = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        min_items: 1, 
+        items: {
+          string: {
+            const: "abc"
+          }
+        }
+      }
+    }
+  ];
+  repeated sint32 wrappers_test = 2 [
+    (buf.validate.field) = {
+      repeated: {
+        min_items: 1, 
+        items: {
+          sint32: {
+            const: 1
+          }
+        }
+      }
+    }
+  ];
+  repeated int32 items_test = 3 [
+    (buf.validate.field) = {
+      repeated: {
+        items: {
+          int32: {
+            const: 15
+          }
+        }
+      }
+    }
+  ];
+  repeated int32 items_cel_test = 4 [
+    (buf.validate.field) = {
+      repeated: {
+        items: {
+          cel: [
+            {
+              id: "cel_rule", 
+              message: "abc", 
+              expression: "this == 1"
+            }
+          ]
+        }
+      }
+    }
+  ];
+  repeated int32 cel_test = 5 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this[0] == 1"
+        }
+      ], 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+}
+
+message RustKeywords {
+  string as = 1;
+  string break = 2;
+  string const = 3;
+  string continue = 4;
+  string else = 5;
+  string enum = 6;
+  string false = 7;
+  string fn = 8;
+  string for = 9;
+  string if = 10;
+  string impl = 11;
+  string in = 12;
+  string let = 13;
+  string loop = 14;
+  string match = 15;
+  string mod = 16;
+  string move = 17;
+  string mut = 18;
+  string pub = 19;
+  string ref = 20;
+  string return = 21;
+  string static = 22;
+  string struct = 23;
+  string trait = 24;
+  string true = 25;
+  string type = 26;
+  string unsafe = 27;
+  string use = 28;
+  string where = 29;
+  string while = 30;
+  string abstract = 31;
+  string become = 32;
+  string box = 33;
+  string do = 34;
+  string final = 35;
+  string macro = 36;
+  string override = 37;
+  string priv = 38;
+  string typeof = 39;
+  string unsized = 40;
+  string virtual = 41;
+  string yield = 42;
+  string try = 43;
+  string async = 44;
+  string await = 45;
+}
+
+message Sfixed32Rules {
+  optional sfixed32 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  sfixed32 lt_test = 2 [
+    (buf.validate.field) = {
+      sfixed32: {
+        lt: 1
+      }
+    }
+  ];
+  sfixed32 lte_test = 3 [
+    (buf.validate.field) = {
+      sfixed32: {
+        lte: 1
+      }
+    }
+  ];
+  sfixed32 gt_test = 4 [
+    (buf.validate.field) = {
+      sfixed32: {
+        gt: 1
+      }
+    }
+  ];
+  sfixed32 gte_test = 5 [
+    (buf.validate.field) = {
+      sfixed32: {
+        gte: 1
+      }
+    }
+  ];
+  sfixed32 in_test = 6 [
+    (buf.validate.field) = {
+      sfixed32: {
+        in: [1]
+      }
+    }
+  ];
+  sfixed32 not_in_test = 7 [
+    (buf.validate.field) = {
+      sfixed32: {
+        not_in: [1]
+      }
+    }
+  ];
+  sfixed32 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  sfixed32 const_test = 9 [
+    (buf.validate.field) = {
+      sfixed32: {
+        const: 1
+      }
+    }
+  ];
+  optional sfixed32 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      sfixed32: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  sfixed32 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      sfixed32: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message Sfixed64Rules {
+  optional sfixed64 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  sfixed64 lt_test = 2 [
+    (buf.validate.field) = {
+      sfixed64: {
+        lt: 1
+      }
+    }
+  ];
+  sfixed64 lte_test = 3 [
+    (buf.validate.field) = {
+      sfixed64: {
+        lte: 1
+      }
+    }
+  ];
+  sfixed64 gt_test = 4 [
+    (buf.validate.field) = {
+      sfixed64: {
+        gt: 1
+      }
+    }
+  ];
+  sfixed64 gte_test = 5 [
+    (buf.validate.field) = {
+      sfixed64: {
+        gte: 1
+      }
+    }
+  ];
+  sfixed64 in_test = 6 [
+    (buf.validate.field) = {
+      sfixed64: {
+        in: [1]
+      }
+    }
+  ];
+  sfixed64 not_in_test = 7 [
+    (buf.validate.field) = {
+      sfixed64: {
+        not_in: [1]
+      }
+    }
+  ];
+  sfixed64 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  sfixed64 const_test = 9 [
+    (buf.validate.field) = {
+      sfixed64: {
+        const: 1
+      }
+    }
+  ];
+  optional sfixed64 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      sfixed64: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  sfixed64 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      sfixed64: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message SimpleMsg {
+  int32 id = 1 [
+    (buf.validate.field) = {
+      int32: {
+        const: 1
+      }
+    }
+  ];
+  string name = 2 [
+    (buf.validate.field) = {
+      string: {
+        min_len: 2
+      }
+    }
+  ];
+}
+
+message Sint32Rules {
+  optional sint32 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  sint32 lt_test = 2 [
+    (buf.validate.field) = {
+      sint32: {
+        lt: 1
+      }
+    }
+  ];
+  sint32 lte_test = 3 [
+    (buf.validate.field) = {
+      sint32: {
+        lte: 1
+      }
+    }
+  ];
+  sint32 gt_test = 4 [
+    (buf.validate.field) = {
+      sint32: {
+        gt: 1
+      }
+    }
+  ];
+  sint32 gte_test = 5 [
+    (buf.validate.field) = {
+      sint32: {
+        gte: 1
+      }
+    }
+  ];
+  sint32 in_test = 6 [
+    (buf.validate.field) = {
+      sint32: {
+        in: [1]
+      }
+    }
+  ];
+  sint32 not_in_test = 7 [
+    (buf.validate.field) = {
+      sint32: {
+        not_in: [1]
+      }
+    }
+  ];
+  sint32 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  sint32 const_test = 9 [
+    (buf.validate.field) = {
+      sint32: {
+        const: 1
+      }
+    }
+  ];
+  optional sint32 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      sint32: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  sint32 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      sint32: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message Sint64Rules {
+  optional sint64 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  sint64 lt_test = 2 [
+    (buf.validate.field) = {
+      sint64: {
+        lt: 1
+      }
+    }
+  ];
+  sint64 lte_test = 3 [
+    (buf.validate.field) = {
+      sint64: {
+        lte: 1
+      }
+    }
+  ];
+  sint64 gt_test = 4 [
+    (buf.validate.field) = {
+      sint64: {
+        gt: 1
+      }
+    }
+  ];
+  sint64 gte_test = 5 [
+    (buf.validate.field) = {
+      sint64: {
+        gte: 1
+      }
+    }
+  ];
+  sint64 in_test = 6 [
+    (buf.validate.field) = {
+      sint64: {
+        in: [1]
+      }
+    }
+  ];
+  sint64 not_in_test = 7 [
+    (buf.validate.field) = {
+      sint64: {
+        not_in: [1]
+      }
+    }
+  ];
+  sint64 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  sint64 const_test = 9 [
+    (buf.validate.field) = {
+      sint64: {
+        const: 1
+      }
+    }
+  ];
+  optional sint64 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      sint64: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  sint64 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      sint64: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message StringRules {
+  string const_test = 1 [
+    (buf.validate.field) = {
+      string: {
+        const: "a"
+      }
+    }
+  ];
+  string len_test = 2 [
+    (buf.validate.field) = {
+      string: {
+        len: 1
+      }
+    }
+  ];
+  string min_len_test = 3 [
+    (buf.validate.field) = {
+      string: {
+        min_len: 1
+      }
+    }
+  ];
+  string max_len_test = 4 [
+    (buf.validate.field) = {
+      string: {
+        max_len: 1
+      }
+    }
+  ];
+  string len_bytes_test = 5 [
+    (buf.validate.field) = {
+      string: {
+        len_bytes: 1
+      }
+    }
+  ];
+  string min_bytes_test = 6 [
+    (buf.validate.field) = {
+      string: {
+        min_bytes: 1
+      }
+    }
+  ];
+  string max_bytes_test = 7 [
+    (buf.validate.field) = {
+      string: {
+        max_bytes: 1
+      }
+    }
+  ];
+  string pattern_test = 8 [
+    (buf.validate.field) = {
+      string: {
+        pattern: "a"
+      }
+    }
+  ];
+  string prefix_test = 9 [
+    (buf.validate.field) = {
+      string: {
+        prefix: "a"
+      }
+    }
+  ];
+  string suffix_test = 10 [
+    (buf.validate.field) = {
+      string: {
+        suffix: "a"
+      }
+    }
+  ];
+  string contains_test = 11 [
+    (buf.validate.field) = {
+      string: {
+        contains: "a"
+      }
+    }
+  ];
+  string not_contains_test = 12 [
+    (buf.validate.field) = {
+      string: {
+        not_contains: "a"
+      }
+    }
+  ];
+  string cel_test = 13 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this == 'a'"
+        }
+      ]
+    }
+  ];
+  optional string required_test = 14 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  optional string ignore_if_zero_value_test = 15 [
+    (buf.validate.field) = {
+      string: {
+        const: "a"
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  string ignore_always_test = 16 [
+    (buf.validate.field) = {
+      string: {
+        const: "b"
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+  string email_test = 17 [
+    (buf.validate.field) = {
+      string: {
+        email: true
+      }
+    }
+  ];
+  string hostname_test = 18 [
+    (buf.validate.field) = {
+      string: {
+        hostname: true
+      }
+    }
+  ];
+  string ip_test = 19 [
+    (buf.validate.field) = {
+      string: {
+        ip: true
+      }
+    }
+  ];
+  string ipv4_test = 20 [
+    (buf.validate.field) = {
+      string: {
+        ipv4: true
+      }
+    }
+  ];
+  string ipv6_test = 21 [
+    (buf.validate.field) = {
+      string: {
+        ipv6: true
+      }
+    }
+  ];
+  string uri_test = 22 [
+    (buf.validate.field) = {
+      string: {
+        uri: true
+      }
+    }
+  ];
+  string uri_ref_test = 23 [
+    (buf.validate.field) = {
+      string: {
+        uri_ref: true
+      }
+    }
+  ];
+  string address_test = 24 [
+    (buf.validate.field) = {
+      string: {
+        address: true
+      }
+    }
+  ];
+  string ulid_test = 25 [
+    (buf.validate.field) = {
+      string: {
+        ulid: true
+      }
+    }
+  ];
+  string uuid_test = 26 [
+    (buf.validate.field) = {
+      string: {
+        uuid: true
+      }
+    }
+  ];
+  string tuuid_test = 27 [
+    (buf.validate.field) = {
+      string: {
+        tuuid: true
+      }
+    }
+  ];
+  string ip_with_prefixlen_test = 28 [
+    (buf.validate.field) = {
+      string: {
+        ip_with_prefixlen: true
+      }
+    }
+  ];
+  string ipv4_with_prefixlen_test = 29 [
+    (buf.validate.field) = {
+      string: {
+        ipv4_with_prefixlen: true
+      }
+    }
+  ];
+  string ipv6_with_prefixlen_test = 30 [
+    (buf.validate.field) = {
+      string: {
+        ipv6_with_prefixlen: true
+      }
+    }
+  ];
+  string ip_prefix_test = 31 [
+    (buf.validate.field) = {
+      string: {
+        ip_prefix: true
+      }
+    }
+  ];
+  string ipv4_prefix_test = 32 [
+    (buf.validate.field) = {
+      string: {
+        ipv4_prefix: true
+      }
+    }
+  ];
+  string ipv6_prefix_test = 33 [
+    (buf.validate.field) = {
+      string: {
+        ipv6_prefix: true
+      }
+    }
+  ];
+  string host_and_port_test = 34 [
+    (buf.validate.field) = {
+      string: {
+        host_and_port: true
+      }
+    }
+  ];
+  string header_name_strict_test = 35 [
+    (buf.validate.field) = {
+      string: {
+        well_known_regex: KNOWN_REGEX_HTTP_HEADER_NAME, 
+        strict: true
+      }
+    }
+  ];
+  string header_name_loose_test = 36 [
+    (buf.validate.field) = {
+      string: {
+        well_known_regex: KNOWN_REGEX_HTTP_HEADER_NAME
+      }
+    }
+  ];
+  string header_value_strict_test = 37 [
+    (buf.validate.field) = {
+      string: {
+        well_known_regex: KNOWN_REGEX_HTTP_HEADER_VALUE, 
+        strict: true
+      }
+    }
+  ];
+  string header_value_loose_test = 38 [
+    (buf.validate.field) = {
+      string: {
+        well_known_regex: KNOWN_REGEX_HTTP_HEADER_VALUE
+      }
+    }
+  ];
+}
+
+message TimestampRules {
+  google.protobuf.Timestamp const_test = 1 [
+    (buf.validate.field) = {
+      timestamp: {
+        const: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Timestamp lt_test = 2 [
+    (buf.validate.field) = {
+      timestamp: {
+        lt: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Timestamp lte_test = 3 [
+    (buf.validate.field) = {
+      timestamp: {
+        lte: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Timestamp gt_test = 4 [
+    (buf.validate.field) = {
+      timestamp: {
+        gt: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Timestamp gte_test = 5 [
+    (buf.validate.field) = {
+      timestamp: {
+        gte: { seconds: 0, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Timestamp within_test = 6 [
+    (buf.validate.field) = {
+      timestamp: {
+        within: { seconds: 10, nanos: 0 }
+      }
+    }
+  ];
+  google.protobuf.Timestamp lt_now_test = 7 [
+    (buf.validate.field) = {
+      timestamp: {
+        lt_now: true
+      }
+    }
+  ];
+  google.protobuf.Timestamp gt_now_test = 8 [
+    (buf.validate.field) = {
+      timestamp: {
+        gt_now: true
+      }
+    }
+  ];
+  google.protobuf.Timestamp required_test = 9 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  google.protobuf.Timestamp ignore_always_test = 10 [
+    (buf.validate.field) = {
+      timestamp: {
+        const: { seconds: 0, nanos: 0 }
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+  google.protobuf.Timestamp cel_test = 11 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this < timestamp('2024-01-01T00:00:00Z')"
+        }
+      ]
+    }
+  ];
+}
+
+message Uint32Rules {
+  optional uint32 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  uint32 lt_test = 2 [
+    (buf.validate.field) = {
+      uint32: {
+        lt: 1
+      }
+    }
+  ];
+  uint32 lte_test = 3 [
+    (buf.validate.field) = {
+      uint32: {
+        lte: 1
+      }
+    }
+  ];
+  uint32 gt_test = 4 [
+    (buf.validate.field) = {
+      uint32: {
+        gt: 1
+      }
+    }
+  ];
+  uint32 gte_test = 5 [
+    (buf.validate.field) = {
+      uint32: {
+        gte: 1
+      }
+    }
+  ];
+  uint32 in_test = 6 [
+    (buf.validate.field) = {
+      uint32: {
+        in: [1]
+      }
+    }
+  ];
+  uint32 not_in_test = 7 [
+    (buf.validate.field) = {
+      uint32: {
+        not_in: [1]
+      }
+    }
+  ];
+  uint32 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  uint32 const_test = 9 [
+    (buf.validate.field) = {
+      uint32: {
+        const: 1
+      }
+    }
+  ];
+  optional uint32 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      uint32: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  uint32 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      uint32: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message Uint64Rules {
+  optional uint64 required_test = 1 [
+    (buf.validate.field) = {
+      required: true
+    }
+  ];
+  uint64 lt_test = 2 [
+    (buf.validate.field) = {
+      uint64: {
+        lt: 1
+      }
+    }
+  ];
+  uint64 lte_test = 3 [
+    (buf.validate.field) = {
+      uint64: {
+        lte: 1
+      }
+    }
+  ];
+  uint64 gt_test = 4 [
+    (buf.validate.field) = {
+      uint64: {
+        gt: 1
+      }
+    }
+  ];
+  uint64 gte_test = 5 [
+    (buf.validate.field) = {
+      uint64: {
+        gte: 1
+      }
+    }
+  ];
+  uint64 in_test = 6 [
+    (buf.validate.field) = {
+      uint64: {
+        in: [1]
+      }
+    }
+  ];
+  uint64 not_in_test = 7 [
+    (buf.validate.field) = {
+      uint64: {
+        not_in: [1]
+      }
+    }
+  ];
+  uint64 cel_test = 8 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "cel_rule", 
+          message: "abc", 
+          expression: "this != 0"
+        }
+      ]
+    }
+  ];
+  uint64 const_test = 9 [
+    (buf.validate.field) = {
+      uint64: {
+        const: 1
+      }
+    }
+  ];
+  optional uint64 ignore_if_zero_value_test = 10 [
+    (buf.validate.field) = {
+      uint64: {
+        const: 1
+      }, 
+      ignore: IGNORE_IF_ZERO_VALUE
+    }
+  ];
+  uint64 ignore_always_test = 11 [
+    (buf.validate.field) = {
+      uint64: {
+        const: 1
+      }, 
+      ignore: IGNORE_ALWAYS
+    }
+  ];
+}
+
+message UniqueBytes {
+  repeated bytes unique_bytes = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        unique: true
+      }
+    }
+  ];
+}
+
+message UniqueEnums {
+  repeated DummyEnum unique_enums = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        unique: true
+      }
+    }
+  ];
+}
+
+message UniqueFloats {
+  repeated float unique_floats = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        unique: true, 
+        items: {
+        }
+      }
+    }
+  ];
+}
+
+message UniqueMessages {
+  repeated DummyMsg unique_messages = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        unique: true
+      }
+    }
+  ];
+}
+
+service CommonMessagesService {
+  rpc DateService (google.type.Date) returns (google.type.Date);
+  rpc DateTimeService (google.type.DateTime) returns (google.type.DateTime);
+  rpc EmptyService (google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc StatusService (google.rpc.Status) returns (google.rpc.Status);
+  rpc IntervalService (google.type.Interval) returns (google.type.Interval);
+  rpc MoneyService (google.type.Money) returns (google.type.Money);
+  rpc ColorService (google.type.Color) returns (google.type.Color);
+  rpc FractionService (google.type.Fraction) returns (google.type.Fraction);
+  rpc DecimalService (google.type.Decimal) returns (google.type.Decimal);
+  rpc PostalAddressService (google.type.PostalAddress) returns (google.type.PostalAddress);
+  rpc PhoneNumberService (google.type.PhoneNumber) returns (google.type.PhoneNumber);
+  rpc QuaternionService (google.type.Quaternion) returns (google.type.Quaternion);
+  rpc LocalizedTextService (google.type.LocalizedText) returns (google.type.LocalizedText);
+  rpc ExprService (google.type.Expr) returns (google.type.Expr);
+  rpc LatLngService (google.type.LatLng) returns (google.type.LatLng);
+  rpc TimeZoneService (google.type.TimeZone) returns (google.type.TimeZone);
+  rpc TimeOfDayService (google.type.TimeOfDay) returns (google.type.TimeOfDay);
+  rpc ErrorInfoService (google.rpc.ErrorInfo) returns (google.rpc.ErrorInfo);
+  rpc DebugInfoService (google.rpc.DebugInfo) returns (google.rpc.DebugInfo);
+  rpc RetryInfoService (google.rpc.RetryInfo) returns (google.rpc.RetryInfo);
+  rpc QuotaFailureService (google.rpc.QuotaFailure) returns (google.rpc.QuotaFailure);
+  rpc PreconditionFailureService (google.rpc.PreconditionFailure) returns (google.rpc.PreconditionFailure);
+  rpc BadRequestService (google.rpc.BadRequest) returns (google.rpc.BadRequest);
+  rpc RequestInfoService (google.rpc.RequestInfo) returns (google.rpc.RequestInfo);
+  rpc ResourceInfoService (google.rpc.ResourceInfo) returns (google.rpc.ResourceInfo);
+  rpc HelpService (google.rpc.Help) returns (google.rpc.Help);
+  rpc LocalizedMessageService (google.rpc.LocalizedMessage) returns (google.rpc.LocalizedMessage);
+  rpc HttpRequestService (google.rpc.HttpRequest) returns (google.rpc.HttpRequest);
+  rpc HttpResponseService (google.rpc.HttpResponse) returns (google.rpc.HttpResponse);
+  rpc HttpHeaderService (google.rpc.HttpHeader) returns (google.rpc.HttpHeader);
+}
+
+service NestedCommonMessagesService {
+  rpc PrecViolation (google.rpc.PreconditionFailure.Violation) returns (google.rpc.PreconditionFailure.Violation);
+  rpc QuotaViolation (google.rpc.QuotaFailure.Violation) returns (google.rpc.QuotaFailure.Violation);
+  rpc FieldViolation (google.rpc.BadRequest.FieldViolation) returns (google.rpc.BadRequest.FieldViolation);
+  rpc Link (google.rpc.Help.Link) returns (google.rpc.Help.Link);
+}

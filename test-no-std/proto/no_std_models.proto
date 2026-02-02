@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package no_std_models;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/descriptor.proto";
+
+
+enum TestEnum {
+  TEST_ENUM_UNSPECIFIED = 0;
+  TEST_ENUM_A = 1;
+  TEST_ENUM_B = 2;
+}
+
+message ProxiedMsg {
+  map<int32, int32> map = 3 [
+    (buf.validate.field) = {
+      map: {
+        min_pairs: 2
+      }
+    }
+  ];
+  oneof proxied_oneof_test {
+    int32 a = 1 [
+      (buf.validate.field) = {
+        int32: {
+          const: 1
+        }
+      }
+    ];
+    uint32 b = 2 [
+      (buf.validate.field) = {
+        uint32: {
+          const: 1
+        }
+      }
+    ];
+  }
+  TestEnum enum_field = 4 [
+    (buf.validate.field) = {
+      enum: {
+        defined_only: true
+      }
+    }
+  ];
+  ProxiedMsg recursive = 5;
+}
+
+message TestMsg {
+  map<int32, int32> map = 3 [
+    (buf.validate.field) = {
+      map: {
+        min_pairs: 2
+      }
+    }
+  ];
+  oneof test_oneof {
+    int32 a = 1 [
+      (buf.validate.field) = {
+        int32: {
+          const: 1
+        }
+      }
+    ];
+    uint32 b = 2 [
+      (buf.validate.field) = {
+        uint32: {
+          const: 1
+        }
+      }
+    ];
+  }
+  TestEnum enum_field = 4 [
+    (buf.validate.field) = {
+      enum: {
+        defined_only: true
+      }
+    }
+  ];
+}
+
+service TestService {
+  rpc Service1 (TestMsg) returns (TestMsg);
+}

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package db_test;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+
+message User {
+  int32 id = 1;
+  string name = 2 [
+    (buf.validate.field) = {
+      string: {
+        min_len: 3
+      }
+    }
+  ];
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message UserId {
+  int32 id = 1;
+}
+
+service UserService {
+  rpc GetUser (UserId) returns (User);
+  rpc InsertUser (User) returns (google.protobuf.Empty);
+}

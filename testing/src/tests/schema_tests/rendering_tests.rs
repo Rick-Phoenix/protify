@@ -118,7 +118,7 @@ fn custom_validators_schema() {
 fn rendering_test() {
   let pkg = RENDERING_PKG::get_package();
 
-  let output1 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/proto_test"));
+  let output1 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/rendering_test"));
 
   pkg.render_files(&output1).unwrap();
 
@@ -142,7 +142,7 @@ fn rendering_test() {
   );
 
   let manual_pkg = Package::new("rendering").with_files(RENDERING_PKG::files());
-  let output2 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/proto_test2"));
+  let output2 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/rendering_test2"));
 
   manual_pkg.render_files(&output2).unwrap();
 
