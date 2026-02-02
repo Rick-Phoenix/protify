@@ -1,7 +1,7 @@
 use std::{env, path::PathBuf};
 
-use builder::DescriptorDataConfig;
 use prost_build::Config;
+use protify_build::DescriptorDataConfig;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("cargo:rerun-if-changed=../proto");

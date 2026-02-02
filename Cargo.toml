@@ -6,7 +6,7 @@ members = [
   "test-reflection",
   "test-server",
   "testing",
-  "builder",
+  "protify-build",
   "test-no-std",
   "gen-readme",
 ]

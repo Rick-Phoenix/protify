@@ -1,7 +1,7 @@
 use std::{env, path::PathBuf};
 
-use builder::{DescriptorDataConfig, set_up_validators};
 use prost_build::Config;
+use protify_build::{DescriptorDataConfig, set_up_validators};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("cargo:rerun-if-changed=../no-std-models/src/lib.rs");

@@ -342,15 +342,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "builder"
-version = "0.1.0"
-dependencies = [
- "document-features",
- "prost-build",
- "prost-reflect",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1528,7 +1519,6 @@ version = "0.1.0"
 dependencies = [
  "askama",
  "bool-enum",
- "builder",
  "bytes",
  "cel",
  "chrono",
@@ -1547,6 +1537,7 @@ dependencies = [
  "owo-colors",
  "paste",
  "prost",
+ "protify-build",
  "protify-proc-macro",
  "proto-types",
  "regex",
@@ -1556,6 +1547,15 @@ dependencies = [
  "thiserror 2.0.17",
  "tonic",
  "tonic-prost-build",
+]
+
+[[package]]
+name = "protify-build"
+version = "0.1.0"
+dependencies = [
+ "document-features",
+ "prost-build",
+ "prost-reflect",
 ]
 
 [[package]]
@@ -2045,25 +2045,25 @@ dependencies = [
 name = "test-no-std"
 version = "0.1.0"
 dependencies = [
- "builder",
  "maplit",
  "no-std-models",
  "prost",
  "prost-build",
  "protify",
+ "protify-build",
 ]
 
 [[package]]
 name = "test-reflection"
 version = "0.1.0"
 dependencies = [
- "builder",
  "bytes",
  "maplit",
  "paste",
  "prost",
  "prost-build",
  "protify",
+ "protify-build",
  "proto-types",
  "similar-asserts",
  "test-schemas",

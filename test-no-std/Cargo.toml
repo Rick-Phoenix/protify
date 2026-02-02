@@ -22,7 +22,7 @@ protify = { path = "../protify", default-features = false, features = [
   "inventory",
   "std",
 ] }
-builder = { path = "../builder", default-features = false }
+protify-build = { path = "../protify-build", default-features = false }
 
 [features]
 reflection = []
