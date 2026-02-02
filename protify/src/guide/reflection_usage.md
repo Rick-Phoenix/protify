@@ -1,12 +1,16 @@
-# From Proto
+# Usage With Pre Built Protos
 
-The preferred usage for this crate is to define the items in rust, and to generate the `.proto` files from it rather than the other way around, but it is also possible to use it purely for the protovalidate support, which it picks up from its predecessor [protocheck](https://github.com/Rick-Phoenix/protocheck).
+The preferred usage for this crate is to define the items in rust, and to generate the `.proto` files from it rather than the other way around, but it is also possible to use it purely for the validation side of things.
+
+In this case, it is possible to use pre-build proto files that have been marked with `protovalidate` annotations, and generate the validation logic accordingly.
 
 To do that, you must first add the [`protify-build`](::protify_build) to the build-dependencies.
 
 For convenience, the builder exports the [`DescriptorDataConfig`](protify_build::DescriptorDataConfig) struct, which you can use to gather information about the elements of a package while the validators are being set (which can often be useful to handle things like oneof attributes which aren't very ergonomic to set up in prost in a programmatic way).
 
-The [`DescriptorDataConfig::set_up_validators`](protify_build::DescriptorDataConfig::set_up_validators) method can then be used to set up the validators for the target packages. If you desire to just set up the validators without gathering any other data, you can just call the omonimous [`set_up_validators`](protify_build::set_up_validators) function exported from the root of the crate.
+The [`DescriptorDataConfig::set_up_validators`](protify_build::DescriptorDataConfig::set_up_validators) method can then be used to set up the validators for the target packages while collecting the desided data. 
+
+If you desire to just set up the validators without gathering any other data, you can just call the omonimous [`set_up_validators`](protify_build::set_up_validators) function exported from the root of the crate.
 
 ```rust,ignore
 use std::{env, path::PathBuf};
@@ -27,7 +31,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Your proto files and dependencies
     let include_paths = &["proto", "proto_deps"];
 
-    let files = &["proto/test.proto"];
+    // Helper to get all the files in a directory 
+    let files = protify_build::get_proto_files("proto");
 
     let mut config = Config::new();
     config
@@ -40,7 +45,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &mut config,
         files,
         include_paths,
-        // The packages for which you want to apply the validators
+        // The packages for which you want to apply the validators.
+        // If a message has validators or is a field of another message
+        // with validators, then its package must be added here.
         &["test_schemas.v1"]
     )?;
 
@@ -61,6 +68,5 @@ After doing this, all of the selected messages will implement [`ValidatedMessage
 
 If the `cel` feature is enabled, [`CelValue`](crate::CelValue) and [`CelOneof`](crate::CelOneof) will also be implemented for messages and oneofs.
 
-Just like the non-reflection-based version of this crate, this will also automatically generate a `check_validators` method on each message and oneof, as well as a test that automatically calls this method and panics on failure, in order to ensure that validators represent valid configurations.
+Just like the non-reflection-based version of this crate, this will also automatically generate a `check_validators` method on each message and oneof, as well as a test that automatically calls this method and panics on failure, in order to ensure that validators represent valid configurations. For more information about this, visit the [`correctness`](crate::guide::correctness) section.
 
-Should you wish to disable these checks, you can disable them with the `skip_checks(validators)` attribute, which you can easily set up programmatically by taking advantage of the data collection performed by the [`DescriptorDataConfig`] struct. For more information about this, visit the [`correctness`](crate::guide::correctness) section.

@@ -1,10 +1,8 @@
 # Database Mapping
 
-An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map the generated protos, or injecting the attributes as plain text with the prost-build helper.
+An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the prost-build helper, which can be unergonomic and brittle.
 
-Our models are not hidden behind a generated file injected with `include!`, they are under our full control and we can use macros and attributes on them like on any other normal rust struct.
-
-And with proxies, the interactions with a database becomes even easier, because we can have the proto message take a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
+And with proxies, the interactions with a database becomes even easier, because we can have the proto-facing struct with a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
 
 ```rust
 use protify::*;
@@ -24,7 +22,7 @@ mod schema {
   }
 }
 
-// If we want to use the message as it is for the db model
+// If we want to use the message as is for the db model
 #[proto_message]
 #[derive(Queryable, Selectable, Insertable)]
 #[diesel(table_name = schema::users)]
@@ -111,7 +109,7 @@ fn main() {
     assert_eq!(queried_proxied_user.id, 2);
     assert_eq!(queried_proxied_user.name, "Aragorn");
 
-    // Now we have the message, with the created_at field populated
+    // Now we have the message, with the `created_at` field populated
     let msg = queried_proxied_user.into_message();
 
     assert_ne!(msg.created_at.unwrap(), Timestamp::default());

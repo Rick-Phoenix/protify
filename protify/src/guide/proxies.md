@@ -1,21 +1,21 @@
-# Proxied Implementations
+# Proxies
 
-Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix.
+Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix (i.e. MyMsg -> MyMsgProto).
 
 Proxied messages/oneofs unlock the following features:
 
 - A field/variant can be missing from the proto struct, but present in the proxy
-- Enums can use their actual rust enum type, rather than being pure integers
+- Enums can be represented with their actual rust enum type, rather than being pure integers
 - Oneofs don't need to be wrapped in `Option`
 - Messages don't need to be wrapped in `Option`
 - We can use types that are not supported by prost
 - We can map an incoming type from another type via custom conversions
 
-By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. 
+By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required. 
 
 To provide custom conversions, you can use the `from_proto` and `into_proto` attributes on the container (to replace the automatically generated impl as a whole) or on individual fields/variants.
 
-The messages/oneofs will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
+The proxied structs/enums will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
 
 ## Examples
 
@@ -26,8 +26,7 @@ use std::sync::Arc;
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
-
-// Generates a MsgProto struct that is protobuf-compatible
+// Generates a MsgProto struct that is prost-compatible
 #[proto_message(proxied)]
 pub struct Msg {
     // Requires setting the type manually as the type
@@ -59,6 +58,8 @@ pub enum TestEnum {
     Unspecified, A, B
 }
 
+// Direct implementation. The prost attributes will be directly
+// injected in it
 #[proto_message]
 pub struct Msg2 {
     pub id: i32,

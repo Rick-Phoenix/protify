@@ -1,7 +1,6 @@
 # Cel Validation
 
-The `cel` feature unlocks validation via [`CelProgram`](crate::CelProgram).
-
+The `cel` feature unlocks [CEL](https://cel.dev/)-based validation, which can be very handy for making validators portable.
 
 If a CEL expressions fails to compile, **it will cause a panic**, so it is strongly advised to test each expression to avoid surprises at runtime. 
 
@@ -14,7 +13,7 @@ The wrapper itself holds an [`Arc`](std::sync::Arc) and is therefore cheap to cl
 
 If a program is used in different places, it's a good idea to initialize it once and then clone it.
 
-This crate exports a Lazy struct that can be used for this purpose, which is a type alias for [`LazyLock`](std::sync::LazyLock) when the `std` feature is enabled, and otherwise implements a wrapper for [`OnceBox`](once_cell::race::OnceBox).
+This crate exports a `Lazy` struct that can be used for this purpose, which is a type alias for [`LazyLock`](std::sync::LazyLock) when the `std` feature is enabled, and otherwise implements a wrapper for [`OnceBox`](once_cell::race::OnceBox) that also initializes at the first deref.
 
 ### Example
 
@@ -51,4 +50,4 @@ pub struct TellMeWhereIsGandalf {
 
 # Enforcing Unique IDs
 
-The instances of [`Package`](crate::Package) provide methods with which to ensure that there aren't rules with the same ID in the same message scope. Refer to the [`correctness`](crate::guide::correctness) section or the [`proto_package`](crate::proto_package) documentation for more details about that.
+The instances of [`Package`](crate::Package) provide methods with which to ensure that there aren't rules with the same ID in the same message scope, which is a good practice to avoid ambiguity. Refer to the [`correctness`](crate::guide::correctness) section or the [`proto_package`](crate::proto_package) documentation for more details about that.

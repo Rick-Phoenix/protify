@@ -10,12 +10,12 @@
 //!	## Features
 //!	- [Validators](crate::guide::validators)
 //!	- [Proxies](crate::guide::proxies)
-//!	- [Reusing Oneofs](crate::guide::reusing_oneofs)
+//!	- [Reusing oneofs](crate::guide::reusing_oneofs)
 //!	- [Correctness](crate::guide::correctness)
 //!	- [CEL validation](crate::guide::cel_validation)
 //!	## Usage Examples
-//!	- [Database Mapping](crate::guide::database_mapping)
-//!	- [Usage With Tonic](crate::guide::usage_with_tonic)
+//!	- [Database mapping](crate::guide::database_mapping)
+//!	- [Usage with tonic](crate::guide::usage_with_tonic)
 //!	## Things To Know
 //!	- [Tips](crate::guide::tips)
 //!	- [Code elimination](crate::guide::code_elimination)
@@ -35,7 +35,7 @@ macro_rules! doc_mod {
 ///  
 /// This is done with the intent of maximizing code elimination, so that the `.validate()` method will be completely eliminated by the compiler if a oneof/message has no validators, and any call to it will also be eliminated.
 ///  
-/// This is very important because it allows us to implement these traits freely without hurting performance or binary size, and it also means that we can make blanket calls to .validate() for all incoming messages, because if some of those messages do not have validators, that call will be a no-op and it will be eliminated by the compiler entirely.
+/// This is very important because it allows us to implement these traits freely without hurting performance or binary size, and it also means that we can make blanket calls to .validate() for all incoming messages, because if some of those messages do not have validators, that call will be a no-op and it will be eliminated by the compiler entirely, rather than needlessly setting up stack frames.
 ///  
 /// The crate has a dedicated test to guard against regressions in this area.
 ///

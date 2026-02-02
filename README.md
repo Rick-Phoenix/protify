@@ -78,11 +78,9 @@ pub enum MyEnum {
 
 # Database Mapping
 
-An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map the generated protos, or injecting the attributes as plain text with the prost-build helper.
+An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the prost-build helper, which can be unergonomic and brittle.
 
-Our models are not hidden behind a generated file injected with `include!`, they are under our full control and we can use macros and attributes on them like on any other normal rust struct.
-
-And with proxies, the interactions with a database becomes even easier, because we can have the proto message take a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
+And with proxies, the interactions with a database becomes even easier, because we can have the proto-facing struct with a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
 
 ```rust
 use protify::*;
@@ -102,7 +100,7 @@ mod schema {
   }
 }
 
-// If we want to use the message as it is for the db model
+// If we want to use the message as is for the db model
 #[proto_message]
 #[derive(Queryable, Selectable, Insertable)]
 #[diesel(table_name = schema::users)]
@@ -189,7 +187,7 @@ fn main() {
     assert_eq!(queried_proxied_user.id, 2);
     assert_eq!(queried_proxied_user.name, "Aragorn");
 
-    // Now we have the message, with the created_at field populated
+    // Now we have the message, with the `created_at` field populated
     let msg = queried_proxied_user.into_message();
 
     assert_ne!(msg.created_at.unwrap(), Timestamp::default());
@@ -197,24 +195,24 @@ fn main() {
 ```
 
 
-# Proxied Implementations
+# Proxies
 
-Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix.
+Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix (i.e. MyMsg -> MyMsgProto).
 
 Proxied messages/oneofs unlock the following features:
 
 - A field/variant can be missing from the proto struct, but present in the proxy
-- Enums can use their actual rust enum type, rather than being pure integers
+- Enums can be represented with their actual rust enum type, rather than being pure integers
 - Oneofs don't need to be wrapped in `Option`
 - Messages don't need to be wrapped in `Option`
 - We can use types that are not supported by prost
 - We can map an incoming type from another type via custom conversions
 
-By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant.
+By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
 
 To provide custom conversions, you can use the `from_proto` and `into_proto` attributes on the container (to replace the automatically generated impl as a whole) or on individual fields/variants.
 
-The messages/oneofs will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
+The proxied structs/enums will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
 
 ## Examples
 
@@ -225,8 +223,7 @@ use std::sync::Arc;
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
-
-// Generates a MsgProto struct that is protobuf-compatible
+// Generates a MsgProto struct that is prost-compatible
 #[proto_message(proxied)]
 pub struct Msg {
     // Requires setting the type manually as the type
@@ -258,6 +255,8 @@ pub enum TestEnum {
     Unspecified, A, B
 }
 
+// Direct implementation. The prost attributes will be directly
+// injected in it
 #[proto_message]
 pub struct Msg2 {
     pub id: i32,
@@ -293,13 +292,15 @@ fn main() {
 
 # Validators
 
-Whenever models are defined and used, the need for validation follows close behind. `protify` provides a series of pre-built validators to handle all primitives and well known types.
+Whenever models or API contracts are defined and used, the need for validation follows close behind. Because of this, `protify` ships with a validation framework that provides both type-safety and customization while also making validators portable by turning them into protobuf schemas.
 
-The validators hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also produce a schema representation, so that their settings can be included as options in the proto files.
+The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also produce a schema representation, so that their settings can be included as options in the proto files, and be picked up by other clients of the same contract, and ported between different applications.
 
 All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to customized protobuf options.
 
-Validators can be assigned to oneofs/messages as a whole, or to individual fields/variants.
+Because every validator is type-safe and comes with ergonomic builder methods to be built with, defining validators using `protify` is a vastly superior experience to defining them manually in proto files, where the process is repetitive, rigid, and lacking the essential features of modern programming such as type safety and LSP integration, as well as programmatic composition.
+
+Validators can be assigned to oneofs/messages as a whole, or to individual fields/variants to be incorporated in thier validation logic, or be used to validate values on-demand.
 
 ## Example
 
@@ -309,6 +310,13 @@ use std::collections::HashMap;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+
+// We can define logic to programmatically compose validators
+fn prefix_validator(prefix: &'static str) -> StringValidator {
+    StringValidator::builder()
+        .prefix(prefix)
+        .build()
+}
 
 #[proto_message]
 // Top level validation using a CEL program
@@ -341,12 +349,13 @@ pub enum MyOneof {
     // Same thing for oneof variants
     #[proto(validate = |v| v.gt(0))]
     A(i32),
-    #[proto(tag = 2)]
-    B(u32),
+    // Multiple validators, including a programmatically built one!
+    #[proto(tag = 2, validate = [ |v| v.min_len(5), prefix_validator("abc") ])]
+    B(String),
 }
 ```
 
-ℹ️ **NOTE**: Validators that are provided via closures will be cached in a Lazy struct (normally a [`LazyLock`](std::sync::LazyLock) or a wrapper for [`OnceBox`](once_cell::race::OnceBox) in a no_std environment), so they are only initialized once.
+ℹ️ **NOTE**: Validators that are provided via closures will be cached in a Lazy struct (normally a [`LazyLock`](std::sync::LazyLock) or a wrapper for [`OnceBox`](once_cell::race::OnceBox) in a no_std environment), so they are only initialized once (except for the [`OneofValidator`](crate::OneofValidator) which is small enough).
 
 # Custom Validators
 
@@ -355,6 +364,8 @@ The [`Validator`](crate::Validator) trait allows for the construction of custom 
 A validator can be a struct (stateful) or just a function, wrapped with the [`from_fn`](crate::from_fn) helper.
 
 Each validator only needs to implement a single method, [`execute_validation`](crate::Validator::execute_validation), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
+
+The [`schema`](crate::Validator::schema) and [`check_consistency`](crate::Validator::check_consistency) methods can be optionally implemented, as described later in this section and in the [`correctness`](crate::guide::correctness) section.
 
 ```rust
 use protify::*;
@@ -372,7 +383,7 @@ fn validate_number(ctx: &mut ValidationCtx, val: Option<&i32>) -> ValidationResu
         is_valid &= ctx.add_required_violation(
             // Optionally, we can provide a custom error message
             Some("number must be set".to_string())
-        )?; // We can use the result to handle `fail-fast` scenarios
+        )?; // Validators use `Result`s to handle `fail-fast` scenarios
             // and trigger early exit
     }
 
@@ -438,13 +449,13 @@ pub enum MyOneof {
 }
 ```
 
-You can refer to the tests for more involved examples of custom validator usage.
+You can have a look at the testing crates in the repo for more complex examples of custom validator usage.
 
 ## Customizing Error Messages
 
-In order to facilitate things like i18n, every provided validator allows for customization of the error messages, withot requiring a whole custom validator to be designed purely for this purpose.
+In order to facilitate things like i18n, every provided validator allows for customization of the error messages, without requiring a whole custom validator to be designed purely for this purpose.
 
-Each builder features a method called `with_error_messages`, which accepts a BTreeMap that maps known violations to error messages.
+Each builder features a method called `with_error_messages`, which accepts a [`BTreeMap`](std::collections::BTreeMap) that maps the violations that it may produce to error messages.
 
 ### Example
 
@@ -476,9 +487,9 @@ assert_eq!(violations[0].message(), "the nickname must be at least three charact
 
 ## Schema Representation
 
-In order to make validation settings portable, each validator can optionally implement the [`schema`](crate::Validator::schema) method, which outputs a protobuf schema representation, so that its contents can be represented as an option in a protobuf file.
+In order to make validation settings portable, each validator can optionally implement the [`schema`](crate::Validator::schema) method, which outputs a [`ProtoOption`](crate::ProtoOption) that will be added to the receiving message/oneof in the proto file.
 
-All default validators implement this method and output the options in the protovalidate format.
+All default validators implement this method and output the options in the `protovalidate` format.
 
 ### Example
 

@@ -1,8 +1,8 @@
 # Reusing Oneofs
 
-An extra feature brought by this library is the ability to reuse the same rust enum as a oneof across different messages.
+An extra feature brought by this library is the ability to reuse the same rust enum as a oneof across different messages. This method requires some constraints but can be useful to reduce code duplication.
 
-When a oneof is used in a message, a completely new oneof will be generated inside that message's definition in its proto file. It will contain the same variants and tags of the original instance, as well as all of the options defined on the original instance. The name will match the name of the field in the rust struct (unless manually overridden with the `#[proto(name = "..")]` attribute). 
+When a oneof is used in a message, a schema for a completely new oneof will be generated inside that message's definition in its proto file. It will contain the same variants, tags and options of the original instance, but the name will match the name of the field in the rust struct (unless manually overridden with the `#[proto(name = "..")]` attribute). 
 
 All validators and options defined on the oneof as a field will be local to that instance.
 

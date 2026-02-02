@@ -1,6 +1,12 @@
 # Managing Files
 
-A file must always be in scope for any given item definition (oneof, enum, message). This can be done by using the [`define_proto_file`](crate::define_proto_file), which both defines a new file schema and brings it into scope within the module, by using the [`use_proto_file`](crate::use_proto_file) and [`inherit_proto_file`](crate::inherit_proto_file) macros, which bring a pre-existing file schema in scope, or by using the `file` attribute on enums or messages for manual assignment.
+A file must always be in scope for any given item definition (oneof, enum, message). 
+
+This can be done by using one of these:
+
+- The [`define_proto_file`](crate::define_proto_file) macro, which both defines a new file schema and brings it into scope within the module
+- The [`use_proto_file`](crate::use_proto_file) and [`inherit_proto_file`](crate::inherit_proto_file) macros, which bring a pre-existing file schema in scope
+- The `file` attribute (on enums or messages only) for manual assignment.
 
 A simple example of the [`define_proto_file`](crate::define_proto_file) macro looks like this:
 
@@ -15,10 +21,10 @@ For the full macro reference, visit the documentation for [`define_proto_file!`]
 
 ## Reusing Files
 
-If you want to define items in different rust files that are descendants of the same module, and place them into the same proto file, you can use one of two macros to bring the file into scope.
+If you want to define items in different rust files and place them into the same proto file, you can use one of two macros to bring the file into scope, with slightly different behaviour:
 
-- The [`use_proto_file`](crate::use_proto_file) macro, which brings the file into scope and applies the extern path of its own `module_path!()` output
-- The [`inherit_proto_file`](crate::inherit_proto_file) macro, which does the same but keeps the import path of the parent module (for re-exported items).
+- The [`use_proto_file`](crate::use_proto_file) macro brings the file into scope and applies the extern path of its own `module_path!()` output
+- The [`inherit_proto_file`](crate::inherit_proto_file) macro does the same but keeps the import path of the parent module (for re-exported items).
 
 ```rust
 mod root {
@@ -70,9 +76,9 @@ Under the hood, the file macros generate a constant named `__PROTO_FILE` that is
 
 It's not recommended to rely on this method to bring the file into scope and to use the [`use_proto_file`](crate::use_proto_file) or [`inherit_proto_file`](crate::inherit_proto_file) macros for more clarity.
 
-In a case where you need to use a global import from the parent module but you want the items to be in a separate proto file, then you must make sure to define a new file with the [`define_proto_file`](crate::define_proto_file) macro (which will shadow the imported constant), or the items will be picked up by the wrong file.
+In a case where you need to use a global import from the parent module but you want the items to be in a separate proto file, then you must make sure to define a new file with the [`define_proto_file`](crate::define_proto_file) macro (which will shadow the imported constant) or use the `file` attribute, or otherwise the items will be picked up by the wrong file.
 
-# Single Items
+# Manually Assigning Files
 
 It is also possible to manually select a file for a given item. 
 

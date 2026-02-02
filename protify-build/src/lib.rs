@@ -308,7 +308,7 @@ fn set_up_validators_inner(
 /// A small utility that recursively collects all .proto files in a given directory and its subdirectories.
 ///
 /// Useful if you want to avoid passing each individual .proto file to the prost config.
-pub fn get_proto_files_recursive(base_dir: impl Into<PathBuf>) -> io::Result<Vec<String>> {
+pub fn get_proto_files(base_dir: impl Into<PathBuf>) -> io::Result<Vec<String>> {
   let base_dir: PathBuf = base_dir.into();
   let mut proto_files = Vec::new();
 
@@ -319,36 +319,24 @@ pub fn get_proto_files_recursive(base_dir: impl Into<PathBuf>) -> io::Result<Vec
     ));
   }
 
-  collect_proto_files_recursive_helper(base_dir.as_path(), &mut proto_files)?;
-
-  Ok(proto_files)
-}
-
-fn collect_proto_files_recursive_helper(
-  current_dir: &Path,
-  proto_files: &mut Vec<String>,
-) -> io::Result<()> {
-  for entry in fs::read_dir(current_dir)? {
+  for entry in fs::read_dir(base_dir)? {
     let entry = entry?;
     let path = entry.path();
 
-    if path.is_file() {
-      if path.extension().is_some_and(|ext| ext == "proto") {
-        proto_files.push(
-          path
-            .to_str()
-            .ok_or_else(|| {
-              io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Path {} contains invalid Unicode.", path.display()),
-              )
-            })?
-            .to_owned(),
-        );
-      }
-    } else if path.is_dir() {
-      collect_proto_files_recursive_helper(&path, proto_files)?;
+    if path.is_file() && path.extension().is_some_and(|ext| ext == "proto") {
+      proto_files.push(
+        path
+          .to_str()
+          .ok_or_else(|| {
+            io::Error::new(
+              io::ErrorKind::InvalidData,
+              format!("Path {} contains invalid Unicode.", path.display()),
+            )
+          })?
+          .to_owned(),
+      );
     }
   }
-  Ok(())
+
+  Ok(proto_files)
 }

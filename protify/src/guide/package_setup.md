@@ -8,15 +8,15 @@ use protify::*;
 proto_package!(MY_PKG, name = "my_pkg");
 ```
 
-The ident that is used as the first argument will be the ident for this package handle, which will be a unit struct that implements [`PackageSchema`](crate::PackageSchema). There should be only one of such an instance for each package.
+The ident that is used as the first argument will be the ident for this package handle, which will be a unit struct that implements [`PackageSchema`](crate::PackageSchema). There should be only one of these for each package.
 
 ℹ️ **NOTE**: By default, this macro also generates a test that ensures that there aren't CEL rules with the same ID within the same message scope. If you want to disable this, you can provide `no_cel_test` as one of the arguments. 
 
-This handle will serve two purposes. One is to serve as a reference for each file definition, and the other one is to be able to generate the fully built [`Package`](crate::Package) struct, which can then be used to generate the `.proto` files, and to access the `extern_path` of each item (to use when setting up tonic).
+This handle will serve two purposes. One is to serve as a reference for each file definition, and the other one is to be able to generate the fully built [`Package`](crate::Package) struct, which can then be used to generate the `.proto` files, and to access the rust import path of each item to use when setting up tonic, with the [`extern_paths`](crate::Package::extern_paths) method.
 
 # Creating Files
 
-For each item definition (oneof, message, enum), a proto file reference must be brought in scope so that the item can be assigned to it. A new file can be defined with the [`define_proto_file`](crate::define_proto_file) macro.
+For each item definition (oneof, message, enum), a proto file reference must be brought in scope so that the item can be assigned to it (or it can also be assigned manually with the `file` attribute). A new file can be defined with the [`define_proto_file`](crate::define_proto_file) macro.
 
 ```rust
 use protify::*;
@@ -74,24 +74,22 @@ To learn more about each element, visit the reference for [messages](crate::prot
 
 # Collecting A Package
 
-When the `inventory` feature is enabled, all the elements in a package are collected automatically. To get the fully built package, all you need to do is to call the [`get_package`](crate::PackageSchema::get_package) method, and that's it.
+When the `inventory` feature is enabled, all the elements in a package are collected automatically. To get the fully built package, all you need to do is to call the [`get_package`](crate::PackageSchema::get_package) method.
 
 This will give you access to the [`render_files`](crate::Package::render_files) method, which is what you need to generate the `.proto` files associated with that package, or the [`extern_paths`](crate::Package::extern_paths) method, which is what you can use to map messages to their Rust path when using `tonic`.
 
-However, since this relies on the [inventory](https://crates.io/crates/inventory) crate which is not available in a `no_std` environment, if we are in such a scenario we need to use a manual workaround to collect the full package.
-
 ## no_std usage
 
-The inventory feature relies on the [inventory](https://crates.io/crates/inventory) crate being available, which is not the case in a no_std crate, and may also be undesirable for users with extreme binary size concerns, as the registry collection applied with inventory may increase the binary size slightly. 
-
-In cases such as these, we need a different method for collecting the schema items, which can use one of the following workarounds.
+The inventory feature relies on the [inventory](https://crates.io/crates/inventory) crate which is not available in a `no_std` environment, if we are in such a scenario we need to one of these workarounds to collect the full package.
 
 ### Build Script Hack
-The first method is more hacky but it enables automatic collection just like std-compatible crates. You basically need to add `protify` as a `build-dependency` of the consuming crate and enable the `inventory` feature. In the `build.rs` file, you then have access to the collected package and its methods, while being able to use it in the actual crate with the feature turned off.
+The first method is a bit more hacky but more advantageous for packages with many files, because it enables automatic collection just like std-compatible crates. 
 
-This is in theory the simplest way, but there is a big catch. Since rust-analyzer compiles only one version per crate in a workspace (as of today), if you apply this workaround, your IDE will show all sorts of errors, because it will apply the checks to the version of the crate that is using the inventory feature, even if the actual crate is not using the feature. 
+You basically need to add `protify` as a `build-dependency` of the consuming crate and enable the `inventory` feature. This means that the `build.rs` file will have access to the fully collected package, whereas the runtime crate will not use the feature and remain `no_std` compatible.
 
-You can check out how this works by cloning the repo and looking inside the [no-std-models](https://github.com/Rick-Phoenix/protify/tree/main/no-std-models) and [test-no-std](https://github.com/Rick-Phoenix/protify/tree/main/test-no-std) crates, where I apply this process. 
+However, there is a catch. Since rust-analyzer compiles only one version per crate in a workspace (as of today), if you apply this workaround, your IDE will show all sorts of errors, because it will call `cargo check` in your `no_std` crate and applying the logic of `protify` with the `inventory` and `std` features enabled, even if your crate is not actually using these features in it. 
+
+You can check out how this works by cloning the repo and looking inside the [no-std-models](https://github.com/Rick-Phoenix/protify/tree/main/no-std-models) and [test-no-std](https://github.com/Rick-Phoenix/protify/tree/main/test-no-std) crates, where I applied this process and came across these limitations. 
 
 If you can find a workaround for the LSP issues, then this is the easiest way to go.
 

@@ -2,12 +2,11 @@
 
 - Usage of protobuf `bytes` fields implies usage of the [`Bytes`](::bytes::Bytes) type in Rust, rather than `Vec<u8>`. Supporting both would increase the complexity of the macros and create more trait indirection for the bytes validator. Since [`Bytes`](::bytes::Bytes) is a tiny, widely used and very convenient dependency to have, I've decided to target that directly.
 
-- Usage of `Box` in a oneof or message is automatically implied as a sign of recursion and handled accordingly in the macros' logic. Using `Box` for non-recursive fields or variants is not supported.
+- Usage of `Box` in a oneof or message is automatically implied as a sign of **recursion** and handled accordingly in the macros' logic. Using `Box` for non-recursive fields or variants is not supported. Furthermore, it's expected that if there is a recursive relationship between a message and a oneof, that the `Box` will be used in the oneof variant, and not on the oneof field on the parent message.
 
-- Using `Self` for a recursive field is very likely to break some of the macro output. For this reason it's advised to use the full struct name instead.
+ - Using `Self` for a recursive field is very likely to break some of the macro output. For this reason it's advised to use the full struct name instead.
 
 - The schema features are not heavily optimized for runtime usage, and they are intended to be used merely for generating files, not as a substitute for a full-fledged reflection library. I can recommend the excellent [`prost-reflect`](https://crates.io/crates/prost-reflect) for that purpose.
-
 
 - Proxy structs/enums do not support generics or lifetimes.
 
