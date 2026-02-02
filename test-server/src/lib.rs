@@ -1,3 +1,5 @@
+// The models are defined in test-schemas/src/server_models.rs
+
 #[cfg(test)]
 mod test {
   use deadpool_diesel::sqlite::{Manager, Pool, Runtime};

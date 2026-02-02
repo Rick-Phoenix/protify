@@ -57,4 +57,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 Then, we can just use our services and messages like in any normal tonic app. The only difference is that the services will be in the generated code, but the messages will be directly imported by the models crate. 
 
-You can take a look at the `test-server` crate in the repo for a full example of this which also includes working with `diesel` and an sqlite database with the same models.
+You can take a look at the [test-server](https://github.com/Rick-Phoenix/protify/tree/main/test-server) crate in the repo for a full example of this which also includes working with [`diesel`](::diesel) and an sqlite database with the same models.

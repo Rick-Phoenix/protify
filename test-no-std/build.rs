@@ -29,6 +29,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .btree_map(["."])
     .out_dir(&out_dir);
 
+  // This last part is not required for basic no_std usage when the messages
+  // are imported from the models crate. I am doing this so that I can use this crate
+  // both for testing models compilation and also validators injected via a
+  // reflection-based impl.
+
   let desc_data = DescriptorDataConfig::new()
     .collect_oneofs_data()
     .set_up_validators(&mut config, files, include_paths, &["no_std_models"])?;
