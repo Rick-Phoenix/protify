@@ -87,9 +87,13 @@ The inventory feature relies on the [inventory](https://crates.io/crates/invento
 In cases such as these, we need a different method for collecting the schema items, which can use one of the following workarounds.
 
 ### Build Script Hack
-The first method is more hacky but it enables automatic collection just like std-compatible crates. You basically need to add this crate as a `build-dependency` of the consuming crate and enable the `inventory` feature. In the `build.rs` file, you then have access to the collected package and its methods, while being able to use it in the actual crate with the feature turned off.
+The first method is more hacky but it enables automatic collection just like std-compatible crates. You basically need to add `protify` as a `build-dependency` of the consuming crate and enable the `inventory` feature. In the `build.rs` file, you then have access to the collected package and its methods, while being able to use it in the actual crate with the feature turned off.
 
-This is in theory the simplest way, but there is a big catch. Since rust-analyzer compiles only one version per crate in a workspace (as of today), if you apply this workaround, your IDE will show all sorts of errors, because it will apply the checks to the version of the crate that is using the inventory feature, even if the actual crate is not using the feature. You can check this out by cloning the repo and looking inside the test-no-std crate which is where I tried applying exactly this. If you can find a workaround for this issue, then this is the easiest way to go.
+This is in theory the simplest way, but there is a big catch. Since rust-analyzer compiles only one version per crate in a workspace (as of today), if you apply this workaround, your IDE will show all sorts of errors, because it will apply the checks to the version of the crate that is using the inventory feature, even if the actual crate is not using the feature. 
+
+You can check out how this works by cloning the repo and looking inside the [no-std-models](https://github.com/Rick-Phoenix/protify/tree/main/no-std-models) and [test-no-std](https://github.com/Rick-Phoenix/protify/tree/main/test-no-std) crates, where I apply this process. 
+
+If you can find a workaround for the LSP issues, then this is the easiest way to go.
 
 ### Composing Schemas Manually
 
@@ -105,7 +109,8 @@ proto_package!(MANUAL_PKG, name = "manual_pkg", files = [ MANUAL_FILE ]);
 
 // NOTE: Even if we are adding these elements manually,
 // a file must still be in the module scope of where
-// the items are defined.
+// the items are defined, or manually assigned
+// with the `#[proto(file = MY_FILE)]` attribute.
 define_proto_file!(
   MANUAL_FILE, 
   name = "manual_file.proto", 

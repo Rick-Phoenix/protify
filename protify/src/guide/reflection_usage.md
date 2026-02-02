@@ -1,6 +1,6 @@
 # From Proto
 
-The preferred usage for this crate is to define the items in rust, and to generate the `.proto` files from it rather than the other way around, but it is also possible to use it purely for the protovalidate support, which it picks up from its predecessor `protocheck`.
+The preferred usage for this crate is to define the items in rust, and to generate the `.proto` files from it rather than the other way around, but it is also possible to use it purely for the protovalidate support, which it picks up from its predecessor [protocheck](https://github.com/Rick-Phoenix/protocheck).
 
 To do that, you must first add the [`protify-build`](::protify_build) to the build-dependencies.
 

@@ -6,11 +6,9 @@ use protify_build::{DescriptorDataConfig, set_up_validators};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("cargo:rerun-if-changed=../no-std-models/src/lib.rs");
 
-  // Because we are overriding the dependency by activating the
-  // inventory feature, this works just like a std-compatible crate.
-  // This is the easiest method to get the models from a no-std crate.
-  // It doesn't require manual collection,
-  // but it causes annoying behaviour with rust-analyzer
+  // Because we are overriding the `protify` dependency by activating the
+  // inventory feature, the file collection is done automatically,
+  // but it comes at the expense of annoying behaviour with rust-analyzer
   no_std_models::NO_STD_PKG::get_package()
     .render_files(concat!(env!("CARGO_MANIFEST_DIR"), "/proto"))
     .unwrap();
