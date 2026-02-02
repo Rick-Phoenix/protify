@@ -133,6 +133,16 @@ where
   /// Sets the rules to apply to each item of this map.
   ///
   /// It receives a closure that that receives the item type's default validator builder as an argument.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use protify::*;
+  ///
+  /// let validator = RepeatedValidator::<String>::builder().items(|i| i.min_len(5)).build();
+  ///
+  /// assert_eq!(validator.items.unwrap(), StringValidator::builder().min_len(5).build());
+  /// ```
   #[inline]
   pub fn items<F, FinalBuilder>(self, config_fn: F) -> RepeatedValidatorBuilder<T, SetItems<S>>
   where

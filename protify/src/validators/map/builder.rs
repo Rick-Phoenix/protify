@@ -235,6 +235,15 @@ where
   /// Sets the rules to apply to each key of this map.
   ///
   /// It receives a closure that that receives the key type's default validator builder as an argument.
+  ///
+  /// # Example
+  /// ```
+  /// use protify::*;
+  ///
+  /// let validator = MapValidator::<String, String>::builder().keys(|k| k.min_len(5)).build();
+  ///
+  /// assert_eq!(validator.keys.unwrap(), StringValidator::builder().min_len(5).build());
+  /// ```
   #[inline]
   pub fn keys<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetKeys<S>>
   where
@@ -261,6 +270,14 @@ where
   /// Sets the rules to apply to each value of this map.
   ///
   /// It receives a closure that that receives the value type's default validator builder as an argument.
+  /// # Example
+  /// ```
+  /// use protify::*;
+  ///
+  /// let validator = MapValidator::<String, String>::builder().values(|v| v.min_len(5)).build();
+  ///
+  /// assert_eq!(validator.values.unwrap(), StringValidator::builder().min_len(5).build());
+  /// ```
   #[inline]
   pub fn values<F, FinalBuilder>(self, config_fn: F) -> MapValidatorBuilder<K, V, SetValues<S>>
   where

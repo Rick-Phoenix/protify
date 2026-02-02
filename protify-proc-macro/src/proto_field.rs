@@ -73,7 +73,7 @@ impl ProtoField {
         if map.is_btree_map {
           quote_spanned! {span=> ::protify::BTreeMap<#keys, #values> }
         } else {
-          quote_spanned! {span=> HashMap<#keys, #values> }
+          quote_spanned! {span=> ::std::collections::HashMap<#keys, #values> }
         }
       }
       Self::Oneof { .. } => quote! {
