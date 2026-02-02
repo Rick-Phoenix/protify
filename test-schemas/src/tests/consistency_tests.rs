@@ -408,6 +408,12 @@ fn length_rules_errors() {
 pub struct StringErrors {
   #[proto(validate = |v| v.contains("abc").not_contains("abc"))]
   contains_not_contains: String,
+
+  #[proto(validate = |v| v.not_contains("abc").prefix("abcde"))]
+  invalid_prefix: String,
+
+  #[proto(validate = |v| v.not_contains("abc").suffix("abcde"))]
+  invalid_suffix: String,
 }
 
 #[test]
@@ -417,6 +423,16 @@ fn string_errors() {
   assert_eq_pretty!(
     field_errors[0].errors[0],
     ConsistencyError::ContradictoryInput("`not_contains` is a substring of `contains`".to_string())
+  );
+
+  assert_eq_pretty!(
+    field_errors[1].errors[0],
+    ConsistencyError::ContradictoryInput("`not_contains` is a substring of `prefix`".to_string())
+  );
+
+  assert_eq_pretty!(
+    field_errors[2].errors[0],
+    ConsistencyError::ContradictoryInput("`not_contains` is a substring of `suffix`".to_string())
   );
 }
 

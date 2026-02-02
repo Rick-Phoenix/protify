@@ -14,7 +14,6 @@ fn bad_field_rules() {
 
   assert_eq_pretty!(message_name, "BadFieldRules");
   assert_eq_pretty!(field_errors.len(), 1);
-  // Top level rules, which don't apply here
   assert_eq_pretty!(top_level_errors.len(), 0);
 }
 
