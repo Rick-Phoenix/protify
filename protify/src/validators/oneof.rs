@@ -46,7 +46,7 @@ impl<T: ValidatedOneof> Validator<T> for OneofValidator {
     match val {
       Some(oneof) => {
         if T::HAS_DEFAULT_VALIDATOR {
-          oneof.borrow().validate(ctx)
+          oneof.borrow().validate_with_ctx(ctx)
         } else {
           Ok(IsValid::Yes)
         }

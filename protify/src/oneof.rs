@@ -56,7 +56,59 @@ pub trait ProtoOneof {
 ///
 /// Implemented by the [`proto_oneof`] macro.
 pub trait ValidatedOneof: ProtoValidation + Clone {
-  fn validate(&self, ctx: &mut ValidationCtx) -> ValidationResult;
+  /// Executes validation on this oneof, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any.
+  ///
+  /// Uses the default settings for [`ValidationCtx`], which include `fail_fast: true`.
+  #[inline]
+  fn validate(&self) -> Result<(), ValidationErrors> {
+    if !Self::HAS_DEFAULT_VALIDATOR {
+      return Ok(());
+    }
+
+    let mut ctx = ValidationCtx::default();
+
+    let _ = self.validate_with_ctx(&mut ctx);
+
+    if ctx.violations.is_empty() {
+      Ok(())
+    } else {
+      Err(ctx.violations)
+    }
+  }
+
+  /// Executes validation on this oneof, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any, and returns true if the validation was successful.
+  ///
+  /// Uses the default settings for [`ValidationCtx`], which include `fail_fast: true`.
+  #[inline]
+  fn is_valid(&self) -> bool {
+    if Self::HAS_DEFAULT_VALIDATOR {
+      self.validate().is_ok()
+    } else {
+      true
+    }
+  }
+
+  /// Executes validation on this oneof, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any, and returns the value if the validation was successful.
+  ///
+  /// Uses the default settings for [`ValidationCtx`], which include `fail_fast: true`.
+  #[inline]
+  fn validated(self) -> Result<Self, ValidationErrors> {
+    if !Self::HAS_DEFAULT_VALIDATOR {
+      return Ok(self);
+    }
+
+    match self.validate() {
+      Ok(()) => Ok(self),
+      Err(e) => Err(e),
+    }
+  }
+
+  /// Executes validation on this oneof, triggering the validators that have been assigned to it
+  /// via macro attributes, if there are any.
+  fn validate_with_ctx(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 
 /// Schema representation for a protobuf oneof.
