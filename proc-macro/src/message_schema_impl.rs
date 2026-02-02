@@ -20,17 +20,17 @@ pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
       let validator_target_type = proto_field.validator_target_type(*span);
 
       quote_spanned! {*span=>
-        ::prelude::Validator::<#validator_target_type>::schema(&#e)
+        ::protify::Validator::<#validator_target_type>::schema(&#e)
       }
     });
 
   if let ProtoField::Oneof(OneofInfo { path, .. }) = proto_field {
     quote_spanned! {*span=>
-      ::prelude::MessageEntry::Oneof(
-        <#path as ::prelude::ProtoOneof>::proto_schema()
+      ::protify::MessageEntry::Oneof(
+        <#path as ::protify::ProtoOneof>::proto_schema()
           .with_name(#proto_name)
           .with_options(#options)
-          .with_validators(::prelude::filter_validators([ #(#validator_schema_tokens),* ]))
+          .with_validators(::protify::filter_validators([ #(#validator_schema_tokens),* ]))
       )
     }
   } else {
@@ -39,12 +39,12 @@ pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
     let options_tokens = options_tokens(*span, options, *deprecated);
 
     quote_spanned! {*span=>
-      ::prelude::Field {
+      ::protify::Field {
         name: #proto_name.into(),
         tag: #tag,
         options: #options_tokens.into_iter().collect(),
         type_: #field_type_tokens,
-        validators: ::prelude::collect_validators([ #(#validator_schema_tokens),* ]),
+        validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
       }
     }
   }
@@ -79,7 +79,7 @@ impl MessageCtx<'_> {
             field
           } else {
             quote_spanned! {data.span=>
-              ::prelude::MessageEntry::Field(
+              ::protify::MessageEntry::Field(
                 #field
               )
             }
@@ -93,8 +93,8 @@ impl MessageCtx<'_> {
 
     let name_method = if let Some(parent) = parent_message {
       quote_spanned! {parent.span()=>
-        static __NAME: ::prelude::Lazy<String> = ::prelude::Lazy::new(|| {
-          format!("{}.{}", <#parent as ::prelude::ProtoMessage>::proto_name(), #proto_name)
+        static __NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
+          format!("{}.{}", <#parent as ::protify::ProtoMessage>::proto_name(), #proto_name)
         });
 
         &*__NAME
@@ -104,7 +104,7 @@ impl MessageCtx<'_> {
     };
 
     let registry_parent_message = if let Some(parent) = parent_message {
-      quote_spanned! {parent.span()=> Some(|| <#parent as ::prelude::ProtoMessage>::proto_name()) }
+      quote_spanned! {parent.span()=> Some(|| <#parent as ::protify::ProtoMessage>::proto_name()) }
     } else {
       quote! { None }
     };
@@ -119,22 +119,22 @@ impl MessageCtx<'_> {
         let orig_struct_ident = &self.orig_struct_ident;
 
         quote_spanned! {orig_struct_ident.span()=>
-          impl ::prelude::AsProtoType for #orig_struct_ident {
-            fn proto_type() -> ::prelude::ProtoType {
-              <#shadow_struct_ident as ::prelude::AsProtoType>::proto_type()
+          impl ::protify::AsProtoType for #orig_struct_ident {
+            fn proto_type() -> ::protify::ProtoType {
+              <#shadow_struct_ident as ::protify::AsProtoType>::proto_type()
             }
           }
         }
       });
 
     let file_name = if let Some(ident) = file {
-      quote! { <#ident as ::prelude::FileSchema>::NAME }
+      quote! { <#ident as ::protify::FileSchema>::NAME }
     } else {
       quote! { __PROTO_FILE.name }
     };
 
     let package = if let Some(ident) = file {
-      quote! { <#ident as ::prelude::FileSchema>::PACKAGE }
+      quote! { <#ident as ::protify::FileSchema>::PACKAGE }
     } else {
       quote! { __PROTO_FILE.package }
     };
@@ -142,7 +142,7 @@ impl MessageCtx<'_> {
     let module_path = module_path.as_ref().map_or_else(
       || {
         if let Some(ident) = file {
-          quote! { <#ident as ::prelude::FileSchema>::EXTERN_PATH }
+          quote! { <#ident as ::protify::FileSchema>::EXTERN_PATH }
         } else {
           quote! { __PROTO_FILE.extern_path }
         }
@@ -151,64 +151,64 @@ impl MessageCtx<'_> {
     );
 
     quote! {
-      ::prelude::register_proto_data! {
-        ::prelude::RegistryMessage {
+      ::protify::register_proto_data! {
+        ::protify::RegistryMessage {
           package: #package,
           parent_message: #registry_parent_message,
-          message: || <#proto_struct as ::prelude::ProtoMessage>::proto_schema()
+          message: || <#proto_struct as ::protify::ProtoMessage>::proto_schema()
         }
       }
 
-      impl ::prelude::AsProtoType for #proto_struct {
-        fn proto_type() -> ::prelude::ProtoType {
-          ::prelude::ProtoType::Message(
-            <Self as ::prelude::MessagePath>::proto_path()
+      impl ::protify::AsProtoType for #proto_struct {
+        fn proto_type() -> ::protify::ProtoType {
+          ::protify::ProtoType::Message(
+            <Self as ::protify::MessagePath>::proto_path()
           )
         }
       }
 
-      impl ::prelude::prost::Name for #proto_struct {
+      impl ::protify::prost::Name for #proto_struct {
         #[doc(hidden)]
-        const PACKAGE: &str = <Self as ::prelude::ProtoMessage>::PACKAGE;
+        const PACKAGE: &str = <Self as ::protify::ProtoMessage>::PACKAGE;
         #[doc(hidden)]
-        const NAME: &str = <Self as ::prelude::ProtoMessage>::SHORT_NAME;
+        const NAME: &str = <Self as ::protify::ProtoMessage>::SHORT_NAME;
 
         #[doc(hidden)]
-        fn full_name() -> ::prelude::String {
-          <Self as ::prelude::ProtoMessage>::full_name().into()
+        fn full_name() -> ::protify::String {
+          <Self as ::protify::ProtoMessage>::full_name().into()
         }
 
         #[doc(hidden)]
-        fn type_url() -> ::prelude::String {
-          <Self as ::prelude::ProtoMessage>::type_url().into()
+        fn type_url() -> ::protify::String {
+          <Self as ::protify::ProtoMessage>::type_url().into()
         }
       }
 
-      impl ::prelude::MessagePath for #proto_struct {
-        fn proto_path() -> ::prelude::ProtoPath {
-          ::prelude::ProtoPath {
-            name: <Self as ::prelude::ProtoMessage>::proto_name().into(),
+      impl ::protify::MessagePath for #proto_struct {
+        fn proto_path() -> ::protify::ProtoPath {
+          ::protify::ProtoPath {
+            name: <Self as ::protify::ProtoMessage>::proto_name().into(),
             file: #file_name.into(),
             package: #package.into(),
           }
         }
       }
 
-      impl ::prelude::ProtoMessage for #proto_struct {
+      impl ::protify::ProtoMessage for #proto_struct {
         const PACKAGE: &str = #package;
         const SHORT_NAME: &str = #proto_name;
 
         fn type_url() -> &'static str {
-          static URL: ::prelude::Lazy<String> = ::prelude::Lazy::new(|| {
-            format!("/{}.{}", <#proto_struct as ::prelude::ProtoMessage>::PACKAGE, <#proto_struct as ::prelude::ProtoMessage>::proto_name())
+          static URL: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
+            format!("/{}.{}", <#proto_struct as ::protify::ProtoMessage>::PACKAGE, <#proto_struct as ::protify::ProtoMessage>::proto_name())
           });
 
           &*URL
         }
 
         fn full_name() -> &'static str {
-          static NAME: ::prelude::Lazy<String> = ::prelude::Lazy::new(|| {
-            format!("{}.{}", <#proto_struct as ::prelude::ProtoMessage>::PACKAGE, <#proto_struct as ::prelude::ProtoMessage>::proto_name())
+          static NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
+            format!("{}.{}", <#proto_struct as ::protify::ProtoMessage>::PACKAGE, <#proto_struct as ::protify::ProtoMessage>::proto_name())
           });
 
           &*NAME
@@ -218,10 +218,10 @@ impl MessageCtx<'_> {
           #name_method
         }
 
-        fn proto_schema() -> ::prelude::MessageSchema {
-          ::prelude::MessageSchema {
+        fn proto_schema() -> ::protify::MessageSchema {
+          ::protify::MessageSchema {
             short_name: #proto_name.into(),
-            name: <Self as ::prelude::ProtoMessage>::proto_name().into(),
+            name: <Self as ::protify::ProtoMessage>::proto_name().into(),
             file: #file_name.into(),
             package: #package.into(),
             reserved_names: vec![ #(#reserved_names.into()),* ],
@@ -230,7 +230,7 @@ impl MessageCtx<'_> {
             messages: vec![],
             enums: vec![],
             entries: vec![ #entries_tokens ],
-            validators: ::prelude::collect_validators([ #(::prelude::Validator::<#proto_struct>::schema(&#validators)),* ]),
+            validators: ::protify::collect_validators([ #(::protify::Validator::<#proto_struct>::schema(&#validators)),* ]),
             rust_path:  format!("::{}::{}", #module_path, #rust_ident_str).into()
           }
         }

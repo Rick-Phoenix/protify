@@ -89,7 +89,7 @@ impl Package {
   ///
   /// # Example
   /// ```
-  /// use prelude::*;
+  /// use protify::*;
   ///
   /// use tonic_prost_build::Config;
   ///

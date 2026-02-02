@@ -44,12 +44,12 @@ pub fn process_extension_derive(
     let field_type_tokens = proto_field.proto_field_target_type(field.ident.span());
 
     fields_tokens.push(quote_spanned! {field.ident.span()=>
-      ::prelude::Field {
+      ::protify::Field {
         name: #proto_name.into(),
         tag: #tag,
         options: #options.into_iter().collect(),
         type_: #field_type_tokens,
-        validators: ::prelude::vec![],
+        validators: ::protify::vec![],
       }
     });
   }
@@ -57,11 +57,11 @@ pub fn process_extension_derive(
   item.fields = Fields::Unit;
 
   Ok(quote! {
-    impl ::prelude::ProtoExtension for #ident {
-      fn proto_schema() -> ::prelude::Extension {
-        ::prelude::Extension {
-          target: ::prelude::ExtensionTarget::#target,
-          fields: ::prelude::vec![ #(#fields_tokens),* ]
+    impl ::protify::ProtoExtension for #ident {
+      fn proto_schema() -> ::protify::Extension {
+        ::protify::Extension {
+          target: ::protify::ExtensionTarget::#target,
+          fields: ::protify::vec![ #(#fields_tokens),* ]
         }
       }
     }

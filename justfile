@@ -6,7 +6,7 @@ check-asm-output:
 
 [working-directory(".")]
 test-all: test-shared-schemas test-schemas test-no-std test-proc-macro test-code-elimination
-    cargo test -p prelude -- --nocapture
+    cargo test -p protify -- --nocapture
 
 test-code-elimination:
     cargo test -p testing --release code_elimination
@@ -42,4 +42,4 @@ update-changelog version:
     git commit -m "updated changelog"
 
 build-docs: gen-readme
-    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --no-deps -p prelude --all-features --open
+    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --no-deps -p protify --all-features --open

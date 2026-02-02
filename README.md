@@ -9,7 +9,7 @@ We can use the provided macros to map a rust struct or enum to a protobuf item (
 We can add options programmatically, and even reuse the same oneof for multiple messages (with limitations explained in the [reusing oneofs](crate::guide::reusing_oneofs) section).
 
 ```rust
-use prelude::*;
+use protify::*;
 
 // Creates a new package
 proto_package!(MY_PKG, name = "my_pkg");
@@ -85,8 +85,8 @@ Our models are not hidden behind an included generated file, they are under our 
 Having the possibility of using proxies makes interactions with a database even easier, because we can have the proto message take a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
 
 ```rust
-use prelude::*;
-use prelude::proto_types::Timestamp;
+use protify::*;
+use protify::proto_types::Timestamp;
 use diesel::prelude::*;
 
 proto_package!(DB_TEST, name = "db_test", no_cel_test);
@@ -218,7 +218,7 @@ The messages/oneofs will also implement [`ProxiedMessage`](crate::ProxiedMessage
 ## Examples
 
 ```rust
-use prelude::*;
+use protify::*;
 use std::sync::Arc;
 
 proto_package!(MY_PKG, name = "my_pkg");
@@ -301,7 +301,7 @@ Validators can be assigned to oneofs/messages as a whole, or to individual field
 ## Example
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -342,7 +342,7 @@ A validator can be a struct (stateful) or just a function, wrapped with the [`fr
 Each validator only needs to implement a single method, [`validate_core`](crate::Validator::validate_core), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -434,8 +434,8 @@ Each builder features a method called `with_error_messages`, which accepts a BTr
 ### Example
 
 ```rust
-use prelude::*;
-use prelude::proto_types::{
+use protify::*;
+use protify::proto_types::{
   protovalidate::violations_data::*,
 };
 use std::collections::BTreeMap;
@@ -468,7 +468,7 @@ All default validators implement this method and output the options in the proto
 ### Example
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);

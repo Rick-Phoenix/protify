@@ -3,7 +3,7 @@
 Start by creating a package using the [`proto_package`](crate::proto_package) macro.
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 ```
@@ -19,7 +19,7 @@ This handle will serve two purposes. One is to serve as a reference for each fil
 For each item definition (oneof, message, enum), a proto file reference must be brought in scope so that the item can be assigned to it. A new file can be defined with the [`define_proto_file`](crate::define_proto_file) macro.
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -30,7 +30,7 @@ Once a file is brought into scope, we can define the items that will be assigned
 For more information on how to reuse the same file for different modules, refer to the [`managing files`](crate::guide::managing_files) section.
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG, extensions = [ MyExt ]);
@@ -98,7 +98,7 @@ Alternatively, you can compose the schemas manually, by adding the files to the 
 #### Example of manual definition
 
 ```rust
-use prelude::*;
+use protify::*;
 
 // We add the file manually
 proto_package!(MANUAL_PKG, name = "manual_pkg", files = [ MANUAL_FILE ]);

@@ -5,7 +5,7 @@ We can use the provided macros to map a rust struct or enum to a protobuf item (
 We can add options programmatically, and even reuse the same oneof for multiple messages (with limitations explained in the [reusing oneofs](crate::guide::reusing_oneofs) section).
 
 ```rust
-use prelude::*;
+use protify::*;
 
 // Creates a new package
 proto_package!(MY_PKG, name = "my_pkg");

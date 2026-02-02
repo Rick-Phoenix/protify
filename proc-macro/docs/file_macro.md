@@ -1,10 +1,10 @@
 Creates a new proto file schema, and brings it into scope for the items that are defined in the same module.
 
-A file must always be in scope for any given item definition (oneof, enum, message). This can be done by using this macro, the [`use_proto_file`](prelude::use_proto_file) and [`inherit_proto_file`](prelude::inherit_proto_file) macros, or by using the `file` attribute on enums or messages.
+A file must always be in scope for any given item definition (oneof, enum, message). This can be done by using this macro, the [`use_proto_file`](protify::use_proto_file) and [`inherit_proto_file`](protify::inherit_proto_file) macros, or by using the `file` attribute on enums or messages.
 
-For more information about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
+For more information about how to manage proto files, visit the [dedicated section](protify::guide::managing_files).
 
-The first argument is the ident that will be used for the file handle, which will be a unit struct that implements [`FileSchema`](prelude::FileSchema).
+The first argument is the ident that will be used for the file handle, which will be a unit struct that implements [`FileSchema`](protify::FileSchema).
 
 The other parameters are not positional and are as follows:
 
@@ -58,7 +58,7 @@ The other parameters are not positional and are as follows:
 # Example
 
 ```rust
-use prelude::*;
+use protify::*;
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
@@ -72,7 +72,7 @@ assert_eq!(Msg::proto_schema().file, "my_file.proto");
 
 ## Manual Schema Composition
 
-As explained in the [`package setup`](prelude::guide::package_setup) section, when the `inventory` feature is disabled, the schemas must be collected manually.
+As explained in the [`package setup`](protify::guide::package_setup) section, when the `inventory` feature is disabled, the schemas must be collected manually.
 
 In such a scenario, we have three more attributes that we can use (and would otherwise be ignored!), to add each element to the target file:
 - `messages`
@@ -82,7 +82,7 @@ In such a scenario, we have three more attributes that we can use (and would oth
 ### Example Of Manual Composition
 
 ```rust
-use prelude::*;
+use protify::*;
 
 // We must also add the file manually
 proto_package!(MY_PKG, name = "my_pkg", files = [ MY_FILE ]);

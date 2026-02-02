@@ -7,7 +7,7 @@ mod proto {
 #[cfg(test)]
 mod test {
   use maplit::hashmap;
-  use prelude::ValidatedMessage;
+  use protify::ValidatedMessage;
   use proto_types::protovalidate::Violation;
 
   #[cfg(feature = "reflection")]
@@ -16,7 +16,7 @@ mod test {
   #[cfg(not(feature = "reflection"))]
   use test_schemas::*;
 
-  use prelude::proto_types::*;
+  use protify::proto_types::*;
 
   #[allow(unused)]
   #[track_caller]

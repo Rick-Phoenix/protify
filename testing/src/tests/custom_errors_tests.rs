@@ -1,5 +1,5 @@
 use maplit::btreemap;
-use prelude::proto_types::{
+use protify::proto_types::{
   Any, Duration, FieldMask, Timestamp, protovalidate::violations_data::*,
 };
 

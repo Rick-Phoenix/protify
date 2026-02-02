@@ -9,7 +9,7 @@ Validators can be assigned to oneofs/messages as a whole, or to individual field
 ## Example
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -50,7 +50,7 @@ A validator can be a struct (stateful) or just a function, wrapped with the [`fr
 Each validator only needs to implement a single method, [`validate_core`](crate::Validator::validate_core), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -142,8 +142,8 @@ Each builder features a method called `with_error_messages`, which accepts a BTr
 ### Example
 
 ```rust
-use prelude::*;
-use prelude::proto_types::{
+use protify::*;
+use protify::proto_types::{
   protovalidate::violations_data::*,
 };
 use std::collections::BTreeMap;
@@ -176,7 +176,7 @@ All default validators implement this method and output the options in the proto
 ### Example
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);

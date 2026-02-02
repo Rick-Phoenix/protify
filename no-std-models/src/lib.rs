@@ -7,9 +7,9 @@ extern crate std;
 use alloc::boxed::Box;
 use alloc::string::String;
 
-use prelude::{BTreeMap, proto_enum, proto_extension, proto_oneof, proto_service};
+use protify::{BTreeMap, proto_enum, proto_extension, proto_oneof, proto_service};
 
-use prelude::{define_proto_file, proto_message, proto_package};
+use protify::{define_proto_file, proto_message, proto_package};
 
 proto_package!(
   NO_STD_PKG,

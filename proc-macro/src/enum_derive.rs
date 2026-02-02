@@ -28,24 +28,24 @@ pub fn named_enum_derive(item: &ItemEnum) -> TokenStream2 {
   let name = name.unwrap_or_else(|| to_pascal_case(&item.ident.to_string()));
 
   quote! {
-    impl ::prelude::ProtoEnum for #ident {
+    impl ::protify::ProtoEnum for #ident {
       #[inline]
       fn proto_name() -> &'static str {
         #name
       }
     }
 
-    impl ::prelude::ProtoValidation for #ident {
+    impl ::protify::ProtoValidation for #ident {
       #[doc(hidden)]
       type Target = i32;
       #[doc(hidden)]
       type Stored = i32;
-      type Validator = ::prelude::EnumValidator<#ident>;
-      type ValidatorBuilder = ::prelude::EnumValidatorBuilder<#ident>;
+      type Validator = ::protify::EnumValidator<#ident>;
+      type ValidatorBuilder = ::protify::EnumValidatorBuilder<#ident>;
 
       #[doc(hidden)]
       type UniqueStore<'a>
-        = ::prelude::CopyHybridStore<i32>
+        = ::protify::CopyHybridStore<i32>
         where
           Self: 'a;
 

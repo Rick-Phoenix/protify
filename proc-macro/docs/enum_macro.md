@@ -1,12 +1,12 @@
 Enables protobuf schema and validation features for the target enum.
 
-It implements [`ProtoEnumSchema`](prelude::ProtoEnumSchema), [`ProtoValidation`](prelude::ProtoValidation) and [`AsProtoType`](prelude::AsProtoType) for the target enum.
+It implements [`ProtoEnumSchema`](protify::ProtoEnumSchema), [`ProtoValidation`](protify::ProtoValidation) and [`AsProtoType`](protify::AsProtoType) for the target enum.
 
 If a tag for a variant is not manually defined, it will be automatically generated based on the tags that have already been used and those that are part of the reserved numbers.
 
 # Example
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -58,13 +58,13 @@ enum MyEnum {
     - Type: Ident
     - Example: `#[proto(file = MY_FILE)]`
     - Description:
-        Assigns a specific file to this item. By default, the `module_path` will be inherited from the target file, and can be overridden with the `module_path` attribute. For more info about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
+        Assigns a specific file to this item. By default, the `module_path` will be inherited from the target file, and can be overridden with the `module_path` attribute. For more info about how to manage proto files, visit the [dedicated section](protify::guide::managing_files).
 
 - `module_path`
     - Type: literal string or [`module_path!`](core::module_path)
     - Example: `#[proto(module_path = core::module_path!())]` or `#[proto(module_path = "module::path")]`
     - Description:
-        Overrides the `module_path` for this item, which is otherwise inherited by the assigned proto file. For more info about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
+        Overrides the `module_path` for this item, which is otherwise inherited by the assigned proto file. For more info about how to manage proto files, visit the [dedicated section](protify::guide::managing_files).
 
 - `reserved_numbers`
     - Type: list of individual numbers or closed ranges

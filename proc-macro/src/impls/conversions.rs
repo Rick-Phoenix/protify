@@ -5,7 +5,7 @@ fn process_custom_expression(expr: &PathOrClosure, base_ident: &TokenStream2) ->
     PathOrClosure::Path(path) => quote! { #path(#base_ident) },
     PathOrClosure::Closure(closure) => {
       quote_spanned! {closure.span()=>
-        ::prelude::apply(#base_ident, #closure)
+        ::protify::apply(#base_ident, #closure)
       }
     }
   }
@@ -33,21 +33,21 @@ impl ProtoConversions<'_> {
 
     let proxy_trait_impl = if kind.is_message() {
       quote! {
-        impl ::prelude::MessageProxy for #proxy_ident {
+        impl ::protify::MessageProxy for #proxy_ident {
           type Message = #proto_ident;
         }
 
-        impl ::prelude::ProxiedMessage for #proto_ident {
+        impl ::protify::ProxiedMessage for #proto_ident {
           type Proxy = #proxy_ident;
         }
       }
     } else {
       quote! {
-        impl ::prelude::OneofProxy for #proxy_ident {
+        impl ::protify::OneofProxy for #proxy_ident {
           type Oneof = #proto_ident;
         }
 
-        impl ::prelude::ProxiedOneof for #proto_ident {
+        impl ::protify::ProxiedOneof for #proto_ident {
           type Proxy = #proxy_ident;
         }
       }

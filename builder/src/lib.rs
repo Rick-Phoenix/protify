@@ -206,8 +206,8 @@ fn set_up_validators_inner(
     .unwrap_or(env::temp_dir());
 
   config
-    .extern_path(".google.protobuf", "::prelude::proto_types")
-    .extern_path(".buf.validate", "::prelude::proto_types::protovalidate")
+    .extern_path(".google.protobuf", "::protify::proto_types")
+    .extern_path(".buf.validate", "::protify::proto_types::protovalidate")
     .compile_well_known_types();
 
   let temp_descriptor_path = out_dir.join("__temp_file_descriptor_set.bin");
@@ -242,10 +242,10 @@ fn set_up_validators_inner(
         });
       }
 
-      config.message_attribute(message_name, "#[derive(::prelude::ValidatedMessage)]");
+      config.message_attribute(message_name, "#[derive(::protify::ValidatedMessage)]");
       #[cfg(feature = "cel")]
       {
-        config.message_attribute(message_name, "#[derive(::prelude::CelValue)]");
+        config.message_attribute(message_name, "#[derive(::protify::CelValue)]");
       }
       config.message_attribute(
         message_name,
@@ -263,10 +263,10 @@ fn set_up_validators_inner(
           });
         }
 
-        config.enum_attribute(oneof.full_name(), "#[derive(::prelude::ValidatedOneof)]");
+        config.enum_attribute(oneof.full_name(), "#[derive(::protify::ValidatedOneof)]");
         #[cfg(feature = "cel")]
         {
-          config.enum_attribute(oneof.full_name(), "#[derive(::prelude::CelOneof)]");
+          config.enum_attribute(oneof.full_name(), "#[derive(::protify::CelOneof)]");
         }
         config.enum_attribute(
           oneof.full_name(),
@@ -292,7 +292,7 @@ fn set_up_validators_inner(
         });
       }
 
-      config.enum_attribute(enum_desc.full_name(), "#[derive(::prelude::ProtoEnum)]");
+      config.enum_attribute(enum_desc.full_name(), "#[derive(::protify::ProtoEnum)]");
       config.enum_attribute(
         enum_desc.full_name(),
         format!(r#"#[proto(name = "{enum_full_ish_name}")]"#),

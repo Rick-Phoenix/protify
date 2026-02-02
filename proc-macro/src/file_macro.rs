@@ -22,7 +22,7 @@ impl ToTokens for MessageExpr {
   fn to_tokens(&self, tokens: &mut TokenStream2) {
     let path = self.path();
 
-    tokens.extend(quote! { <#path as ::prelude::ProtoMessage>::proto_schema() });
+    tokens.extend(quote! { <#path as ::protify::ProtoMessage>::proto_schema() });
 
     if let Self::Nested {
       nested_messages,
@@ -96,12 +96,12 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut file_ident: Option<Ident> = None;
   let mut name: Option<String> = None;
   let mut package: Option<Path> = None;
-  let mut options = TokenStreamOr::new(|_| quote! { ::prelude::vec![] });
+  let mut options = TokenStreamOr::new(|_| quote! { ::protify::vec![] });
   let mut extern_path =
     TokensOr::<LitStr>::new(|span| quote_spanned! (span=> ::core::module_path!()));
-  let mut imports = TokenStreamOr::new(|_| quote! { ::prelude::Vec::<&'static str>::new() });
+  let mut imports = TokenStreamOr::new(|_| quote! { ::protify::Vec::<&'static str>::new() });
   let mut extensions: Vec<Path> = Vec::new();
-  let mut edition = TokenStreamOr::new(|_| quote! { ::prelude::Edition::Proto3 });
+  let mut edition = TokenStreamOr::new(|_| quote! { ::protify::Edition::Proto3 });
   let mut messages: Vec<MessageExpr> = Vec::new();
   let mut enums: Vec<Path> = Vec::new();
   let mut services: Vec<Path> = Vec::new();
@@ -162,10 +162,10 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
   let inventory_call = (!no_emit).then(|| {
     quote! {
-      ::prelude::register_proto_data! {
-        ::prelude::RegistryFile {
-          file: || <#file_ident as ::prelude::FileSchema>::file_schema(),
-          package: <#package as ::prelude::PackageSchema>::NAME
+      ::protify::register_proto_data! {
+        ::protify::RegistryFile {
+          file: || <#file_ident as ::protify::FileSchema>::file_schema(),
+          package: <#package as ::protify::PackageSchema>::NAME
         }
       }
     }
@@ -174,22 +174,22 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   Ok(quote! {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: ::prelude::FileReference = ::prelude::FileReference {
+    const __PROTO_FILE: ::protify::FileReference = ::protify::FileReference {
       name: #file,
-      package: <#package as ::prelude::PackageSchema>::NAME,
+      package: <#package as ::protify::PackageSchema>::NAME,
       extern_path: #extern_path,
     };
 
     #[allow(non_camel_case_types)]
     pub(crate) struct #file_ident;
 
-    impl ::prelude::FileSchema for #file_ident {
+    impl ::protify::FileSchema for #file_ident {
       const NAME: &str = #file;
-      const PACKAGE: &str = <#package as ::prelude::PackageSchema>::NAME;
+      const PACKAGE: &str = <#package as ::protify::PackageSchema>::NAME;
       const EXTERN_PATH: &str = #extern_path;
 
-      fn file_schema() -> ::prelude::ProtoFile {
-        let mut file = ::prelude::ProtoFile::new(#file, <#package as ::prelude::PackageSchema>::NAME);
+      fn file_schema() -> ::protify::ProtoFile {
+        let mut file = ::protify::ProtoFile::new(#file, <#package as ::protify::PackageSchema>::NAME);
 
         file
           .with_edition(#edition)

@@ -45,18 +45,18 @@ pub fn field_validator_tokens(
             .default_check_tokens
             .push(if msg_info.boxed {
               quote! {
-                <#path as ::prelude::ProtoValidation>::HAS_SHALLOW_VALIDATION
+                <#path as ::protify::ProtoValidation>::HAS_SHALLOW_VALIDATION
               }
             } else {
               quote! {
-                <#path as ::prelude::ProtoValidation>::HAS_DEFAULT_VALIDATOR
+                <#path as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR
               }
             });
         } else if let ProtoField::Oneof(oneof) = proto_field {
           let path = &oneof.path;
 
           validators_data.default_check_tokens.push(quote! {
-            <#path as ::prelude::ProtoValidation>::HAS_DEFAULT_VALIDATOR
+            <#path as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR
           });
         }
       } else {
@@ -100,7 +100,7 @@ pub fn field_validator_tokens(
     } else {
       quote_spanned! {*span=>
         ctx.with_field_context(
-          ::prelude::FieldContext {
+          ::protify::FieldContext {
             name: #proto_name.into(),
             tag: #tag,
             field_type: #field_type,
@@ -120,11 +120,11 @@ pub fn field_validator_tokens(
 
       quote_spanned! {*span=>
         is_valid &= {
-          static #static_ident: ::prelude::Lazy<#validator_name> = ::prelude::Lazy::new(|| {
+          static #static_ident: ::protify::Lazy<#validator_name> = ::protify::Lazy::new(|| {
             #validator_expr
           });
 
-          ::prelude::Validator::<#validator_target_type>::validate_core(
+          ::protify::Validator::<#validator_target_type>::validate_core(
             &*#static_ident,
             #validate_args
           )?
@@ -132,7 +132,7 @@ pub fn field_validator_tokens(
       }
     } else {
       quote_spanned! {*span=>
-        is_valid &= ::prelude::Validator::<#validator_target_type>::validate_core(
+        is_valid &= ::protify::Validator::<#validator_target_type>::validate_core(
           &(#validator_expr),
           #validate_args
         )?;
@@ -141,7 +141,7 @@ pub fn field_validator_tokens(
 
     let output = if kind.is_default() {
       quote_spanned! {*span=>
-        if <#validator_target_type as ::prelude::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
+        if <#validator_target_type as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
           #validator_call
         }
       }
@@ -172,7 +172,7 @@ pub fn generate_message_validator(
     let top_level = top_level_validators.iter().enumerate().map(|(i, v)| {
       if v.kind.is_custom() {
         quote_spanned! {v.span=>
-          is_valid &= ::prelude::Validator::<#target_ident>::validate_core(
+          is_valid &= ::protify::Validator::<#target_ident>::validate_core(
             &(#v),
             ctx,
             Some(self)
@@ -183,11 +183,11 @@ pub fn generate_message_validator(
 
         quote_spanned! {v.span=>
           is_valid &= {
-            static #validator_static_ident: ::prelude::Lazy<::prelude::CelValidator> = ::prelude::Lazy::new(|| {
+            static #validator_static_ident: ::protify::Lazy<::protify::CelValidator> = ::protify::Lazy::new(|| {
               #v
             });
 
-            ::prelude::Validator::<#target_ident>::validate_core(
+            ::protify::Validator::<#target_ident>::validate_core(
               &*#validator_static_ident,
               ctx,
               Some(self)
@@ -267,10 +267,10 @@ pub fn generate_message_validator(
   };
 
   quote! {
-    impl ::prelude::ValidatedMessage for #target_ident {
+    impl ::protify::ValidatedMessage for #target_ident {
       #inline_if_empty
-      fn validate_with_ctx(&self, ctx: &mut ::prelude::ValidationCtx) -> ::prelude::ValidationResult {
-        let mut is_valid = ::prelude::IsValid::Yes;
+      fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
+        let mut is_valid = ::protify::IsValid::Yes;
 
         #validators_tokens
 
@@ -278,18 +278,18 @@ pub fn generate_message_validator(
       }
     }
 
-    impl ::prelude::ProtoValidation for #target_ident {
+    impl ::protify::ProtoValidation for #target_ident {
       #[doc(hidden)]
       type Target = Self;
       #[doc(hidden)]
       type Stored = Self;
       #[doc(hidden)]
-      type Validator = ::prelude::MessageValidator;
+      type Validator = ::protify::MessageValidator;
       #[doc(hidden)]
-      type ValidatorBuilder = ::prelude::MessageValidatorBuilder;
+      type ValidatorBuilder = ::protify::MessageValidatorBuilder;
 
       type UniqueStore<'a>
-        = ::prelude::LinearRefStore<'a, Self>
+        = ::protify::LinearRefStore<'a, Self>
       where
         Self: 'a;
 

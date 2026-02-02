@@ -71,7 +71,7 @@ impl ProtoField {
         let values = map.values.field_proto_type_tokens(span);
 
         if map.is_btree_map {
-          quote_spanned! {span=> ::prelude::BTreeMap<#keys, #values> }
+          quote_spanned! {span=> ::protify::BTreeMap<#keys, #values> }
         } else {
           quote_spanned! {span=> HashMap<#keys, #values> }
         }
@@ -92,7 +92,7 @@ impl ProtoField {
       Self::Single(proto_type) => proto_type.field_proto_type_tokens(span),
     };
 
-    quote_spanned! {span=> <#target_type as ::prelude::AsProtoField>::as_proto_field() }
+    quote_spanned! {span=> <#target_type as ::protify::AsProtoField>::as_proto_field() }
   }
 
   // This one has to stay with `ProtoField` because it's used before
@@ -102,7 +102,7 @@ impl ProtoField {
       Self::Oneof(OneofInfo { .. }) => {
         return Some(ValidatorTokens {
           expr: quote_spanned! {span=>
-            *::prelude::DEFAULT_ONEOF_VALIDATOR
+            *::protify::DEFAULT_ONEOF_VALIDATOR
           },
           kind: ValidatorKind::DefaultOneof,
           span,
@@ -114,7 +114,7 @@ impl ProtoField {
           let keys_type = map.keys.into_type().validator_target_type(span);
 
           Some(quote_spanned! {span=>
-            ::prelude::MapValidator::<#keys_type, #path>::default()
+            ::protify::MapValidator::<#keys_type, #path>::default()
           })
         } else {
           None
@@ -124,7 +124,7 @@ impl ProtoField {
         // Only offers a default if the items are messages
         if let ProtoType::Message(MessageInfo { path, .. }) = inner {
           Some(quote_spanned! {span=>
-            ::prelude::RepeatedValidator::<#path>::default()
+            ::protify::RepeatedValidator::<#path>::default()
           })
         } else {
           None
@@ -134,7 +134,7 @@ impl ProtoField {
         if let ProtoType::Message(MessageInfo { .. }) = inner {
           return Some(ValidatorTokens {
             expr: quote_spanned! {span=>
-              *::prelude::DEFAULT_MESSAGE_VALIDATOR
+              *::protify::DEFAULT_MESSAGE_VALIDATOR
             },
             kind: ValidatorKind::DefaultMessage,
             span,
@@ -161,7 +161,7 @@ impl ProtoField {
         let values = map.values.validator_target_type(span);
 
         if map.is_btree_map {
-          quote_spanned! {span=> ::prelude::BTreeMap<#keys, #values> }
+          quote_spanned! {span=> ::protify::BTreeMap<#keys, #values> }
         } else {
           quote_spanned! {span=> ::std::collections::HashMap<#keys, #values> }
         }

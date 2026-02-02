@@ -64,8 +64,8 @@ pub fn attr_forwarding_derive_test(_: TokenStream) -> TokenStream {
   TokenStream::new()
 }
 
-/// Implements the [`CelOneof`](prelude::CelOneof) trait on an enum. Automatically implemented
-/// by the [`proto_oneof`](prelude::proto_oneof) macro when the `cel` feature is enabled.
+/// Implements the [`CelOneof`](protify::CelOneof) trait on an enum. Automatically implemented
+/// by the [`proto_oneof`](protify::proto_oneof) macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelOneof, attributes(cel))]
 pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
@@ -77,8 +77,8 @@ pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
   }
 }
 
-/// Implements the [`CelValue`](prelude::CelValue) trait on a struct. Automatically
-/// implemented by the [`proto_message`](prelude::proto_message) macro when the `cel` feature is enabled.
+/// Implements the [`CelValue`](protify::CelValue) trait on a struct. Automatically
+/// implemented by the [`proto_message`](protify::proto_message) macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelValue, attributes(cel))]
 pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
@@ -147,7 +147,7 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
 #[allow(clippy::doc_overindented_list_items)]
 /// Creates a new package handle, which is used to collect the proto schemas in a crate.
 ///
-/// For a comprehensive guide of how to set up a package, visit the [`package setup`](prelude::guide::package_setup) section.
+/// For a comprehensive guide of how to set up a package, visit the [`package setup`](protify::guide::package_setup) section.
 ///
 /// The first parameter of the macro is the ident that will be used for the generated constant that will hold the package handle, which will be used to generate the package and its proto files.
 ///
@@ -166,11 +166,11 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
 ///   - Description:
 ///       By default, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
 ///
-/// As explained in the [`package setup`](prelude::guide::package_setup) section, when the `inventory` feature is disabled, the files of a given package must be added manually, inside a bracketed list.
+/// As explained in the [`package setup`](protify::guide::package_setup) section, when the `inventory` feature is disabled, the files of a given package must be added manually, inside a bracketed list.
 ///
 /// # Examples
 /// ```
-/// use prelude::*;
+/// use protify::*;
 ///
 /// // If we want to skip the automatically generated
 /// // Test for conflicting CEL rules in the same scope
@@ -216,7 +216,7 @@ pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
   };
 
   quote! {
-    #[derive(::prelude::macros::Extension)]
+    #[derive(::protify::macros::Extension)]
     #item
 
     #extra_tokens

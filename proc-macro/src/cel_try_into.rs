@@ -2,7 +2,7 @@ use crate::*;
 
 pub fn get_conversion_tokens(type_info: &TypeInfo, val_tokens: &TokenStream2) -> TokenStream2 {
   match type_info.type_.as_ref() {
-    RustType::Box(_) => quote! { ::prelude::CelValue::try_into_cel(*#val_tokens)? },
+    RustType::Box(_) => quote! { ::protify::CelValue::try_into_cel(*#val_tokens)? },
     RustType::Float(_)
     | RustType::Uint(_)
     | RustType::Int(_)
@@ -12,7 +12,7 @@ pub fn get_conversion_tokens(type_info: &TypeInfo, val_tokens: &TokenStream2) ->
       quote! { #val_tokens.into() }
     }
     _ => {
-      quote! { #val_tokens.try_into().map_err(::prelude::proto_types::cel::CelConversionError::from)? }
+      quote! { #val_tokens.try_into().map_err(::protify::proto_types::cel::CelConversionError::from)? }
     }
   }
 }
@@ -49,10 +49,10 @@ pub fn derive_cel_value_oneof(item: &ItemEnum) -> Result<TokenStream2, Error> {
   // We cannot rely on the try_into impl as is here, because we need to know
   // the name of the specific oneof variant being used
   Ok(quote! {
-    impl ::prelude::CelOneof for #enum_ident {
+    impl ::protify::CelOneof for #enum_ident {
       #[doc(hidden)]
-      fn try_into_cel(self) -> Result<(String, ::prelude::cel::Value), ::prelude::proto_types::cel::CelConversionError> {
-        use ::prelude::{CelOneof as __CelOneof, CelValue as __CelValue};
+      fn try_into_cel(self) -> Result<(String, ::protify::cel::Value), ::protify::proto_types::cel::CelConversionError> {
+        use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
 
         match self {
           #(#match_arms),*
@@ -60,12 +60,12 @@ pub fn derive_cel_value_oneof(item: &ItemEnum) -> Result<TokenStream2, Error> {
       }
     }
 
-    impl TryFrom<#enum_ident> for ::prelude::cel::Value {
-      type Error = ::prelude::proto_types::cel::CelConversionError;
+    impl TryFrom<#enum_ident> for ::protify::cel::Value {
+      type Error = ::protify::proto_types::cel::CelConversionError;
 
       #[inline]
       fn try_from(value: #enum_ident) -> Result<Self, Self::Error> {
-        Ok(<#enum_ident as ::prelude::CelOneof>::try_into_cel(value)?.1)
+        Ok(<#enum_ident as ::protify::CelOneof>::try_into_cel(value)?.1)
       }
     }
   })
@@ -102,7 +102,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
     if is_oneof {
       tokens.extend(quote_spanned! {span=>
         if let Some(oneof) = value.#field_ident {
-          let (oneof_field_name, cel_val) = ::prelude::CelOneof::try_into_cel(oneof)?;
+          let (oneof_field_name, cel_val) = ::protify::CelOneof::try_into_cel(oneof)?;
           fields.insert(oneof_field_name.into(), cel_val);
         }
       });
@@ -119,7 +119,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
             if let Some(val) = value.#field_ident {
               fields.insert(#field_name.into(), #conversion_tokens);
             } else {
-              fields.insert(#field_name.into(), ::prelude::cel::Value::Null);
+              fields.insert(#field_name.into(), ::protify::cel::Value::Null);
             }
           });
         }
@@ -127,12 +127,12 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
           let conversion_tokens = get_conversion_tokens(inner, &val_tokens);
 
           tokens.extend(quote_spanned! {span=>
-            let mut converted: Vec<::prelude::cel::Value> = Vec::new();
+            let mut converted: Vec<::protify::cel::Value> = Vec::new();
             for val in value.#field_ident {
               converted.push(#conversion_tokens);
             }
 
-            fields.insert(#field_name.into(), ::prelude::cel::Value::List(converted.into()));
+            fields.insert(#field_name.into(), ::protify::cel::Value::List(converted.into()));
           });
         }
 
@@ -140,13 +140,13 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
           let values_conversion_tokens = get_conversion_tokens(v, &val_tokens);
 
           tokens.extend(quote_spanned! {span=>
-            let mut field_map: ::std::collections::HashMap<::prelude::cel::objects::Key, ::prelude::cel::Value> = ::std::collections::HashMap::new();
+            let mut field_map: ::std::collections::HashMap<::protify::cel::objects::Key, ::protify::cel::Value> = ::std::collections::HashMap::new();
 
             for (key, val) in value.#field_ident {
               field_map.insert(key.into(), #values_conversion_tokens);
             }
 
-            fields.insert(#field_name.into(), ::prelude::cel::Value::Map(field_map.into()));
+            fields.insert(#field_name.into(), ::protify::cel::Value::Map(field_map.into()));
           });
         }
         _ => {
@@ -162,19 +162,19 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
   }
 
   Ok(quote! {
-    impl ::prelude::CelValue for #struct_name {}
+    impl ::protify::CelValue for #struct_name {}
 
-    impl TryFrom<#struct_name> for ::prelude::cel::Value {
-      type Error = ::prelude::proto_types::cel::CelConversionError;
+    impl TryFrom<#struct_name> for ::protify::cel::Value {
+      type Error = ::protify::proto_types::cel::CelConversionError;
 
       fn try_from(value: #struct_name) -> Result<Self, Self::Error> {
-        use ::prelude::{CelOneof as __CelOneof, CelValue as __CelValue};
+        use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
 
-        let mut fields: ::std::collections::HashMap<::prelude::cel::objects::Key, ::prelude::cel::Value> = std::collections::HashMap::new();
+        let mut fields: ::std::collections::HashMap<::protify::cel::objects::Key, ::protify::cel::Value> = std::collections::HashMap::new();
 
         #tokens
 
-        Ok(::prelude::cel::Value::Map(fields.into()))
+        Ok(::protify::cel::Value::Map(fields.into()))
       }
     }
   })

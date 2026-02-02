@@ -1,4 +1,4 @@
-use prelude::proto_types::protovalidate::{Violation, ViolationKind};
+use protify::proto_types::protovalidate::{Violation, ViolationKind};
 
 use super::*;
 use std::sync::LazyLock;

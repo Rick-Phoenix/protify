@@ -107,7 +107,7 @@ impl Validators {
       if validator.kind.is_closure() {
         let validator_target_type = proto_field.validator_target_type(validator.span);
 
-        validator.expr = quote_spanned! {validator.span=> <#validator_target_type as ::prelude::ProtoValidation>::validator_from_closure(#validator) };
+        validator.expr = quote_spanned! {validator.span=> <#validator_target_type as ::protify::ProtoValidation>::validator_from_closure(#validator) };
 
         if proto_field.is_oneof() {
           validator.kind = ValidatorKind::ClosureOneof;

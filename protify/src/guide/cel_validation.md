@@ -19,7 +19,7 @@ This crate exports a Lazy struct that can be used for this purpose, which is a t
 ### Example
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);

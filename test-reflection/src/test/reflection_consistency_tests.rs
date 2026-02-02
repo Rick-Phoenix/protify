@@ -1,4 +1,4 @@
-use prelude::{ConsistencyError, TestError};
+use protify::{ConsistencyError, TestError};
 
 use crate::proto::bad_cel_oneof_test::BadCelOneof;
 

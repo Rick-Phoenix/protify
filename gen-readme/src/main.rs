@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
     .args([
       "expand",
       "-p",
-      "prelude",
+      "protify",
       "--no-default-features",
       "--features",
       "document-features",

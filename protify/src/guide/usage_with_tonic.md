@@ -30,9 +30,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     config
         // You can use `proto_types` directly or its re-export
-        .extern_path(".google.protobuf", "::prelude::proto_types")
+        .extern_path(".google.protobuf", "::protify::proto_types")
         // If we are using validators
-        .extern_path(".buf.validate", "::prelude::proto_types::protovalidate")
+        .extern_path(".buf.validate", "::protify::proto_types::protovalidate")
         // Required, if bytes fields are used
         .bytes(["."])
         .compile_well_known_types();

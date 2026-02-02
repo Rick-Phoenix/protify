@@ -44,17 +44,17 @@ impl<'a> FallbackImpls<'a> {
       ItemKind::Oneof => {
         quote! {
           impl #target_ident {
-            pub fn encode(&self, buf: &mut impl ::prelude::prost::bytes::BufMut) {
+            pub fn encode(&self, buf: &mut impl ::protify::prost::bytes::BufMut) {
               unimplemented!()
             }
 
             pub fn merge(
               _: &mut ::core::option::Option<Self>,
               _: u32,
-              _: ::prelude::prost::encoding::wire_type::WireType,
-              _: &mut impl ::prelude::prost::bytes::Buf,
-              _: ::prelude::prost::encoding::DecodeContext,
-            ) -> ::core::result::Result<(), ::prelude::prost::DecodeError>
+              _: ::protify::prost::encoding::wire_type::WireType,
+              _: &mut impl ::protify::prost::bytes::Buf,
+              _: ::protify::prost::encoding::DecodeContext,
+            ) -> ::core::result::Result<(), ::protify::prost::DecodeError>
             {
               unimplemented!()
             }
@@ -67,14 +67,14 @@ impl<'a> FallbackImpls<'a> {
       }
       ItemKind::Message => {
         quote! {
-          impl ::prelude::prost::Message for #target_ident {
+          impl ::protify::prost::Message for #target_ident {
             fn encoded_len(&self) -> usize {
               unimplemented!()
             }
 
-            fn encode_raw(&self, _: &mut impl ::prelude::prost::bytes::buf::BufMut) { unimplemented!() }
+            fn encode_raw(&self, _: &mut impl ::protify::prost::bytes::buf::BufMut) { unimplemented!() }
 
-            fn merge_field(&mut self, _: u32, _: prost::encoding::WireType, _: &mut impl ::prelude::prost::bytes::buf::Buf, _: prost::encoding::DecodeContext) -> std::result::Result<(), prost::DecodeError> { unimplemented!() }
+            fn merge_field(&mut self, _: u32, _: prost::encoding::WireType, _: &mut impl ::protify::prost::bytes::buf::Buf, _: prost::encoding::DecodeContext) -> std::result::Result<(), prost::DecodeError> { unimplemented!() }
 
             fn clear(&mut self) {}
           }
@@ -86,15 +86,15 @@ impl<'a> FallbackImpls<'a> {
     if cfg!(feature = "cel") {
       output.extend(match self.kind {
         ItemKind::Oneof => quote! {
-          impl ::prelude::CelOneof for #target_ident {
+          impl ::protify::CelOneof for #target_ident {
             #[doc(hidden)]
-            fn try_into_cel(self) -> Result<(String, ::prelude::cel::Value), ::prelude::proto_types::cel::CelConversionError> {
+            fn try_into_cel(self) -> Result<(String, ::protify::cel::Value), ::protify::proto_types::cel::CelConversionError> {
               unimplemented!()
             }
           }
 
-          impl TryFrom<#target_ident> for ::prelude::cel::Value {
-            type Error = ::prelude::proto_types::cel::CelConversionError;
+          impl TryFrom<#target_ident> for ::protify::cel::Value {
+            type Error = ::protify::proto_types::cel::CelConversionError;
 
             #[inline]
             fn try_from(value: #target_ident) -> Result<Self, Self::Error> {
@@ -103,10 +103,10 @@ impl<'a> FallbackImpls<'a> {
           }
         },
         ItemKind::Message => quote! {
-          impl ::prelude::CelValue for #target_ident {}
+          impl ::protify::CelValue for #target_ident {}
 
-          impl TryFrom<#target_ident> for ::prelude::cel::Value {
-            type Error = ::prelude::proto_types::cel::CelConversionError;
+          impl TryFrom<#target_ident> for ::protify::cel::Value {
+            type Error = ::protify::proto_types::cel::CelConversionError;
 
             fn try_from(value: #target_ident) -> Result<Self, Self::Error> {
               unimplemented!()

@@ -1,4 +1,4 @@
-Implements the [`ProtoExtension`](prelude::ProtoExtension) trait for the given struct.
+Implements the [`ProtoExtension`](protify::ProtoExtension) trait for the given struct.
 
 Since the item on which this macro is used is intended to be used only for schema purposes, the macro
 will generate the impl and then erase all of the fields of the struct, so as to not trigger any "unused"
@@ -11,7 +11,7 @@ Each field must have a defined tag, and can also support options like fields in 
 # Examples
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 

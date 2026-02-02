@@ -25,18 +25,18 @@ impl OneofCtx<'_> {
     let tags = &self.tags;
 
     quote! {
-      impl ::prelude::ProtoOneof for #enum_ident {
+      impl ::protify::ProtoOneof for #enum_ident {
         #[doc(hidden)]
         const NAME: &str = #proto_name;
         #[doc(hidden)]
         const TAGS: &[i32] = &[ #(#tags),* ];
 
-        fn proto_schema() -> ::prelude::Oneof {
-          ::prelude::Oneof {
+        fn proto_schema() -> ::protify::Oneof {
+          ::protify::Oneof {
             name: #proto_name.into(),
             fields: vec![ #variants_tokens ],
             options: #options_tokens.into_iter().collect(),
-            validators: ::prelude::collect_validators([ #(::prelude::Validator::<#enum_ident>::schema(&#validators)),* ]),
+            validators: ::protify::collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]),
           }
         }
       }

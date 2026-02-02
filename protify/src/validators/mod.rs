@@ -260,7 +260,7 @@ pub trait ProtoValidation {
   /// # Example
   ///
   /// ```
-  /// use prelude::*;
+  /// use protify::*;
   ///
   /// assert_eq!(StringValidator::builder(), String::validator_builder());
   /// ```
@@ -276,7 +276,7 @@ pub trait ProtoValidation {
   /// # Example
   ///
   /// ```
-  /// use prelude::*;
+  /// use protify::*;
   ///
   /// let validator = String::validator_from_closure(|v| v.min_len(3));
   /// let validator2 = StringValidator::builder().min_len(3).build();

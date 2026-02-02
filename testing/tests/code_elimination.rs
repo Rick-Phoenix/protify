@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use prelude::*;
+use protify::*;
 
 proto_package!(TESTING_PKG, name = "testing", no_cel_test);
 

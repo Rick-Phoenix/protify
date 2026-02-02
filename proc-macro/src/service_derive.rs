@@ -95,10 +95,10 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
     let options_tokens = options_tokens(*span, options, *deprecated);
 
     quote_spanned! {*span=>
-      ::prelude::ServiceHandler {
+      ::protify::ServiceHandler {
         name: #name.into(),
-        request: <#request as ::prelude::MessagePath>::proto_path(),
-        response: <#response as ::prelude::MessagePath>::proto_path(),
+        request: <#request as ::protify::MessagePath>::proto_path(),
+        response: <#response as ::protify::MessagePath>::proto_path(),
         options: #options_tokens.into_iter().collect()
       }
     }
@@ -107,23 +107,23 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
   let options_tokens = options_tokens(Span::call_site(), &service_options, deprecated);
 
   Ok(quote! {
-    #[derive(::prelude::macros::Service)]
+    #[derive(::protify::macros::Service)]
     #vis struct #ident;
 
-    ::prelude::register_proto_data! {
-      ::prelude::RegistryService {
+    ::protify::register_proto_data! {
+      ::protify::RegistryService {
         package: __PROTO_FILE.package,
-        service: || <#ident as ::prelude::ProtoService>::proto_schema()
+        service: || <#ident as ::protify::ProtoService>::proto_schema()
       }
     }
 
-    impl ::prelude::ProtoService for #ident {
-      fn proto_schema() -> ::prelude::Service {
-        ::prelude::Service {
+    impl ::protify::ProtoService for #ident {
+      fn proto_schema() -> ::protify::Service {
+        ::protify::Service {
           name: #service_name.into(),
           file: __PROTO_FILE.name.into(),
           package: __PROTO_FILE.package.into(),
-          handlers: ::prelude::vec![ #(#handlers_tokens),* ],
+          handlers: ::protify::vec![ #(#handlers_tokens),* ],
           options: #options_tokens.into_iter().collect()
         }
       }

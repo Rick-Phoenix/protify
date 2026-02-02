@@ -18,7 +18,7 @@ pub fn process_derive_enum_attrs(
 ) -> Result<EnumAttrs, Error> {
   let mut reserved_names: Vec<String> = Vec::new();
   let mut reserved_numbers = ReservedNumbers::default();
-  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { ::prelude::vec![] });
+  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { ::protify::vec![] });
   let mut proto_name: Option<ParsedStr> = None;
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;

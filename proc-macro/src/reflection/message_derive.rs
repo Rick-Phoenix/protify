@@ -107,7 +107,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
         let validator_expr = if oneof_rules.required() {
           Some(ValidatorTokens {
             expr: quote_spanned! {field_span=>
-              *::prelude::DEFAULT_REQUIRED_ONEOF_VALIDATOR
+              *::protify::DEFAULT_REQUIRED_ONEOF_VALIDATOR
             },
             kind: ValidatorKind::ReflectionOneof,
             span: field_span,
@@ -191,7 +191,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
   if let Some(message_rules) = get_message_rules(&message_desc) {
     if !message_rules.cel.is_empty() {
       let mut builder_tokens = quote! {
-        ::prelude::CelValidator::default()
+        ::protify::CelValidator::default()
       };
 
       for rule in message_rules.cel {
@@ -202,7 +202,7 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
         } = rule;
 
         builder_tokens.extend(
-          quote! { .cel(::prelude::cel_program!(id = #id, msg = #message, expr = #expression)) },
+          quote! { .cel(::protify::cel_program!(id = #id, msg = #message, expr = #expression)) },
         );
       }
 
@@ -222,10 +222,10 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
     let struct_ident = &item.ident;
 
     quote! {
-      impl ::prelude::AsProtoType for #struct_ident {
-        fn proto_type() -> ::prelude::ProtoType {
-          ::prelude::ProtoType::Message(
-            ::prelude::ProtoPath {
+      impl ::protify::AsProtoType for #struct_ident {
+        fn proto_type() -> ::protify::ProtoType {
+          ::protify::ProtoType::Message(
+            ::protify::ProtoPath {
               name: #name.into(),
               file: #file_name.into(),
               package: #pkg.into(),

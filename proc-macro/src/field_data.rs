@@ -21,8 +21,8 @@ impl FieldData {
         let validator_target_type = self.proto_field.validator_target_type(self.span);
 
         quote_spanned! {self.span=>
-          if let Err(errs) = ::prelude::Validator::<#validator_target_type>::check_consistency(&#validator) {
-            field_errors.push(::prelude::FieldError {
+          if let Err(errs) = ::protify::Validator::<#validator_target_type>::check_consistency(&#validator) {
+            field_errors.push(::protify::FieldError {
               field: #ident_str,
               errors: errs
             });
@@ -38,7 +38,7 @@ impl FieldData {
   pub fn descriptor_type_tokens(&self) -> TokenStream2 {
     match &self.proto_field {
       ProtoField::Map(_) => {
-        quote_spanned! {self.span=> ::prelude::proto_types::field_descriptor_proto::Type::Message }
+        quote_spanned! {self.span=> ::protify::proto_types::field_descriptor_proto::Type::Message }
       }
       ProtoField::Repeated(inner) | ProtoField::Optional(inner) | ProtoField::Single(inner) => {
         inner.descriptor_type_tokens(self.span)
@@ -101,13 +101,13 @@ impl FieldData {
           .validator_target_type(self.span);
         let values = map.values.validator_target_type(self.span);
 
-        quote_spanned! {self.span=> ::prelude::MapValidator<#keys, #values> }
+        quote_spanned! {self.span=> ::protify::MapValidator<#keys, #values> }
       }
-      ProtoField::Oneof { .. } => quote_spanned! {self.span=> ::prelude::OneofValidator },
+      ProtoField::Oneof { .. } => quote_spanned! {self.span=> ::protify::OneofValidator },
       ProtoField::Repeated(proto_type) => {
         let inner = proto_type.validator_target_type(self.span);
 
-        quote_spanned! {self.span=> ::prelude::RepeatedValidator<#inner> }
+        quote_spanned! {self.span=> ::protify::RepeatedValidator<#inner> }
       }
       ProtoField::Optional(proto_type) | ProtoField::Single(proto_type) => {
         proto_type.validator_name(self.span)
@@ -122,7 +122,7 @@ impl FieldData {
         let values = map.values.output_proto_type(self.span);
 
         if map.is_btree_map {
-          parse_quote_spanned! {self.span=> ::prelude::BTreeMap<#keys, #values> }
+          parse_quote_spanned! {self.span=> ::protify::BTreeMap<#keys, #values> }
         } else {
           parse_quote_spanned! {self.span=> ::std::collections::HashMap<#keys, #values> }
         }

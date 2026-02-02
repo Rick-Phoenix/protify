@@ -1199,8 +1199,8 @@ dependencies = [
 name = "no-std-models"
 version = "0.1.0"
 dependencies = [
- "prelude",
  "prost",
+ "protify",
 ]
 
 [[package]]
@@ -1431,42 +1431,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "prelude"
-version = "0.1.0"
-dependencies = [
- "askama",
- "bool-enum",
- "builder",
- "bytes",
- "cel",
- "chrono",
- "diesel",
- "document-features",
- "float_eq",
- "fluent-uri",
- "hashbrown 0.16.1",
- "inventory",
- "ipnet",
- "log",
- "maplit",
- "once_cell",
- "ordered-float",
- "ordermap",
- "owo-colors",
- "paste",
- "proc-macro-impls",
- "prost",
- "proto-types",
- "regex",
- "serde",
- "serde_json",
- "similar-asserts",
- "thiserror 2.0.17",
- "tonic",
- "tonic-prost-build",
-]
-
-[[package]]
 name = "prettyplease"
 version = "0.2.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1493,9 +1457,9 @@ dependencies = [
  "bytes",
  "convert_case",
  "paste",
- "prelude",
  "proc-macro2",
  "prost-reflect",
+ "protify",
  "proto-types",
  "quote",
  "syn 2.0.108",
@@ -1573,6 +1537,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9b4db3d6da204ed77bb26ba83b6122a73aeb2e87e25fbf7ad2e84c4ccbf8f72"
 dependencies = [
  "prost",
+]
+
+[[package]]
+name = "protify"
+version = "0.1.0"
+dependencies = [
+ "askama",
+ "bool-enum",
+ "builder",
+ "bytes",
+ "cel",
+ "chrono",
+ "diesel",
+ "document-features",
+ "float_eq",
+ "fluent-uri",
+ "hashbrown 0.16.1",
+ "inventory",
+ "ipnet",
+ "log",
+ "maplit",
+ "once_cell",
+ "ordered-float",
+ "ordermap",
+ "owo-colors",
+ "paste",
+ "proc-macro-impls",
+ "prost",
+ "proto-types",
+ "regex",
+ "serde",
+ "serde_json",
+ "similar-asserts",
+ "thiserror 2.0.17",
+ "tonic",
+ "tonic-prost-build",
 ]
 
 [[package]]
@@ -2048,9 +2048,9 @@ dependencies = [
  "builder",
  "maplit",
  "no-std-models",
- "prelude",
  "prost",
  "prost-build",
+ "protify",
 ]
 
 [[package]]
@@ -2061,9 +2061,9 @@ dependencies = [
  "bytes",
  "maplit",
  "paste",
- "prelude",
  "prost",
  "prost-build",
+ "protify",
  "proto-types",
  "similar-asserts",
  "test-schemas",
@@ -2077,8 +2077,8 @@ dependencies = [
  "diesel",
  "maplit",
  "paste",
- "prelude",
  "prost",
+ "protify",
  "proto-types",
  "similar-asserts",
 ]
@@ -2090,7 +2090,7 @@ dependencies = [
  "deadpool-diesel",
  "deadpool-sync",
  "diesel",
- "prelude",
+ "protify",
  "proto-types",
  "test-schemas",
  "tokio",
@@ -2108,9 +2108,9 @@ dependencies = [
  "env_logger",
  "maplit",
  "paste",
- "prelude",
  "proc-macro-impls",
  "prost",
+ "protify",
  "regex",
  "similar-asserts",
 ]

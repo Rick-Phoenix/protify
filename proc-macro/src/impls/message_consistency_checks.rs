@@ -16,7 +16,7 @@ pub fn generate_oneofs_tags_checks(
 
       if let ProtoField::Oneof(OneofInfo { path, tags, .. }) = proto_field {
         Some(quote_spanned! {*span=>
-          <#path as ::prelude::ProtoOneof>::check_tags(#message_name, &mut [ #(#tags),* ])?;
+          <#path as ::protify::ProtoOneof>::check_tags(#message_name, &mut [ #(#tags),* ])?;
         })
       } else {
         None
@@ -69,7 +69,7 @@ pub fn generate_validators_consistency_checks(
     .filter_map(|data| data.consistency_check_tokens())
     .chain(top_level_validators.iter().map(|v| {
       quote! {
-        if let Err(errs) = ::prelude::Validator::<#item_ident>::check_consistency(&#v) {
+        if let Err(errs) = ::protify::Validator::<#item_ident>::check_consistency(&#v) {
           top_level_errors.extend(errs);
         }
       }
@@ -99,14 +99,14 @@ pub fn generate_validators_consistency_checks(
     impl #item_ident {
       #[allow(unused)]
       #[track_caller]
-      pub fn check_validators() -> Result<(), ::prelude::TestError> {
-        let mut field_errors: Vec<::prelude::FieldError> = Vec::new();
-        let mut top_level_errors: Vec<::prelude::ConsistencyError> = Vec::new();
+      pub fn check_validators() -> Result<(), ::protify::TestError> {
+        let mut field_errors: Vec<::protify::FieldError> = Vec::new();
+        let mut top_level_errors: Vec<::protify::ConsistencyError> = Vec::new();
 
         #(#consistency_checks)*
 
         if !field_errors.is_empty() || !top_level_errors.is_empty() {
-          return Err(::prelude::TestError {
+          return Err(::protify::TestError {
               item_name: stringify!(#item_ident),
               field_errors,
               top_level_errors

@@ -162,7 +162,7 @@ macro_rules! impl_primitive {
 
 macro_rules! impl_wrapper {
   ($name:ident, $unit:ty, $wrapper:ident) => {
-    impl_numeric_rules!($name, $unit, $wrapper, int, ::prelude::$wrapper);
+    impl_numeric_rules!($name, $unit, $wrapper, int, ::protify::$wrapper);
   };
 }
 

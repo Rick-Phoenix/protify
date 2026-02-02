@@ -1,7 +1,7 @@
 [workspace]
 members = [
   "test-schemas",
-  "prelude",
+  "protify",
   "proc-macro",
   "test-reflection",
   "test-server",

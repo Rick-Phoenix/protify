@@ -9,7 +9,7 @@ keywords.workspace = true
 
 [dependencies]
 proto-types = { workspace = true, features = ["default", "all_common", "rpc"] }
-prelude = { path = "../prelude/", features = ["reflection"] }
+protify = { path = "../protify/", features = ["reflection"] }
 prost = { workspace = true, features = ["std"] }
 paste = "1"
 bytes = { workspace = true }

@@ -7,8 +7,8 @@ Our models are not hidden behind an included generated file, they are under our 
 Having the possibility of using proxies makes interactions with a database even easier, because we can have the proto message take a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
 
 ```rust
-use prelude::*;
-use prelude::proto_types::Timestamp;
+use protify::*;
+use protify::proto_types::Timestamp;
 use diesel::prelude::*;
 
 proto_package!(DB_TEST, name = "db_test", no_cel_test);

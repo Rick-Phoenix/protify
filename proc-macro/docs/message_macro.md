@@ -3,12 +3,12 @@ Implements protobuf schema and validation features for a rust struct.
 This macro will implement the following:
 - Clone
 - PartialEq
-- [`prost::Message`](prelude::prost::Message)
-- [`ProtoMessage`](prelude::ProtoMessage)
-- [`AsProtoType`](prelude::AsProtoType)
-- [`MessagePath`](prelude::MessagePath)
-- [`ValidatedMessage`](prelude::ValidatedMessage)
-- [`CelValue`](prelude::CelValue) (if the `cel` feature is enabled)
+- [`prost::Message`](protify::prost::Message)
+- [`ProtoMessage`](protify::ProtoMessage)
+- [`AsProtoType`](protify::AsProtoType)
+- [`MessagePath`](protify::MessagePath)
+- [`ValidatedMessage`](protify::ValidatedMessage)
+- [`CelValue`](protify::CelValue) (if the `cel` feature is enabled)
 - A method called `check_validators` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
 - (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators` method and panics on failure.
 - A test that checks if the oneof tags used in this message (if there are any) are correct.
@@ -16,14 +16,14 @@ This macro will implement the following:
 If the impl is not proxied, these traits and methods will target the struct directly.
 
 If the impl is proxied:
-- A new struct with a `Proto` suffix will be generated (i.e. MyMsg -> MyMsgProto) and these traits and methods will target that. An impl for [`ProxiedMessage`](prelude::ProxiedMessage) will also be generated.
-- The proxy will implement [`MessageProxy`](prelude::MessageProxy).
+- A new struct with a `Proto` suffix will be generated (i.e. MyMsg -> MyMsgProto) and these traits and methods will target that. An impl for [`ProxiedMessage`](protify::ProxiedMessage) will also be generated.
+- The proxy will implement [`MessageProxy`](protify::MessageProxy).
 
 To learn more about proxied implementations, visit the dedicated [section](crate::guide::proxies).
 
 # Examples
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -61,13 +61,13 @@ fn main() {
     - Type: Ident
     - Example: `#[proto(file = MY_FILE)]`
     - Description:
-        Assigns a specific file to this item. By default, the `module_path` will be inherited from the target file, and can be overridden with the `module_path` attribute. For more info about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
+        Assigns a specific file to this item. By default, the `module_path` will be inherited from the target file, and can be overridden with the `module_path` attribute. For more info about how to manage proto files, visit the [dedicated section](protify::guide::managing_files).
 
 - `module_path`
     - Type: literal string or [`module_path!`](core::module_path)
     - Example: `#[proto(module_path = core::module_path!())]` or `#[proto(module_path = "module::path")]`
     - Description:
-        Overrides the `module_path` for this item, which is otherwise inherited by the assigned proto file. For more info about how to manage proto files, visit the [dedicated section](prelude::guide::managing_files).
+        Overrides the `module_path` for this item, which is otherwise inherited by the assigned proto file. For more info about how to manage proto files, visit the [dedicated section](protify::guide::managing_files).
 
 - `derive`
     - Type: list of Paths

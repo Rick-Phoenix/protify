@@ -3,24 +3,24 @@ Implements protobuf schema and validation features for a rust enum.
 This macro will implement the following:
 - Clone
 - PartialEq
-- [`prost::Oneof`](prelude::prost::Oneof)
-- [`ProtoOneof`](prelude::ProtoOneof)
-- [`ValidatedOneof`](prelude::ValidatedOneof)
-- [`CelOneof`](prelude::CelOneof) (if the `cel` feature is enabled)
+- [`prost::Oneof`](protify::prost::Oneof)
+- [`ProtoOneof`](protify::ProtoOneof)
+- [`ValidatedOneof`](protify::ValidatedOneof)
+- [`CelOneof`](protify::CelOneof) (if the `cel` feature is enabled)
 - A method called `check_validators` (compiled only with `#[cfg(test)]`) for verifying the correctness of the validators used in it
 - (If the `skip_checks(validators)` attribute is not used) A test that calls the `check_validators` method and panics on failure.
 
 If the impl is not proxied, these traits and methods will target the struct directly.
 
 If the impl is proxied:
-- A new struct with a `Proto` suffix will be generated (i.e. MyOneof -> MyOneofProto) and these traits and methods will target that. An impl for [`ProxiedOneof`](prelude::ProxiedOneof) will also be generated.
-- The proxy will implement [`OneofProxy`](prelude::OneofProxy).
+- A new struct with a `Proto` suffix will be generated (i.e. MyOneof -> MyOneofProto) and these traits and methods will target that. An impl for [`ProxiedOneof`](protify::ProxiedOneof) will also be generated.
+- The proxy will implement [`OneofProxy`](protify::OneofProxy).
 
 To learn more about proxied implementations, visit the dedicated [section](crate::guide::proxies).
 
 # Examples
 ```rust
-use prelude::*;
+use protify::*;
 
 #[proto_oneof]
 pub enum NormalOneof {
@@ -40,7 +40,7 @@ pub enum ProxiedOneof {
 }
 
 fn main() {
-  use prelude::*;
+  use protify::*;
 
   // `ProxiedOneof` and `OneofProxy` methods
   let oneof = ProxiedOneofProto::A(1);

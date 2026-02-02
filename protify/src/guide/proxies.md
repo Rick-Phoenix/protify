@@ -19,7 +19,7 @@ The messages/oneofs will also implement [`ProxiedMessage`](crate::ProxiedMessage
 ## Examples
 
 ```rust
-use prelude::*;
+use protify::*;
 use std::sync::Arc;
 
 proto_package!(MY_PKG, name = "my_pkg");

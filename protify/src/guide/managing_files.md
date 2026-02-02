@@ -5,7 +5,7 @@ A file must always be in scope for any given item definition (oneof, enum, messa
 A simple example of the [`define_proto_file`](crate::define_proto_file) macro looks like this:
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -22,7 +22,7 @@ If you want to define items in different rust files that are descendants of the 
 
 ```rust
 mod root {
-    use prelude::*;
+    use protify::*;
 
     proto_package!(MY_PKG, name = "my_pkg");
     define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -77,7 +77,7 @@ In a case where you need to use a global import from the parent module but you w
 It is also possible to manually select a file for a given item. 
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 

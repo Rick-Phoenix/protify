@@ -127,8 +127,8 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 
   let proto_name_method = if let Some(parent) = &parent_message {
     quote_spanned! {parent.span()=>
-      static __FULL_NAME: ::prelude::Lazy<String> = ::prelude::Lazy::new(|| {
-        ::prelude::format!("{}.{}", <#parent as ::prelude::ProtoMessage>::proto_name(), #proto_name)
+      static __FULL_NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
+        ::protify::format!("{}.{}", <#parent as ::protify::ProtoMessage>::proto_name(), #proto_name)
       });
 
       &*__FULL_NAME
@@ -138,7 +138,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
   };
 
   let parent_message_registry = if let Some(parent) = &parent_message {
-    quote_spanned! {parent.span()=> Some(|| <#parent as ::prelude::ProtoMessage>::proto_name()) }
+    quote_spanned! {parent.span()=> Some(|| <#parent as ::protify::ProtoMessage>::proto_name()) }
   } else {
     quote! { None }
   };
@@ -161,7 +161,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
     let options_tokens = options_tokens(*span, options, *deprecated);
 
     quote_spanned! {*span=>
-      ::prelude::EnumVariant { name: #name.into(), options: #options_tokens.into_iter().collect(), tag: #tag, }
+      ::protify::EnumVariant { name: #name.into(), options: #options_tokens.into_iter().collect(), tag: #tag, }
     }
   });
 
@@ -225,7 +225,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
     quote! {
       match value {
         #(#tokens,)*
-        _ => Err(::prelude::prost::UnknownEnumValue(value))
+        _ => Err(::protify::prost::UnknownEnumValue(value))
       }
     }
   };
@@ -235,13 +235,13 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
   let options_tokens = options_tokens(Span::call_site(), &enum_options, deprecated);
 
   let file_name = if let Some(ident) = &file {
-    quote! { <#ident as ::prelude::FileSchema>::NAME }
+    quote! { <#ident as ::protify::FileSchema>::NAME }
   } else {
     quote! { __PROTO_FILE.name }
   };
 
   let package = if let Some(ident) = &file {
-    quote! { <#ident as ::prelude::FileSchema>::PACKAGE }
+    quote! { <#ident as ::protify::FileSchema>::PACKAGE }
   } else {
     quote! { __PROTO_FILE.package }
   };
@@ -249,7 +249,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
   let module_path = module_path.as_ref().map_or_else(
     || {
       if let Some(ident) = &file {
-        quote! { <#ident as ::prelude::FileSchema>::EXTERN_PATH }
+        quote! { <#ident as ::protify::FileSchema>::EXTERN_PATH }
       } else {
         quote! { __PROTO_FILE.extern_path }
       }
@@ -259,19 +259,19 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 
   quote! {
     #[repr(i32)]
-    #[derive(::prelude::macros::Enum, Hash, PartialEq, Eq, Debug, Clone, Copy)]
+    #[derive(::protify::macros::Enum, Hash, PartialEq, Eq, Debug, Clone, Copy)]
     #item
 
-    ::prelude::register_proto_data! {
-      ::prelude::RegistryEnum {
+    ::protify::register_proto_data! {
+      ::protify::RegistryEnum {
         parent_message: #parent_message_registry,
         package: #package,
-        enum_: || <#enum_ident as ::prelude::ProtoEnumSchema>::proto_schema()
+        enum_: || <#enum_ident as ::protify::ProtoEnumSchema>::proto_schema()
       }
     }
 
     impl TryFrom<i32> for #enum_ident {
-      type Error = ::prelude::prost::UnknownEnumValue;
+      type Error = ::protify::prost::UnknownEnumValue;
 
       #[inline]
       fn try_from(value: i32) -> Result<Self, Self::Error> {
@@ -293,17 +293,17 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
       }
     }
 
-    impl ::prelude::ProtoValidation for #enum_ident {
+    impl ::protify::ProtoValidation for #enum_ident {
       #[doc(hidden)]
       type Target = i32;
       #[doc(hidden)]
       type Stored = i32;
-      type Validator = ::prelude::EnumValidator<#enum_ident>;
-      type ValidatorBuilder = ::prelude::EnumValidatorBuilder<#enum_ident>;
+      type Validator = ::protify::EnumValidator<#enum_ident>;
+      type ValidatorBuilder = ::protify::EnumValidatorBuilder<#enum_ident>;
 
       #[doc(hidden)]
       type UniqueStore<'a>
-        = ::prelude::CopyHybridStore<i32>
+        = ::protify::CopyHybridStore<i32>
       where
         Self: 'a;
 
@@ -311,24 +311,24 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
       const HAS_DEFAULT_VALIDATOR: bool = false;
     }
 
-    impl ::prelude::AsProtoType for #enum_ident {
-      fn proto_type() -> ::prelude::ProtoType {
-        ::prelude::ProtoType::Enum(
-          <Self as ::prelude::ProtoEnumSchema>::proto_path()
+    impl ::protify::AsProtoType for #enum_ident {
+      fn proto_type() -> ::protify::ProtoType {
+        ::protify::ProtoType::Enum(
+          <Self as ::protify::ProtoEnumSchema>::proto_path()
         )
       }
     }
 
-    impl ::prelude::ProtoEnum for #enum_ident {
+    impl ::protify::ProtoEnum for #enum_ident {
       fn proto_name() -> &'static str {
         #proto_name_method
       }
     }
 
-    impl ::prelude::ProtoEnumSchema for #enum_ident {
-      fn proto_path() -> ::prelude::ProtoPath {
-        ::prelude::ProtoPath {
-          name: <Self as ::prelude::ProtoEnum>::proto_name().into(),
+    impl ::protify::ProtoEnumSchema for #enum_ident {
+      fn proto_path() -> ::protify::ProtoPath {
+        ::protify::ProtoPath {
+          name: <Self as ::protify::ProtoEnum>::proto_name().into(),
           file: #file_name.into(),
           package: #package.into(),
         }
@@ -344,17 +344,17 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
         #from_str_impl
       }
 
-      fn proto_schema() -> ::prelude::EnumSchema {
-        ::prelude::EnumSchema {
+      fn proto_schema() -> ::protify::EnumSchema {
+        ::protify::EnumSchema {
           short_name: #proto_name.into(),
-          name: <Self as ::prelude::ProtoEnum>::proto_name().into(),
+          name: <Self as ::protify::ProtoEnum>::proto_name().into(),
           file: #file_name.into(),
           package: #package.into(),
-          variants: ::prelude::vec! [ #variants_tokens ],
-          reserved_names: ::prelude::vec![ #(#reserved_names.into()),* ],
+          variants: ::protify::vec! [ #variants_tokens ],
+          reserved_names: ::protify::vec![ #(#reserved_names.into()),* ],
           reserved_numbers: #reserved_numbers,
           options: #options_tokens.into_iter().collect(),
-          rust_path:  ::prelude::format!("::{}::{}", #module_path, #rust_ident_str).into()
+          rust_path:  ::protify::format!("::{}::{}", #module_path, #rust_ident_str).into()
         }
       }
     }

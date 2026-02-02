@@ -16,7 +16,7 @@ pub fn generate_oneof_validator(
   } else {
     let top_level = top_level_validators.iter().map(|v| {
       quote_spanned! {v.span=>
-        is_valid &= ::prelude::Validator::<#oneof_ident>::validate_core(
+        is_valid &= ::protify::Validator::<#oneof_ident>::validate_core(
           &(#v),
           ctx.without_field_context(),
           Some(self)
@@ -89,10 +89,10 @@ pub fn generate_oneof_validator(
   let inline_if_empty = (!has_validators).then(|| quote! { #[inline(always)] });
 
   quote! {
-    impl ::prelude::ValidatedOneof for #oneof_ident {
+    impl ::protify::ValidatedOneof for #oneof_ident {
       #inline_if_empty
-      fn validate(&self, ctx: &mut ::prelude::ValidationCtx) -> ::prelude::ValidationResult {
-        let mut is_valid = ::prelude::IsValid::Yes;
+      fn validate(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
+        let mut is_valid = ::protify::IsValid::Yes;
 
         #validators_tokens
 
@@ -100,19 +100,19 @@ pub fn generate_oneof_validator(
       }
     }
 
-    impl ::prelude::ProtoValidation for #oneof_ident {
+    impl ::protify::ProtoValidation for #oneof_ident {
       #[doc(hidden)]
       type Target = Self;
       #[doc(hidden)]
       type Stored = Self;
       #[doc(hidden)]
-      type Validator = ::prelude::OneofValidator;
+      type Validator = ::protify::OneofValidator;
       #[doc(hidden)]
-      type ValidatorBuilder = ::prelude::OneofValidatorBuilder;
+      type ValidatorBuilder = ::protify::OneofValidatorBuilder;
 
       #[doc(hidden)]
       type UniqueStore<'a>
-        = ::prelude::LinearRefStore<'a, Self>
+        = ::protify::LinearRefStore<'a, Self>
       where
         Self: 'a;
 

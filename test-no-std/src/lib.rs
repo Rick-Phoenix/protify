@@ -7,7 +7,7 @@ mod proto {
 #[cfg(test)]
 mod test {
   use maplit::btreemap;
-  use prelude::ValidatedMessage;
+  use protify::ValidatedMessage;
 
   #[cfg(feature = "reflection")]
   use crate::proto::{test_msg::*, *};

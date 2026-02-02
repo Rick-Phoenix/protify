@@ -15,8 +15,8 @@ mod oneof_consistency_checks;
 pub fn wrap_with_imports(tokens: &TokenStream2) -> TokenStream2 {
   quote! {
     const _: () = {
-      use ::prelude::{Validator as ___Validator};
-      use ::prelude::alloc::{vec, vec::Vec, format, string::String};
+      use ::protify::{Validator as ___Validator};
+      use ::protify::alloc::{vec, vec::Vec, format, string::String};
 
       #tokens
     };
@@ -35,8 +35,8 @@ pub fn options_tokens(
   if deprecated {
     quote_spanned! {span=>
       {
-        let mut options: Vec<::prelude::ProtoOption> = #options;
-        options.push(::prelude::proto_deprecated());
+        let mut options: Vec<::protify::ProtoOption> = #options;
+        options.push(::protify::proto_deprecated());
         options
       }
     }

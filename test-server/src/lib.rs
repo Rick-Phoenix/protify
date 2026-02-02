@@ -2,7 +2,7 @@
 mod test {
   use deadpool_diesel::sqlite::{Manager, Pool, Runtime};
   use diesel::prelude::*;
-  use prelude::ValidatedMessage;
+  use protify::ValidatedMessage;
   use proto_types::Empty;
   use test_schemas::server_models::{User, UserId, users::dsl::*};
   use tonic::{Request as TonicRequest, Response as TonicResponse, Status};

@@ -61,7 +61,7 @@ macro_rules! register_proto_data {
 /// # Examples
 ///
 /// ```
-/// use prelude::*;
+/// use protify::*;
 ///
 /// let option = proto_option!("is_cool" => true);
 /// assert_eq!(option, ProtoOption { name: "is_cool".into(), value: true.into() });
@@ -92,7 +92,7 @@ macro_rules! proto_option {
 /// # Examples
 ///
 /// ```
-/// use prelude::*;
+/// use protify::*;
 ///
 /// let list = option_list!([ 1, 2 ]);
 /// assert!(matches!(list, OptionValue::List(_)));
@@ -109,7 +109,7 @@ macro_rules! option_list {
 /// # Examples
 ///
 /// ```
-/// use prelude::*;
+/// use protify::*;
 ///
 /// let option = option_message!("is_cool" => true);
 /// let value = option.get("is_cool").unwrap();
@@ -151,7 +151,7 @@ macro_rules! length_rule_value {
 /// # Examples
 ///
 /// ```rust
-/// use prelude::*;
+/// use protify::*;
 /// mod example {
 ///   use super::*;
 ///
@@ -166,7 +166,7 @@ macro_rules! length_rule_value {
 ///  
 ///   mod re_exported {
 ///     use super::MY_FILE;
-///     use prelude::*;
+///     use protify::*;
 ///  
 ///     // The file is now in scope, and will be picked up automatically by all items defined in this module
 ///     // The items will have the extern path of the parent, so `::cratename::example`
@@ -189,10 +189,10 @@ macro_rules! inherit_proto_file {
   ($file:path) => {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: $crate::FileReference = ::prelude::FileReference {
-      name: <$file as ::prelude::FileSchema>::NAME,
-      package: <$file as ::prelude::FileSchema>::PACKAGE,
-      extern_path: <$file as ::prelude::FileSchema>::EXTERN_PATH,
+    const __PROTO_FILE: $crate::FileReference = ::protify::FileReference {
+      name: <$file as ::protify::FileSchema>::NAME,
+      package: <$file as ::protify::FileSchema>::PACKAGE,
+      extern_path: <$file as ::protify::FileSchema>::EXTERN_PATH,
     };
   };
 }
@@ -206,7 +206,7 @@ macro_rules! inherit_proto_file {
 /// # Examples
 ///
 /// ```rust
-/// use prelude::*;
+/// use protify::*;
 ///
 /// mod example {
 ///   use super::*;
@@ -215,7 +215,7 @@ macro_rules! inherit_proto_file {
 ///  
 ///   pub mod submod {
 ///     use super::MY_FILE;
-///     use prelude::*;
+///     use protify::*;
 ///
 ///     pub fn mod_path() -> &'static str {
 ///       module_path!()
@@ -242,9 +242,9 @@ macro_rules! use_proto_file {
   ($file:path) => {
     #[doc(hidden)]
     #[allow(unused)]
-    const __PROTO_FILE: $crate::FileReference = ::prelude::FileReference {
-      name: <$file as ::prelude::FileSchema>::NAME,
-      package: <$file as ::prelude::FileSchema>::PACKAGE,
+    const __PROTO_FILE: $crate::FileReference = ::protify::FileReference {
+      name: <$file as ::protify::FileSchema>::NAME,
+      package: <$file as ::protify::FileSchema>::PACKAGE,
       extern_path: ::core::module_path!(),
     };
   };

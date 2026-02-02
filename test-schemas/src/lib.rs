@@ -10,8 +10,8 @@ mod tests {
 
 use ::bytes::Bytes;
 use paste::paste;
-use prelude::{proto_enum, proto_oneof};
-use prelude::{
+use protify::{proto_enum, proto_oneof};
+use protify::{
   proto_types::{Any, Duration, FieldMask, Timestamp, common::*, rpc::*},
   *,
 };

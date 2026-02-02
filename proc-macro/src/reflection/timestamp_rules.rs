@@ -7,7 +7,7 @@ use super::*;
 fn tokenize_timestamp(span: Span, timestamp: Timestamp) -> TokenStream2 {
   let Timestamp { seconds, nanos } = timestamp;
 
-  quote_spanned! {span=> ::prelude::proto_types::Timestamp { seconds: #seconds, nanos: #nanos } }
+  quote_spanned! {span=> ::protify::proto_types::Timestamp { seconds: #seconds, nanos: #nanos } }
 }
 
 impl RulesCtx {

@@ -7,7 +7,7 @@ When a oneof is used in a message, a completely new oneof will be generated insi
 All validators and options defined on the oneof as a field will be local to that instance.
 
 ```rust
-use prelude::*;
+use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);

@@ -41,7 +41,7 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
       #[cfg(test)]
       #[test]
       fn #test_fn_ident() {
-        let pkg = <#pkg_ident as ::prelude::PackageSchema>::get_package();
+        let pkg = <#pkg_ident as ::protify::PackageSchema>::get_package();
 
         if let Err(e) = pkg.check_unique_cel_rules() {
           panic!("{e}");
@@ -54,17 +54,17 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
     #[allow(non_camel_case_types)]
     pub struct #pkg_ident;
 
-    impl ::prelude::PackageSchema for #pkg_ident {
+    impl ::protify::PackageSchema for #pkg_ident {
       const NAME: &str = #pkg_name;
 
-      fn files() -> ::prelude::Vec<::prelude::ProtoFile> {
-        ::prelude::vec![ #(<#files as ::prelude::FileSchema>::file_schema()),* ]
+      fn files() -> ::protify::Vec<::protify::ProtoFile> {
+        ::protify::vec![ #(<#files as ::protify::FileSchema>::file_schema()),* ]
       }
     }
 
     impl #pkg_ident {
-      pub fn get_package() -> ::prelude::Package {
-        <Self as ::prelude::PackageSchema>::get_package()
+      pub fn get_package() -> ::protify::Package {
+        <Self as ::protify::PackageSchema>::get_package()
       }
     }
 

@@ -159,7 +159,7 @@ pub fn process_message_attrs(
   for validator in validators.validators.iter_mut() {
     if validator.kind.is_closure() {
       validator.expr = quote_spanned! {validator.span=>
-        ::prelude::apply(::prelude::CelValidator::default(), #validator)
+        ::protify::apply(::protify::CelValidator::default(), #validator)
       }
     }
   }

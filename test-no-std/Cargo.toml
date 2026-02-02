@@ -8,7 +8,7 @@ repository.workspace = true
 keywords.workspace = true
 
 [dependencies]
-prelude = { path = "../prelude", default-features = false, features = [
+protify = { path = "../protify", default-features = false, features = [
   "reflection",
 ] }
 no-std-models = { path = "../no-std-models" }
@@ -18,7 +18,7 @@ maplit = "1"
 [build-dependencies]
 prost-build = { workspace = true }
 no-std-models = { path = "../no-std-models" }
-prelude = { path = "../prelude", default-features = false, features = [
+protify = { path = "../protify", default-features = false, features = [
   "inventory",
   "std",
 ] }

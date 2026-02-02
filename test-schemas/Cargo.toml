@@ -12,7 +12,7 @@ similar-asserts = { workspace = true }
 
 [dependencies]
 maplit = "1"
-prelude = { path = "../prelude/", features = ["common-types", "rpc-types"] }
+protify = { path = "../protify/", features = ["common-types", "rpc-types"] }
 prost = { workspace = true, features = ["std"] }
 paste = "1"
 bytes = { workspace = true }

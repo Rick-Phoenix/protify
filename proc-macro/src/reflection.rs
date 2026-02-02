@@ -53,7 +53,7 @@ impl BuilderTokens {
     methods_tokens.to_tokens(&mut builder_expr);
 
     quote! {
-      ::prelude::#builder_expr
+      ::protify::#builder_expr
     }
   }
 
@@ -67,7 +67,7 @@ impl BuilderTokens {
     methods_tokens.to_tokens(&mut builder_expr);
 
     quote_spanned! {span=>
-      ::prelude::#builder_expr.build()
+      ::protify::#builder_expr.build()
     }
   }
 }
@@ -112,7 +112,7 @@ impl RulesCtx {
       } = rule;
 
       validator.extend(quote_spanned! {self.field_span=>
-        .cel(::prelude::cel_program!(id = #id, msg = #message, expr = #expression))
+        .cel(::protify::cel_program!(id = #id, msg = #message, expr = #expression))
       });
     }
   }

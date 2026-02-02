@@ -117,7 +117,7 @@ impl ToTokens for ReservedNumbers {
       }
     });
 
-    tokens.extend(quote_spanned! {self.span=> ::prelude::vec![ #(#list),* ] });
+    tokens.extend(quote_spanned! {self.span=> ::protify::vec![ #(#list),* ] });
   }
 }
 

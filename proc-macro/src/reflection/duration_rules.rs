@@ -6,7 +6,7 @@ use super::*;
 pub(super) fn tokenize_duration(span: Span, duration: Duration) -> TokenStream2 {
   let Duration { seconds, nanos } = duration;
 
-  quote_spanned! {span=> ::prelude::proto_types::Duration { seconds: #seconds, nanos: #nanos } }
+  quote_spanned! {span=> ::protify::proto_types::Duration { seconds: #seconds, nanos: #nanos } }
 }
 
 impl RulesCtx {

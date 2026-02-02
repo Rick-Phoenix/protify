@@ -145,29 +145,29 @@ impl ProtoType {
     match self {
       Self::String => quote_spanned! {span=> String },
       Self::Bool => quote_spanned! {span=> bool },
-      Self::Bytes => quote_spanned! {span=> ::prelude::Bytes },
+      Self::Bytes => quote_spanned! {span=> ::protify::Bytes },
       Self::Enum(path) | Self::Message(MessageInfo { path, .. }) => path.to_token_stream(),
       Self::Int32 => quote_spanned! {span=> i32 },
-      Self::Sint32 => quote_spanned! {span=> ::prelude::Sint32 },
-      Self::Duration => quote_spanned! {span=> ::prelude::proto_types::Duration },
-      Self::Timestamp => quote_spanned! {span=> ::prelude::proto_types::Timestamp },
+      Self::Sint32 => quote_spanned! {span=> ::protify::Sint32 },
+      Self::Duration => quote_spanned! {span=> ::protify::proto_types::Duration },
+      Self::Timestamp => quote_spanned! {span=> ::protify::proto_types::Timestamp },
       Self::Uint32 => quote_spanned! {span=> u32 },
       Self::Float => quote_spanned! {span=> f32 },
       Self::Double => quote_spanned! {span=> f64 },
       Self::Int64 => quote_spanned! {span=> i64  },
       Self::Uint64 => quote_spanned! {span=> u64 },
-      Self::Sint64 => quote_spanned! {span=> ::prelude::Sint64  },
-      Self::Fixed32 => quote_spanned! {span=> ::prelude::Fixed32  },
-      Self::Fixed64 => quote_spanned! {span=> ::prelude::Fixed64  },
-      Self::Sfixed32 => quote_spanned! {span=> ::prelude::Sfixed32  },
-      Self::Sfixed64 => quote_spanned! {span=> ::prelude::Sfixed64  },
-      Self::Any => quote_spanned! {span=> ::prelude::proto_types::Any },
-      Self::FieldMask => quote_spanned! {span=> ::prelude::proto_types::FieldMask },
+      Self::Sint64 => quote_spanned! {span=> ::protify::Sint64  },
+      Self::Fixed32 => quote_spanned! {span=> ::protify::Fixed32  },
+      Self::Fixed64 => quote_spanned! {span=> ::protify::Fixed64  },
+      Self::Sfixed32 => quote_spanned! {span=> ::protify::Sfixed32  },
+      Self::Sfixed64 => quote_spanned! {span=> ::protify::Sfixed64  },
+      Self::Any => quote_spanned! {span=> ::protify::proto_types::Any },
+      Self::FieldMask => quote_spanned! {span=> ::protify::proto_types::FieldMask },
     }
   }
 
   pub fn descriptor_type_tokens(&self, span: Span) -> TokenStream2 {
-    let prefix = quote_spanned! {span=> ::prelude::proto_types::field_descriptor_proto::Type };
+    let prefix = quote_spanned! {span=> ::protify::proto_types::field_descriptor_proto::Type };
 
     match self {
       Self::Uint32 => quote_spanned! {span=> #prefix::Uint32 },
@@ -223,52 +223,52 @@ impl ProtoType {
     match self {
       Self::String => quote_spanned! {span=> String },
       Self::Bool => quote_spanned! {span=> bool },
-      Self::Bytes => quote_spanned! {span=> ::prelude::Bytes },
+      Self::Bytes => quote_spanned! {span=> ::protify::Bytes },
       Self::Enum(path) | Self::Message(MessageInfo { path, .. }) => path.to_token_stream(),
       Self::Int32 => quote_spanned! {span=> i32 },
-      Self::Sint32 => quote_spanned! {span=> ::prelude::Sint32 },
-      Self::Duration => quote_spanned! {span=> ::prelude::proto_types::Duration },
-      Self::Timestamp => quote_spanned! {span=> ::prelude::proto_types::Timestamp },
+      Self::Sint32 => quote_spanned! {span=> ::protify::Sint32 },
+      Self::Duration => quote_spanned! {span=> ::protify::proto_types::Duration },
+      Self::Timestamp => quote_spanned! {span=> ::protify::proto_types::Timestamp },
       Self::Uint32 => quote_spanned! {span=> u32 },
       Self::Float => quote_spanned! {span=> f32 },
       Self::Double => quote_spanned! {span=> f64 },
       Self::Int64 => quote_spanned! {span=> i64  },
       Self::Uint64 => quote_spanned! {span=> u64 },
-      Self::Sint64 => quote_spanned! {span=> ::prelude::Sint64  },
-      Self::Fixed32 => quote_spanned! {span=> ::prelude::Fixed32  },
-      Self::Fixed64 => quote_spanned! {span=> ::prelude::Fixed64  },
-      Self::Sfixed32 => quote_spanned! {span=> ::prelude::Sfixed32  },
-      Self::Sfixed64 => quote_spanned! {span=> ::prelude::Sfixed64  },
-      Self::Any => quote_spanned! {span=> ::prelude::proto_types::Any },
-      Self::FieldMask => quote_spanned! {span=> ::prelude::proto_types::FieldMask },
+      Self::Sint64 => quote_spanned! {span=> ::protify::Sint64  },
+      Self::Fixed32 => quote_spanned! {span=> ::protify::Fixed32  },
+      Self::Fixed64 => quote_spanned! {span=> ::protify::Fixed64  },
+      Self::Sfixed32 => quote_spanned! {span=> ::protify::Sfixed32  },
+      Self::Sfixed64 => quote_spanned! {span=> ::protify::Sfixed64  },
+      Self::Any => quote_spanned! {span=> ::protify::proto_types::Any },
+      Self::FieldMask => quote_spanned! {span=> ::protify::proto_types::FieldMask },
     }
   }
 
   pub fn validator_name(&self, span: Span) -> TokenStream2 {
     match self {
-      Self::String => quote_spanned! {span=> ::prelude::StringValidator },
-      Self::Bool => quote_spanned! {span=> ::prelude::BoolValidator },
-      Self::Bytes => quote_spanned! {span=> ::prelude::BytesValidator },
-      Self::Enum(path) => quote_spanned! {span=> ::prelude::EnumValidator<#path> },
+      Self::String => quote_spanned! {span=> ::protify::StringValidator },
+      Self::Bool => quote_spanned! {span=> ::protify::BoolValidator },
+      Self::Bytes => quote_spanned! {span=> ::protify::BytesValidator },
+      Self::Enum(path) => quote_spanned! {span=> ::protify::EnumValidator<#path> },
       Self::Message(MessageInfo { .. }) => {
-        quote_spanned! {span=> ::prelude::MessageValidator }
+        quote_spanned! {span=> ::protify::MessageValidator }
       }
-      Self::Int32 => quote_spanned! {span=> ::prelude::IntValidator<i32> },
-      Self::Sint32 => quote_spanned! {span=> ::prelude::IntValidator<::prelude::Sint32> },
-      Self::Duration => quote_spanned! {span=> ::prelude::DurationValidator },
-      Self::Timestamp => quote_spanned! {span=> ::prelude::TimestampValidator },
-      Self::Uint32 => quote_spanned! {span=> ::prelude::IntValidator<u32> },
-      Self::Float => quote_spanned! {span=> ::prelude::FloatValidator<f32> },
-      Self::Double => quote_spanned! {span=> ::prelude::FloatValidator<f64> },
-      Self::Int64 => quote_spanned! {span=> ::prelude::IntValidator<i64> },
-      Self::Uint64 => quote_spanned! {span=> ::prelude::IntValidator<u64> },
-      Self::Sint64 => quote_spanned! {span=> ::prelude::IntValidator<::prelude::Sint64>  },
-      Self::Fixed32 => quote_spanned! {span=> ::prelude::IntValidator<::prelude::Fixed32>  },
-      Self::Fixed64 => quote_spanned! {span=> ::prelude::IntValidator<::prelude::Fixed64>  },
-      Self::Sfixed32 => quote_spanned! {span=> ::prelude::IntValidator<::prelude::Sfixed32>  },
-      Self::Sfixed64 => quote_spanned! {span=> ::prelude::IntValidator<::prelude::Sfixed64>  },
-      Self::Any => quote_spanned! {span=> ::prelude::AnyValidator },
-      Self::FieldMask => quote_spanned! {span=> ::prelude::FieldMaskValidator },
+      Self::Int32 => quote_spanned! {span=> ::protify::IntValidator<i32> },
+      Self::Sint32 => quote_spanned! {span=> ::protify::IntValidator<::protify::Sint32> },
+      Self::Duration => quote_spanned! {span=> ::protify::DurationValidator },
+      Self::Timestamp => quote_spanned! {span=> ::protify::TimestampValidator },
+      Self::Uint32 => quote_spanned! {span=> ::protify::IntValidator<u32> },
+      Self::Float => quote_spanned! {span=> ::protify::FloatValidator<f32> },
+      Self::Double => quote_spanned! {span=> ::protify::FloatValidator<f64> },
+      Self::Int64 => quote_spanned! {span=> ::protify::IntValidator<i64> },
+      Self::Uint64 => quote_spanned! {span=> ::protify::IntValidator<u64> },
+      Self::Sint64 => quote_spanned! {span=> ::protify::IntValidator<::protify::Sint64>  },
+      Self::Fixed32 => quote_spanned! {span=> ::protify::IntValidator<::protify::Fixed32>  },
+      Self::Fixed64 => quote_spanned! {span=> ::protify::IntValidator<::protify::Fixed64>  },
+      Self::Sfixed32 => quote_spanned! {span=> ::protify::IntValidator<::protify::Sfixed32>  },
+      Self::Sfixed64 => quote_spanned! {span=> ::protify::IntValidator<::protify::Sfixed64>  },
+      Self::Any => quote_spanned! {span=> ::protify::AnyValidator },
+      Self::FieldMask => quote_spanned! {span=> ::protify::FieldMaskValidator },
     }
   }
 
@@ -276,7 +276,7 @@ impl ProtoType {
     match self {
       Self::String => quote_spanned! {span=> String },
       Self::Bool => quote_spanned! {span=> bool },
-      Self::Bytes => quote_spanned! {span=> ::prelude::Bytes },
+      Self::Bytes => quote_spanned! {span=> ::protify::Bytes },
       Self::Enum(_) | Self::Int32 | Self::Sint32 | Self::Sfixed32 => quote_spanned! {span=> i32 },
       Self::Message(MessageInfo { boxed, path, .. }) => {
         if *boxed {
@@ -285,10 +285,10 @@ impl ProtoType {
           path.to_token_stream()
         }
       }
-      Self::Duration => quote_spanned! {span=> ::prelude::proto_types::Duration },
-      Self::Timestamp => quote_spanned! {span=> ::prelude::proto_types::Timestamp },
-      Self::Any => quote_spanned! {span=> ::prelude::proto_types::Any },
-      Self::FieldMask => quote_spanned! {span=> ::prelude::proto_types::FieldMask },
+      Self::Duration => quote_spanned! {span=> ::protify::proto_types::Duration },
+      Self::Timestamp => quote_spanned! {span=> ::protify::proto_types::Timestamp },
+      Self::Any => quote_spanned! {span=> ::protify::proto_types::Any },
+      Self::FieldMask => quote_spanned! {span=> ::protify::proto_types::FieldMask },
       Self::Uint32 | Self::Fixed32 => quote_spanned! {span=> u32 },
       Self::Float => quote_spanned! {span=> f32 },
       Self::Double => quote_spanned! {span=> f64 },

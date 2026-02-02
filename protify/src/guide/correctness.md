@@ -22,7 +22,7 @@ There is a particular emphasis on checking the validity of CEL expressions becau
 Unless specified otherwise with the `skip_checks` attribute, the macros will generate a test that calls this method for every validator assigned to a message/oneof, and panics on failure.
 
 ```rust
-use prelude::*;
+use protify::*;
 
 let bad_validator = StringValidator::builder().min_len(10).max_len(3).build();
 

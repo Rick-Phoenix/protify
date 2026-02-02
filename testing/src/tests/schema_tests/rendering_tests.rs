@@ -6,7 +6,7 @@
 
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use prelude::proto_types::{Duration, Timestamp};
+use protify::proto_types::{Duration, Timestamp};
 
 use super::*;
 
