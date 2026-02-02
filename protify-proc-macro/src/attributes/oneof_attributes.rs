@@ -64,7 +64,7 @@ pub fn process_oneof_attrs(
         forwarded_attrs = meta.parse_list::<PunctuatedItems<Meta>>()?.list;
       }
       "validate" => {
-        validators = meta.parse_value::<Validators>()?;
+        validators.merge(meta.parse_value::<Validators>()?);
       }
       "skip_checks" => {
         auto_tests = AutoTests::parse(&meta)?;

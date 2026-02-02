@@ -104,7 +104,7 @@ pub fn process_message_attrs(
               auto_tests = AutoTests::parse(&meta)?;
             }
             "validate" => {
-              validators = meta.parse_value::<Validators>()?;
+              validators.merge(meta.parse_value::<Validators>()?);
             }
             "deprecated" => {
               let boolean = meta.parse_value::<LitBool>()?;

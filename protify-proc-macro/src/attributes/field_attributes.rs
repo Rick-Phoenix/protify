@@ -113,7 +113,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
               name = Some(meta.expr_value()?.as_string()?);
             }
             "validate" => {
-              validators = meta.parse_value::<Validators>()?;
+              validators.merge(meta.parse_value::<Validators>()?);
             }
             "from_proto" => {
               from_proto = Some(meta.expr_value()?.as_path_or_closure()?);

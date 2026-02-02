@@ -84,6 +84,12 @@ impl Deref for Validators {
 }
 
 impl Validators {
+  pub fn merge(&mut self, other: Self) {
+    self.validators.extend(other.validators);
+
+    self.has_closure_validator &= other.has_closure_validator;
+  }
+
   pub fn span(&self) -> Span {
     self
       .validators

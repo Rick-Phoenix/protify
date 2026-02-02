@@ -175,7 +175,9 @@ enum CustomValidatorOneof {
 #[proto_message]
 #[proto(skip_checks(all))]
 struct MultipleValidators {
-  #[proto(validate = [ |v| v.const_(1), CustomValidator, from_fn(custom_int_validator), *CUSTOM_STATIC ])]
+  #[proto(validate = [ |v| v.const_(1), from_fn(custom_int_validator), *CUSTOM_STATIC ])]
+  // Checking if multiple attributes merge correctly
+  #[proto(validate = CustomValidator)]
   id: i32,
   #[proto(oneof(tags(1, 2)), validate = [ CustomValidator, from_fn(custom_oneof_validator2), *CUSTOM_STATIC ])]
   oneof: Option<MultipleValidatorsOneof>,
