@@ -1,5 +1,5 @@
 use crate::validators::builder_internals::*;
-use proc_macro_impls::builder_state_macro;
+use protify_proc_macro::builder_state_macro;
 builder_state_macro!(
   Const,
   Required,

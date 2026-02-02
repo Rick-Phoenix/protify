@@ -71,7 +71,7 @@ use float_eq::{FloatEq, float_eq};
 use ordered_float::{FloatCore, OrderedFloat};
 use owo_colors::OwoColorize;
 use paste::paste;
-use proc_macro_impls::impl_known_type;
+use protify_proc_macro::impl_known_type;
 use thiserror::Error;
 
 #[doc(hidden)]
@@ -83,14 +83,14 @@ pub use macros::*;
 pub mod macros {
   #[doc(inline)]
   #[cfg(feature = "cel")]
-  pub use proc_macro_impls::{CelOneof, CelValue};
+  pub use protify_proc_macro::{CelOneof, CelValue};
 
   #[doc(inline)]
   #[cfg(feature = "reflection")]
-  pub use proc_macro_impls::{ProtoEnum, ValidatedMessage, ValidatedOneof};
+  pub use protify_proc_macro::{ProtoEnum, ValidatedMessage, ValidatedOneof};
 
   #[doc(inline)]
-  pub use proc_macro_impls::{
+  pub use protify_proc_macro::{
     Enum, Extension, Message, Oneof, Service, define_proto_file, proto_enum, proto_extension,
     proto_message, proto_oneof, proto_package, proto_service,
   };

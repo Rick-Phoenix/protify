@@ -1450,23 +1450,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro-impls"
-version = "0.1.0"
-dependencies = [
- "bool-enum",
- "bytes",
- "convert_case",
- "paste",
- "proc-macro2",
- "prost-reflect",
- "protify",
- "proto-types",
- "quote",
- "syn 2.0.108",
- "syn-utils",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1563,8 +1546,8 @@ dependencies = [
  "ordermap",
  "owo-colors",
  "paste",
- "proc-macro-impls",
  "prost",
+ "protify-proc-macro",
  "proto-types",
  "regex",
  "serde",
@@ -1573,6 +1556,23 @@ dependencies = [
  "thiserror 2.0.17",
  "tonic",
  "tonic-prost-build",
+]
+
+[[package]]
+name = "protify-proc-macro"
+version = "0.1.0"
+dependencies = [
+ "bool-enum",
+ "bytes",
+ "convert_case",
+ "paste",
+ "proc-macro2",
+ "prost-reflect",
+ "protify",
+ "proto-types",
+ "quote",
+ "syn 2.0.108",
+ "syn-utils",
 ]
 
 [[package]]
@@ -2108,9 +2108,9 @@ dependencies = [
  "env_logger",
  "maplit",
  "paste",
- "proc-macro-impls",
  "prost",
  "protify",
+ "protify-proc-macro",
  "regex",
  "similar-asserts",
 ]

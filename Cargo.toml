@@ -2,12 +2,13 @@
 members = [
   "test-schemas",
   "protify",
-  "proc-macro",
+  "protify-proc-macro",
   "test-reflection",
   "test-server",
   "testing",
   "builder",
-  "test-no-std", "gen-readme",
+  "test-no-std",
+  "gen-readme",
 ]
 resolver = "3"
 

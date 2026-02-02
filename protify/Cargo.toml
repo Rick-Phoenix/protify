@@ -49,7 +49,7 @@ inventory = { version = "0.3", optional = true }
 ordermap = { version = "1", default-features = false }
 similar-asserts = { version = "1" }
 float_eq = { version = "1", default-features = false }
-proc-macro-impls = { path = "../proc-macro/", default-features = false }
+protify-proc-macro = { path = "../protify-proc-macro/", default-features = false }
 ipnet = { version = "2", default-features = false }
 fluent-uri = { version = "0.4", default-features = false }
 hashbrown = "0.16"
@@ -117,10 +117,10 @@ common-types = ["proto-types/all_common"]
 rpc-types = ["proto-types/rpc"]
 
 ## Enables usage with reflection.
-reflection = ["proc-macro-impls/reflection"]
+reflection = ["protify-proc-macro/reflection"]
 
 ## Enables CEL validation.
-cel = ["std", "dep:cel", "proto-types/cel", "proc-macro-impls/cel"]
+cel = ["std", "dep:cel", "proto-types/cel", "protify-proc-macro/cel"]
 
 ## Enables regex-based validators.
 regex = ["dep:regex"]

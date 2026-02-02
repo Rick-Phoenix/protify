@@ -22,7 +22,7 @@ mod tolerances_tests;
 use ::bytes::Bytes;
 use paste::paste;
 use protify::*;
-use proc_macro_impls::__AttrForwarding;
+use protify_proc_macro::__AttrForwarding;
 use similar_asserts::assert_eq as assert_eq_pretty;
 use std::collections::HashMap;
 

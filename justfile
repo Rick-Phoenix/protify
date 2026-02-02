@@ -12,7 +12,7 @@ test-code-elimination:
     cargo test -p testing --release code_elimination
 
 test-proc-macro:
-    cargo test -p proc-macro-impls -- --nocapture
+    cargo test -p protify-proc-macro -- --nocapture
 
 test-no-std:
     cargo test --features reflection -p test-no-std -- --nocapture
