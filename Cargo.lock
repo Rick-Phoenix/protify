@@ -2108,7 +2108,6 @@ dependencies = [
  "env_logger",
  "maplit",
  "paste",
- "prost",
  "protify",
  "protify-proc-macro",
  "regex",

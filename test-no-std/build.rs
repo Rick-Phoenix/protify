@@ -26,6 +26,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   config
     .file_descriptor_set_path(&descriptor_path)
     .bytes(["."])
+    // NOTE: Due to a bug in prost's macro output, if you need to use btree maps
+    // you need to add `prost` as a runtime dependency too and cannot rely solely on the
+    // re-export from `protify`.
     .btree_map(["."])
     .out_dir(&out_dir);
 
