@@ -1,3 +1,5 @@
+//! Build-time library for protify when using pre-built `.proto` files.
+//!
 #![doc = ::document_features::document_features!()]
 
 use std::fmt::Write;

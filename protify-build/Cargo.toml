@@ -16,7 +16,7 @@ document-features = { workspace = true }
 workspace = true
 
 [features]
-default = ["cel"]
+default = []
 
 ## Enables CEL-based validation
 cel = []

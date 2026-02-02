@@ -19,7 +19,7 @@ similar-asserts = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }
-protify-build = { path = "../protify-build" }
+protify-build = { path = "../protify-build", features = ["cel"] }
 
 [lints]
 workspace = true
