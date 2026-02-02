@@ -1432,6 +1432,7 @@ dependencies = [
  "bytes",
  "cel",
  "chrono",
+ "diesel",
  "document-features",
  "float_eq",
  "fluent-uri",

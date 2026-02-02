@@ -1,7 +1,10 @@
-# Default Validators
+# Validators
+
+A key component of this library is that is enables a very simple but powerful way of attaching validators to messages and oneofs. The validators hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also offer a schema for conversion into a protobuf option, so that the settings made in rust can be reflected in the protobuf package and be picked up by other clients using the same contracts.
+
+All the provided validators map their options to the protovalidate options, but you ca also create customized validators that map to customized protobuf options.
 
 Validators can be assigned to oneofs/messages as a whole, or to individual fields/variants.
-Default validators can be created with a concise syntax that uses closures.
 
 ## Example
 

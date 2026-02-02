@@ -18,6 +18,11 @@ rustdoc-args = ["--cfg", "docsrs"]
 builder = { path = "../builder" }
 maplit = "1"
 tonic-prost-build = { workspace = true }
+diesel = { workspace = true }
+proto-types = { workspace = true, features = [
+  "protovalidate",
+  "diesel-sqlite",
+] }
 
 [dependencies]
 bool-enum = { workspace = true }

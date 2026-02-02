@@ -20,3 +20,11 @@ All provided validators as a whole will:
 There is a particular emphasis on checking the validity of CEL expressions because they are written as plain text and are very easy to get wrong, and they **will panic** at initialization if they fail to compile.
 
 Unless specified otherwise with the `skip_checks` attribute, the macros will generate a test that calls this method for every validator assigned to a message/oneof, and panics on failure.
+
+```rust
+use prelude::*;
+
+let bad_validator = StringValidator::builder().min_len(10).max_len(3).build();
+
+assert!(bad_validator.check_consistency().is_err());
+```

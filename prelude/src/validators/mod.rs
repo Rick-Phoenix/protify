@@ -36,7 +36,10 @@ impl ValidationResultExt for ValidationResult {
 #[derive(Debug, Clone, Copy)]
 pub struct FailFast;
 
-bool_enum!(pub IsValid, doc = "A boolean-like enum that represents validation status. It supports all of the bit operators.");
+bool_enum!(pub IsValid, doc = r"A boolean-like enum that represents validation status. It supports all of the bit operators.
+
+For more information on the boolean-like features of this enum, you can refer to the [`bool-enum`](::bool_enum) documentation.
+");
 
 impl IsValid {
   #[must_use]
