@@ -1,0 +1,682 @@
+syntax = "proto3";
+
+package rendering;
+
+import "buf/validate/validate.proto";
+import "custom_validator/validator.proto";
+import "google/protobuf/descriptor.proto";
+import "some_pkg/some_import.proto";
+
+option name = {
+  string: "abc", 
+  int: 1, 
+  float: 1, 
+  bytes: "hello", 
+  num_list: [1, 2, 3], 
+  str_list: ["abc", "def"], 
+  bool: true, 
+  enum: NAME, 
+  duration: { seconds: 0, nanos: 0 }, 
+  timestamp: { seconds: 0, nanos: 0 }
+};
+option nested_opt = {
+  nested: {
+    very_nested: {
+      thing1: 15, 
+      thing2: true, 
+      thing3: {
+        string: "abc", 
+        int: 1, 
+        float: 1, 
+        bytes: "hello", 
+        num_list: [1, 2, 3], 
+        str_list: ["abc", "def"], 
+        bool: true, 
+        enum: NAME, 
+        duration: { seconds: 0, nanos: 0 }, 
+        timestamp: { seconds: 0, nanos: 0 }
+      }
+    }
+  }
+};
+
+extend google.protobuf.MessageOptions {
+  string name = 5000 [
+    name = {
+      string: "abc", 
+      int: 1, 
+      float: 1, 
+      bytes: "hello", 
+      num_list: [1, 2, 3], 
+      str_list: ["abc", "def"], 
+      bool: true, 
+      enum: NAME, 
+      duration: { seconds: 0, nanos: 0 }, 
+      timestamp: { seconds: 0, nanos: 0 }
+    },
+    nested_opt = {
+      nested: {
+        very_nested: {
+          thing1: 15, 
+          thing2: true, 
+          thing3: {
+            string: "abc", 
+            int: 1, 
+            float: 1, 
+            bytes: "hello", 
+            num_list: [1, 2, 3], 
+            str_list: ["abc", "def"], 
+            bool: true, 
+            enum: NAME, 
+            duration: { seconds: 0, nanos: 0 }, 
+            timestamp: { seconds: 0, nanos: 0 }
+          }
+        }
+      }
+    }
+  ];
+  string name2 = 5001;
+}
+
+enum TopLevelEnum {
+  reserved "abc", "bcd";
+
+  reserved 1, 2, 10 to max;
+
+  option name = {
+    string: "abc", 
+    int: 1, 
+    float: 1, 
+    bytes: "hello", 
+    num_list: [1, 2, 3], 
+    str_list: ["abc", "def"], 
+    bool: true, 
+    enum: NAME, 
+    duration: { seconds: 0, nanos: 0 }, 
+    timestamp: { seconds: 0, nanos: 0 }
+  };
+  option nested_opt = {
+    nested: {
+      very_nested: {
+        thing1: 15, 
+        thing2: true, 
+        thing3: {
+          string: "abc", 
+          int: 1, 
+          float: 1, 
+          bytes: "hello", 
+          num_list: [1, 2, 3], 
+          str_list: ["abc", "def"], 
+          bool: true, 
+          enum: NAME, 
+          duration: { seconds: 0, nanos: 0 }, 
+          timestamp: { seconds: 0, nanos: 0 }
+        }
+      }
+    }
+  };
+
+  TOP_LEVEL_ENUM_ABC_DEG = 0 [
+    name = {
+      string: "abc", 
+      int: 1, 
+      float: 1, 
+      bytes: "hello", 
+      num_list: [1, 2, 3], 
+      str_list: ["abc", "def"], 
+      bool: true, 
+      enum: NAME, 
+      duration: { seconds: 0, nanos: 0 }, 
+      timestamp: { seconds: 0, nanos: 0 }
+    },
+    nested_opt = {
+      nested: {
+        very_nested: {
+          thing1: 15, 
+          thing2: true, 
+          thing3: {
+            string: "abc", 
+            int: 1, 
+            float: 1, 
+            bytes: "hello", 
+            num_list: [1, 2, 3], 
+            str_list: ["abc", "def"], 
+            bool: true, 
+            enum: NAME, 
+            duration: { seconds: 0, nanos: 0 }, 
+            timestamp: { seconds: 0, nanos: 0 }
+          }
+        }
+      }
+    }
+  ];
+  TOP_LEVEL_ENUM_B = 3;
+}
+
+message MsgWithCustomValidator {
+  option (custom_validator.setting) = true;
+
+  oneof oneof {
+    option (custom_validator.setting) = true;
+    option (custom_validator.setting) = true;
+
+    MsgWithCustomValidator msg = 1 [
+      (custom_validator.setting) = true
+    ];
+    int32 b = 2;
+  }
+}
+
+message TestMessage {
+  reserved "abc", "bcd";
+
+  reserved 1, 2, 3 to 8;
+
+  option name = {
+    string: "abc", 
+    int: 1, 
+    float: 1, 
+    bytes: "hello", 
+    num_list: [1, 2, 3], 
+    str_list: ["abc", "def"], 
+    bool: true, 
+    enum: NAME, 
+    duration: { seconds: 0, nanos: 0 }, 
+    timestamp: { seconds: 0, nanos: 0 }
+  };
+  option nested_opt = {
+    nested: {
+      very_nested: {
+        thing1: 15, 
+        thing2: true, 
+        thing3: {
+          string: "abc", 
+          int: 1, 
+          float: 1, 
+          bytes: "hello", 
+          num_list: [1, 2, 3], 
+          str_list: ["abc", "def"], 
+          bool: true, 
+          enum: NAME, 
+          duration: { seconds: 0, nanos: 0 }, 
+          timestamp: { seconds: 0, nanos: 0 }
+        }
+      }
+    }
+  };
+  option (buf.validate.message) = {
+    cel: [
+      {
+        id: "abc", 
+        message: "abc", 
+        expression: "true == true"
+      }, 
+      {
+        id: "abc", 
+        message: "abc", 
+        expression: "true == true"
+      }
+    ]
+  };
+
+  enum TestEnum {
+    reserved "abc", "bcd";
+
+    reserved 1, 2, 10 to max;
+
+    option name = {
+      string: "abc", 
+      int: 1, 
+      float: 1, 
+      bytes: "hello", 
+      num_list: [1, 2, 3], 
+      str_list: ["abc", "def"], 
+      bool: true, 
+      enum: NAME, 
+      duration: { seconds: 0, nanos: 0 }, 
+      timestamp: { seconds: 0, nanos: 0 }
+    };
+    option nested_opt = {
+      nested: {
+        very_nested: {
+          thing1: 15, 
+          thing2: true, 
+          thing3: {
+            string: "abc", 
+            int: 1, 
+            float: 1, 
+            bytes: "hello", 
+            num_list: [1, 2, 3], 
+            str_list: ["abc", "def"], 
+            bool: true, 
+            enum: NAME, 
+            duration: { seconds: 0, nanos: 0 }, 
+            timestamp: { seconds: 0, nanos: 0 }
+          }
+        }
+      }
+    };
+
+    TEST_ENUM_ABC_DEG = 0 [
+      name = {
+        string: "abc", 
+        int: 1, 
+        float: 1, 
+        bytes: "hello", 
+        num_list: [1, 2, 3], 
+        str_list: ["abc", "def"], 
+        bool: true, 
+        enum: NAME, 
+        duration: { seconds: 0, nanos: 0 }, 
+        timestamp: { seconds: 0, nanos: 0 }
+      },
+      nested_opt = {
+        nested: {
+          very_nested: {
+            thing1: 15, 
+            thing2: true, 
+            thing3: {
+              string: "abc", 
+              int: 1, 
+              float: 1, 
+              bytes: "hello", 
+              num_list: [1, 2, 3], 
+              str_list: ["abc", "def"], 
+              bool: true, 
+              enum: NAME, 
+              duration: { seconds: 0, nanos: 0 }, 
+              timestamp: { seconds: 0, nanos: 0 }
+            }
+          }
+        }
+      }
+    ];
+    TEST_ENUM_B = 3;
+  }
+
+  message Nested1 {
+    message Nested2 {
+      string name = 1;
+      map<sint32, sint32> map_field = 2 [
+        (buf.validate.field) = {
+          map: {
+            min_pairs: 5, 
+            max_pairs: 15, 
+            keys: {
+              sint32: {
+                gt: 15
+              }
+            }, 
+            values: {
+              sint32: {
+                gt: 56
+              }
+            }
+          }
+        }
+      ];
+      oneof reused_oneof {
+        option name = {
+          string: "abc", 
+          int: 1, 
+          float: 1, 
+          bytes: "hello", 
+          num_list: [1, 2, 3], 
+          str_list: ["abc", "def"], 
+          bool: true, 
+          enum: NAME, 
+          duration: { seconds: 0, nanos: 0 }, 
+          timestamp: { seconds: 0, nanos: 0 }
+        };
+        option nested_opt = {
+          nested: {
+            very_nested: {
+              thing1: 15, 
+              thing2: true, 
+              thing3: {
+                string: "abc", 
+                int: 1, 
+                float: 1, 
+                bytes: "hello", 
+                num_list: [1, 2, 3], 
+                str_list: ["abc", "def"], 
+                bool: true, 
+                enum: NAME, 
+                duration: { seconds: 0, nanos: 0 }, 
+                timestamp: { seconds: 0, nanos: 0 }
+              }
+            }
+          }
+        };
+
+        string a = 201 [
+          name = {
+            string: "abc", 
+            int: 1, 
+            float: 1, 
+            bytes: "hello", 
+            num_list: [1, 2, 3], 
+            str_list: ["abc", "def"], 
+            bool: true, 
+            enum: NAME, 
+            duration: { seconds: 0, nanos: 0 }, 
+            timestamp: { seconds: 0, nanos: 0 }
+          },
+          nested_opt = {
+            nested: {
+              very_nested: {
+                thing1: 15, 
+                thing2: true, 
+                thing3: {
+                  string: "abc", 
+                  int: 1, 
+                  float: 1, 
+                  bytes: "hello", 
+                  num_list: [1, 2, 3], 
+                  str_list: ["abc", "def"], 
+                  bool: true, 
+                  enum: NAME, 
+                  duration: { seconds: 0, nanos: 0 }, 
+                  timestamp: { seconds: 0, nanos: 0 }
+                }
+              }
+            }
+          }
+        ];
+        fixed32 b = 200 [
+          (buf.validate.field) = {
+            fixed32: {
+              lt: 50, 
+              gt: 10
+            }
+          }
+        ];
+      }
+      oneof oneof_b {
+        string a = 1502;
+        string b = 1503;
+      }
+    }
+
+    oneof reused_oneof {
+      option name = {
+        string: "abc", 
+        int: 1, 
+        float: 1, 
+        bytes: "hello", 
+        num_list: [1, 2, 3], 
+        str_list: ["abc", "def"], 
+        bool: true, 
+        enum: NAME, 
+        duration: { seconds: 0, nanos: 0 }, 
+        timestamp: { seconds: 0, nanos: 0 }
+      };
+      option nested_opt = {
+        nested: {
+          very_nested: {
+            thing1: 15, 
+            thing2: true, 
+            thing3: {
+              string: "abc", 
+              int: 1, 
+              float: 1, 
+              bytes: "hello", 
+              num_list: [1, 2, 3], 
+              str_list: ["abc", "def"], 
+              bool: true, 
+              enum: NAME, 
+              duration: { seconds: 0, nanos: 0 }, 
+              timestamp: { seconds: 0, nanos: 0 }
+            }
+          }
+        }
+      };
+      option some_option = 100;
+
+      string a = 201 [
+        name = {
+          string: "abc", 
+          int: 1, 
+          float: 1, 
+          bytes: "hello", 
+          num_list: [1, 2, 3], 
+          str_list: ["abc", "def"], 
+          bool: true, 
+          enum: NAME, 
+          duration: { seconds: 0, nanos: 0 }, 
+          timestamp: { seconds: 0, nanos: 0 }
+        },
+        nested_opt = {
+          nested: {
+            very_nested: {
+              thing1: 15, 
+              thing2: true, 
+              thing3: {
+                string: "abc", 
+                int: 1, 
+                float: 1, 
+                bytes: "hello", 
+                num_list: [1, 2, 3], 
+                str_list: ["abc", "def"], 
+                bool: true, 
+                enum: NAME, 
+                duration: { seconds: 0, nanos: 0 }, 
+                timestamp: { seconds: 0, nanos: 0 }
+              }
+            }
+          }
+        }
+      ];
+      fixed32 b = 200 [
+        (buf.validate.field) = {
+          fixed32: {
+            lt: 50, 
+            gt: 10
+          }
+        }
+      ];
+    }
+  }
+
+  int32 manual_tag_field = 9;
+  repeated int32 repeated_field = 10 [
+    (buf.validate.field) = {
+      repeated: {
+        min_items: 15, 
+        items: {
+          int32: {
+            lt: 50, 
+            gt: 0
+          }
+        }
+      }
+    }
+  ];
+  optional bytes optional_field = 11 [
+    (buf.validate.field) = {
+      bytes: {
+        min_len: 45, 
+        max_len: 128
+      }
+    }
+  ];
+  TestMessage.Nested1 msg_field = 12 [
+    (buf.validate.field) = {
+      cel: [
+        {
+          id: "abc", 
+          message: "abc", 
+          expression: "true == true"
+        }
+      ]
+    }
+  ];
+  map<sint32, sint32> map_field = 13 [
+    (buf.validate.field) = {
+      map: {
+        min_pairs: 5, 
+        max_pairs: 15, 
+        keys: {
+          sint32: {
+            gt: 15
+          }
+        }, 
+        values: {
+          sint32: {
+            gt: 56
+          }
+        }
+      }
+    }
+  ];
+  TestMessage.TestEnum enum_field = 14;
+  oneof oneof_field {
+    option name = {
+      string: "abc", 
+      int: 1, 
+      float: 1, 
+      bytes: "hello", 
+      num_list: [1, 2, 3], 
+      str_list: ["abc", "def"], 
+      bool: true, 
+      enum: NAME, 
+      duration: { seconds: 0, nanos: 0 }, 
+      timestamp: { seconds: 0, nanos: 0 }
+    };
+    option nested_opt = {
+      nested: {
+        very_nested: {
+          thing1: 15, 
+          thing2: true, 
+          thing3: {
+            string: "abc", 
+            int: 1, 
+            float: 1, 
+            bytes: "hello", 
+            num_list: [1, 2, 3], 
+            str_list: ["abc", "def"], 
+            bool: true, 
+            enum: NAME, 
+            duration: { seconds: 0, nanos: 0 }, 
+            timestamp: { seconds: 0, nanos: 0 }
+          }
+        }
+      }
+    };
+    option (buf.validate.oneof).required = true;
+
+    string a = 201 [
+      name = {
+        string: "abc", 
+        int: 1, 
+        float: 1, 
+        bytes: "hello", 
+        num_list: [1, 2, 3], 
+        str_list: ["abc", "def"], 
+        bool: true, 
+        enum: NAME, 
+        duration: { seconds: 0, nanos: 0 }, 
+        timestamp: { seconds: 0, nanos: 0 }
+      },
+      nested_opt = {
+        nested: {
+          very_nested: {
+            thing1: 15, 
+            thing2: true, 
+            thing3: {
+              string: "abc", 
+              int: 1, 
+              float: 1, 
+              bytes: "hello", 
+              num_list: [1, 2, 3], 
+              str_list: ["abc", "def"], 
+              bool: true, 
+              enum: NAME, 
+              duration: { seconds: 0, nanos: 0 }, 
+              timestamp: { seconds: 0, nanos: 0 }
+            }
+          }
+        }
+      }
+    ];
+    fixed32 b = 200 [
+      (buf.validate.field) = {
+        fixed32: {
+          lt: 50, 
+          gt: 10
+        }
+      }
+    ];
+  }
+}
+
+service TestService {
+  option name = {
+    string: "abc", 
+    int: 1, 
+    float: 1, 
+    bytes: "hello", 
+    num_list: [1, 2, 3], 
+    str_list: ["abc", "def"], 
+    bool: true, 
+    enum: NAME, 
+    duration: { seconds: 0, nanos: 0 }, 
+    timestamp: { seconds: 0, nanos: 0 }
+  };
+  option nested_opt = {
+    nested: {
+      very_nested: {
+        thing1: 15, 
+        thing2: true, 
+        thing3: {
+          string: "abc", 
+          int: 1, 
+          float: 1, 
+          bytes: "hello", 
+          num_list: [1, 2, 3], 
+          str_list: ["abc", "def"], 
+          bool: true, 
+          enum: NAME, 
+          duration: { seconds: 0, nanos: 0 }, 
+          timestamp: { seconds: 0, nanos: 0 }
+        }
+      }
+    }
+  };
+
+  rpc Service1 (TestMessage) returns (TestMessage.Nested1) {
+    option name = {
+      string: "abc", 
+      int: 1, 
+      float: 1, 
+      bytes: "hello", 
+      num_list: [1, 2, 3], 
+      str_list: ["abc", "def"], 
+      bool: true, 
+      enum: NAME, 
+      duration: { seconds: 0, nanos: 0 }, 
+      timestamp: { seconds: 0, nanos: 0 }
+    };
+    option nested_opt = {
+      nested: {
+        very_nested: {
+          thing1: 15, 
+          thing2: true, 
+          thing3: {
+            string: "abc", 
+            int: 1, 
+            float: 1, 
+            bytes: "hello", 
+            num_list: [1, 2, 3], 
+            str_list: ["abc", "def"], 
+            bool: true, 
+            enum: NAME, 
+            duration: { seconds: 0, nanos: 0 }, 
+            timestamp: { seconds: 0, nanos: 0 }
+          }
+        }
+      }
+    };
+  };
+  rpc Service2 (TestMessage) returns (TestMessage.Nested1);
+}

@@ -119,6 +119,7 @@ fn rendering_test() {
   let pkg = RENDERING_PKG::get_package();
 
   let output1 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/rendering_test"));
+  fs::remove_dir_all(&output1).unwrap();
 
   pkg.render_files(&output1).unwrap();
 
@@ -141,8 +142,10 @@ fn rendering_test() {
     no_emit
   );
 
-  let manual_pkg = Package::new("rendering").with_files(RENDERING_PKG::files());
+  let manual_pkg = Package::new("rendering").with_files([ManualFile::file_schema()]);
+
   let output2 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/rendering_test2"));
+  fs::remove_dir_all(&output2).unwrap();
 
   manual_pkg.render_files(&output2).unwrap();
 
