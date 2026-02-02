@@ -1,6 +1,26 @@
 //! # Guide
 //!
-//! 1. [Creating A Package](crate::guide::package_setup)
+//! This is the guide for `protify`.
+//!
+//!
+//! ## Setup
+//! - [Setup with full schema features](crate::guide::package_setup)
+//! - [Setup with pre-built protos (validation only)](crate::guide::reflection_usage)
+//! - [Managing files](crate::guide::managing_files)
+//!	## Features
+//!	- [Validators](crate::guide::validators)
+//!	- [Proxies](crate::guide::proxies)
+//!	- [Reusing Oneofs](crate::guide::reusing_oneofs)
+//!	- [Correctness](crate::guide::correctness)
+//!	- [CEL validation](crate::guide::cel_validation)
+//!	## Usage Examples
+//!	- [Database Mapping](crate::guide::database_mapping)
+//!	- [Usage With Tonic](crate::guide::usage_with_tonic)
+//!	## Things To Know
+//!	- [Tips](crate::guide::tips)
+//!	- [Code elimination](crate::guide::code_elimination)
+//!	- [Limitations](crate::guide::limitations)
+//!	- [Roadmap](crate::guide::roadmap)
 
 macro_rules! doc_mod {
   ($name:ident) => {
