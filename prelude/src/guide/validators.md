@@ -132,7 +132,7 @@ You can refer to the tests for more involved examples of custom validator usage.
 
 ## Customizing Error Messages
 
-In order to facilitate things like it8n, every provided validator allows for customization of the error messages, withot requiring a whole custom validator to be designed purely for this purpose.
+In order to facilitate things like i18n, every provided validator allows for customization of the error messages, withot requiring a whole custom validator to be designed purely for this purpose.
 
 Each builder features a method called `with_error_messages`, which accepts a BTreeMap that maps known violations to error messages.
 

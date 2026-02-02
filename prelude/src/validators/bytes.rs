@@ -151,7 +151,7 @@ impl BytesValidator {
         if *val != *const_val {
           handle_violation!(
             Const,
-            format!("must be equal to {}", const_val.escape_ascii())
+            format!("must be equal to \"{}\"", const_val.escape_ascii())
           );
         }
 
@@ -195,13 +195,19 @@ impl BytesValidator {
       if let Some(prefix) = &self.prefix
         && !val.starts_with(prefix)
       {
-        handle_violation!(Prefix, format!("must start with {}", prefix.escape_ascii()));
+        handle_violation!(
+          Prefix,
+          format!("must start with \"{}\"", prefix.escape_ascii())
+        );
       }
 
       if let Some(suffix) = &self.suffix
         && !val.ends_with(suffix)
       {
-        handle_violation!(Suffix, format!("must end with {}", suffix.escape_ascii()));
+        handle_violation!(
+          Suffix,
+          format!("must end with \"{}\"", suffix.escape_ascii())
+        );
       }
 
       if let Some(substring) = &self.contains
@@ -211,7 +217,7 @@ impl BytesValidator {
       {
         handle_violation!(
           Contains,
-          format!("must contain {}", substring.escape_ascii())
+          format!("must contain \"{}\"", substring.escape_ascii())
         );
       }
 

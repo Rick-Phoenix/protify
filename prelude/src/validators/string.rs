@@ -318,7 +318,7 @@ impl StringValidator {
     if let Some(val) = val {
       if let Some(const_val) = &self.const_ {
         if val != const_val.as_ref() {
-          handle_violation!(Const, format!("must be equal to {const_val}"));
+          handle_violation!(Const, format!("must be equal to \"{const_val}\""));
         }
 
         // Using `const` implies no other rules
@@ -397,25 +397,25 @@ impl StringValidator {
       if let Some(prefix) = &self.prefix
         && !val.starts_with(&**prefix)
       {
-        handle_violation!(Prefix, format!("must start with {prefix}"));
+        handle_violation!(Prefix, format!("must start with \"{prefix}\""));
       }
 
       if let Some(suffix) = &self.suffix
         && !val.ends_with(&**suffix)
       {
-        handle_violation!(Suffix, format!("must end with {suffix}"));
+        handle_violation!(Suffix, format!("must end with \"{suffix}\""));
       }
 
       if let Some(substring) = &self.contains
         && !val.contains(substring.as_ref())
       {
-        handle_violation!(Contains, format!("must contain {substring}"));
+        handle_violation!(Contains, format!("must contain \"{substring}\""));
       }
 
       if let Some(substring) = &self.not_contains
         && val.contains(substring.as_ref())
       {
-        handle_violation!(NotContains, format!("cannot contain {substring}"));
+        handle_violation!(NotContains, format!("cannot contain \"{substring}\""));
       }
 
       #[cfg(feature = "regex")]
