@@ -1,8 +1,10 @@
 # Validators
 
-A key component of this library is that is enables a very simple but powerful way of attaching validators to messages and oneofs. The validators hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also offer a schema for conversion into a protobuf option, so that the settings made in rust can be reflected in the protobuf package and be picked up by other clients using the same contracts.
+Whenever models are defined and used, the need for validation follows close behind. `protify` provides a series of pre-built validators to handle all primitives and well known types.
 
-All the provided validators map their options to the protovalidate options, but you ca also create customized validators that map to customized protobuf options.
+The validators hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also produce a schema representation, so that their settings can be included as options in the proto files.
+
+All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to customized protobuf options.
 
 Validators can be assigned to oneofs/messages as a whole, or to individual fields/variants.
 
@@ -19,7 +21,10 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 #[proto(validate = |v| v.cel(cel_program!(id = "my_rule", msg = "oopsie", expr = "this.id == 50")))]
 pub struct MyMsg { 
     // Field validator
-    // The argument of the closure is the IntValidator builder
+    // Type-safe and lsp-friendly!
+    // The argument of the closure is the IntValidator builder,
+    // so we are going to get autocomplete suggestions
+    // for its specific methods.
     #[proto(validate = |v| v.gt(0))]
     pub id: i32,
 

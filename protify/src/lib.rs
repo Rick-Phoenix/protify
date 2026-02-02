@@ -11,7 +11,7 @@
 //!
 //! For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
 //!
-#![doc = include_str!("./guide/diesel_usage.md")]
+#![doc = include_str!("./guide/database_mapping.md")]
 //!
 #![doc = include_str!("./guide/proxies.md")]
 //!

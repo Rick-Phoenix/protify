@@ -76,7 +76,7 @@ pub enum MyEnum {
 
  For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
 
-# Diesel Usage
+# Database Mapping
 
 An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map the generated protos, or injecting the attributes as plain text with the prost-build helper.
 
