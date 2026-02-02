@@ -1,3 +1,38 @@
+[changelog]
+body = """
+{%- macro print_commit(commit) -%}
+    - ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/Rick-Phoenix/proto-types/commit/{{ commit.id }})) \
+        {% if commit.scope %}{{ commit.scope }}: {% endif %}\
+        {% if commit.breaking %}[**BREAKING**] {% endif %}\
+        {{ commit.message | trim | upper_first }}\
+        {% raw %}\n{% endraw -%}
+{%- endmacro -%}
+
+{%- if version -%}
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}{% raw %}\n\n{% endraw -%}
+{%- else -%}
+    ## [Unreleased]{% raw %}\n\n{% endraw -%}
+{%- endif -%}
+
+{%- if commits | filter(attribute="breaking", value=true) | length != 0 -%}
+  ### 💥 BREAKING CHANGES{% raw %}\n\n{% endraw -%}
+  {%- for commit in commits | filter(attribute="breaking", value=true) -%}
+     {{ self::print_commit(commit=commit) }}
+  {%- endfor -%}\
+  {% raw %}\n{% endraw -%}
+{%- endif -%}
+
+{%- for group, commits in commits | filter(attribute="breaking", value=false) | sort(attribute="group") | group_by(attribute="group") -%}
+  {%- if commits | length != 0 -%}
+    ### {{ group | striptags | trim | upper_first }}{% raw %}\n\n{% endraw -%}
+    {%- for commit in commits -%}
+        {{ self::print_commit(commit=commit) }}
+    {%- endfor -%}
+    {% raw %}\n{% endraw -%}
+  {%- endif -%}
+{%- endfor -%}
+"""
+
 [git]
 commit_parsers = [
   { message = "^feat", group = "<!-- 0 -->⛰️  Features" },
@@ -20,6 +55,3 @@ commit_parsers = [
   { body = ".*security", group = "<!-- 9 -->🛡️ Security" },
   { message = "^revert", group = "<!-- 10 -->🔙 Revert" },
 ]
-
-[changelog]
-output = "CHANGELOG.md"
