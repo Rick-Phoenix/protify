@@ -2,6 +2,9 @@
 open-docs:
     mdbook serve --open
 
+gen-readme:
+    cargo run -p gen-readme
+
 check-asm-output:
     cargo asm --release -p testing --test code_elimination trigger_validation
 

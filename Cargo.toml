@@ -7,7 +7,7 @@ members = [
   "test-server",
   "testing",
   "builder",
-  "test-no-std",
+  "test-no-std", "gen-readme",
 ]
 resolver = "3"
 

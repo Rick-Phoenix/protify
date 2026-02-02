@@ -3,9 +3,63 @@
 #![deny(clippy::std_instead_of_alloc)]
 #![deny(clippy::std_instead_of_core)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+//! Protify is a library that aims to vastly simplify working with protobuf in a rust project. It offers a rust-first approach in defining protobuf models, so that every element in a protobuf package (messages, enums, oneofs, services, extensions, files) can be fully defined in rust code, and then the respective proto files can be generated from it as a compilation artifact, rather than it being the other way around.
+//!
+//! Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, to an experience that feels almost as native as just working with `serde`.
+//!
+//! ```rust
+//! use prelude::*;
+//!
+//! // Creates a new package
+//! proto_package!(MY_PKG, name = "my_pkg");
+//! // Creates a new file
+//! define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG, extensions = [ MyExt ]);
+//!
+//! #[proto_extension(target = MessageOptions)]
+//! pub struct MyExt {
+//!     #[proto(tag = 5000)]
+//!     cool_opt: String
+//! }
+//!
+//! #[proto_service]
+//! enum MyService {
+//!     Service1 {
+//!         request: MyMsg,
+//!         response: MyMsg
+//!     }
+//! }
+//!
+//! #[proto_message]
+//! pub struct MyMsg {
+//!     pub id: i32
+//! }
+//!
+//! #[proto_oneof]
+//! pub enum MyOneof {
+//!     #[proto(tag = 1)]
+//!     A(i32),
+//!     #[proto(tag = 2)]
+//!     B(u32),
+//! }
+//!
+//! #[proto_enum]
+//! pub enum MyEnum {
+//!     Unspecified,
+//!     A,
+//!     B
+//! }
+//!```
+#![doc = include_str!("./guide/diesel_usage.md")]
+//!
+#![doc = include_str!("./guide/proxies.md")]
+//!
+#![doc = include_str!("./guide/validators.md")]
+//!
+//! # Feature Flags
+//!
 #![cfg_attr(
-    feature = "document-features",
-    cfg_attr(doc, doc = ::document_features::document_features!())
+		feature = "document-features",
+		doc = ::document_features::document_features!()
 )]
 
 #[cfg(any(test, feature = "std"))]

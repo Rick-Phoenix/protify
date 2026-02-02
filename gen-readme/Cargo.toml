@@ -1,0 +1,15 @@
+[package]
+name = "gen-readme"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+anyhow = "1.0"
+
+[lints]
+workspace = true
