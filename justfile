@@ -1,7 +1,3 @@
-[working-directory("docs")]
-open-docs:
-    mdbook serve --open
-
 gen-readme:
     cargo run -p gen-readme
 
@@ -45,5 +41,5 @@ update-changelog version:
     git add "CHANGELOG.md"
     git commit -m "updated changelog"
 
-build-docs:
+build-docs: gen-readme
     RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --no-deps -p prelude --all-features --open
