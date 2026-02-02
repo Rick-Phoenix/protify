@@ -9,7 +9,6 @@ keywords.workspace = true
 
 [dependencies]
 syn = { version = "2.0", features = ["full", "extra-traits"] }
-anyhow = "1.0"
 
 [lints]
 workspace = true

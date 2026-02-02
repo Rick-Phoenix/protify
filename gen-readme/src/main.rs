@@ -1,9 +1,8 @@
-use anyhow::anyhow;
 use std::fs;
 use std::process::Command;
 use syn::{Expr, Lit, Meta};
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("Expanding crate...");
   let output = Command::new("cargo")
     .args([
@@ -18,7 +17,7 @@ fn main() -> anyhow::Result<()> {
 
   if !output.status.success() {
     eprintln!("{}", str::from_utf8(&output.stderr)?);
-    return Err(anyhow!("Failed to expand crate"));
+    return Err("Failed to expand crate".into());
   }
 
   let expanded_src = str::from_utf8(&output.stdout)?;

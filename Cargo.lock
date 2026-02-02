@@ -710,7 +710,6 @@ dependencies = [
 name = "gen-readme"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "syn 2.0.108",
 ]
 
