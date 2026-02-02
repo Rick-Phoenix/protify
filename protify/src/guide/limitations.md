@@ -4,7 +4,10 @@
 
 - Usage of `Box` in a oneof or message is automatically implied as a sign of recursion and handled accordingly in the macros' logic. Using `Box` for non-recursive fields or variants is not supported.
 
+- Using `Self` for a recursive field is very likely to break some of the macro output. For this reason it's advised to use the full struct name instead.
+
 - The schema features are not heavily optimized for runtime usage, and they are intended to be used merely for generating files, not as a substitute for a full-fledged reflection library. I can recommend the excellent [`prost-reflect`](https://crates.io/crates/prost-reflect) for that purpose.
+
 
 - Proxy structs/enums do not support generics or lifetimes.
 

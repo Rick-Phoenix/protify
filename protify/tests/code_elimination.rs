@@ -43,9 +43,9 @@ enum OneofWithNoValidator {
   Recursive(Box<MsgWithNoValidator>),
 }
 
-// Run `just check-asm-output` to view the asm output of this function.
+// You can clone the repo and run `just check-asm-output` to view the asm output of this function.
 //
-// If the validator is being correctly detected as empty, the assembly output should be more or less like this:
+// If the validator is being correctly detected as empty, the assembly output should be just an empty return:
 //
 // .section .text.trigger_validation,"ax",@progbits
 // .globl  trigger_validation
@@ -69,6 +69,8 @@ unsafe extern "C" {
 #[test]
 fn code_elimination_test() {
   if MsgWithNoValidator::HAS_DEFAULT_VALIDATOR
+	  // The check above actually implies these two,
+		// but we add them manually out of caution
     || OneofWithNoValidator::HAS_DEFAULT_VALIDATOR
     || SecondDegreeRecursion::HAS_DEFAULT_VALIDATOR
   {
