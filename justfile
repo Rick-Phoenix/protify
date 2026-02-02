@@ -35,10 +35,9 @@ expand-reflection: gen-schemas
 test-renders:
     cargo test -p test-schemas rendering_test -- -q --nocapture
 
-update-changelog version:
-    git cliff --tag {{ version }}
-    git add "CHANGELOG.md"
-    git commit -m "updated changelog"
+release version exec="": test-all gen-readme
+    ../pre_release.sh {{ version }} {{ exec }}
+    cargo release {{ version }} {{ exec }}
 
 build-docs: gen-readme
     RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --no-deps -p protify --all-features --open

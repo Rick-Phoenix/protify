@@ -305,6 +305,7 @@ Validators can be assigned to oneofs/messages as a whole, or to individual field
 
 ```rust
 use protify::*;
+use std::collections::HashMap;
 
 proto_package!(MY_PKG, name = "my_pkg");
 define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
@@ -320,6 +321,14 @@ pub struct MyMsg {
     // for its specific methods.
     #[proto(validate = |v| v.gt(0))]
     pub id: i32,
+
+    // Repeated validator
+    #[proto(validate = |v| v.items(|i| i.gt(0)))]
+    pub repeated_nums: Vec<i32>,
+
+    // Map validator
+    #[proto(validate = |m| m.keys(|k| k.gt(0)).values(|v| v.min_len(5)))]
+    pub map_field: HashMap<i32, String>,
 
     #[proto(oneof(tags(1, 2)))]
     #[proto(validate = |v| v.required())]
