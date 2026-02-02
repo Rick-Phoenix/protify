@@ -39,7 +39,7 @@ impl<T: ?Sized + Send + Sync + ToOwned> Validator<T> for NoOpValidator<T> {
 
   #[doc(hidden)]
   #[inline(always)]
-  fn validate_core<V>(&self, _ctx: &mut ValidationCtx, _val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, _ctx: &mut ValidationCtx, _val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {

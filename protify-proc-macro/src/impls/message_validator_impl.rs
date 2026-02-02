@@ -124,7 +124,7 @@ pub fn field_validator_tokens(
             #validator_expr
           });
 
-          ::protify::Validator::<#validator_target_type>::validate_core(
+          ::protify::Validator::<#validator_target_type>::execute_validation(
             &*#static_ident,
             #validate_args
           )?
@@ -132,7 +132,7 @@ pub fn field_validator_tokens(
       }
     } else {
       quote_spanned! {*span=>
-        is_valid &= ::protify::Validator::<#validator_target_type>::validate_core(
+        is_valid &= ::protify::Validator::<#validator_target_type>::execute_validation(
           &(#validator_expr),
           #validate_args
         )?;
@@ -172,7 +172,7 @@ pub fn generate_message_validator(
     let top_level = top_level_validators.iter().enumerate().map(|(i, v)| {
       if v.kind.is_custom() {
         quote_spanned! {v.span=>
-          is_valid &= ::protify::Validator::<#target_ident>::validate_core(
+          is_valid &= ::protify::Validator::<#target_ident>::execute_validation(
             &(#v),
             ctx,
             Some(self)
@@ -187,7 +187,7 @@ pub fn generate_message_validator(
               #v
             });
 
-            ::protify::Validator::<#target_ident>::validate_core(
+            ::protify::Validator::<#target_ident>::execute_validation(
               &*#validator_static_ident,
               ctx,
               Some(self)

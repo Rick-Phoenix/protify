@@ -52,7 +52,7 @@ The [`Validator`](crate::Validator) trait allows for the construction of custom 
 
 A validator can be a struct (stateful) or just a function, wrapped with the [`from_fn`](crate::from_fn) helper.
 
-Each validator only needs to implement a single method, [`validate_core`](crate::Validator::validate_core), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
+Each validator only needs to implement a single method, [`execute_validation`](crate::Validator::execute_validation), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
 
 ```rust
 use protify::*;
@@ -86,7 +86,7 @@ static CACHED_VALIDATOR: Lazy<CustomValidator> = Lazy::new(|| CustomValidator);
 impl Validator<MyMsg> for CustomValidator {
     type Target = MyMsg;
 
-    fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+    fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
     where
         V: std::borrow::Borrow<Self::Target> + ?Sized,
     {
@@ -111,7 +111,7 @@ pub struct MyMsg {
 impl Validator<MyOneof> for CustomValidator {
     type Target = MyOneof;
 
-    fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+    fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
     where
         V: std::borrow::Borrow<Self::Target> + ?Sized,
     {

@@ -59,7 +59,7 @@ pub type ValidationResult = Result<IsValid, FailFast>;
 ///
 /// The `Target` is the actual type that will be validated.
 ///
-/// The only required method is [`validate_core`](Validator::validate_core), all the other validation methods are
+/// The only required method is [`execute_validation`](Validator::execute_validation), all the other validation methods are
 /// automatically implemented.
 ///
 /// The validation methods can receive any type which implements [`Borrow`] with the `Target`.
@@ -128,7 +128,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   {
     let mut ctx = ValidationCtx::default();
 
-    let _ = self.validate_core(&mut ctx, Some(val));
+    let _ = self.execute_validation(&mut ctx, Some(val));
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -145,7 +145,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   {
     let mut ctx = ValidationCtx::default();
 
-    let _ = self.validate_core(&mut ctx, val);
+    let _ = self.execute_validation(&mut ctx, val);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -160,7 +160,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    let _ = self.validate_core(&mut ctx, Some(val));
+    let _ = self.execute_validation(&mut ctx, Some(val));
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -179,7 +179,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   where
     V: Borrow<Self::Target> + ?Sized,
   {
-    let _ = self.validate_core(&mut ctx, val);
+    let _ = self.execute_validation(&mut ctx, val);
 
     if ctx.violations.is_empty() {
       Ok(())
@@ -189,7 +189,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   }
 
   /// Validates a value that implements [`Borrow`] with the Target, with customized settings.
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized;
 }
@@ -318,7 +318,7 @@ where
   type Target = T;
 
   #[inline]
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {

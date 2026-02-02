@@ -64,7 +64,6 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
     }
   }
 
-  #[doc(hidden)]
   fn validate_with_ctx(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 
@@ -129,7 +128,7 @@ where
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -255,7 +254,7 @@ where
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {

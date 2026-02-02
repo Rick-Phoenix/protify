@@ -80,9 +80,9 @@ pub enum MyEnum {
 
 An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map the generated protos, or injecting the attributes as plain text with the prost-build helper.
 
-Our models are not hidden behind an included generated file, they are under our full control and we can use macros and attributes on them like on any other normal rust struct.
+Our models are not hidden behind a generated file injected with `include!`, they are under our full control and we can use macros and attributes on them like on any other normal rust struct.
 
-Having the possibility of using proxies makes interactions with a database even easier, because we can have the proto message take a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
+And with proxies, the interactions with a database becomes even easier, because we can have the proto message take a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
 
 ```rust
 use protify::*;
@@ -205,9 +205,10 @@ Proxied messages/oneofs unlock the following features:
 
 - A field/variant can be missing from the proto struct, but present in the proxy
 - Enums can use their actual rust enum type, rather than being pure integers
-- Oneofs can be not optional
-- Messages can be not optional
-- Types that are not supported by prost can be used in the proxy
+- Oneofs don't need to be wrapped in `Option`
+- Messages don't need to be wrapped in `Option`
+- We can use types that are not supported by prost
+- We can map an incoming type from another type via custom conversions
 
 By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant.
 
@@ -292,9 +293,11 @@ fn main() {
 
 # Validators
 
-A key component of this library is that is enables a very simple but powerful way of attaching validators to messages and oneofs. The validators hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also offer a schema for conversion into a protobuf option, so that the settings made in rust can be reflected in the protobuf package and be picked up by other clients using the same contracts.
+Whenever models are defined and used, the need for validation follows close behind. `protify` provides a series of pre-built validators to handle all primitives and well known types.
 
-All the provided validators map their options to the protovalidate options, but you ca also create customized validators that map to customized protobuf options.
+The validators hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also produce a schema representation, so that their settings can be included as options in the proto files.
+
+All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to customized protobuf options.
 
 Validators can be assigned to oneofs/messages as a whole, or to individual fields/variants.
 
@@ -311,7 +314,10 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 #[proto(validate = |v| v.cel(cel_program!(id = "my_rule", msg = "oopsie", expr = "this.id == 50")))]
 pub struct MyMsg {
     // Field validator
-    // The argument of the closure is the IntValidator builder
+    // Type-safe and lsp-friendly!
+    // The argument of the closure is the IntValidator builder,
+    // so we are going to get autocomplete suggestions
+    // for its specific methods.
     #[proto(validate = |v| v.gt(0))]
     pub id: i32,
 
@@ -339,7 +345,7 @@ The [`Validator`](crate::Validator) trait allows for the construction of custom 
 
 A validator can be a struct (stateful) or just a function, wrapped with the [`from_fn`](crate::from_fn) helper.
 
-Each validator only needs to implement a single method, [`validate_core`](crate::Validator::validate_core), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
+Each validator only needs to implement a single method, [`execute_validation`](crate::Validator::execute_validation), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
 
 ```rust
 use protify::*;
@@ -373,7 +379,7 @@ static CACHED_VALIDATOR: Lazy<CustomValidator> = Lazy::new(|| CustomValidator);
 impl Validator<MyMsg> for CustomValidator {
     type Target = MyMsg;
 
-    fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+    fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
     where
         V: std::borrow::Borrow<Self::Target> + ?Sized,
     {
@@ -398,7 +404,7 @@ pub struct MyMsg {
 impl Validator<MyOneof> for CustomValidator {
     type Target = MyOneof;
 
-    fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+    fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
     where
         V: std::borrow::Borrow<Self::Target> + ?Sized,
     {

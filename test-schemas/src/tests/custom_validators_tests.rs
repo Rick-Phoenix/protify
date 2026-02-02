@@ -8,7 +8,7 @@ struct CustomValidator;
 impl Validator<i32> for CustomValidator {
   type Target = i32;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: std::borrow::Borrow<Self::Target> + ?Sized,
   {
@@ -19,7 +19,7 @@ impl Validator<i32> for CustomValidator {
 impl Validator<SimpleEnum> for CustomValidator {
   type Target = i32;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: std::borrow::Borrow<Self::Target> + ?Sized,
   {
@@ -102,7 +102,7 @@ fn custom_validators() {
 impl Validator<CustomValidatorOneof> for CustomValidator {
   type Target = CustomValidatorOneof;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: std::borrow::Borrow<Self::Target> + ?Sized,
   {
@@ -133,7 +133,7 @@ fn custom_oneof_validator(
 impl Validator<MultipleValidatorsOneof> for CustomValidator {
   type Target = MultipleValidatorsOneof;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: std::borrow::Borrow<Self::Target> + ?Sized,
   {
@@ -211,7 +211,7 @@ fn multiple_validators() {
 impl Validator<CustomTopLevelValidators> for CustomValidator {
   type Target = CustomTopLevelValidators;
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: std::borrow::Borrow<Self::Target> + ?Sized,
   {

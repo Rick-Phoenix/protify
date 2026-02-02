@@ -339,7 +339,7 @@ where
   }
 
   #[inline]
-  fn validate_core<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> ValidationResult
+  fn execute_validation<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> ValidationResult
   where
     Val: Borrow<Self::Target> + ?Sized,
   {
@@ -454,7 +454,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapKey);
 
-            is_valid &= validator.validate_core(ctx, Some(k))?;
+            is_valid &= validator.execute_validation(ctx, Some(k))?;
           }
 
           if let Some(validator) = values_validator {
@@ -463,7 +463,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapValue);
 
-            is_valid &= validator.validate_core(ctx, Some(v))?;
+            is_valid &= validator.execute_validation(ctx, Some(v))?;
           }
         }
 

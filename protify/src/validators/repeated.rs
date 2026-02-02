@@ -253,7 +253,7 @@ where
     }
   }
 
-  fn validate_core<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
+  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
   where
     V: Borrow<Self::Target> + ?Sized,
   {
@@ -337,7 +337,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::RepeatedItem);
 
-            is_valid &= validator.validate_core(ctx, Some(value))?;
+            is_valid &= validator.execute_validation(ctx, Some(value))?;
           }
         }
 

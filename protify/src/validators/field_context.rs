@@ -82,6 +82,9 @@ impl FieldKind {
 }
 
 /// The context for a given validation execution.
+///
+/// NOTE: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
+/// because this is by far the most desired behaviour for most applications.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ValidationCtx {
   pub field_context: Option<FieldContext>,

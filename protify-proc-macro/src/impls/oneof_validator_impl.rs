@@ -16,7 +16,7 @@ pub fn generate_oneof_validator(
   } else {
     let top_level = top_level_validators.iter().map(|v| {
       quote_spanned! {v.span=>
-        is_valid &= ::protify::Validator::<#oneof_ident>::validate_core(
+        is_valid &= ::protify::Validator::<#oneof_ident>::execute_validation(
           &(#v),
           ctx.without_field_context(),
           Some(self)
