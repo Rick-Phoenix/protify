@@ -22,7 +22,9 @@ pub trait OneofProxy: From<Self::Oneof> + Into<Self::Oneof> {
 
 /// Trait responsible for generating the schema representation of a oneof.
 pub trait ProtoOneof {
+  #[doc(hidden)]
   const NAME: &str;
+  #[doc(hidden)]
   const TAGS: &[i32];
 
   fn proto_schema() -> Oneof;

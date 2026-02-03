@@ -356,8 +356,9 @@ where
   }
 }
 
-/// Trait for types representing protobuf integer types.
+/// Sealed trait for types representing protobuf integers.
 pub trait IntWrapper: AsProtoType + Default + Copy + Send + Sync {
+  #[doc(hidden)]
   type RustType: PartialOrd
     + PartialEq
     + Copy
@@ -375,18 +376,29 @@ pub trait IntWrapper: AsProtoType + Default + Copy + Send + Sync {
     + Sync
     + MaybeSerde
     + 'static;
+  #[doc(hidden)]
   type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync + MaybeSerde + Hash;
+  #[doc(hidden)]
   const LT_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const LTE_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const GT_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const GTE_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const IN_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const NOT_IN_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const CONST_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const REQUIRED_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
+  #[doc(hidden)]
   fn type_name() -> &'static str;
 }
 

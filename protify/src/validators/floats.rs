@@ -455,6 +455,7 @@ where
 impl_proto_type!(f32, Float);
 impl_proto_type!(f64, Double);
 
+/// A sealed trait for protobuf-compatible floats
 pub trait FloatWrapper:
   AsProtoType
   + Default
@@ -471,19 +472,31 @@ pub trait FloatWrapper:
   + Send
   + Sync
 {
+  #[doc(hidden)]
   type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync + MaybeSerde;
+  #[doc(hidden)]
   const LT_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const LTE_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const GT_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const GTE_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const IN_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const NOT_IN_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const CONST_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const FINITE_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   const REQUIRED_VIOLATION: Self::ViolationEnum;
+  #[doc(hidden)]
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
+  #[doc(hidden)]
   fn type_name() -> &'static str;
 }
 

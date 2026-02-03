@@ -9,6 +9,7 @@ pub trait ProtoEnum: TryFrom<i32> + Copy + Default + Into<i32> + Send + Sync {
   /// Returns the name of the enum, preceded by the parent message, if there is one (i.e. "ParentMessage.EnumName").
   fn proto_name() -> &'static str;
 
+  /// Turns the enum into its integer representation.
   #[inline]
   fn as_int(self) -> i32 {
     self.into()
@@ -37,9 +38,12 @@ pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
   fn proto_path() -> ProtoPath;
   fn proto_schema() -> EnumSchema;
 
+  /// Converts the enum variant to its corresponding name in the protobuf representation.
   fn as_proto_name(&self) -> &'static str;
+  /// Attempts conversion from the protobuf name of a given variant.
   fn from_proto_name(name: &str) -> Option<Self>;
 
+  /// Checks if the received integer is among the known variants for this enum.
   #[inline]
   #[must_use]
   fn is_known_variant(int: i32) -> bool {

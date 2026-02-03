@@ -34,6 +34,7 @@ pub fn builder_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
       #(
         type #idents;
       )*
+      #[doc(hidden)]
       const SEALED: sealed::Sealed;
     }
 

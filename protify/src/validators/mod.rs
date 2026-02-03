@@ -2,8 +2,9 @@ use crate::*;
 
 use proto_types::protovalidate::*;
 
-/// Utility trait for [`ValidationResult`] that makes it easier to discern the validation status.
+/// Utility sealed trait for [`ValidationResult`] that makes it easier to discern the validation status.
 pub trait ValidationResultExt {
+  #[doc(hidden)]
   #[allow(private_interfaces)]
   const SEALED: Sealed;
 
@@ -215,26 +216,16 @@ pub trait ProtoValidation {
   /// [`validator_from_closure`](ProtoValidation::validator_from_closure).
   type ValidatorBuilder: ValidatorBuilderFor<Self, Validator = Self::Validator>;
 
-  /// Determines if the type holds its own validators. Can be true of implementors of [`ValidatedMessage`] or [`ValidatedOneof`] if they have validators defined in them or one of the item in their recursive chain of validation has this set to true.
-  ///
-  /// If a message or oneof has this set to true and they are used as a field in another message that uses the [`proto_message`] macro,
-  /// their [`validate`](ValidatedMessage::validate) function will be called even if no
-  /// other field validators are specified.
+  #[doc(hidden)]
   const HAS_DEFAULT_VALIDATOR: bool = false;
   #[doc(hidden)]
   const HAS_SHALLOW_VALIDATION: bool = false;
 
-  /// A [`UniqueStore`] for this type, to use in uniqueness checks.
-  ///
-  /// Used by the [`RepeatedValidator`] for the `unique` rule.
   #[doc(hidden)]
   type UniqueStore<'a>: UniqueStore<'a, Item = Self::Target>
   where
     Self: 'a;
 
-  /// Creates a [`UniqueStore`] for this type, to use in uniqueness checks.
-  ///
-  /// Used by the [`RepeatedValidator`] for the `unique` rule.
   #[inline]
   #[doc(hidden)]
   fn make_unique_store<'a>(_validator: &Self::Validator, cap: usize) -> Self::UniqueStore<'a>

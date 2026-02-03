@@ -116,6 +116,7 @@ pub fn generate_oneof_validator(
       where
         Self: 'a;
 
+      #[doc(hidden)]
       const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
       #[doc(hidden)]
       const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;

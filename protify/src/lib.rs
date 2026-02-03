@@ -101,7 +101,7 @@ pub use proto_types;
 pub use proto_types::protovalidate::{FieldPathElement, Violations};
 
 mod oneof;
-#[doc(hidden)]
+#[doc(inline)]
 pub use oneof::*;
 
 #[cfg(not(feature = "std"))]
@@ -112,54 +112,54 @@ use std::collections::HashSet;
 mod rendering_utils;
 use rendering_utils::*;
 
-#[doc(hidden)]
+#[doc(inline)]
 pub use field::*;
 mod field;
 
 mod proto_enum;
-#[doc(hidden)]
+#[doc(inline)]
 pub use proto_enum::*;
 
 mod file;
-#[doc(hidden)]
+#[doc(inline)]
 pub use file::*;
 
 mod package;
-#[doc(hidden)]
+#[doc(inline)]
 pub use package::*;
 
 mod proto_type;
-#[doc(hidden)]
+#[doc(inline)]
 pub use proto_type::*;
 
 mod service;
-#[doc(hidden)]
+#[doc(inline)]
 pub use service::*;
 
 mod test_utils;
-#[doc(hidden)]
+#[doc(inline)]
 pub use test_utils::*;
 
 mod options;
-#[doc(hidden)]
+#[doc(inline)]
 pub use options::*;
 
 mod well_known_types;
 
 mod proto_message;
-#[doc(hidden)]
+#[doc(inline)]
 pub use proto_message::*;
 
 pub mod validators;
-#[doc(hidden)]
+#[doc(inline)]
 pub use validators::*;
 
 mod registry;
-#[doc(hidden)]
+#[doc(inline)]
 pub use registry::*;
 
 mod extension;
-#[doc(hidden)]
+#[doc(inline)]
 pub use extension::*;
 
 #[cfg(feature = "serde")]
@@ -186,6 +186,7 @@ where
 ///
 /// It retains `& 'static` when possible, otherwise clones or allocates.
 pub trait IntoBytes {
+  #[doc(hidden)]
   fn into_bytes(self) -> Bytes;
 }
 
@@ -231,6 +232,7 @@ mod regex_impls {
 
   /// Utility trait to create a [`Regex`].
   pub trait IntoRegex {
+    #[doc(hidden)]
     fn into_regex(self) -> Regex;
   }
 
@@ -260,6 +262,7 @@ mod regex_impls {
 
   /// Utility trait to create a [`Regex`](BytesRegex).
   pub trait IntoBytesRegex {
+    #[doc(hidden)]
     fn into_regex(self) -> BytesRegex;
   }
 
