@@ -62,7 +62,6 @@ impl_proto_map_key!(bool, Bool);
 impl Validator<bool> for BoolValidator {
   type Target = bool;
 
-  #[doc(hidden)]
   #[inline(never)]
   #[cold]
   fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {

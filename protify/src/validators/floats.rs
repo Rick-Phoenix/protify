@@ -494,6 +494,7 @@ macro_rules! impl_float_wrapper {
       impl FloatWrapper for $target_type {
         #[doc(hidden)]
         type ViolationEnum = [< $proto_type Violation >];
+				#[doc(hidden)]
         const LT_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Lt;
         #[doc(hidden)]
         const LTE_VIOLATION: Self::ViolationEnum = [< $proto_type Violation >]::Lte;

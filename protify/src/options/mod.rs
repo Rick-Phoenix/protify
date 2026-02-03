@@ -18,7 +18,7 @@ pub struct ProtoOption {
 
 /// An enum representing values for protobuf options.
 ///
-/// These can be composed manually by using one of the many provided `From` impls, or With the `serde` feature, whcih allows conversion from [`serde_json::Value`].
+/// These can be composed manually by using one of the many provided `From` impls, or with the `serde` feature, whcih allows conversion from [`serde_json::Value`].
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "std", derive(Template))]
@@ -198,6 +198,7 @@ pub struct OptionMessageBuilder {
 
 impl OptionMessageBuilder {
   #[must_use]
+  #[inline]
   /// Checks whether the builder has no values set.
   pub const fn is_empty(&self) -> bool {
     self.inner.is_empty()
@@ -240,7 +241,6 @@ impl OptionMessageBuilder {
   }
 
   /// Sets a new value.
-  #[inline]
   pub fn set(&mut self, name: impl Into<FixedStr>, value: impl Into<OptionValue>) -> &mut Self {
     self.inner.push(ProtoOption {
       name: name.into(),
@@ -250,7 +250,6 @@ impl OptionMessageBuilder {
   }
 
   /// Sets a new key/value pair from a [`ProtoOption`].
-  #[inline]
   pub fn set_from_option(&mut self, option: impl Into<ProtoOption>) -> &mut Self {
     self.inner.push(option.into());
     self
@@ -277,7 +276,6 @@ impl OptionMessageBuilder {
     self.inner.iter()
   }
 
-  #[inline]
   #[must_use]
   /// Creates the [`OptionMessage`] instance with the given key-value pairs.
   pub fn build(self) -> OptionMessage {
@@ -497,12 +495,14 @@ pub struct OptionList {
 impl Deref for OptionList {
   type Target = [OptionValue];
 
+  #[inline]
   fn deref(&self) -> &Self::Target {
     &self.inner
   }
 }
 
 impl OptionList {
+  #[inline]
   pub fn iter(&self) -> core::slice::Iter<'_, OptionValue> {
     self.inner.iter()
   }
@@ -523,6 +523,7 @@ impl<'a> IntoIterator for &'a OptionList {
   type Item = &'a OptionValue;
   type IntoIter = core::slice::Iter<'a, OptionValue>;
 
+  #[inline]
   fn into_iter(self) -> Self::IntoIter {
     self.inner.iter()
   }
@@ -586,6 +587,7 @@ impl<T: Into<Self>, const S: usize> From<[T; S]> for OptionValue {
 }
 
 impl From<Arc<[OptionValue]>> for OptionList {
+  #[inline]
   fn from(value: Arc<[OptionValue]>) -> Self {
     Self { inner: value }
   }
@@ -598,6 +600,7 @@ impl<T: Into<Self>> From<Vec<T>> for OptionValue {
 }
 
 impl From<&'static str> for OptionValue {
+  #[inline]
   fn from(value: &'static str) -> Self {
     Self::String(value.into())
   }

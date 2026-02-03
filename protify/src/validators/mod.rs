@@ -45,7 +45,7 @@ impl IsValid {
   #[must_use]
   #[inline]
   pub fn is_valid(&self) -> bool {
-    (*self).into()
+    **self
   }
 }
 
@@ -344,6 +344,7 @@ where
 type ErrorMessages<T> = Box<BTreeMap<T, FixedStr>>;
 
 mod builder_internals;
+#[doc(hidden)]
 use builder_internals::*;
 
 pub mod any;

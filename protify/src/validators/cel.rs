@@ -3,11 +3,11 @@ pub use cel_trait::*;
 
 use super::*;
 
-// This will be included even without the cel feature, as it is useful for schema purposes
+/// A rule that defines CEL-based validation
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CelRule {
-  /// The id of this specific rule.
+  /// The id of this specific rule. It should be unique in the scope of its message.
   pub id: FixedStr,
   /// The error message to display in case the rule fails validation.
   pub message: FixedStr,
@@ -47,7 +47,7 @@ impl From<CelRule> for OptionValue {
 
 /// A struct that holds the data to initialize and execute a CEL program. It can be created from a [`CelRule`].
 ///
-/// The program is compiled once and reused afterwards. This type can be cheaply cloned (from something like a Lazy static) to reuse it in different places.
+/// The program is compiled once and reused afterwards. This type can be cheaply cloned (from something like a Lazy static) to reuse it in multiple locations.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(from = "CelRule", into = "CelRule"))]
@@ -58,6 +58,7 @@ pub struct CelProgram {
 impl CelProgram {
   /// Accesses the [`CelRule`] for this program.
   #[must_use]
+  #[inline]
   pub fn rule(&self) -> &CelRule {
     &self.inner.rule
   }
@@ -137,7 +138,7 @@ mod cel_impls {
   where
     T: TryIntoCel,
   {
-    pub fn execute_programs(self) -> ValidationResult {
+    pub(crate) fn execute_programs(self) -> ValidationResult {
       let Self {
         programs,
         value,

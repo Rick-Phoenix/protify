@@ -1,5 +1,6 @@
 use super::*;
 
+/// Well known string formats that a value should adhere to in order to be valid.
 #[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

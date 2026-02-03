@@ -19,6 +19,7 @@ fn clamp_capacity_for_unique_items_collection<T>(requested_cap: usize) -> usize 
   requested_cap.min(max_items)
 }
 
+#[doc(hidden)]
 pub trait UniqueStore<'a> {
   type Item: ?Sized;
 
@@ -98,7 +99,6 @@ where
     Self::new(cap, T::default(), T::default())
   }
 
-  #[inline]
   fn insert(&mut self, item: &Self::Item) -> bool {
     let item = OrderedFloat(*item);
 
@@ -188,7 +188,6 @@ where
     }
   }
 
-  #[inline]
   fn insert(&mut self, item: &'a T) -> bool {
     match self {
       Self::BSearch(vec) => match vec.binary_search(&item) {
@@ -233,7 +232,6 @@ where
     }
   }
 
-  #[inline]
   fn insert(&mut self, item: &'a T) -> bool {
     match self {
       Self::BSearch(vec) => match vec.binary_search(item) {
@@ -255,6 +253,9 @@ where
   }
 }
 
+/// Holds a static list of immutable, sorted values.
+///
+/// Holds an `Arc`, so it is cheaply clonable.
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SortedList<T: Ord> {
@@ -282,7 +283,6 @@ impl<T: Ord> IntoSortedList<T> for SortedList<T> {
 }
 
 impl<T: Ord> IntoSortedList<T> for &SortedList<T> {
-  #[inline]
   fn into_sorted_list(self) -> SortedList<T> {
     self.clone()
   }
@@ -399,6 +399,7 @@ impl<T> SortedList<T>
 where
   T: Ord,
 {
+  /// Creates a new instance.
   pub fn new<I: IntoIterator<Item = T>>(iter: I) -> Self {
     let mut items: Vec<T> = iter.into_iter().collect();
 
@@ -409,12 +410,7 @@ where
     }
   }
 
-  #[must_use]
-  #[inline]
-  pub fn as_slice(&self) -> &[T] {
-    &self.items
-  }
-
+  /// Checks if the list contains a value.
   #[inline]
   pub fn contains<B>(&self, item: &B) -> bool
   where
@@ -425,18 +421,6 @@ where
       .items
       .binary_search_by(|probe| probe.borrow().cmp(item))
       .is_ok()
-  }
-
-  #[inline]
-  pub fn iter(&self) -> core::slice::Iter<'_, T> {
-    self.into_iter()
-  }
-
-  #[allow(clippy::len_without_is_empty)]
-  #[must_use]
-  #[inline]
-  pub fn len(&self) -> usize {
-    self.items.len()
   }
 }
 

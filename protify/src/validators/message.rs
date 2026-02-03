@@ -3,6 +3,7 @@ pub use builder::MessageValidatorBuilder;
 
 use super::*;
 
+/// Trait that executes validation on a message, if the latter had validators assigned to it via the attributes in [`proto_message`].
 pub trait ValidatedMessage: ProtoValidation + Default + Clone {
   /// Executes validation on this message, triggering the validators that have been assigned to it
   /// via macro attributes, if there are any.
@@ -118,11 +119,14 @@ where
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
+  #[doc(hidden)]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
   }
 
   #[doc(hidden)]
+  #[inline(never)]
+  #[cold]
   fn cel_rules(&self) -> Vec<CelRule> {
     self
       .cel
@@ -205,7 +209,7 @@ where
   }
 }
 
-/// Default validator for messages as a whole.
+/// Default validator for messages when validated in their entirety (and not as a nested field).
 ///
 /// Contains rules that are equivalent to `(buf.validate.message).cel` options in protobuf.
 #[non_exhaustive]
@@ -216,6 +220,7 @@ pub struct CelValidator {
 }
 
 impl CelValidator {
+  /// Adds a new program to this validator.
   #[must_use]
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> Self {
@@ -244,6 +249,7 @@ where
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
+  #[doc(hidden)]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
   }

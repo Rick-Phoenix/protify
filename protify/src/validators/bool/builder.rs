@@ -27,7 +27,6 @@ impl ProtoValidation for bool {
   #[doc(hidden)]
   const HAS_DEFAULT_VALIDATOR: Self = false;
 
-  #[inline]
   #[doc(hidden)]
   fn make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a> {
     // This is likely to never be used in the first place, but

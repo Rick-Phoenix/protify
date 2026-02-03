@@ -406,6 +406,7 @@ impl Validator<Bytes> for BytesValidator {
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
+  #[doc(hidden)]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(vec![])
   }
@@ -516,7 +517,7 @@ impl From<BytesValidator> for ProtoOption {
   }
 }
 
-#[doc(hidden)]
+/// Well known formats for bytes that a value should adhere to in order to be valid.
 #[non_exhaustive]
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

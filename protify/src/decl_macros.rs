@@ -282,6 +282,7 @@ macro_rules! impl_testing_methods {
     #[cfg(feature = "cel")]
     #[inline(never)]
     #[cold]
+    #[doc(hidden)]
     fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
       self.check_cel_programs_with(Self::Target::default())
     }

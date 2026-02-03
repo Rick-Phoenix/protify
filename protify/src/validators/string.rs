@@ -64,6 +64,15 @@ impl FixedStr {
     }
   }
 
+  /// Transforms `Box<str>` into `Arc<str>`, otherwise leaves the value as is.
+  #[inline]
+  pub fn make_cheaply_clonable(&mut self) {
+    if let Self::Boxed(boxed) = self {
+      let str = core::mem::take(boxed);
+      *self = Self::Shared(Self::box_to_arc(str));
+    }
+  }
+
   #[must_use]
   #[inline]
   pub fn as_str(&self) -> &str {
@@ -621,6 +630,7 @@ impl Validator<String> for StringValidator {
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
+  #[doc(hidden)]
   fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(String::new())
   }
