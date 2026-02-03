@@ -109,20 +109,6 @@ impl MessageCtx<'_> {
 
     let rust_ident_str = proto_struct.to_string();
 
-    let proxy_struct_impl = self
-      .shadow_struct_ident
-      .map(|shadow_struct_ident| {
-        let orig_struct_ident = &self.orig_struct_ident;
-
-        quote_spanned! {orig_struct_ident.span()=>
-          impl ::protify::AsProtoType for #orig_struct_ident {
-            fn proto_type() -> ::protify::ProtoType {
-              <#shadow_struct_ident as ::protify::AsProtoType>::proto_type()
-            }
-          }
-        }
-      });
-
     let file_name = if let Some(ident) = file {
       quote! { <#ident as ::protify::FileSchema>::NAME }
     } else {
@@ -196,7 +182,7 @@ impl MessageCtx<'_> {
 
         fn type_url() -> &'static str {
           static URL: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
-            format!("/{}.{}", <#proto_struct as ::protify::ProtoMessage>::PACKAGE, <#proto_struct as ::protify::ProtoMessage>::proto_name())
+            format!("/{}", <#proto_struct as ::protify::ProtoMessage>::full_name())
           });
 
           &*URL
@@ -231,8 +217,6 @@ impl MessageCtx<'_> {
           }
         }
       }
-
-      #proxy_struct_impl
     }
   }
 }
