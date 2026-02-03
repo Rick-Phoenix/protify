@@ -57,7 +57,7 @@ The cardinality of the field should be inferred automatically in most cases from
     - Type: Ident
     - Example: `#[proto(ignore)]`
     - Description:
-        Excludes the field from the proto item (only valid in proxied impls).
+        Excludes the field from the proto item (only valid in proxied impls). By default, the conversion from proto to proxy for this field will use `Default::default()` for message fields, and `NameOfOneofProto::default()` for oneof variants.
 
 - `attr`
     - Type: list of Metas
