@@ -278,6 +278,10 @@ pub fn generate_message_validator(
     impl ::protify::ValidatedMessage for #target_ident {
       #inline_if_empty
       fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
+        if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
+          return Ok(::protify::IsValid::Yes);
+        }
+
         let mut is_valid = ::protify::IsValid::Yes;
 
         #validators_tokens

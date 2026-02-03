@@ -92,6 +92,10 @@ pub fn generate_oneof_validator(
     impl ::protify::ValidatedOneof for #oneof_ident {
       #inline_if_empty
       fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
+        if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
+          return Ok(::protify::IsValid::Yes);
+        }
+
         let mut is_valid = ::protify::IsValid::Yes;
 
         #validators_tokens
