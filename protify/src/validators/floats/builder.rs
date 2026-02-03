@@ -119,6 +119,16 @@ where
   }
 
   /// Sets a value that represents the `abs` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use protify::*;
+  ///
+  /// let validator = FloatValidator::<f32>::builder().const_(1.0).abs_tolerance(0.00001).build();
+  ///
+  /// assert!(validator.validate(&1.000001).is_ok());
+  /// ```
   #[inline]
   pub fn abs_tolerance(mut self, val: Num) -> FloatValidatorBuilder<Num, SetAbsTolerance<S>>
   where
@@ -134,6 +144,16 @@ where
   }
 
   /// Sets a value that represents the `r2nd` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use protify::*;
+  ///
+  /// let validator = FloatValidator::<f32>::builder().const_(1.0).rel_tolerance(0.00001).build();
+  ///
+  /// assert!(validator.validate(&1.000001).is_ok());
+  /// ```
   #[inline]
   pub fn rel_tolerance(mut self, val: Num) -> FloatValidatorBuilder<Num, SetRelTolerance<S>>
   where

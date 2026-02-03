@@ -71,6 +71,7 @@ impl<S: State> From<TimestampValidatorBuilder<S>> for ProtoOption {
 impl<S: State> TimestampValidatorBuilder<S> {
   custom_error_messages_method!(Timestamp);
 
+  /// Adds a [`CelProgram`] to this validator.
   #[inline]
   pub fn cel(mut self, program: CelProgram) -> TimestampValidatorBuilder<S> {
     self.data.cel.push(program);
@@ -81,6 +82,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that this validator should always be ignored.
   #[inline]
   pub fn ignore_always(mut self) -> TimestampValidatorBuilder<SetIgnore<S>>
   where
@@ -94,6 +96,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the timestamp must be in the past (from the moment of validation) in order to be valid.
   #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
   #[inline]
   pub fn lt_now(mut self) -> TimestampValidatorBuilder<SetLtNow<S>>
@@ -108,6 +111,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the timestamp must be in the future (from the moment of validation) in order to be valid.
   #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
   #[inline]
   pub fn gt_now(mut self) -> TimestampValidatorBuilder<SetGtNow<S>>
@@ -122,6 +126,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the field must be set in order to be valid.
   #[inline]
   pub fn required(mut self) -> TimestampValidatorBuilder<SetRequired<S>>
   where
@@ -135,6 +140,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that only this specific value will be considered valid for this field.
   #[inline]
   pub fn const_(mut self, val: Timestamp) -> TimestampValidatorBuilder<SetConst<S>>
   where
@@ -148,6 +154,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the timestamp must be earlier than the specified value in order to be valid.
   #[inline]
   pub fn lt(mut self, val: Timestamp) -> TimestampValidatorBuilder<SetLt<S>>
   where
@@ -161,6 +168,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the timestamp must be earlier than or equal to the specified value in order to be valid.
   #[inline]
   pub fn lte(mut self, val: Timestamp) -> TimestampValidatorBuilder<SetLte<S>>
   where
@@ -174,6 +182,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the timestamp must be later than the specified value in order to be valid.
   #[inline]
   pub fn gt(mut self, val: Timestamp) -> TimestampValidatorBuilder<SetGt<S>>
   where
@@ -187,6 +196,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the timestamp must be later than or equal to the specified value in order to be valid.
   #[inline]
   pub fn gte(mut self, val: Timestamp) -> TimestampValidatorBuilder<SetGte<S>>
   where
@@ -200,6 +210,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies that the timestamp must within the specified duration (in the past or in the future) from the moment of validation in order to be valid.
   #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
   #[inline]
   pub fn within(mut self, val: Duration) -> TimestampValidatorBuilder<SetWithin<S>>
@@ -214,6 +225,26 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Specifies a tolerance to use when performing the `gt_now` check. This is for cases when you may want to check if a value is "from now onwards", but a tiny delay between the value's creation (which is the indended "now" moment) and its validation (which is when the "now" is evaluated) would cause the validation to fail.
+  ///
+  /// # Example
+  /// ```
+  /// use protify::{*, proto_types::{Timestamp, Duration}};
+  ///
+  /// // Our intended validation is that this value should not be in the past.
+  /// // So this should be valid.
+  /// let mut timestamp = Timestamp::now();
+  ///
+  /// // But if we are strict, a single nanosecond may make it invalid
+  /// timestamp.nanos += 1;
+  ///
+  /// let strict_validator = TimestampValidator::builder().gt_now().build();
+  /// assert!(strict_validator.validate(&timestamp).is_err());
+  ///
+  /// // If we add a small tolerance, it becomes valid again
+  /// let validator_with_tolerance = TimestampValidator::builder().gt_now().now_tolerance(Duration::new(1, 0)).build();
+  /// assert!(validator_with_tolerance.validate(&timestamp).is_ok());
+  /// ```
   #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
   #[inline]
   pub fn now_tolerance(mut self, val: Duration) -> TimestampValidatorBuilder<SetNowTolerance<S>>
@@ -228,6 +259,7 @@ impl<S: State> TimestampValidatorBuilder<S> {
     }
   }
 
+  /// Builds the validator.
   #[inline]
   pub fn build(self) -> TimestampValidator {
     self.data
