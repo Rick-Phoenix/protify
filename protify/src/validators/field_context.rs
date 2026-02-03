@@ -32,13 +32,16 @@ impl FieldContext {
   }
 }
 
-/// Specifies whether the target of the validation is a field as a whole,
+/// Specifies whether the target of the validation is a field/element as a whole,
 /// a value or key in a map field, or an item in a repeated field.
+///
+/// For example, if the validation is performed on a `repeated` field but the validation analyzes the collection as a whole (for example, its length), the [`FieldKind`] would be [`Normal`](FieldKind::Normal), whereas if the validation is performed on its individual items, then it would be set to [`RepeatedItem`](FieldKind::RepeatedItem).
 #[derive(Clone, Default, Debug, Copy, PartialEq, Eq, Hash)]
 pub enum FieldKind {
   MapKey,
   MapValue,
   RepeatedItem,
+  /// Signifies that the target of validation is either an item as a whole (for validators defined at the top level of messages/oneofs) or a field.
   #[default]
   Normal,
 }
@@ -83,7 +86,7 @@ impl FieldKind {
 
 /// The context for a given validation execution.
 ///
-/// NOTE: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
+/// ℹ️ **NOTE**: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
 /// because this is by far the most desired behaviour for most applications.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ValidationCtx {
@@ -113,7 +116,7 @@ impl Default for ValidationCtx {
 impl ValidationCtx {
   /// Sets the [`FieldContext`] to [`None`].
   ///
-  /// Mainly useful for top level oneof validators, which do not have a proto
+  /// Mainly useful for validators defined at the top level of a oneof or an unnested message, which do not have a proto
   /// field context (tag, name, etc) of their own.
   #[inline]
   pub fn without_field_context(&mut self) -> &mut Self {
@@ -202,7 +205,7 @@ impl ValidationCtx {
     }
   }
 
-  /// Adds a new violation belonging to a [`CelRule`].
+  /// Adds a new violation related to a [`CelRule`].
   #[inline]
   #[cold]
   pub fn add_cel_violation(&mut self, rule: &CelRule) -> ValidationResult {

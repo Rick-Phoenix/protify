@@ -7,12 +7,18 @@ use proto_types::Status;
 
 use super::*;
 
+/// Offers information about the subject of the violation: the violation kind (string, int32, bytes, etc) and the field kind (map key, map value, etc).
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
 pub struct ViolationMeta {
   pub kind: ViolationKind,
   pub field_kind: FieldKind,
 }
 
+/// Holds the rich context concerning the validation errors that occur during validation.
+///
+/// Can be converted into [`Violations`] to be serialized into protobuf.
+///
+/// When the feature `tonic` is enabled, it can be converted directly into [`tonic::Status`] so that the `?` operator can be used directly inside [`tonic`] handlers.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ValidationErrors {
   metas: Vec<ViolationMeta>,
@@ -34,12 +40,16 @@ impl From<ValidationErrors> for tonic::Status {
   }
 }
 
+/// The context of a specific violation.
+///
+/// It contains the [`Violation`] data, which is used for protobuf serialization, as well as the [`ViolationMeta`], which contains the extra information about a the violation's kind and field kind.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ViolationCtx {
   pub meta: ViolationMeta,
   pub data: Violation,
 }
 
+/// Immutable view for [`ViolationCtx`].
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub struct ViolationCtxRef<'a> {
   pub meta: ViolationMeta,
@@ -47,22 +57,17 @@ pub struct ViolationCtxRef<'a> {
 }
 
 impl ViolationCtxRef<'_> {
+  /// Transforms this view into an owned instance of [`ViolationCtx`].
   #[must_use]
-  #[inline]
   pub fn into_owned(self) -> ViolationCtx {
     ViolationCtx {
       meta: self.meta,
       data: self.data.clone(),
     }
   }
-
-  #[must_use]
-  #[inline]
-  pub fn into_violation(self) -> Violation {
-    self.into_owned().into_violation()
-  }
 }
 
+/// Mutable view for [`ViolationCtx`].
 #[derive(Debug, PartialEq, Eq)]
 pub struct ViolationCtxMut<'a> {
   pub meta: &'a mut ViolationMeta,
@@ -70,22 +75,17 @@ pub struct ViolationCtxMut<'a> {
 }
 
 impl ViolationCtxMut<'_> {
+  /// Transforms this view into an owned instance of [`ViolationCtx`].
   #[must_use]
-  #[inline]
   pub fn into_owned(&self) -> ViolationCtx {
     ViolationCtx {
       meta: *self.meta,
       data: self.data.clone(),
     }
   }
-
-  #[must_use]
-  #[inline]
-  pub fn into_violation(&self) -> Violation {
-    self.into_owned().into_violation()
-  }
 }
 
+/// Owned iterator for [`ViolationCtx`].
 #[derive(Clone, Debug)]
 pub struct IntoIter {
   iter: core::iter::Zip<alloc::vec::IntoIter<ViolationMeta>, alloc::vec::IntoIter<Violation>>,
@@ -115,6 +115,7 @@ impl ExactSizeIterator for IntoIter {
   }
 }
 
+/// Ref iterator for [`ViolationCtx`].
 #[derive(Clone, Debug)]
 pub struct Iter<'a> {
   iter: Zip<Copied<slice::Iter<'a, ViolationMeta>>, slice::Iter<'a, Violation>>,
@@ -144,6 +145,7 @@ impl ExactSizeIterator for Iter<'_> {
   }
 }
 
+/// Mutable ref iterator for [`ViolationCtx`].
 #[derive(Debug)]
 pub struct IterMut<'a> {
   iter: Zip<core::slice::IterMut<'a, ViolationMeta>, core::slice::IterMut<'a, Violation>>,
@@ -174,6 +176,7 @@ impl ExactSizeIterator for IterMut<'_> {
 }
 
 impl ViolationCtx {
+  /// Converts into a [`Violation`].
   #[must_use]
   #[inline]
   pub fn into_violation(self) -> Violation {
@@ -198,7 +201,6 @@ impl From<ValidationErrors> for Vec<Violation> {
 }
 
 impl From<ValidationErrors> for Status {
-  #[inline]
   fn from(value: ValidationErrors) -> Self {
     value.into_violations().into()
   }
@@ -228,6 +230,7 @@ impl<'a> IntoIterator for &'a ValidationErrors {
 
   type IntoIter = Iter<'a>;
 
+  #[inline]
   fn into_iter(self) -> Self::IntoIter {
     Iter {
       iter: self
@@ -244,6 +247,7 @@ impl<'a> IntoIterator for &'a mut ValidationErrors {
 
   type IntoIter = IterMut<'a>;
 
+  #[inline]
   fn into_iter(self) -> Self::IntoIter {
     IterMut {
       iter: self
@@ -272,23 +276,27 @@ impl Extend<ViolationCtx> for ValidationErrors {
 }
 
 impl ValidationErrors {
+  /// Appends the contents of another [`ValidationErrors`] to the original instance.
   #[inline]
   pub fn merge(&mut self, other: &mut Self) {
     self.metas.append(&mut other.metas);
     self.violations.append(&mut other.violations);
   }
 
+  /// Returns a ref iterator.
   #[inline]
   #[must_use]
   pub fn iter(&self) -> Iter<'_> {
     self.into_iter()
   }
 
+  /// Returns a mutable ref iterator.
   #[inline]
   pub fn iter_mut(&mut self) -> IterMut<'_> {
     self.into_iter()
   }
 
+  /// Removes the violations that match the given predicate.
   pub fn retain<F>(&mut self, mut f: F)
   where
     F: FnMut(ViolationCtxRef) -> bool,
@@ -315,6 +323,7 @@ impl ValidationErrors {
     self.violations.truncate(keep_count);
   }
 
+  /// Creates a new instance.
   #[must_use]
   #[inline]
   pub const fn new() -> Self {
@@ -324,12 +333,14 @@ impl ValidationErrors {
     }
   }
 
+  /// Turns into [`Status`], the equivalent of the `google.rpc.Status` message.
   #[inline]
   #[must_use]
   pub fn into_status(self) -> Status {
     self.into()
   }
 
+  /// Converts into [`Violations`].
   #[inline]
   #[must_use]
   pub fn into_violations(self) -> Violations {
@@ -338,18 +349,21 @@ impl ValidationErrors {
     }
   }
 
+  /// Adds a new violation to the list.
   #[inline]
   pub fn push(&mut self, v: ViolationCtx) {
     self.metas.push(v.meta);
     self.violations.push(v.data);
   }
 
+  /// Checks if this instance contains any violations.
   #[inline]
   #[must_use]
   pub const fn is_empty(&self) -> bool {
     self.violations.is_empty()
   }
 
+  /// Returns the amount of violations contained.
   #[inline]
   #[must_use]
   pub const fn len(&self) -> usize {
