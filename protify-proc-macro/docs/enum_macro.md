@@ -88,7 +88,7 @@ enum MyEnum {
     - Type: string
     - Example: `#[proto(name = "MyEnum")]`
     - Description:
-        Specifies the name of the message. Overrides the default behaviour, which uses the name of the rust enum.
+        Specifies the name of the message. Overrides the default behaviour, which uses the name of the rust enum. This name will be prefixed to each variant, as per the protobuf convention.
 
 - `parent_message`
     - Type: Ident
@@ -121,7 +121,7 @@ enum MyEnum {
     - Type: string
     - Example: `#[proto(name = "MY_ENUM_ABC")]`
     - Description:
-        Specifies the name for the given variant. Defaults to the SCREAMING_CASE name of the variant, prefixed by the name of the enum as per the proto convention.
+        Specifies the name for the given variant. Defaults to the SCREAMING_CASE name of the variant, prefixed by the name of the enum as per the proto convention. If overridden, the prefixing must be done manually.
 
 - `deprecated`
     - Type: Ident
