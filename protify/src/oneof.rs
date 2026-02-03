@@ -23,18 +23,19 @@ pub trait OneofProxy: From<Self::Oneof> + Into<Self::Oneof> {
 /// Trait responsible for generating the schema representation of a oneof.
 pub trait ProtoOneof {
   #[doc(hidden)]
-  const NAME: &str;
-  #[doc(hidden)]
   const TAGS: &[i32];
 
   fn proto_schema() -> Oneof;
 
   #[doc(hidden)]
-  fn check_tags(message: &str, found_tags: &mut [i32]) -> Result<(), String> {
+  fn check_tags(
+    message_name: &str,
+    oneof_name: &str,
+    found_tags: &mut [i32],
+  ) -> Result<(), String> {
     use similar_asserts::SimpleDiff;
 
     let expected = Self::TAGS;
-    let oneof_name = Self::NAME;
 
     found_tags.sort_unstable();
 
@@ -45,7 +46,7 @@ pub trait ProtoOneof {
       let diff = SimpleDiff::from_str(&exp_str, &found_str, "expected", "found");
 
       let error =
-        format!("Found tags mismatch for oneof {oneof_name} in message {message}:\n{diff}");
+        format!("Found tags mismatch for oneof {oneof_name} in message {message_name}:\n{diff}");
 
       return Err(error);
     }

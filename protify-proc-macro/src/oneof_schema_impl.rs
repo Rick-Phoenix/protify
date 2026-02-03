@@ -18,7 +18,6 @@ impl OneofCtx<'_> {
 
     let OneofAttrs {
       options: options_tokens,
-      name: proto_name,
       validators,
       ..
     } = &self.oneof_attrs;
@@ -27,13 +26,11 @@ impl OneofCtx<'_> {
     quote! {
       impl ::protify::ProtoOneof for #enum_ident {
         #[doc(hidden)]
-        const NAME: &str = #proto_name;
-        #[doc(hidden)]
         const TAGS: &[i32] = &[ #(#tags),* ];
 
         fn proto_schema() -> ::protify::Oneof {
           ::protify::Oneof {
-            name: #proto_name.into(),
+            name: stringify!(#enum_ident).into(),
             fields: vec![ #variants_tokens ],
             options: #options_tokens.into_iter().collect(),
             validators: ::protify::collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]),

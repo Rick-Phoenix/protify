@@ -18,12 +18,16 @@ If the impl is proxied:
 
 To learn more about proxied implementations, visit the dedicated [section](crate::guide::proxies).
 
+ℹ️ **NOTE**: In `protify`, oneofs are reusable. This means that tags must be set manually for each of the variants, and that the name of the oneof will be the name of the field in the message where it's used. To learn more about oneofs, visit the [reusing oneofs](protify::guide::reusing_oneofs) section.
+
 # Examples
+
 ```rust
 use protify::*;
 
 #[proto_oneof]
 pub enum NormalOneof {
+  // Tags must be set manually!
   #[proto(tag = 1)]
   A(i32),
   #[proto(tag = 2)]
@@ -78,12 +82,6 @@ fn main() {
     - Example: `#[proto(options = vec![ my_option_1() ])]`
     - Description:
         Specifies the options for the given oneof. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption)>.
-
-- `name`
-    - Type: string
-    - Example: `#[proto(name = "abc")]`
-    - Description:
-        Specifies the name of the oneof. Overrides the default behaviour, which uses the snake_case name of the enum.
 
 - `from_proto`
     - Type: function Path or closure

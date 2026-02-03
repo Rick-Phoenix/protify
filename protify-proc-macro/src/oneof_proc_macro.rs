@@ -23,8 +23,8 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
   let macro_attrs =
     OneofMacroAttrs::parse(macro_attrs).unwrap_or_default_and_push_error(&mut errors);
 
-  let oneof_attrs = process_oneof_attrs(&item.ident, macro_attrs, &item.attrs)
-    .unwrap_or_default_and_push_error(&mut errors);
+  let oneof_attrs =
+    process_oneof_attrs(macro_attrs, &item.attrs).unwrap_or_default_and_push_error(&mut errors);
 
   let is_proxied = oneof_attrs.is_proxied;
 

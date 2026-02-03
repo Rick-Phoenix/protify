@@ -3,7 +3,6 @@ use crate::*;
 #[derive(Default)]
 pub struct OneofAttrs {
   pub options: TokensOr<TokenStream2>,
-  pub name: String,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
   pub proto_derives: Vec<Path>,
@@ -43,12 +42,10 @@ impl OneofMacroAttrs {
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn process_oneof_attrs(
-  enum_ident: &Ident,
   macro_attrs: OneofMacroAttrs,
   attrs: &[Attribute],
 ) -> Result<OneofAttrs, Error> {
   let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
-  let mut name: Option<String> = None;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
   let mut shadow_derives: Vec<Path> = Vec::new();
@@ -82,7 +79,6 @@ pub fn process_oneof_attrs(
       "into_proto" => {
         into_proto = Some(meta.expr_value()?.as_path_or_closure()?);
       }
-      "name" => name = Some(meta.expr_value()?.as_string()?),
       _ => return Err(meta.error("Unknown attribute")),
     };
 
@@ -100,7 +96,6 @@ pub fn process_oneof_attrs(
 
   Ok(OneofAttrs {
     options,
-    name: name.unwrap_or_else(|| to_snake_case(&enum_ident.to_string())),
     from_proto,
     into_proto,
     proto_derives: shadow_derives,
