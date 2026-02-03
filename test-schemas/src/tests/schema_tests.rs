@@ -65,3 +65,50 @@ fn ignored_field() {
   assert_eq_pretty!(proxy.ignored, 0);
   assert_eq_pretty!(proxy.custom_conv, 5);
 }
+
+#[proto_oneof]
+#[proto(skip_checks(all))]
+pub enum OneofVariantNameOverride {
+  #[proto(tag = 1)]
+  A(i32),
+  #[proto(tag = 2, name = "abc")]
+  B(u32),
+}
+
+#[test]
+fn oneof_variant_name_override() {
+  let schema = OneofVariantNameOverride::proto_schema();
+
+  assert_eq_pretty!(schema.fields.last().unwrap().name, "abc");
+}
+
+#[proto_message]
+pub struct FieldNameOverride {
+  #[proto(name = "abc")]
+  pub field: i32,
+}
+
+#[test]
+fn field_name_override() {
+  let schema = FieldNameOverride::proto_schema();
+
+  assert!(schema.fields().any(|f| f.name == "abc"));
+}
+
+#[proto_enum]
+#[proto(name = "Abc")]
+pub enum EnumNameOverride {
+  Unspecified,
+  A,
+  #[proto(name = "ABC_ABC")]
+  B,
+}
+
+#[test]
+fn enum_name_override() {
+  let schema = EnumNameOverride::proto_schema();
+
+  assert_eq_pretty!(schema.name, "Abc");
+
+  assert_eq_pretty!(schema.variants.last().unwrap().name, "ABC_ABC");
+}
