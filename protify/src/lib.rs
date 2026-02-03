@@ -95,9 +95,9 @@ pub mod macros {
 pub use proto_types;
 pub use proto_types::protovalidate::{FieldPathElement, Violations};
 
-mod oneof;
+mod oneof_schema;
 #[doc(inline)]
-pub use oneof::*;
+pub use oneof_schema::*;
 
 #[cfg(not(feature = "std"))]
 use hashbrown::HashSet;
@@ -111,9 +111,9 @@ use rendering_utils::*;
 pub use field::*;
 mod field;
 
-mod proto_enum;
+mod enum_schema;
 #[doc(inline)]
-pub use proto_enum::*;
+pub use enum_schema::*;
 
 mod file;
 #[doc(inline)]
@@ -123,9 +123,9 @@ mod package;
 #[doc(inline)]
 pub use package::*;
 
-mod proto_type;
+mod types;
 #[doc(inline)]
-pub use proto_type::*;
+pub use types::*;
 
 mod service;
 #[doc(inline)]
@@ -141,9 +141,9 @@ pub use options::*;
 
 mod well_known_types;
 
-mod proto_message;
+mod message_schema;
 #[doc(inline)]
-pub use proto_message::*;
+pub use message_schema::*;
 
 pub mod validators;
 pub use validators::*;

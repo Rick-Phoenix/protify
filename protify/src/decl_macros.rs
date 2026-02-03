@@ -333,7 +333,7 @@ macro_rules! impl_proto_map_key {
     impl AsProtoMapKey for $rust_type {
       #[doc(hidden)]
       #[allow(private_interfaces)]
-      const SEALED: crate::proto_type::Sealed = crate::proto_type::Sealed;
+      const SEALED: crate::Sealed = crate::Sealed;
 
       #[doc(hidden)]
       fn as_proto_map_key() -> ProtoMapKey {

@@ -77,6 +77,7 @@ pub trait ProtoMessage: Default + MessagePath {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageSchema {
   pub short_name: FixedStr,
+  /// The short name of the enum, preceded by the name of the parent messages, if there are any.
   pub name: FixedStr,
   pub package: FixedStr,
   pub file: FixedStr,

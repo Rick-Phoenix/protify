@@ -34,7 +34,7 @@ pub trait ProtoEnum: TryFrom<i32> + Copy + Default + Into<i32> + Send + Sync {
 /// It provides methods that enables the generation of the protobuf schema representation for an enum.
 ///
 /// Implemented by the [`proto_enum`] macro.
-pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
+pub trait ProtoEnumSchema: ProtoEnum {
   /// Returns the protobuf path to this enum.
   fn proto_path() -> ProtoPath;
   /// Returns the protobuf schema representation for this enum.
@@ -60,6 +60,7 @@ pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EnumSchema {
   pub short_name: FixedStr,
+  /// The short name of the enum, preceded by the name of the parent messages, if there are any.
   pub name: FixedStr,
   pub package: FixedStr,
   pub file: FixedStr,
