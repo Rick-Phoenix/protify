@@ -21,7 +21,7 @@ impl<'a> TagAllocator<'a> {
     }
   }
 
-  pub fn next_tag(&mut self, span: Span) -> syn::Result<i32> {
+  pub fn next_tag(&mut self, span: Span) -> syn::Result<ParsedNum> {
     while self.current_range_idx < self.unavailable.len() {
       let range = &self.unavailable[self.current_range_idx];
 
@@ -29,7 +29,7 @@ impl<'a> TagAllocator<'a> {
         // Found a gap before the next reserved range
         let tag = self.next_tag;
         self.next_tag += 1;
-        return Ok(tag);
+        return Ok(ParsedNum { num: tag, span });
       } else if self.next_tag < range.end {
         // Inside a reserved range, jump to the end
         self.next_tag = range.end;
@@ -51,6 +51,7 @@ impl<'a> TagAllocator<'a> {
     // If we ran out of reserved ranges, every tag is now available
     let tag = self.next_tag;
     self.next_tag += 1;
-    Ok(tag)
+
+    Ok(ParsedNum { num: tag, span })
   }
 }

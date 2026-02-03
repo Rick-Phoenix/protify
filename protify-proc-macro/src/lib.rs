@@ -105,7 +105,7 @@ pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
 pub fn enum_derive(input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
 
-  enum_derive::named_enum_derive(&item).into()
+  enum_derive::basic_enum_derive(&item).into()
 }
 
 #[doc(hidden)]

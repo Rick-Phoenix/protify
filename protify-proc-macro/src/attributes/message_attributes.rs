@@ -11,7 +11,7 @@ pub struct MessageAttrs {
   pub parent_message: Option<Ident>,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
-  pub proto_derives: Vec<Path>,
+  pub forwarded_derives: Vec<Path>,
   pub forwarded_attrs: Vec<Meta>,
   pub is_proxied: bool,
   pub auto_tests: AutoTests,
@@ -66,7 +66,7 @@ pub fn process_message_attrs(
   let mut proto_name: Option<ParsedStr> = None;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
-  let mut shadow_derives: Vec<Path> = Vec::new();
+  let mut forwarded_derives: Vec<Path> = Vec::new();
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;
   let mut validators = Validators::default();
@@ -122,7 +122,7 @@ pub fn process_message_attrs(
               reserved_numbers = numbers;
             }
             "derive" => {
-              shadow_derives = meta.parse_list::<PathList>()?.list;
+              forwarded_derives = meta.parse_list::<PathList>()?.list;
             }
             "parent_message" => {
               parent_message = Some(
@@ -175,7 +175,7 @@ pub fn process_message_attrs(
     parent_message,
     from_proto,
     into_proto,
-    proto_derives: shadow_derives,
+    forwarded_derives,
     is_proxied: macro_args.is_proxied,
     auto_tests,
     deprecated,

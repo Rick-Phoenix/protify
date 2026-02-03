@@ -76,7 +76,7 @@ fn extract_enum_data(item: &mut ItemEnum) -> syn::Result<EnumData> {
       let next_tag = if i == 0 {
         0
       } else {
-        tag_allocator.next_tag(variant.ident.span())?
+        tag_allocator.next_tag(variant.ident.span())?.num
       };
 
       let tag_expr: Expr = parse_quote!(#next_tag);

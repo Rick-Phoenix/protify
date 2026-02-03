@@ -11,7 +11,6 @@ pub fn builder_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
     quote! {
       pub struct #ident<S: State = Empty>(PhantomData<fn() -> S>);
 
-
       #[doc(hidden)]
       impl<S: State> State for #ident<S> {
         type #id = Set<members::#id>;

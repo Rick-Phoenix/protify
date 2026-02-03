@@ -98,8 +98,8 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
         .collect();
     }
 
-    let extra_proto_derives = (!message_attrs.proto_derives.is_empty()).then(|| {
-      let paths = &message_attrs.proto_derives;
+    let forwarded_derives = (!message_attrs.forwarded_derives.is_empty()).then(|| {
+      let paths = &message_attrs.forwarded_derives;
 
       quote! { #[derive(#(#paths),*)] }
     });
@@ -124,7 +124,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
       #item
 
       #proto_derives
-      #extra_proto_derives
+      #forwarded_derives
       #(#forwarded_attrs)*
       #[allow(clippy::use_self)]
       #proto_struct
@@ -194,11 +194,8 @@ pub enum ImplKind {
 }
 
 impl ImplKind {
-  /// Returns `true` if the impl kind is [`Shadow`].
-  ///
-  /// [`Shadow`]: ImplKind::Shadow
   #[must_use]
-  pub const fn is_shadow(self) -> bool {
+  pub const fn is_proxied(self) -> bool {
     matches!(self, Self::Proxied)
   }
 }
@@ -268,10 +265,13 @@ where
     for (mut dst_field, field_data) in fields.into_iter().zip(fields_data.iter_mut()) {
       // Skipping ignored fields
       let FieldDataKind::Normal(field_data) = field_data else {
-        if impl_kind.is_shadow() {
+        if impl_kind.is_proxied() {
           continue;
         } else {
-          bail!(dst_field.ident()?, "Cannot ignore fields in a direct impl");
+          bail!(
+            dst_field.ident()?,
+            "If you want to ignore a field, you must use the `proxied` attribute"
+          );
         }
       };
 
@@ -280,13 +280,11 @@ where
       }
 
       if !field_data.proto_field.is_oneof() && field_data.tag.is_none() {
+        // Tag allocator being missing implies this being a oneof
         if let Some(tag_allocator) = tag_allocator.as_mut() {
           let new_tag = tag_allocator.next_tag(field_data.span)?;
 
-          field_data.tag = Some(ParsedNum {
-            num: new_tag,
-            span: field_data.span,
-          });
+          field_data.tag = Some(new_tag);
         } else {
           bail!(field_data.ident, "Field tag is missing");
         }
@@ -295,7 +293,7 @@ where
       let prost_attr = field_data.as_prost_attr();
       dst_field.attributes_mut().push(prost_attr);
 
-      if impl_kind.is_shadow() {
+      if impl_kind.is_proxied() {
         let prost_compatible_type = field_data.output_proto_type(item_kind);
         *dst_field.type_mut()? = prost_compatible_type;
 

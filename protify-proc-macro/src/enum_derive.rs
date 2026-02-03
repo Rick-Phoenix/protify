@@ -4,7 +4,7 @@ use crate::*;
 // the parent message name with a method, this one gets it from an attribute
 // therefore we cannot pass it from the proc macro to this one,
 // only via reflection
-pub fn named_enum_derive(item: &ItemEnum) -> TokenStream2 {
+pub fn basic_enum_derive(item: &ItemEnum) -> TokenStream2 {
   let mut name: Option<String> = None;
 
   for attr in &item.attrs {

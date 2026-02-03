@@ -103,16 +103,16 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
   }
 
   let main_enum_tokens = if let Some(proto_enum) = &mut proto_enum {
-    // We strip away the ignored variants from the shadow enum
-    let shadow_variants = std::mem::take(&mut proto_enum.variants);
-    proto_enum.variants = shadow_variants
+    // We strip away the ignored variants
+    let proto_enum_variants = std::mem::take(&mut proto_enum.variants);
+    proto_enum.variants = proto_enum_variants
       .into_iter()
       .zip(fields_data.iter())
       .filter_map(|(variant, data)| matches!(data, FieldDataKind::Normal(_)).then_some(variant))
       .collect();
 
-    let extra_proto_derives = (!oneof_attrs.proto_derives.is_empty()).then(|| {
-      let paths = &oneof_attrs.proto_derives;
+    let forwarded_derives = (!oneof_attrs.forwarded_derives.is_empty()).then(|| {
+      let paths = &oneof_attrs.forwarded_derives;
 
       quote! { #[derive(#(#paths),*)] }
     });
@@ -137,7 +137,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
       #item
 
       #proto_derives
-      #extra_proto_derives
+      #forwarded_derives
       #(#forwarded_attrs)*
       #[allow(clippy::use_self)]
       #proto_enum

@@ -5,7 +5,7 @@ pub struct OneofAttrs {
   pub options: TokensOr<TokenStream2>,
   pub from_proto: Option<PathOrClosure>,
   pub into_proto: Option<PathOrClosure>,
-  pub proto_derives: Vec<Path>,
+  pub forwarded_derives: Vec<Path>,
   pub forwarded_attrs: Vec<Meta>,
   pub is_proxied: bool,
   pub auto_tests: AutoTests,
@@ -48,7 +48,7 @@ pub fn process_oneof_attrs(
   let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
-  let mut shadow_derives: Vec<Path> = Vec::new();
+  let mut forwarded_derives: Vec<Path> = Vec::new();
   let mut auto_tests = AutoTests::default();
   let mut validators = Validators::default();
   let mut forwarded_attrs: Vec<Meta> = Vec::new();
@@ -67,7 +67,7 @@ pub fn process_oneof_attrs(
         auto_tests = AutoTests::parse(&meta)?;
       }
       "derive" => {
-        shadow_derives = meta.parse_list::<PathList>()?.list;
+        forwarded_derives = meta.parse_list::<PathList>()?.list;
       }
       "options" => {
         options.span = meta.input.span();
@@ -98,7 +98,7 @@ pub fn process_oneof_attrs(
     options,
     from_proto,
     into_proto,
-    proto_derives: shadow_derives,
+    forwarded_derives,
     is_proxied: macro_attrs.is_proxied,
     auto_tests,
     validators,
