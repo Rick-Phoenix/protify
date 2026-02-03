@@ -1,6 +1,7 @@
 [package]
 name = "protify"
 version = "0.1.0"
+description = "Rust-first interface for protobuf, with validation framework included."
 edition.workspace = true
 license.workspace = true
 authors.workspace = true

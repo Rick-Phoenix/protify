@@ -1454,7 +1454,6 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "diesel",
- "document-features",
  "num-traits",
  "palette",
  "paste",

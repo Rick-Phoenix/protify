@@ -1,11 +1,12 @@
 [package]
 name = "protify-build"
 version = "0.1.0"
+description = "Build-time entrypoint for protify that generates validation logic for protobuf messages from protovalidate annotations"
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-keywords.workspace = true
+keywords = ["protobuf", "validation", "reflection"]
 
 [dependencies]
 prost-build = { workspace = true }

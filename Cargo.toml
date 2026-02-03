@@ -23,8 +23,8 @@ debug = false
 edition = "2024"
 license = "MPL-2.0"
 authors = ["Rick-Phoenix <https://github.com/Rick-Phoenix>"]
-repository = "https://github.com/Rick-Phoenix/protoschema"
-keywords = ["protobuf", "validation", "schema"]
+repository = "https://github.com/Rick-Phoenix/protify"
+keywords = ["protobuf", "validation", "schema", "generation", "no_std"]
 
 [workspace.dependencies]
 askama = { version = "0.15", default-features = false, features = [
