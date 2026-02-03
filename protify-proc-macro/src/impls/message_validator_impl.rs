@@ -296,6 +296,7 @@ pub fn generate_message_validator(
       #[doc(hidden)]
       type ValidatorBuilder = ::protify::MessageValidatorBuilder;
 
+      #[doc(hidden)]
       type UniqueStore<'a>
         = ::protify::LinearRefStore<'a, Self>
       where

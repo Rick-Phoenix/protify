@@ -128,9 +128,9 @@ impl OneofCtx<'_> {
   pub fn generate_validator(&self) -> TokenStream2 {
     let oneof_ident = self.proto_enum_ident();
 
-    // For non-reflection implementations we don't skip fields if they don't have
-    // validators, so having empty fields means an error occurred
     generate_oneof_validator(
+      // For non-reflection implementations we don't skip fields if they don't have
+      // validators, so having empty fields means an error occurred
       UseFallback::from(self.variants.is_empty()),
       oneof_ident,
       &self.variants,

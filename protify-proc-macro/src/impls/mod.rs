@@ -10,7 +10,6 @@ mod message_consistency_checks;
 pub use message_consistency_checks::*;
 mod message_validator_impl;
 pub use message_validator_impl::*;
-mod oneof_consistency_checks;
 
 pub fn wrap_with_imports(tokens: &TokenStream2) -> TokenStream2 {
   quote! {
