@@ -303,6 +303,9 @@ const PROTOBUF_MAX_TAG: i32 = 536_870_911;
 fn enum_schema_output() {
   let schema = TestEnum::proto_schema();
 
+  // Checking if the name method works fine
+  assert_eq_pretty!(TestEnum::proto_name(), "TestMessage.TestEnum");
+
   assert_eq_pretty!(
     schema.reserved_numbers,
     &[1..2, 2..3, 10..PROTOBUF_MAX_TAG + 1]
@@ -504,7 +507,26 @@ fn message_schema_output() {
       imports: vec!["buf/validate/validate.proto".into()],
     },
     "oneof.required option should be present"
-  )
+  );
+
+  // Name methods
+  assert_eq_pretty!(Nested1::PACKAGE, "rendering");
+  assert_eq_pretty!(Nested1::SHORT_NAME, "Nested1");
+  assert_eq_pretty!(Nested1::proto_name(), "TestMessage.Nested1");
+  assert_eq_pretty!(Nested1::full_name(), "rendering.TestMessage.Nested1");
+  assert_eq_pretty!(Nested1::type_url(), "/rendering.TestMessage.Nested1");
+
+  assert_eq_pretty!(Nested2::PACKAGE, "rendering");
+  assert_eq_pretty!(Nested2::SHORT_NAME, "Nested2");
+  assert_eq_pretty!(Nested2::proto_name(), "TestMessage.Nested1.Nested2");
+  assert_eq_pretty!(
+    Nested2::full_name(),
+    "rendering.TestMessage.Nested1.Nested2"
+  );
+  assert_eq_pretty!(
+    Nested2::type_url(),
+    "/rendering.TestMessage.Nested1.Nested2"
+  );
 }
 
 #[proto_message]
