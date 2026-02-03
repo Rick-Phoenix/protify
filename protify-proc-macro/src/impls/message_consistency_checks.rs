@@ -16,7 +16,7 @@ pub fn generate_oneofs_tags_checks(
 
       if let ProtoField::Oneof(OneofInfo { path, tags, .. }) = proto_field {
         Some(quote_spanned! {*span=>
-          <#path as ::protify::ProtoOneof>::check_tags(#message_name, #proto_name, &mut [ #(#tags),* ])?;
+          <#path as ::protify::ProtoOneof>::__check_tags(#message_name, #proto_name, &mut [ #(#tags),* ])?;
         })
       } else {
         None

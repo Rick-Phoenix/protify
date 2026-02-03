@@ -335,14 +335,14 @@ impl Validator<String> for StringValidator {
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(String::new())
   }
 
   #[doc(hidden)]
   #[inline(never)]
   #[cold]
-  fn cel_rules(&self) -> Vec<CelRule> {
+  fn __cel_rules(&self) -> Vec<CelRule> {
     self
       .cel
       .iter()
@@ -429,7 +429,7 @@ impl Validator<String> for StringValidator {
     }
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -642,7 +642,7 @@ impl Validator<String> for StringValidator {
           In,
           format!(
             "must be one of these values: {}",
-            FixedStr::format_list(allowed_list)
+            FixedStr::__format_list(allowed_list)
           )
         );
       }
@@ -654,7 +654,7 @@ impl Validator<String> for StringValidator {
           NotIn,
           format!(
             "cannot be one of these values: {}",
-            FixedStr::format_list(forbidden_list)
+            FixedStr::__format_list(forbidden_list)
           )
         );
       }
@@ -798,7 +798,7 @@ impl Validator<String> for StringValidator {
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

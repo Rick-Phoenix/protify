@@ -69,11 +69,11 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   /// The target of the validation.
   type Target: ToOwned + ?Sized;
 
+  // This is necessary to gather rules from validators like repeated or map which need to gather nested rules
   #[doc(hidden)]
   #[inline(never)]
   #[cold]
-  // This is necessary to gather rules from validators like repeated or map which need to gather nested rules
-  fn cel_rules(&self) -> Vec<CelRule> {
+  fn __cel_rules(&self) -> Vec<CelRule> {
     vec![]
   }
 
@@ -113,7 +113,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     Ok(())
   }
 
@@ -228,7 +228,7 @@ pub trait ProtoValidation {
 
   #[inline]
   #[doc(hidden)]
-  fn make_unique_store<'a>(_validator: &Self::Validator, cap: usize) -> Self::UniqueStore<'a>
+  fn __make_unique_store<'a>(_validator: &Self::Validator, cap: usize) -> Self::UniqueStore<'a>
   where
     Self: 'a,
   {

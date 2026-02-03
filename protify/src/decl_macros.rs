@@ -283,14 +283,14 @@ macro_rules! impl_testing_methods {
     #[inline(never)]
     #[cold]
     #[doc(hidden)]
-    fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+    fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
       self.check_cel_programs_with(Self::Target::default())
     }
 
     #[doc(hidden)]
     #[inline(never)]
     #[cold]
-    fn cel_rules(&self) -> Vec<CelRule> {
+    fn __cel_rules(&self) -> Vec<CelRule> {
       self
         .cel
         .iter()

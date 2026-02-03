@@ -70,7 +70,7 @@ impl<T: ProtoEnum> EnumValidator<T> {
         In,
         format!(
           "must be one of these values: {}",
-          i32::format_list(allowed_list)
+          i32::__format_list(allowed_list)
         )
       );
     }
@@ -82,7 +82,7 @@ impl<T: ProtoEnum> EnumValidator<T> {
         NotIn,
         format!(
           "cannot be one of these values: {}",
-          i32::format_list(forbidden_list)
+          i32::__format_list(forbidden_list)
         )
       );
     }
@@ -154,7 +154,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
     }
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -242,7 +242,7 @@ impl<T: ProtoEnum> Validator<T> for EnumValidator<T> {
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

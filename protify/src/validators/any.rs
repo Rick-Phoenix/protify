@@ -40,7 +40,7 @@ impl Validator<Any> for AnyValidator {
     let mut errors = Vec::new();
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -108,7 +108,7 @@ impl Validator<Any> for AnyValidator {
           In,
           format!(
             "must have one of these type URLs: {}",
-            FixedStr::format_list(allowed_list)
+            FixedStr::__format_list(allowed_list)
           )
         );
       }
@@ -120,7 +120,7 @@ impl Validator<Any> for AnyValidator {
           NotIn,
           format!(
             "cannot have one of these type URLs: {}",
-            FixedStr::format_list(forbidden_list)
+            FixedStr::__format_list(forbidden_list)
           )
         );
       }
@@ -147,7 +147,7 @@ impl Validator<Any> for AnyValidator {
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

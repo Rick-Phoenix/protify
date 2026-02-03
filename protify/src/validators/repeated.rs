@@ -105,7 +105,7 @@ where
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
+  fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
   where
     Self: 'a,
   {
@@ -152,7 +152,7 @@ where
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(Vec::new())
   }
 
@@ -162,7 +162,7 @@ where
     let mut errors = Vec::new();
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -209,14 +209,14 @@ where
   }
 
   #[doc(hidden)]
-  fn cel_rules(&self) -> Vec<CelRule> {
+  fn __cel_rules(&self) -> Vec<CelRule> {
     let mut rules: Vec<CelRule> = self
       .cel
       .iter()
       .map(|p| p.rule().clone())
       .collect();
 
-    rules.extend(self.items.iter().flat_map(|i| i.cel_rules()));
+    rules.extend(self.items.iter().flat_map(|i| i.__cel_rules()));
 
     rules
   }
@@ -242,7 +242,7 @@ where
     }
 
     if let Some(items_validator) = &self.items
-      && let Err(e) = items_validator.check_cel_programs()
+      && let Err(e) = items_validator.__check_cel_programs()
     {
       errors.extend(e)
     }
@@ -304,7 +304,7 @@ where
         let size = val.len();
 
         let store = match &self.items {
-          Some(v) => <T as ProtoValidation>::make_unique_store(v, size),
+          Some(v) => <T as ProtoValidation>::__make_unique_store(v, size),
           None => <T as ProtoValidation>::UniqueStore::default_with_capacity(size),
         };
 
@@ -382,7 +382,7 @@ where
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

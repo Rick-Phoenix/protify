@@ -97,7 +97,7 @@ impl Validator<Duration> for DurationValidator {
     }
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -201,7 +201,7 @@ impl Validator<Duration> for DurationValidator {
           In,
           format!(
             "must be one of these values: {}",
-            Duration::format_list(allowed_list)
+            Duration::__format_list(allowed_list)
           )
         );
       }
@@ -213,7 +213,7 @@ impl Validator<Duration> for DurationValidator {
           NotIn,
           format!(
             "must be one of these values: {}",
-            Duration::format_list(forbidden_list)
+            Duration::__format_list(forbidden_list)
           )
         );
       }
@@ -240,7 +240,7 @@ impl Validator<Duration> for DurationValidator {
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

@@ -453,14 +453,14 @@ impl<'a, T: Ord> IntoIterator for &'a SortedList<T> {
 
 #[doc(hidden)]
 pub trait ListFormatter: Sized {
-  fn format_list(items: &[Self]) -> String;
+  fn __format_list(items: &[Self]) -> String;
 }
 
 macro_rules! impl_format_for_nums {
   ($($t:ty),*) => {
     $(
       impl ListFormatter for $t {
-        fn format_list(items: &[Self]) -> String {
+        fn __format_list(items: &[Self]) -> String {
           format!("{:?}", items)
         }
       }
@@ -471,13 +471,13 @@ macro_rules! impl_format_for_nums {
 impl_format_for_nums!(i32, i64, u32, u64, f32, f64);
 
 impl<T: ordered_float::FloatCore + Debug> ListFormatter for OrderedFloat<T> {
-  fn format_list(items: &[Self]) -> String {
+  fn __format_list(items: &[Self]) -> String {
     format!("{items:?}")
   }
 }
 
 impl ListFormatter for ::bytes::Bytes {
-  fn format_list(items: &[Self]) -> String {
+  fn __format_list(items: &[Self]) -> String {
     let total_bytes: usize = items.iter().map(|v| v.len()).sum();
 
     // Worst case: every byte becomes "\xNN" (4 chars)
@@ -509,7 +509,7 @@ impl ListFormatter for ::bytes::Bytes {
 }
 
 impl ListFormatter for &[u8] {
-  fn format_list(items: &[Self]) -> String {
+  fn __format_list(items: &[Self]) -> String {
     let total_bytes: usize = items.iter().map(|v| v.len()).sum();
 
     // Worst case: every byte becomes "\xNN" (4 chars)
@@ -541,7 +541,7 @@ impl ListFormatter for &[u8] {
 }
 
 impl ListFormatter for FixedStr {
-  fn format_list(items: &[Self]) -> String {
+  fn __format_list(items: &[Self]) -> String {
     let data_len: usize = items.iter().map(|s| s.len()).sum();
 
     let quotes_len = items.len() * 2;
@@ -570,7 +570,7 @@ impl ListFormatter for FixedStr {
 }
 
 impl ListFormatter for &str {
-  fn format_list(items: &[Self]) -> String {
+  fn __format_list(items: &[Self]) -> String {
     let data_len: usize = items.iter().map(|s| s.len()).sum();
 
     let quotes_len = items.len() * 2;
@@ -599,7 +599,7 @@ impl ListFormatter for &str {
 }
 
 impl ListFormatter for Duration {
-  fn format_list(items: &[Self]) -> String {
+  fn __format_list(items: &[Self]) -> String {
     let est_cap = (items.len() * 54) + 2;
 
     let mut acc = String::with_capacity(est_cap);

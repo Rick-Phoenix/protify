@@ -120,14 +120,14 @@ where
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
   }
 
   #[doc(hidden)]
   #[inline(never)]
   #[cold]
-  fn cel_rules(&self) -> Vec<CelRule> {
+  fn __cel_rules(&self) -> Vec<CelRule> {
     self
       .cel
       .iter()
@@ -141,7 +141,7 @@ where
     let mut errors = Vec::new();
 
     #[cfg(feature = "cel")]
-    if let Err(e) = <Self as Validator<T>>::check_cel_programs(self) {
+    if let Err(e) = <Self as Validator<T>>::__check_cel_programs(self) {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -202,7 +202,7 @@ where
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: <Self as Validator<T>>::cel_rules(self),
+      cel_rules: <Self as Validator<T>>::__cel_rules(self),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }
@@ -249,12 +249,12 @@ where
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
   }
 
   #[doc(hidden)]
-  fn cel_rules(&self) -> Vec<CelRule> {
+  fn __cel_rules(&self) -> Vec<CelRule> {
     self
       .programs
       .iter()
@@ -268,7 +268,7 @@ where
     let mut errors = Vec::new();
 
     #[cfg(feature = "cel")]
-    if let Err(e) = <Self as Validator<T>>::check_cel_programs(self) {
+    if let Err(e) = <Self as Validator<T>>::__check_cel_programs(self) {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -307,7 +307,7 @@ where
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: <Self as Validator<T>>::cel_rules(self),
+      cel_rules: <Self as Validator<T>>::__cel_rules(self),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

@@ -28,7 +28,7 @@ impl ProtoValidation for bool {
   const HAS_DEFAULT_VALIDATOR: Self = false;
 
   #[doc(hidden)]
-  fn make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a> {
+  fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a> {
     // This is likely to never be used in the first place, but
     // uniqueness checks would fail after more than 2 elements anyway
     CopyHybridStore::default_with_capacity(2)

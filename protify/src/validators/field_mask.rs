@@ -92,7 +92,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
     }
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -164,7 +164,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
               In,
               format!(
                 "can only contain these paths: {}",
-                FixedStr::format_list(allowed_paths)
+                FixedStr::__format_list(allowed_paths)
               )
             );
 
@@ -180,7 +180,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
               NotIn,
               format!(
                 "cannot contain one of these paths: {}",
-                FixedStr::format_list(forbidden_paths)
+                FixedStr::__format_list(forbidden_paths)
               )
             );
 
@@ -211,7 +211,7 @@ impl Validator<FieldMask> for FieldMaskValidator {
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

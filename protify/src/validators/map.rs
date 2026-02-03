@@ -136,7 +136,7 @@ where
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
+  fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
   where
     Self: 'a,
   {
@@ -172,7 +172,7 @@ where
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
+  fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
   where
     Self: 'a,
   {
@@ -215,7 +215,7 @@ where
   #[cfg(feature = "cel")]
   #[inline(never)]
   #[cold]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     <Self as Validator<M>>::check_cel_programs_with(self, M::Target::default())
   }
 
@@ -225,7 +225,7 @@ where
     let mut errors = Vec::new();
 
     #[cfg(feature = "cel")]
-    if let Err(e) = <Self as Validator<M>>::check_cel_programs(self) {
+    if let Err(e) = <Self as Validator<M>>::__check_cel_programs(self) {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -277,15 +277,15 @@ where
   }
 
   #[doc(hidden)]
-  fn cel_rules(&self) -> Vec<CelRule> {
+  fn __cel_rules(&self) -> Vec<CelRule> {
     let mut rules: Vec<CelRule> = self
       .cel
       .iter()
       .map(|p| p.rule().clone())
       .collect();
 
-    rules.extend(self.keys.iter().flat_map(|k| k.cel_rules()));
-    rules.extend(self.values.iter().flat_map(|v| v.cel_rules()));
+    rules.extend(self.keys.iter().flat_map(|k| k.__cel_rules()));
+    rules.extend(self.values.iter().flat_map(|v| v.__cel_rules()));
 
     rules
   }
@@ -308,14 +308,14 @@ where
     }
 
     if let Some(key_validator) = &self.keys {
-      match key_validator.check_cel_programs() {
+      match key_validator.__check_cel_programs() {
         Ok(()) => {}
         Err(errs) => errors.extend(errs),
       };
     }
 
     if let Some(values_validator) = &self.values {
-      match values_validator.check_cel_programs() {
+      match values_validator.__check_cel_programs() {
         Ok(()) => {}
         Err(errs) => errors.extend(errs),
       };
@@ -333,7 +333,7 @@ where
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: <Self as Validator<M>>::cel_rules(self),
+      cel_rules: <Self as Validator<M>>::__cel_rules(self),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

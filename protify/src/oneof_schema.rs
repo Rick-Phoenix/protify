@@ -31,7 +31,7 @@ pub trait ProtoOneof {
   fn proto_schema() -> Oneof;
 
   #[doc(hidden)]
-  fn check_tags(
+  fn __check_tags(
     message_name: &str,
     oneof_name: &str,
     found_tags: &mut [i32],

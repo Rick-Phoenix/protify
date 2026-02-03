@@ -27,9 +27,9 @@ use syn::{
 use syn_utils::*;
 
 use crate::{
-  enum_proc_macro::*, extension_derive::*, file_macro::*, impls::*, item_cloners::*,
+  enum_proc_macro::*, extension_macro::*, file_macro::*, impls::*, item_cloners::*,
   message_proc_macro::*, oneof_proc_macro::*, package_macro::*, path_utils::*, proto_field::*,
-  proto_map::*, proto_types::*, service_derive::*,
+  proto_map::*, proto_types::*, service_macro::*,
 };
 
 mod attributes;
@@ -39,7 +39,7 @@ mod cel_try_into;
 #[cfg(feature = "reflection")]
 mod enum_derive;
 mod enum_proc_macro;
-mod extension_derive;
+mod extension_macro;
 mod field_data;
 mod file_macro;
 mod impls;
@@ -55,7 +55,7 @@ mod proto_map;
 mod proto_types;
 #[cfg(feature = "reflection")]
 mod reflection;
-mod service_derive;
+mod service_macro;
 mod well_known_type_impl;
 
 #[doc(hidden)]

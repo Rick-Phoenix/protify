@@ -236,7 +236,7 @@ where
     }
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -334,7 +334,7 @@ where
           In,
           format!(
             "must be one of these values: {}",
-            OrderedFloat::<Num>::format_list(allowed_list)
+            OrderedFloat::<Num>::__format_list(allowed_list)
           )
         );
       }
@@ -346,7 +346,7 @@ where
           NotIn,
           format!(
             "cannot be one of these values: {}",
-            OrderedFloat::<Num>::format_list(forbidden_list)
+            OrderedFloat::<Num>::__format_list(forbidden_list)
           )
         );
       }
@@ -371,7 +371,7 @@ where
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }
@@ -550,7 +550,7 @@ macro_rules! impl_float_wrapper {
 
         #[doc(hidden)]
         #[inline]
-        fn make_unique_store<'a>(
+        fn __make_unique_store<'a>(
           validator: &Self::Validator,
           size: usize,
         ) -> Self::UniqueStore<'a>

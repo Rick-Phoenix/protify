@@ -195,7 +195,7 @@ impl Validator<Bytes> for BytesValidator {
     }
 
     #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
+    if let Err(e) = self.__check_cel_programs() {
       errors.extend(e.into_iter().map(ConsistencyError::from));
     }
 
@@ -219,7 +219,7 @@ impl Validator<Bytes> for BytesValidator {
   }
 
   #[doc(hidden)]
-  fn cel_rules(&self) -> Vec<CelRule> {
+  fn __cel_rules(&self) -> Vec<CelRule> {
     self
       .cel
       .iter()
@@ -231,7 +231,7 @@ impl Validator<Bytes> for BytesValidator {
   #[inline(never)]
   #[cold]
   #[doc(hidden)]
-  fn check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
     self.check_cel_programs_with(vec![])
   }
 
@@ -368,7 +368,7 @@ impl Validator<Bytes> for BytesValidator {
           In,
           format!(
             "must be one of these values: {}",
-            Bytes::format_list(allowed_list)
+            Bytes::__format_list(allowed_list)
           )
         );
       }
@@ -380,7 +380,7 @@ impl Validator<Bytes> for BytesValidator {
           NotIn,
           format!(
             "cannot be one of these values: {}",
-            Bytes::format_list(forbidden_list)
+            Bytes::__format_list(forbidden_list)
           )
         );
       }
@@ -433,7 +433,7 @@ impl Validator<Bytes> for BytesValidator {
   fn schema(&self) -> Option<ValidatorSchema> {
     Some(ValidatorSchema {
       schema: self.clone().into(),
-      cel_rules: self.cel_rules(),
+      cel_rules: self.__cel_rules(),
       imports: vec!["buf/validate/validate.proto".into()],
     })
   }

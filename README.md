@@ -516,12 +516,12 @@ r"message MyMsg {
 
 * **`tonic`** —  Enables direct conversion from validation errors to [`tonic::Status`].
 * **`serde`** —  Enables serde for all schema representations.
-* **`inventory`** *(enabled by default)* —  Collects elements of a package automatically.
+* **`inventory`** *(enabled by default)* —  Enables automatic collection for elements of a package. (Required `std`)
 * **`chrono`** *(enabled by default)* —  Enables timestamp `now` features in CEL and timestamp validation.
 * **`chrono-wasm`** —  Enables usage of wasmbind for chrono's `now` methods.
 * **`std`** *(enabled by default)* —  Enables the std library features.
 * **`common-types`** —  Enables schema features for `google.type` types.
 * **`rpc-types`** —  Enables schema features for `google.rpc` types.
-* **`reflection`** —  Enables usage with reflection.
+* **`reflection`** —  Enables usage with reflection, to generate validation logic from pre-built protos with protovalidate annotations.
 * **`cel`** *(enabled by default)* —  Enables CEL validation.
 * **`regex`** *(enabled by default)* —  Enables regex-based validators.
