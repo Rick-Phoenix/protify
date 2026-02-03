@@ -4,6 +4,7 @@ use crate::{validators::CelRule, *};
 pub trait ProxiedMessage: From<Self::Proxy> + Into<Self::Proxy> {
   type Proxy: MessageProxy<Message = Self> + From<Self> + Into<Self>;
 
+  /// Converts into the associated proxy.
   #[inline]
   fn into_proxy(self) -> Self::Proxy {
     self.into()
@@ -14,6 +15,7 @@ pub trait ProxiedMessage: From<Self::Proxy> + Into<Self::Proxy> {
 pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
   type Message: ProtoMessage + ValidatedMessage + From<Self> + Into<Self>;
 
+  /// Converts into the associated message.
   #[inline]
   fn into_message(self) -> Self::Message {
     self.into()
@@ -44,6 +46,7 @@ pub trait MessageProxy: From<Self::Message> + Into<Self::Message> {
 ///
 /// It must be implemented for the targets of the enums annotated with the [`proto_service`] macro.
 pub trait MessagePath {
+  /// Returns the protobuf path to this message.
   fn proto_path() -> ProtoPath;
 }
 
@@ -94,7 +97,9 @@ impl MessageSchema {
     self.render()
   }
 
-  pub(crate) fn options_with_validators(&self) -> Vec<ProtoOption> {
+  /// Collects all the options of the field, including those created by the schema representations of validators.
+  #[must_use]
+  pub fn options_with_validators(&self) -> Vec<ProtoOption> {
     self
       .options
       .clone()

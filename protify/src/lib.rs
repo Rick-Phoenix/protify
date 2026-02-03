@@ -184,7 +184,7 @@ where
 
 /// Helper trait to convert a type to [`Bytes`].
 ///
-/// It retains `& 'static` when possible, otherwise clones or allocates.
+/// It retains `& 'static` when possible, otherwise takes ownership of the value.
 pub trait IntoBytes {
   #[doc(hidden)]
   fn into_bytes(self) -> Bytes;

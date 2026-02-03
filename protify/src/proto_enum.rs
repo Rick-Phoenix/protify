@@ -35,7 +35,9 @@ pub trait ProtoEnum: TryFrom<i32> + Copy + Default + Into<i32> + Send + Sync {
 ///
 /// Implemented by the [`proto_enum`] macro.
 pub trait ProtoEnumSchema: TryFrom<i32> + Default + ProtoEnum {
+  /// Returns the protobuf path to this enum.
   fn proto_path() -> ProtoPath;
+  /// Returns the protobuf schema representation for this enum.
   fn proto_schema() -> EnumSchema;
 
   /// Converts the enum variant to its corresponding name in the protobuf representation.

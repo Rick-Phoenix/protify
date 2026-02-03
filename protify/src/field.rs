@@ -24,7 +24,8 @@ pub struct ValidatorSchema {
 }
 
 impl Field {
-  pub(crate) fn options_with_validators(&self) -> impl Iterator<Item = &options::ProtoOption> {
+  /// Collects all the options of the field, including those created by the schema representations of validators.
+  pub fn options_with_validators(&self) -> impl Iterator<Item = &options::ProtoOption> {
     self
       .options
       .iter()
