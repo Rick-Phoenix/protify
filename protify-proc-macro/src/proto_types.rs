@@ -1,8 +1,7 @@
 use crate::*;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub enum ProtoType {
-  #[default]
   String,
   Bool,
   Bytes,

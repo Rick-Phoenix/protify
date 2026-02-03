@@ -151,7 +151,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     if let ProtoField::Single(proto_type) = &mut field
       && (type_info.is_option() || type_info.is_vec())
     {
-      let inner = std::mem::take(proto_type);
+      let inner = std::mem::replace(proto_type, ProtoType::String);
 
       field = if type_info.is_option() {
         ProtoField::Optional(inner)

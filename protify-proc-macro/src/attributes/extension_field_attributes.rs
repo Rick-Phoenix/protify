@@ -44,7 +44,7 @@ pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttr
     if let ProtoField::Single(proto_type) = &mut field
       && type_info.is_option()
     {
-      let inner = std::mem::take(proto_type);
+      let inner = std::mem::replace(proto_type, ProtoType::String);
 
       field = ProtoField::Optional(inner);
     }
