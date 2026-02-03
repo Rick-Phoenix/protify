@@ -1,12 +1,12 @@
 Protify is a library that aims to vastly simplify working with protobuf in a rust project. It offers a rust-first approach in defining protobuf models, so that every element in a protobuf package (messages, enums, oneofs, services, extensions, files) can be fully defined in rust code, and then the respective proto files can be generated from it as a compilation artifact, rather than it being the other way around.
 
- Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, to an experience that feels almost as native as just working with `serde`.
+ Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, this crate aims to provide an experience that feels almost as simple and native as using `serde`.
 
 # Schema Features
 
-We can use the provided macros to map a rust struct or enum to a protobuf item (messages, services, oneofs, etc).
+Each element of a protobuf file can be defined with a proc or attribute macro. Options for each element can be composed and assigned programmatically.
 
-We can add options programmatically, and even reuse the same oneof for multiple messages (with limitations explained in the [reusing oneofs](crate::guide::reusing_oneofs) section).
+Unlike in prost, enums representing protobuf oneofs can be reused for multiple messages (with limitations explained in the [reusing oneofs](crate::guide::reusing_oneofs) section).
 
 ```rust
 use protify::*;
@@ -38,7 +38,7 @@ enum MyService {
 #[proto(reserved_numbers(22, 23..30))]
 #[proto(reserved_names("name1", "name2"))]
 pub struct MyMsg {
-    // Programmatically creating options!
+    // Programmatically creating options
     #[proto(options = [ create_option(25) ])]
     pub id: i32,
     #[proto(oneof(tags(1, 2)))]
@@ -56,7 +56,7 @@ pub enum MyOneof {
 #[proto_message]
 pub struct MyMsg2 {
     pub id: i32,
-    // Reusing the same oneof!
+    // Reusing the same oneof
     #[proto(oneof(tags(1, 2)))]
     pub oneof: Option<MyOneof>
 }
@@ -75,6 +75,99 @@ pub enum MyEnum {
 
 
  For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
+
+# Proxies
+
+Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix (i.e. MyMsg -> MyMsgProto).
+
+Proxied messages/oneofs unlock the following features:
+
+- A field/variant can be missing from the proto struct, but present in the proxy
+- Enums can be represented with their actual rust enum type, rather than being pure integers
+- Oneofs don't need to be wrapped in `Option`
+- Messages don't need to be wrapped in `Option`
+- We can use types that are not supported by prost
+- We can map an incoming type from another type via custom conversions
+
+By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
+
+To provide custom conversions, you can use the `from_proto` and `into_proto` attributes on the container (to replace the automatically generated impl as a whole) or on individual fields/variants.
+
+The proxied structs/enums will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
+
+```rust
+use protify::*;
+use std::sync::Arc;
+
+proto_package!(MY_PKG, name = "my_pkg");
+define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
+
+// Generates a MsgProto struct that is prost-compatible
+#[proto_message(proxied)]
+pub struct Msg {
+    // Requires setting the type manually as the type
+    // is not prost-compatible
+    #[proto(string)]
+    // Must provide a custom `into_proto` impl because `Arc<str>` does not support `Into<String>`
+    #[proto(into_proto = |v| v.as_ref().to_string())]
+    pub name: Arc<str>,
+    // Ignored field. Conversion from proto will use `Default::default()` unless a custom
+    // conversion is specified
+    #[proto(ignore)]
+    pub rust_only: i32,
+    // In proxied messages, we can use `default` for oneofs
+    // so that using `Option` is not required.
+    // The default conversion will call `ProxiedOneofProto::default().into()`
+    // if the field is `None` in the proto struct.
+    #[proto(oneof(proxied, default, tags(1, 2)))]
+    pub oneof: ProxiedOneof,
+    // We can do the same for messages too
+    #[proto(message(default))]
+    pub message_with_default: Msg2,
+    // We can use the enum directly as the type
+    #[proto(enum_)]
+    pub enum_: TestEnum
+}
+
+#[proto_enum]
+pub enum TestEnum {
+    Unspecified, A, B
+}
+
+// Direct implementation. The prost attributes will be directly
+// injected in it
+#[proto_message]
+pub struct Msg2 {
+    pub id: i32,
+    // In direct impls, enums are just integers
+    #[proto(enum_(TestEnum))]
+    pub enum_: i32
+}
+
+// Generates the `ProxiedOneofProto` enum
+#[proto_oneof(proxied)]
+pub enum ProxiedOneof {
+    #[proto(string, tag = 1, into_proto = |v| v.as_ref().to_string())]
+    A(Arc<str>),
+    #[proto(tag = 2)]
+    B(u32),
+}
+
+impl Default for ProxiedOneofProto {
+    fn default() -> Self {
+        Self::B(1)
+    }
+}
+
+fn main() {
+    let msg = MsgProto::default();
+    // Using the `ProxiedMessage` trait
+    let proxy = msg.into_proxy();
+    // Using the `MessageProxy` trait
+    let msg_again = proxy.into_message();
+}
+```
+
 
 # Database Mapping
 
@@ -195,114 +288,19 @@ fn main() {
 ```
 
 
-# Proxies
-
-Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix (i.e. MyMsg -> MyMsgProto).
-
-Proxied messages/oneofs unlock the following features:
-
-- A field/variant can be missing from the proto struct, but present in the proxy
-- Enums can be represented with their actual rust enum type, rather than being pure integers
-- Oneofs don't need to be wrapped in `Option`
-- Messages don't need to be wrapped in `Option`
-- We can use types that are not supported by prost
-- We can map an incoming type from another type via custom conversions
-
-By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
-
-To provide custom conversions, you can use the `from_proto` and `into_proto` attributes on the container (to replace the automatically generated impl as a whole) or on individual fields/variants.
-
-The proxied structs/enums will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
-
-## Examples
-
-```rust
-use protify::*;
-use std::sync::Arc;
-
-proto_package!(MY_PKG, name = "my_pkg");
-define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
-
-// Generates a MsgProto struct that is prost-compatible
-#[proto_message(proxied)]
-pub struct Msg {
-    // Requires setting the type manually as the type
-    // is not prost-compatible
-    #[proto(string)]
-    // Must provide a custom `into_proto` impl because `Arc<str>` does not support `Into<String>`
-    #[proto(into_proto = |v| v.as_ref().to_string())]
-    pub name: Arc<str>,
-    // Ignored field. Conversion from proto will use `Default::default()` unless a custom
-    // conversion is specified
-    #[proto(ignore)]
-    pub rust_only: i32,
-    // In proxied messages, we can use `default` for oneofs
-    // so that using `Option` is not required.
-    // The default conversion will call `ProxiedOneofProto::default().into()`
-    // if the field is `None` in the proto struct.
-    #[proto(oneof(proxied, default, tags(1, 2)))]
-    pub oneof: ProxiedOneof,
-    // We can do the same for messages too
-    #[proto(message(default))]
-    pub message_with_default: Msg2,
-    // We can use the enum directly as the type
-    #[proto(enum_)]
-    pub enum_: TestEnum
-}
-
-#[proto_enum]
-pub enum TestEnum {
-    Unspecified, A, B
-}
-
-// Direct implementation. The prost attributes will be directly
-// injected in it
-#[proto_message]
-pub struct Msg2 {
-    pub id: i32,
-    // In direct impls, enums are just integers
-    #[proto(enum_(TestEnum))]
-    pub enum_: i32
-}
-
-// Generates the `ProxiedOneofProto` enum
-#[proto_oneof(proxied)]
-pub enum ProxiedOneof {
-    #[proto(string, tag = 1, into_proto = |v| v.as_ref().to_string())]
-    A(Arc<str>),
-    #[proto(tag = 2)]
-    B(u32),
-}
-
-impl Default for ProxiedOneofProto {
-    fn default() -> Self {
-        Self::B(1)
-    }
-}
-
-fn main() {
-    let msg = MsgProto::default();
-    // Using the `ProxiedMessage` trait
-    let proxy = msg.into_proxy();
-    // Using the `MessageProxy` trait
-    let msg_again = proxy.into_message();
-}
-```
-
-
 # Validators
 
-Whenever models or API contracts are defined and used, the need for validation follows close behind. Because of this, `protify` ships with a validation framework that provides both type-safety and customization while also making validators portable by turning them into protobuf schemas.
+Whenever models or API contracts are defined and used, the need for validation follows close behind.
 
-The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also produce a schema representation, so that their settings can be included as options in the proto files, and be picked up by other clients of the same contract, and ported between different applications.
+Because of this, `protify` ships with a validation framework that integrates validation logic with schema definitions.
+
+The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they can also produce a schema representation, so that their settings can be represented as options in a protobuf file, so that they can be ported between different applications.
 
 All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to customized protobuf options.
 
-Because every validator is type-safe and comes with ergonomic builder methods to be built with, defining validators using `protify` is a vastly superior experience to defining them manually in proto files, where the process is repetitive, rigid, and lacking the essential features of modern programming such as type safety and LSP integration, as well as programmatic composition.
+Because every validator is type-safe and comes with an ergonomic builder methods to be built with, defining validators becomes a vastly superior experience than manual composition in protobuf files, where the process is repetitive, rigid, and lacking the most ergonomic features of modern programming such as type safety and LSP integration, as well as programmatic composition.
 
-Validators can be assigned to oneofs/messages as a whole, or to individual fields/variants to be incorporated in thier validation logic, or be used to validate values on-demand.
-
-## Example
+Validators can be assigned to oneofs/messages as a whole or to individual fields/variants to be incorporated in thier validation logic.
 
 ```rust
 use protify::*;
@@ -357,7 +355,7 @@ pub enum MyOneof {
 
 ℹ️ **NOTE**: Validators that are provided via closures will be cached in a Lazy struct (normally a [`LazyLock`](std::sync::LazyLock) or a wrapper for [`OnceBox`](once_cell::race::OnceBox) in a no_std environment), so they are only initialized once (except for the [`OneofValidator`](crate::OneofValidator) which is small enough).
 
-# Custom Validators
+## Custom Validators
 
 The [`Validator`](crate::Validator) trait allows for the construction of custom validators.
 
@@ -393,7 +391,8 @@ fn validate_number(ctx: &mut ValidationCtx, val: Option<&i32>) -> ValidationResu
 pub struct CustomValidator;
 
 // If a validator contains some heavy or complex logic,
-// it can be initialized once and then reused
+// it can be initialized once and then reused.
+// This is done by default for validators defined with closures in attributes.
 static CACHED_VALIDATOR: Lazy<CustomValidator> = Lazy::new(|| CustomValidator);
 
 impl Validator<MyMsg> for CustomValidator {
@@ -445,15 +444,13 @@ pub enum MyOneof {
 }
 ```
 
-You can have a look at the testing crates in the repo for more complex examples of custom validator usage.
+You can have a look at the testing crates in the [repo](https://github.com/Rick-Phoenix/protify) for more complex examples of custom validator usage.
 
 ## Customizing Error Messages
 
 In order to facilitate things like i18n, every provided validator allows for customization of the error messages, without requiring a whole custom validator to be designed purely for this purpose.
 
 Each builder features a method called `with_error_messages`, which accepts a [`BTreeMap`](std::collections::BTreeMap) that maps the violations that it may produce to error messages.
-
-### Example
 
 ```rust
 use protify::*;
@@ -487,8 +484,6 @@ In order to make validation settings portable, each validator can optionally imp
 
 All default validators implement this method and output the options in the `protovalidate` format.
 
-### Example
-
 ```rust
 use protify::*;
 
@@ -519,7 +514,7 @@ r"message MyMsg {
 
  # Feature Flags
 
-* **`tonic`** —  Enables direct conversion from validation errors to tonic::Status
+* **`tonic`** —  Enables direct conversion from validation errors to [`tonic::Status`].
 * **`serde`** —  Enables serde for all schema representations.
 * **`inventory`** *(enabled by default)* —  Collects elements of a package automatically.
 * **`chrono`** *(enabled by default)* —  Enables timestamp `now` features in CEL and timestamp validation.

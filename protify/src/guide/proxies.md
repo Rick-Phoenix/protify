@@ -17,8 +17,6 @@ To provide custom conversions, you can use the `from_proto` and `into_proto` att
 
 The proxied structs/enums will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
 
-## Examples
-
 ```rust
 use protify::*;
 use std::sync::Arc;

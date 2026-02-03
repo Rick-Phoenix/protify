@@ -270,6 +270,7 @@ impl<T: Ord> Clone for SortedList<T> {
   }
 }
 
+/// Utility trait to convert a sortable list into a [`SortedList`].
 pub trait IntoSortedList<T: Ord> {
   fn into_sorted_list(self) -> SortedList<T>;
 }
@@ -450,6 +451,7 @@ impl<'a, T: Ord> IntoIterator for &'a SortedList<T> {
   }
 }
 
+#[doc(hidden)]
 pub trait ListFormatter: Sized {
   fn format_list(items: &[Self]) -> String;
 }

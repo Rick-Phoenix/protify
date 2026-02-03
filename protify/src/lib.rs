@@ -5,15 +5,15 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 //! Protify is a library that aims to vastly simplify working with protobuf in a rust project. It offers a rust-first approach in defining protobuf models, so that every element in a protobuf package (messages, enums, oneofs, services, extensions, files) can be fully defined in rust code, and then the respective proto files can be generated from it as a compilation artifact, rather than it being the other way around.
 //!
-//! Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, to an experience that feels almost as native as just working with `serde`.
+//! Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, this crate aims to provide an experience that feels almost as simple and native as using `serde`.
 //!
 #![doc = include_str!("./guide/schema_features.md")]
 //!
 //! For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
 //!
-#![doc = include_str!("./guide/database_mapping.md")]
-//!
 #![doc = include_str!("./guide/proxies.md")]
+//!
+#![doc = include_str!("./guide/database_mapping.md")]
 //!
 #![doc = include_str!("./guide/validators.md")]
 //!
@@ -78,18 +78,14 @@ use thiserror::Error;
 #[cfg(feature = "inventory")]
 pub use inventory;
 
-#[doc(inline)]
 pub use macros::*;
 pub mod macros {
-  #[doc(inline)]
   #[cfg(feature = "cel")]
   pub use protify_proc_macro::{CelOneof, CelValue};
 
-  #[doc(inline)]
   #[cfg(feature = "reflection")]
   pub use protify_proc_macro::{ProtoEnum, ValidatedMessage, ValidatedOneof};
 
-  #[doc(inline)]
   pub use protify_proc_macro::{
     Enum, Extension, Message, Oneof, Service, define_proto_file, proto_enum, proto_extension,
     proto_message, proto_oneof, proto_package, proto_service,
@@ -97,7 +93,6 @@ pub mod macros {
 }
 
 pub use proto_types;
-#[doc(inline)]
 pub use proto_types::protovalidate::{FieldPathElement, Violations};
 
 mod oneof;
@@ -151,11 +146,10 @@ mod proto_message;
 pub use proto_message::*;
 
 pub mod validators;
-#[doc(inline)]
 pub use validators::*;
 
 mod registry;
-#[doc(inline)]
+#[doc(hidden)]
 pub use registry::*;
 
 mod extension;

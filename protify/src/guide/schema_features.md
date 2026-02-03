@@ -1,8 +1,8 @@
 # Schema Features
 
-We can use the provided macros to map a rust struct or enum to a protobuf item (messages, services, oneofs, etc).
+Each element of a protobuf file can be defined with a proc or attribute macro. Options for each element can be composed and assigned programmatically.
 
-We can add options programmatically, and even reuse the same oneof for multiple messages (with limitations explained in the [reusing oneofs](crate::guide::reusing_oneofs) section).
+Unlike in prost, enums representing protobuf oneofs can be reused for multiple messages (with limitations explained in the [reusing oneofs](crate::guide::reusing_oneofs) section).
 
 ```rust
 use protify::*;
@@ -34,7 +34,7 @@ enum MyService {
 #[proto(reserved_numbers(22, 23..30))]
 #[proto(reserved_names("name1", "name2"))]
 pub struct MyMsg {
-    // Programmatically creating options!
+    // Programmatically creating options
     #[proto(options = [ create_option(25) ])]
     pub id: i32,
     #[proto(oneof(tags(1, 2)))]
@@ -52,7 +52,7 @@ pub enum MyOneof {
 #[proto_message]
 pub struct MyMsg2 {
     pub id: i32,
-    // Reusing the same oneof!
+    // Reusing the same oneof
     #[proto(oneof(tags(1, 2)))]
     pub oneof: Option<MyOneof>
 }

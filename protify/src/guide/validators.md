@@ -1,16 +1,16 @@
 # Validators
 
-Whenever models or API contracts are defined and used, the need for validation follows close behind. Because of this, `protify` ships with a validation framework that provides both type-safety and customization while also making validators portable by turning them into protobuf schemas.
+Whenever models or API contracts are defined and used, the need for validation follows close behind. 
 
-The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they also produce a schema representation, so that their settings can be included as options in the proto files, and be picked up by other clients of the same contract, and ported between different applications.
+Because of this, `protify` ships with a validation framework that integrates validation logic with schema definitions.
+
+The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they can also produce a schema representation, so that their settings can be represented as options in a protobuf file, so that they can be ported between different applications.
 
 All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to customized protobuf options.
 
-Because every validator is type-safe and comes with ergonomic builder methods to be built with, defining validators using `protify` is a vastly superior experience to defining them manually in proto files, where the process is repetitive, rigid, and lacking the essential features of modern programming such as type safety and LSP integration, as well as programmatic composition.
+Because every validator is type-safe and comes with an ergonomic builder methods to be built with, defining validators becomes a vastly superior experience than manual composition in protobuf files, where the process is repetitive, rigid, and lacking the most ergonomic features of modern programming such as type safety and LSP integration, as well as programmatic composition.
 
-Validators can be assigned to oneofs/messages as a whole, or to individual fields/variants to be incorporated in thier validation logic, or be used to validate values on-demand.
-
-## Example
+Validators can be assigned to oneofs/messages as a whole or to individual fields/variants to be incorporated in thier validation logic.
 
 ```rust
 use protify::*;
@@ -65,7 +65,7 @@ pub enum MyOneof {
 
 ℹ️ **NOTE**: Validators that are provided via closures will be cached in a Lazy struct (normally a [`LazyLock`](std::sync::LazyLock) or a wrapper for [`OnceBox`](once_cell::race::OnceBox) in a no_std environment), so they are only initialized once (except for the [`OneofValidator`](crate::OneofValidator) which is small enough).
 
-# Custom Validators
+## Custom Validators
 
 The [`Validator`](crate::Validator) trait allows for the construction of custom validators.
 
@@ -101,7 +101,8 @@ fn validate_number(ctx: &mut ValidationCtx, val: Option<&i32>) -> ValidationResu
 pub struct CustomValidator;
 
 // If a validator contains some heavy or complex logic, 
-// it can be initialized once and then reused
+// it can be initialized once and then reused.
+// This is done by default for validators defined with closures in attributes.
 static CACHED_VALIDATOR: Lazy<CustomValidator> = Lazy::new(|| CustomValidator);
 
 impl Validator<MyMsg> for CustomValidator {
@@ -153,15 +154,13 @@ pub enum MyOneof {
 }
 ```
 
-You can have a look at the testing crates in the repo for more complex examples of custom validator usage.
+You can have a look at the testing crates in the [repo](https://github.com/Rick-Phoenix/protify) for more complex examples of custom validator usage.
 
 ## Customizing Error Messages
 
 In order to facilitate things like i18n, every provided validator allows for customization of the error messages, without requiring a whole custom validator to be designed purely for this purpose.
 
 Each builder features a method called `with_error_messages`, which accepts a [`BTreeMap`](std::collections::BTreeMap) that maps the violations that it may produce to error messages.
-
-### Example
 
 ```rust
 use protify::*;
@@ -194,8 +193,6 @@ assert_eq!(violations[0].message(), "the nickname must be at least three charact
 In order to make validation settings portable, each validator can optionally implement the [`schema`](crate::Validator::schema) method, which outputs a [`ProtoOption`](crate::ProtoOption) that will be added to the receiving message/oneof in the proto file. 
 
 All default validators implement this method and output the options in the `protovalidate` format.
-
-### Example
 
 ```rust
 use protify::*;

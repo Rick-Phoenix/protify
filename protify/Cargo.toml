@@ -69,7 +69,7 @@ default = ["std", "regex", "cel", "chrono", "inventory"]
 
 document-features = ["dep:document-features"]
 
-## Enables direct conversion from validation errors to tonic::Status
+## Enables direct conversion from validation errors to [`tonic::Status`].
 tonic = ["dep:tonic"]
 
 ## Enables serde for all schema representations.
@@ -82,7 +82,7 @@ serde = [
   "hashbrown/serde",
 ]
 
-## Collects elements of a package automatically.
+## Enables automatic collection for elements of a package. (Required `std`)
 inventory = ["std", "dep:inventory"]
 
 ## Enables timestamp `now` features in CEL and timestamp validation.
@@ -116,7 +116,7 @@ common-types = ["proto-types/all_common"]
 ## Enables schema features for `google.rpc` types.
 rpc-types = ["proto-types/rpc"]
 
-## Enables usage with reflection.
+## Enables usage with reflection, to generate validation logic from pre-built protos with protovalidate annotations.
 reflection = ["protify-proc-macro/reflection"]
 
 ## Enables CEL validation.
