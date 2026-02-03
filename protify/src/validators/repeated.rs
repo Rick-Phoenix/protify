@@ -254,18 +254,17 @@ where
     }
   }
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_empty()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_empty()));
 
     let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
-      let val = val.borrow();
-
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
           is_valid &= ctx.add_violation(
@@ -338,7 +337,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::RepeatedItem);
 
-            is_valid &= validator.execute_validation(ctx, Some(value))?;
+            is_valid &= validator.execute_validation(ctx, Some(value.borrow()))?;
           }
         }
 

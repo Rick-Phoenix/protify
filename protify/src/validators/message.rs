@@ -152,18 +152,17 @@ where
     }
   }
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none());
 
     let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
-      let val = val.borrow();
-
       if let Some(field_context) = &mut ctx.field_context {
         ctx
           .parent_elements
@@ -280,15 +279,14 @@ where
     }
   }
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
     let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
-      let val = val.borrow();
-
       #[cfg(feature = "cel")]
       if !self.programs.is_empty() {
         let cel_ctx = ProgramsExecutionCtx {

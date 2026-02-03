@@ -339,11 +339,12 @@ where
   }
 
   #[inline]
-  fn execute_validation<Val>(&self, ctx: &mut ValidationCtx, val: Option<&Val>) -> ValidationResult
-  where
-    Val: Borrow<Self::Target> + ?Sized,
-  {
-    self.validate_map(ctx, val.map(|v| v.borrow()))
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    self.validate_map(ctx, val)
   }
 }
 
@@ -400,13 +401,11 @@ where
     V: AsProtoType,
   {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().length() == 0));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.length() == 0));
 
     let mut is_valid = IsValid::Yes;
 
     if let Some(val) = val {
-      let val = val.borrow();
-
       macro_rules! handle_violation {
         ($id:ident, $default:expr) => {
           is_valid &= ctx.add_violation(
@@ -454,7 +453,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapKey);
 
-            is_valid &= validator.execute_validation(ctx, Some(k))?;
+            is_valid &= validator.execute_validation(ctx, Some(k.borrow()))?;
           }
 
           if let Some(validator) = values_validator {
@@ -463,7 +462,7 @@ where
               .as_mut()
               .map(|fc| fc.field_kind = FieldKind::MapValue);
 
-            is_valid &= validator.execute_validation(ctx, Some(v))?;
+            is_valid &= validator.execute_validation(ctx, Some(v.borrow()))?;
           }
         }
 

@@ -39,14 +39,15 @@ impl<T: ValidatedOneof> Validator<T> for OneofValidator {
   // Should be inlined because if the assoc. constant is false, it may promote
   // dead code elimination.
   #[inline]
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
     match val {
       Some(oneof) => {
         if T::HAS_DEFAULT_VALIDATOR {
-          oneof.borrow().validate_with_ctx(ctx)
+          oneof.validate_with_ctx(ctx)
         } else {
           Ok(IsValid::Yes)
         }

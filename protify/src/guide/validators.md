@@ -71,7 +71,7 @@ The [`Validator`](crate::Validator) trait allows for the construction of custom 
 
 A validator can be a struct (stateful) or just a function, wrapped with the [`from_fn`](crate::from_fn) helper.
 
-Each validator only needs to implement a single method, [`execute_validation`](crate::Validator::execute_validation), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of a generic type that supports [`Borrow`](std::borrow::Borrow) with the target type. All the other methods are automatically derived.
+Each validator only needs to implement a single method, [`execute_validation`](crate::Validator::execute_validation), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of the target type. All the other methods are automatically derived.
 
 The [`schema`](crate::Validator::schema) and [`check_consistency`](crate::Validator::check_consistency) methods can be optionally implemented, as described later in this section and in the [`correctness`](crate::guide::correctness) section.
 
@@ -107,11 +107,9 @@ static CACHED_VALIDATOR: Lazy<CustomValidator> = Lazy::new(|| CustomValidator);
 impl Validator<MyMsg> for CustomValidator {
     type Target = MyMsg;
 
-    fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-    where
-        V: std::borrow::Borrow<Self::Target> + ?Sized,
+    fn execute_validation(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> ValidationResult
     {
-        validate_number(ctx, val.map(|v| &v.borrow().id))
+        validate_number(ctx, val.map(|v| &v.id))
     }
 }
 
@@ -132,11 +130,9 @@ pub struct MyMsg {
 impl Validator<MyOneof> for CustomValidator {
     type Target = MyOneof;
 
-    fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-    where
-        V: std::borrow::Borrow<Self::Target> + ?Sized,
+    fn execute_validation(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> ValidationResult
     {
-        if let Some(oneof) = val.map(|v| v.borrow()) 
+        if let Some(oneof) = val 
             && let MyOneof::A(int) = oneof
         {
             validate_number(ctx, Some(&int))

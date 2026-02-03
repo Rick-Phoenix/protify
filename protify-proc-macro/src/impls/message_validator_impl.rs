@@ -69,7 +69,11 @@ pub fn field_validator_tokens(
 
       ItemKind::Message => match type_info.type_.as_ref() {
         RustType::Option(inner) => {
-          if inner.is_box() {
+          if inner.is_box()
+            || proto_field
+              .inner()
+              .is_some_and(|i| matches!(i, ProtoType::Bytes | ProtoType::String))
+          {
             quote_spanned! (*span=> self.#ident.as_deref())
           } else {
             quote_spanned! (*span=> self.#ident.as_ref())
@@ -82,6 +86,10 @@ pub fn field_validator_tokens(
             ProtoField::Single(ProtoType::Message(MessageInfo { .. })) | ProtoField::Oneof(_)
           ) {
             quote_spanned! (*span=> self.#ident.as_ref())
+          } else if let ProtoField::Single(inner) = proto_field
+            && matches!(inner, ProtoType::Bytes | ProtoType::String)
+          {
+            quote_spanned! (*span=> Some(self.#ident.as_ref()))
           } else {
             quote_spanned! (*span=> Some(&self.#ident))
           }

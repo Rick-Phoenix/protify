@@ -260,12 +260,13 @@ where
     }
   }
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.borrow().is_default()));
+    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
 
     let mut is_valid = IsValid::Yes;
 
@@ -283,14 +284,12 @@ where
       };
     }
 
-    if self.required && val.is_none_or(|v| v.borrow().is_default()) {
+    if self.required && val.is_none_or(|v| v.is_default()) {
       handle_violation!(Required, "is required".to_string());
       return Ok(is_valid);
     }
 
-    if let Some(val) = val {
-      let val = *val.borrow();
-
+    if let Some(&val) = val {
       if let Some(const_val) = self.const_ {
         if !self.float_is_eq(const_val, val) {
           handle_violation!(Const, format!("must be equal to {const_val}"));

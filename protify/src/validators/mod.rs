@@ -62,14 +62,10 @@ pub type ValidationResult = Result<IsValid, FailFast>;
 /// The only required method is [`execute_validation`](Validator::execute_validation), all the other validation methods are
 /// automatically implemented.
 ///
-/// The validation methods can receive any type which implements [`Borrow`] with the `Target`.
-///
 /// Validators can optionally implement the [`schema`](Validator::schema) method, which allows them to be
 /// turned into protobuf options for file generation.
 pub trait Validator<T: ?Sized>: Send + Sync {
   /// The target of the validation.
-  ///
-  /// The validator can validate any type which implements [`Borrow`] with this type.
   type Target: ToOwned + ?Sized;
 
   #[doc(hidden)]
@@ -120,12 +116,9 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     Ok(())
   }
 
-  /// Validates a value that implements [`Borrow`] with the Target, with the `fail_fast` setting set to true.
+  /// Validates the Target, with the `fail_fast` setting set to true.
   #[inline]
-  fn validate<V>(&self, val: &V) -> Result<(), ValidationErrors>
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn validate(&self, val: &Self::Target) -> Result<(), ValidationErrors> {
     let mut ctx = ValidationCtx::default();
 
     let _ = self.execute_validation(&mut ctx, Some(val));
@@ -137,12 +130,9 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     }
   }
 
-  /// Validates a value that implements [`Borrow`] with the Target, with the `fail_fast` setting set to true.
+  /// Validates the Target, with the `fail_fast` setting set to true.
   #[inline]
-  fn validate_option<V>(&self, val: Option<&V>) -> Result<(), ValidationErrors>
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+  fn validate_option(&self, val: Option<&Self::Target>) -> Result<(), ValidationErrors> {
     let mut ctx = ValidationCtx::default();
 
     let _ = self.execute_validation(&mut ctx, val);
@@ -154,31 +144,29 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     }
   }
 
-  /// Validates a value that implements [`Borrow`] with the Target, with customized settings.
+  /// Validates the Target, with customized settings.
   #[inline]
-  fn validate_with_ctx<V>(&self, mut ctx: ValidationCtx, val: &V) -> Result<(), ValidationErrors>
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
-    let _ = self.execute_validation(&mut ctx, Some(val));
-
-    if ctx.violations.is_empty() {
-      Ok(())
-    } else {
-      Err(ctx.violations)
-    }
-  }
-
-  /// Validates a value that implements [`Borrow`] with the Target, with customized settings.
-  #[inline]
-  fn validate_option_with_ctx<V>(
+  fn validate_with_ctx(
     &self,
     mut ctx: ValidationCtx,
-    val: Option<&V>,
-  ) -> Result<(), ValidationErrors>
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
+    val: &Self::Target,
+  ) -> Result<(), ValidationErrors> {
+    let _ = self.execute_validation(&mut ctx, Some(val));
+
+    if ctx.violations.is_empty() {
+      Ok(())
+    } else {
+      Err(ctx.violations)
+    }
+  }
+
+  /// Validates the Target, with customized settings.
+  #[inline]
+  fn validate_option_with_ctx(
+    &self,
+    mut ctx: ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> Result<(), ValidationErrors> {
     let _ = self.execute_validation(&mut ctx, val);
 
     if ctx.violations.is_empty() {
@@ -188,10 +176,12 @@ pub trait Validator<T: ?Sized>: Send + Sync {
     }
   }
 
-  /// Validates a value that implements [`Borrow`] with the Target, with customized settings.
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized;
+  /// Validates the Target, with customized settings.
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult;
 }
 
 /// Utility trait for validator builders. Mainly used for default validators.
@@ -216,8 +206,7 @@ pub trait ProtoValidation {
   type Target: ?Sized;
   /// The `Stored` type is needed for compatibility with the [`RepeatedValidator`]
   /// and [`MapValidator`]. It is the same as the `Target` in most cases, but
-  /// not for [`String`] specifically, because the Target is `str` (so that validation
-  /// is performed on type that implement [`Borrow`] with `str`), but `Stored` is `String`.
+  /// not for [`String`] specifically, because the Target is `str`, but `Stored` is `String`.
   type Stored: Borrow<Self::Target>;
   /// Represent the **default** validator for this type.
   type Validator: Validator<Self, Target = Self::Target> + Clone + Default;
@@ -318,12 +307,12 @@ where
   type Target = T;
 
   #[inline]
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
-    let target = val.map(|v| v.borrow());
-    (self.func)(ctx, target)
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    (self.func)(ctx, val)
   }
 }
 

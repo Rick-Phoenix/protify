@@ -31,8 +31,88 @@ pub struct FieldMaskValidator {
   pub error_messages: Option<ErrorMessages<FieldMaskViolation>>,
 }
 
-impl FieldMaskValidator {
-  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&FieldMask>) -> ValidationResult {
+impl ProtoValidation for FieldMask {
+  #[doc(hidden)]
+  type Target = Self;
+  #[doc(hidden)]
+  type Stored = Self;
+  type Validator = FieldMaskValidator;
+  type ValidatorBuilder = FieldMaskValidatorBuilder;
+
+  #[doc(hidden)]
+  type UniqueStore<'a>
+    = LinearRefStore<'a, Self>
+  where
+    Self: 'a;
+
+  #[doc(hidden)]
+  const HAS_DEFAULT_VALIDATOR: bool = false;
+}
+
+impl Validator<FieldMask> for FieldMaskValidator {
+  type Target = FieldMask;
+
+  impl_testing_methods!();
+
+  #[inline(never)]
+  #[cold]
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+    let mut errors = Vec::new();
+
+    macro_rules! check_prop_some {
+      ($($id:ident),*) => {
+        $(self.$id.is_some()) ||*
+      };
+    }
+
+    if self.const_.is_some() && (!self.cel.is_empty() || check_prop_some!(in_, not_in)) {
+      errors.push(ConsistencyError::ConstWithOtherRules);
+    }
+
+    if let Some(custom_messages) = self.error_messages.as_deref() {
+      let mut unused_messages: Vec<String> = Vec::new();
+
+      for key in custom_messages.keys() {
+        let is_used = match key {
+          FieldMaskViolation::Required => self.required,
+          FieldMaskViolation::In => self.in_.is_some(),
+          FieldMaskViolation::Const => self.const_.is_some(),
+          FieldMaskViolation::NotIn => self.not_in.is_some(),
+          _ => true,
+        };
+
+        if !is_used {
+          unused_messages.push(format!("{key:?}"));
+        }
+      }
+
+      if !unused_messages.is_empty() {
+        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+      }
+    }
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(ConsistencyError::from));
+    }
+
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
+      errors.push(e.into());
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
+  #[inline]
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
 
     let mut is_valid = IsValid::Yes;
@@ -124,91 +204,6 @@ impl FieldMaskValidator {
     }
 
     Ok(is_valid)
-  }
-}
-
-impl ProtoValidation for FieldMask {
-  #[doc(hidden)]
-  type Target = Self;
-  #[doc(hidden)]
-  type Stored = Self;
-  type Validator = FieldMaskValidator;
-  type ValidatorBuilder = FieldMaskValidatorBuilder;
-
-  #[doc(hidden)]
-  type UniqueStore<'a>
-    = LinearRefStore<'a, Self>
-  where
-    Self: 'a;
-
-  #[doc(hidden)]
-  const HAS_DEFAULT_VALIDATOR: bool = false;
-}
-
-impl Validator<FieldMask> for FieldMaskValidator {
-  type Target = FieldMask;
-
-  impl_testing_methods!();
-
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
-
-    macro_rules! check_prop_some {
-      ($($id:ident),*) => {
-        $(self.$id.is_some()) ||*
-      };
-    }
-
-    if self.const_.is_some() && (!self.cel.is_empty() || check_prop_some!(in_, not_in)) {
-      errors.push(ConsistencyError::ConstWithOtherRules);
-    }
-
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
-
-      for key in custom_messages.keys() {
-        let is_used = match key {
-          FieldMaskViolation::Required => self.required,
-          FieldMaskViolation::In => self.in_.is_some(),
-          FieldMaskViolation::Const => self.const_.is_some(),
-          FieldMaskViolation::NotIn => self.not_in.is_some(),
-          _ => true,
-        };
-
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
-
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
-
-    #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
-
-    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.into());
-    }
-
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
-
-  #[inline]
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
-    self.__validate(ctx, val.map(|v| v.borrow()))
   }
 
   #[inline(never)]

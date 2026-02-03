@@ -29,8 +29,58 @@ pub struct AnyValidator {
   pub error_messages: Option<ErrorMessages<AnyViolation>>,
 }
 
-impl AnyValidator {
-  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<&Any>) -> ValidationResult {
+impl Validator<Any> for AnyValidator {
+  type Target = Any;
+
+  impl_testing_methods!();
+
+  #[inline(never)]
+  #[cold]
+  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+    let mut errors = Vec::new();
+
+    #[cfg(feature = "cel")]
+    if let Err(e) = self.check_cel_programs() {
+      errors.extend(e.into_iter().map(ConsistencyError::from));
+    }
+
+    if let Some(custom_messages) = self.error_messages.as_deref() {
+      let mut unused_messages: Vec<String> = Vec::new();
+
+      for key in custom_messages.keys() {
+        let is_used = match key {
+          AnyViolation::Required => self.required,
+          AnyViolation::In => self.in_.is_some(),
+          AnyViolation::NotIn => self.not_in.is_some(),
+          _ => true,
+        };
+
+        if !is_used {
+          unused_messages.push(format!("{key:?}"));
+        }
+      }
+
+      if !unused_messages.is_empty() {
+        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+      }
+    }
+
+    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
+      errors.push(e.into());
+    }
+
+    if errors.is_empty() {
+      Ok(())
+    } else {
+      Err(errors)
+    }
+  }
+
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
     handle_ignore_always!(&self.ignore);
     handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
 
@@ -90,62 +140,6 @@ impl AnyValidator {
     }
 
     Ok(is_valid)
-  }
-}
-
-impl Validator<Any> for AnyValidator {
-  type Target = Any;
-
-  impl_testing_methods!();
-
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
-
-    #[cfg(feature = "cel")]
-    if let Err(e) = self.check_cel_programs() {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
-
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
-
-      for key in custom_messages.keys() {
-        let is_used = match key {
-          AnyViolation::Required => self.required,
-          AnyViolation::In => self.in_.is_some(),
-          AnyViolation::NotIn => self.not_in.is_some(),
-          _ => true,
-        };
-
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
-
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
-
-    if let Err(e) = check_list_rules(self.in_.as_ref(), self.not_in.as_ref()) {
-      errors.push(e.into());
-    }
-
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
-
-  #[inline]
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
-    self.__validate(ctx, val.map(|v| v.borrow()))
   }
 
   #[inline(never)]

@@ -8,22 +8,24 @@ struct CustomValidator;
 impl Validator<i32> for CustomValidator {
   type Target = i32;
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: std::borrow::Borrow<Self::Target> + ?Sized,
-  {
-    custom_int_validator(ctx, Some(val.unwrap().borrow()))
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    custom_int_validator(ctx, Some(val.unwrap()))
   }
 }
 
 impl Validator<SimpleEnum> for CustomValidator {
   type Target = i32;
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: std::borrow::Borrow<Self::Target> + ?Sized,
-  {
-    custom_int_validator(ctx, val.map(|v| v.borrow()))
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    custom_int_validator(ctx, val)
   }
 }
 
@@ -102,11 +104,12 @@ fn custom_validators() {
 impl Validator<CustomValidatorOneof> for CustomValidator {
   type Target = CustomValidatorOneof;
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: std::borrow::Borrow<Self::Target> + ?Sized,
-  {
-    custom_oneof_validator(ctx, val.map(|v| v.borrow()))
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    custom_oneof_validator(ctx, val)
   }
 }
 
@@ -133,11 +136,12 @@ fn custom_oneof_validator(
 impl Validator<MultipleValidatorsOneof> for CustomValidator {
   type Target = MultipleValidatorsOneof;
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: std::borrow::Borrow<Self::Target> + ?Sized,
-  {
-    custom_oneof_validator2(ctx, val.map(|v| v.borrow()))
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    custom_oneof_validator2(ctx, val)
   }
 }
 
@@ -213,11 +217,12 @@ fn multiple_validators() {
 impl Validator<CustomTopLevelValidators> for CustomValidator {
   type Target = CustomTopLevelValidators;
 
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: std::borrow::Borrow<Self::Target> + ?Sized,
-  {
-    custom_top_level_validator(ctx, Some(val.unwrap().borrow()))
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    custom_top_level_validator(ctx, Some(val.unwrap()))
   }
 }
 

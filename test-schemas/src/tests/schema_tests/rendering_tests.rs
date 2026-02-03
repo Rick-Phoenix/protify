@@ -41,10 +41,11 @@ impl Validator<OneofWithCustomValidator> for CustomValidator {
     Some(custom_validator_schema())
   }
 
-  fn execute_validation<V>(&self, _: &mut ValidationCtx, _: Option<&V>) -> ValidationResult
-  where
-    V: std::borrow::Borrow<Self::Target> + ?Sized,
-  {
+  fn execute_validation(
+    &self,
+    _: &mut ValidationCtx,
+    _: Option<&Self::Target>,
+  ) -> ValidationResult {
     Ok(IsValid::Yes)
   }
 }
@@ -56,10 +57,11 @@ impl Validator<MsgWithCustomValidator> for CustomValidator {
     Some(custom_validator_schema())
   }
 
-  fn execute_validation<V>(&self, _: &mut ValidationCtx, _: Option<&V>) -> ValidationResult
-  where
-    V: std::borrow::Borrow<Self::Target> + ?Sized,
-  {
+  fn execute_validation(
+    &self,
+    _: &mut ValidationCtx,
+    _: Option<&Self::Target>,
+  ) -> ValidationResult {
     Ok(IsValid::Yes)
   }
 }

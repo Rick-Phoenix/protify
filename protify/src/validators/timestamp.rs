@@ -57,95 +57,6 @@ pub struct TimestampValidator {
 }
 
 impl TimestampValidator {
-  fn __validate(&self, ctx: &mut ValidationCtx, val: Option<Timestamp>) -> ValidationResult {
-    handle_ignore_always!(&self.ignore);
-
-    let mut is_valid = IsValid::Yes;
-
-    macro_rules! handle_violation {
-      ($id:ident, $default:expr) => {
-        is_valid &= ctx.add_violation(
-          ViolationKind::Timestamp(TimestampViolation::$id),
-          self
-            .error_messages
-            .as_deref()
-            .and_then(|map| map.get(&TimestampViolation::$id))
-            .map(|m| Cow::Borrowed(m.as_ref()))
-            .unwrap_or_else(|| Cow::Owned($default)),
-        )?;
-      };
-    }
-
-    if let Some(val) = val {
-      if let Some(const_val) = self.const_ {
-        if val != const_val {
-          handle_violation!(Const, format!("must be equal to {const_val}"));
-        }
-
-        // Using `const` implies no other rules
-        return Ok(is_valid);
-      }
-
-      if let Some(gt) = self.gt
-        && val <= gt
-      {
-        handle_violation!(Gt, format!("must be later than {gt}"));
-      }
-
-      if let Some(gte) = self.gte
-        && val < gte
-      {
-        handle_violation!(Gte, format!("must be later than or equal to {gte}"));
-      }
-
-      if let Some(lt) = self.lt
-        && val >= lt
-      {
-        handle_violation!(Lt, format!("must be earlier than {lt}"));
-      }
-
-      if let Some(lte) = self.lte
-        && val > lte
-      {
-        handle_violation!(Lte, format!("must be earlier than or equal to {lte}"));
-      }
-
-      #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
-      {
-        if self.gt_now && !(val + self.now_tolerance).is_future() {
-          handle_violation!(GtNow, "must be in the future".to_string());
-        }
-
-        if self.lt_now && !val.is_past() {
-          handle_violation!(LtNow, "must be in the past".to_string());
-        }
-
-        if let Some(range) = self.within
-          && !val.is_within_range_from_now(range)
-        {
-          handle_violation!(Within, format!("must be within {range} from now"));
-        }
-      }
-
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        let cel_ctx = ProgramsExecutionCtx {
-          programs: &self.cel,
-          value: val,
-          ctx,
-        };
-
-        is_valid &= cel_ctx.execute_programs()?;
-      }
-    } else if self.required {
-      handle_violation!(Required, "is required".to_string());
-    }
-
-    Ok(is_valid)
-  }
-}
-
-impl TimestampValidator {
   #[inline(never)]
   #[cold]
   const fn has_props(&self) -> bool {
@@ -253,12 +164,95 @@ impl Validator<Timestamp> for TimestampValidator {
     }
   }
 
-  #[inline]
-  fn execute_validation<V>(&self, ctx: &mut ValidationCtx, val: Option<&V>) -> ValidationResult
-  where
-    V: Borrow<Self::Target> + ?Sized,
-  {
-    self.__validate(ctx, val.map(|v| *v.borrow()))
+  fn execute_validation(
+    &self,
+    ctx: &mut ValidationCtx,
+    val: Option<&Self::Target>,
+  ) -> ValidationResult {
+    handle_ignore_always!(&self.ignore);
+
+    let mut is_valid = IsValid::Yes;
+
+    macro_rules! handle_violation {
+      ($id:ident, $default:expr) => {
+        is_valid &= ctx.add_violation(
+          ViolationKind::Timestamp(TimestampViolation::$id),
+          self
+            .error_messages
+            .as_deref()
+            .and_then(|map| map.get(&TimestampViolation::$id))
+            .map(|m| Cow::Borrowed(m.as_ref()))
+            .unwrap_or_else(|| Cow::Owned($default)),
+        )?;
+      };
+    }
+
+    if let Some(&val) = val {
+      if let Some(const_val) = self.const_ {
+        if val != const_val {
+          handle_violation!(Const, format!("must be equal to {const_val}"));
+        }
+
+        // Using `const` implies no other rules
+        return Ok(is_valid);
+      }
+
+      if let Some(gt) = self.gt
+        && val <= gt
+      {
+        handle_violation!(Gt, format!("must be later than {gt}"));
+      }
+
+      if let Some(gte) = self.gte
+        && val < gte
+      {
+        handle_violation!(Gte, format!("must be later than or equal to {gte}"));
+      }
+
+      if let Some(lt) = self.lt
+        && val >= lt
+      {
+        handle_violation!(Lt, format!("must be earlier than {lt}"));
+      }
+
+      if let Some(lte) = self.lte
+        && val > lte
+      {
+        handle_violation!(Lte, format!("must be earlier than or equal to {lte}"));
+      }
+
+      #[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
+      {
+        if self.gt_now && !(val + self.now_tolerance).is_future() {
+          handle_violation!(GtNow, "must be in the future".to_string());
+        }
+
+        if self.lt_now && !val.is_past() {
+          handle_violation!(LtNow, "must be in the past".to_string());
+        }
+
+        if let Some(range) = self.within
+          && !val.is_within_range_from_now(range)
+        {
+          handle_violation!(Within, format!("must be within {range} from now"));
+        }
+      }
+
+      #[cfg(feature = "cel")]
+      if !self.cel.is_empty() {
+        let cel_ctx = ProgramsExecutionCtx {
+          programs: &self.cel,
+          value: val,
+          ctx,
+        };
+
+        is_valid &= cel_ctx.execute_programs()?;
+      }
+    } else if self.required {
+      handle_violation!(Required, "is required".to_string());
+    }
+
+    Ok(is_valid)
   }
 
   #[inline(never)]
