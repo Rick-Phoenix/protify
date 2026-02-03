@@ -65,7 +65,7 @@ impl ProtoField {
   // This one has to stay with `ProtoField` because it's used by the extension
   // macro which does not create FieldData
   pub fn proto_field_target_type(&self, span: Span) -> TokenStream2 {
-    let target_type = match self {
+    match self {
       Self::Map(map) => {
         let keys = map.keys.into_type().field_proto_type_tokens(span);
         let values = map.values.field_proto_type_tokens(span);
@@ -90,9 +90,7 @@ impl ProtoField {
         quote_spanned! {span=> Option<#inner> }
       }
       Self::Single(proto_type) => proto_type.field_proto_type_tokens(span),
-    };
-
-    quote_spanned! {span=> <#target_type as ::protify::AsProtoField>::as_proto_field() }
+    }
   }
 
   // This one has to stay with `ProtoField` because it's used before
