@@ -19,7 +19,9 @@ pub struct Field {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ValidatorSchema {
   pub schema: ProtoOption,
+  /// The CEL rules belonging to this validator. They are stored separately so that the containing [`Package`] can check if there are multiple rules with the same ID within the same message scope.
   pub cel_rules: Vec<CelRule>,
+  /// The imports that should be added to the receiving proto file.
   pub imports: Vec<FixedStr>,
 }
 
