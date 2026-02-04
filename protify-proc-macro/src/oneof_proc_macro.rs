@@ -2,19 +2,9 @@ use crate::*;
 
 pub struct OneofCtx<'a> {
   pub oneof_attrs: &'a OneofAttrs,
-  pub orig_enum_ident: &'a Ident,
-  pub shadow_enum_ident: Option<&'a Ident>,
+  pub proto_enum_ident: &'a Ident,
   pub variants: Vec<FieldDataKind>,
   pub tags: Vec<ParsedNum>,
-}
-
-impl<'a> OneofCtx<'a> {
-  pub fn proto_enum_ident(&'a self) -> &'a Ident {
-    self
-      .shadow_enum_ident
-      .as_ref()
-      .unwrap_or(&self.orig_enum_ident)
-  }
 }
 
 pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -> TokenStream2 {
@@ -149,8 +139,10 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
 
   let oneof_ctx = OneofCtx {
     oneof_attrs: &oneof_attrs,
-    orig_enum_ident: &item.ident,
-    shadow_enum_ident: proto_enum.as_ref().map(|se| &se.ident),
+    proto_enum_ident: proto_enum
+      .as_ref()
+      .map(|se| &se.ident)
+      .unwrap_or(&item.ident),
     variants: fields_data,
     tags: manually_set_tags,
   };

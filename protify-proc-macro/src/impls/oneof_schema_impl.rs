@@ -2,7 +2,7 @@ use crate::*;
 
 impl OneofCtx<'_> {
   pub fn generate_schema_impl(&self) -> TokenStream2 {
-    let enum_ident = self.proto_enum_ident();
+    let enum_ident = self.proto_enum_ident;
 
     let variants_tokens = if self.variants.is_empty() {
       quote! { unimplemented!() }
