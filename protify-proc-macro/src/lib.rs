@@ -27,12 +27,11 @@ use syn::{
 use syn_utils::*;
 
 use crate::{
-  enum_proc_macro::*, extension_macro::*, file_macro::*, impls::*, item_cloners::*,
-  message_proc_macro::*, oneof_proc_macro::*, package_macro::*, path_utils::*, proto_field::*,
-  proto_map::*, proto_types::*, service_macro::*,
+  enum_proc_macro::*, extension_macro::*, file_macro::*, impls::*, internals::*,
+  message_proc_macro::*, oneof_proc_macro::*, package_macro::*, proto_field::*, proto_map::*,
+  proto_types::*, service_macro::*,
 };
 
-mod builder_macro;
 #[cfg(feature = "cel")]
 mod cel_try_into;
 mod enum_proc_macro;
@@ -40,21 +39,19 @@ mod extension_macro;
 mod field_data;
 mod file_macro;
 mod impls;
-mod item_cloners;
+mod internals;
 mod message_proc_macro;
 mod message_schema_impl;
 mod oneof_proc_macro;
 mod oneof_schema_impl;
 mod package_macro;
 mod parsing;
-mod path_utils;
 mod proto_field;
 mod proto_map;
 mod proto_types;
 #[cfg(feature = "reflection")]
 mod reflection;
 mod service_macro;
-mod well_known_type_impl;
 
 #[doc(hidden)]
 #[proc_macro_derive(__AttrForwarding, attributes(forward))]
@@ -118,7 +115,7 @@ pub fn validated_message_derive(input: TokenStream) -> TokenStream {
 #[doc(hidden)]
 #[proc_macro]
 pub fn impl_known_type(input: TokenStream) -> TokenStream {
-  match well_known_type_impl::well_known_type_impl_macro(input.into()) {
+  match well_known_type_impl_macro(input.into()) {
     Ok(output) => output.into(),
     Err(e) => e.into_compile_error().into(),
   }
@@ -127,7 +124,7 @@ pub fn impl_known_type(input: TokenStream) -> TokenStream {
 #[doc(hidden)]
 #[proc_macro]
 pub fn builder_state_macro(input: TokenStream) -> TokenStream {
-  match builder_macro::builder_macro(input.into()) {
+  match builder_macro(input.into()) {
     Ok(output) => output.into(),
     Err(e) => e.into_compile_error().into(),
   }
