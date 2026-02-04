@@ -7,144 +7,144 @@ pub(crate) use state::*;
 /// Builder for [`FieldMaskValidator`].
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FieldMaskValidatorBuilder<S: State = Empty> {
-  _state: PhantomData<S>,
+	_state: PhantomData<S>,
 
-  data: FieldMaskValidator,
+	data: FieldMaskValidator,
 }
 
 impl<S: State> Default for FieldMaskValidatorBuilder<S> {
-  #[inline]
-  fn default() -> Self {
-    Self {
-      _state: PhantomData,
-      data: FieldMaskValidator::default(),
-    }
-  }
+	#[inline]
+	fn default() -> Self {
+		Self {
+			_state: PhantomData,
+			data: FieldMaskValidator::default(),
+		}
+	}
 }
 
 impl<S: State> ValidatorBuilderFor<FieldMask> for FieldMaskValidatorBuilder<S> {
-  type Validator = FieldMaskValidator;
-  #[inline]
-  fn build_validator(self) -> FieldMaskValidator {
-    self.build()
-  }
+	type Validator = FieldMaskValidator;
+	#[inline]
+	fn build_validator(self) -> FieldMaskValidator {
+		self.build()
+	}
 }
 
 impl<S: State> From<FieldMaskValidatorBuilder<S>> for ProtoOption {
-  #[inline(never)]
-  #[cold]
-  fn from(value: FieldMaskValidatorBuilder<S>) -> Self {
-    value.build().into()
-  }
+	#[inline(never)]
+	#[cold]
+	fn from(value: FieldMaskValidatorBuilder<S>) -> Self {
+		value.build().into()
+	}
 }
 
 impl FieldMaskValidator {
-  #[must_use]
-  #[inline]
-  pub fn builder() -> FieldMaskValidatorBuilder {
-    FieldMaskValidatorBuilder::default()
-  }
+	#[must_use]
+	#[inline]
+	pub fn builder() -> FieldMaskValidatorBuilder {
+		FieldMaskValidatorBuilder::default()
+	}
 }
 
 #[allow(
-  clippy::must_use_candidate,
-  clippy::use_self,
-  clippy::return_self_not_must_use
+	clippy::must_use_candidate,
+	clippy::use_self,
+	clippy::return_self_not_must_use
 )]
 impl<S: State> FieldMaskValidatorBuilder<S> {
-  custom_error_messages_method!(FieldMask);
+	custom_error_messages_method!(FieldMask);
 
-  /// Adds a [`CelProgram`] to this validator.
-  #[inline]
-  pub fn cel(mut self, program: CelProgram) -> FieldMaskValidatorBuilder<S> {
-    self.data.cel.push(program);
+	/// Adds a [`CelProgram`] to this validator.
+	#[inline]
+	pub fn cel(mut self, program: CelProgram) -> FieldMaskValidatorBuilder<S> {
+		self.data.cel.push(program);
 
-    FieldMaskValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		FieldMaskValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that this validator should always be ignored.
-  #[inline]
-  pub fn ignore_always(mut self) -> FieldMaskValidatorBuilder<SetIgnore<S>>
-  where
-    S::Ignore: IsUnset,
-  {
-    self.data.ignore = Ignore::Always;
+	/// Specifies that this validator should always be ignored.
+	#[inline]
+	pub fn ignore_always(mut self) -> FieldMaskValidatorBuilder<SetIgnore<S>>
+	where
+		S::Ignore: IsUnset,
+	{
+		self.data.ignore = Ignore::Always;
 
-    FieldMaskValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		FieldMaskValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that the field must be set in order to be valid.
-  #[inline]
-  pub fn required(mut self) -> FieldMaskValidatorBuilder<SetRequired<S>>
-  where
-    S::Required: IsUnset,
-  {
-    self.data.required = true;
+	/// Specifies that the field must be set in order to be valid.
+	#[inline]
+	pub fn required(mut self) -> FieldMaskValidatorBuilder<SetRequired<S>>
+	where
+		S::Required: IsUnset,
+	{
+		self.data.required = true;
 
-    FieldMaskValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		FieldMaskValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that only the paths in this list will be considered valid for this field.
-  #[inline]
-  pub fn in_(mut self, val: impl IntoSortedList<FixedStr>) -> FieldMaskValidatorBuilder<SetIn<S>>
-  where
-    S::In: IsUnset,
-  {
-    self.data.in_ = Some(val.into_sorted_list());
+	/// Specifies that only the paths in this list will be considered valid for this field.
+	#[inline]
+	pub fn in_(mut self, val: impl IntoSortedList<FixedStr>) -> FieldMaskValidatorBuilder<SetIn<S>>
+	where
+		S::In: IsUnset,
+	{
+		self.data.in_ = Some(val.into_sorted_list());
 
-    FieldMaskValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		FieldMaskValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that the paths in this list will be considered NOT valid for this field.
-  #[inline]
-  pub fn not_in(
-    mut self,
-    val: impl IntoSortedList<FixedStr>,
-  ) -> FieldMaskValidatorBuilder<SetNotIn<S>>
-  where
-    S::NotIn: IsUnset,
-  {
-    self.data.not_in = Some(val.into_sorted_list());
+	/// Specifies that the paths in this list will be considered NOT valid for this field.
+	#[inline]
+	pub fn not_in(
+		mut self,
+		val: impl IntoSortedList<FixedStr>,
+	) -> FieldMaskValidatorBuilder<SetNotIn<S>>
+	where
+		S::NotIn: IsUnset,
+	{
+		self.data.not_in = Some(val.into_sorted_list());
 
-    FieldMaskValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		FieldMaskValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that the FieldMask should contain exactly these paths.
-  #[inline]
-  pub fn const_(
-    mut self,
-    val: impl IntoSortedList<FixedStr>,
-  ) -> FieldMaskValidatorBuilder<SetConst<S>>
-  where
-    S::Const: IsUnset,
-  {
-    self.data.const_ = Some(val.into_sorted_list());
+	/// Specifies that the FieldMask should contain exactly these paths.
+	#[inline]
+	pub fn const_(
+		mut self,
+		val: impl IntoSortedList<FixedStr>,
+	) -> FieldMaskValidatorBuilder<SetConst<S>>
+	where
+		S::Const: IsUnset,
+	{
+		self.data.const_ = Some(val.into_sorted_list());
 
-    FieldMaskValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		FieldMaskValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Builds the validator.
-  #[inline]
-  #[must_use]
-  pub fn build(self) -> FieldMaskValidator {
-    self.data
-  }
+	/// Builds the validator.
+	#[inline]
+	#[must_use]
+	pub fn build(self) -> FieldMaskValidator {
+		self.data
+	}
 }

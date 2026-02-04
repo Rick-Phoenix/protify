@@ -10,6 +10,7 @@ The target of a method must implement [`MessagePath`](protify::MessagePath), whi
 
 # Example
 ```rust
+use indoc::indoc;
 use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
@@ -19,38 +20,37 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 #[proto_message]
 pub struct User {
-  pub id: i32,
-  pub name: String
+	pub id: i32,
+	pub name: String,
 }
 
 #[proto_message]
 pub struct UserId {
-  pub id: i32
+	pub id: i32,
 }
 
 #[proto_message]
 pub struct Status {
-  pub success: bool
+	pub success: bool,
 }
 
 #[proto_service]
 enum UserService {
-  GetUser {
-    request: UserId,
-    response: User
-  },
-  UpdateUser {
-    request: User,
-    response: Status
-  }
+	GetUser { request: UserId, response: User },
+	UpdateUser { request: User, response: Status },
 }
 
-let proto_rep = UserService::proto_schema();
+fn main() {
+	let proto_rep = UserService::proto_schema();
 
-assert_eq!(proto_rep.render_schema().unwrap(), 
-r"
-service UserService {
-  rpc GetUser (UserId) returns (User);
-  rpc UpdateUser (User) returns (Status);
-}".trim_start());
+	assert_eq!(
+		proto_rep.render_schema().unwrap(),
+		indoc! {"
+            service UserService {
+              rpc GetUser (UserId) returns (User);
+              rpc UpdateUser (User) returns (Status);
+            }"
+		}
+	);
+}
 ```

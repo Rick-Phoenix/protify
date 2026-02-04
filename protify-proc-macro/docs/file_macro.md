@@ -32,10 +32,10 @@ In order to distinguish the file handle from a normal rust type, it is advised t
         define_proto_file!(TESTING_FILE, package = TESTING_PKG);
 
         fn main() {
-          define_proto_file!(TESTING, package = TESTING_PKG);
+        	define_proto_file!(TESTING, package = TESTING_PKG);
 
-          assert_eq!(TESTING_FILE::NAME, "testing.proto");
-          assert_eq!(TESTING::NAME, "testing.proto");
+        	assert_eq!(TESTING_FILE::NAME, "testing.proto");
+        	assert_eq!(TESTING::NAME, "testing.proto");
         }
         ```
 
@@ -43,7 +43,7 @@ In order to distinguish the file handle from a normal rust type, it is advised t
     - Type: string
     - Example: `define_proto_file!(MY_FILE, extern_path = "module::path")`
     - Description:
-        The rust path to reach the items described in this proto file, when applied from an external crate. The items in this file will inherit the path of their file + their own ident. For example, if a message `Msg1` is assigned to this file, its `extern_path` will be registered as `::module::path::Msg1`. 
+        The rust path to reach the items described in this proto file, when applied from an external crate. The items in this file will inherit the path of their file + their own ident. For example, if a message `Msg1` is assigned to this file, its `extern_path` will be registered as `::module::path::Msg1`.
         It defaults to `core::module_path!()` and should only be overridden for re-exported items where their path does not match their module's path.
 
 - `options`
@@ -82,7 +82,7 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 #[proto_message]
 pub struct Msg {
-  pub id: i32
+	pub id: i32,
 }
 
 assert_eq!(Msg::proto_schema().file, "my_file.proto");
@@ -103,17 +103,17 @@ In such a scenario, we have three more attributes that we can use (and would oth
 use protify::*;
 
 // We must also add the file manually
-proto_package!(MY_PKG, name = "my_pkg", files = [ MY_FILE ]);
+proto_package!(MY_PKG, name = "my_pkg", files = [MY_FILE]);
 
 define_proto_file!(
-  MY_FILE, 
-  name = "my_file.proto", 
+  MY_FILE,
+  name = "my_file.proto",
   package = MY_PKG,
   // Adding messages manually
   messages = [
-    Msg2,
-    // Nested elements
-    Msg1 = { messages = [ Nested ], enums = [ NestedEnum ] }
+	Msg2,
+	// Nested elements
+	Msg1 = { messages = [ Nested ], enums = [ NestedEnum ] }
   ],
   services = [ MyService ],
   enums = [ Enum1 ],
@@ -121,37 +121,38 @@ define_proto_file!(
 
 #[proto_message]
 pub struct Msg1 {
-  pub id: i32
+	pub id: i32,
 }
 
 #[proto_message]
 #[proto(parent_message = Msg1)]
 pub struct Nested {
-  pub id: i32
+	pub id: i32,
 }
 
 #[proto_message]
 pub struct Msg2 {
-  pub id: i32
+	pub id: i32,
 }
 
 #[proto_enum]
 pub enum Enum1 {
-  Unspecified, A, B
+	Unspecified,
+	A,
+	B,
 }
 
 #[proto_enum]
 #[proto(parent_message = Msg1)]
 pub enum NestedEnum {
-  Unspecified, A, B
+	Unspecified,
+	A,
+	B,
 }
 
 #[proto_service]
 pub enum MyService {
-  GetMsg {
-    request: Msg1,
-    response: Msg2
-  }
+	GetMsg { request: Msg1, response: Msg2 },
 }
 ```
 

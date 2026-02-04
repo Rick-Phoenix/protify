@@ -19,6 +19,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]
+indoc = { workspace = true }
 protify-build = { path = "../protify-build" }
 maplit = "1"
 tonic-prost-build = { workspace = true }

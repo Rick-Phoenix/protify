@@ -14,16 +14,16 @@ mod message_validator_impl;
 pub use message_validator_impl::*;
 
 pub fn wrap_with_imports(tokens: &TokenStream2) -> TokenStream2 {
-  quote! {
-    const _: () = {
-      use ::protify::{Validator as ___Validator};
-      use ::protify::alloc::{vec, vec::Vec, format, string::String};
+	quote! {
+	  const _: () = {
+		use ::protify::{Validator as ___Validator};
+		use ::protify::alloc::{vec, vec::Vec, format, string::String};
 
-      #tokens
-    };
-  }
+		#tokens
+	  };
+	}
 }
 
 pub fn wrap_multiple_with_imports(tokens: &[TokenStream2]) -> TokenStream2 {
-  wrap_with_imports(&quote! { #(#tokens)* })
+	wrap_with_imports(&quote! { #(#tokens)* })
 }

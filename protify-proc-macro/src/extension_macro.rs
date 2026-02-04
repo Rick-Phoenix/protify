@@ -1,69 +1,69 @@
 use crate::*;
 
 pub fn process_extension_derive(
-  args: TokenStream2,
-  item: &mut ItemStruct,
+	args: TokenStream2,
+	item: &mut ItemStruct,
 ) -> Result<TokenStream2, Error> {
-  let ItemStruct { ident, fields, .. } = item;
+	let ItemStruct { ident, fields, .. } = item;
 
-  let mut target: Option<Ident> = None;
-  let mut fields_tokens: Vec<TokenStream2> = Vec::new();
+	let mut target: Option<Ident> = None;
+	let mut fields_tokens: Vec<TokenStream2> = Vec::new();
 
-  let parser = syn::meta::parser(|meta| {
-    let ident = meta.ident_str()?;
+	let parser = syn::meta::parser(|meta| {
+		let ident = meta.ident_str()?;
 
-    match ident.as_str() {
-      "target" => {
-        target = Some(meta.parse_value::<Ident>()?);
-      }
-      _ => return Err(meta.error("Unknown attribute")),
-    };
+		match ident.as_str() {
+			"target" => {
+				target = Some(meta.parse_value::<Ident>()?);
+			}
+			_ => return Err(meta.error("Unknown attribute")),
+		};
 
-    Ok(())
-  });
+		Ok(())
+	});
 
-  parser.parse2(args)?;
+	parser.parse2(args)?;
 
-  let target = target.ok_or_else(|| error_call_site!("Missing target attribute"))?;
+	let target = target.ok_or_else(|| error_call_site!("Missing target attribute"))?;
 
-  for field in fields {
-    let ExtensionFieldAttrs {
-      tag,
-      options,
-      proto_name,
-      proto_field,
-    } = process_extension_field_attrs(field)?;
+	for field in fields {
+		let ExtensionFieldAttrs {
+			tag,
+			options,
+			proto_name,
+			proto_field,
+		} = process_extension_field_attrs(field)?;
 
-    if tag.is_none() {
-      bail!(
-        field,
-        "Missing protobuf tag. You can set it with `#[proto(tag = 123)]`"
-      );
-    }
+		if tag.is_none() {
+			bail!(
+				field,
+				"Missing protobuf tag. You can set it with `#[proto(tag = 123)]`"
+			);
+		}
 
-    let proto_field_trait_target = proto_field.proto_field_trait_target(field.ident.span());
+		let proto_field_trait_target = proto_field.proto_field_trait_target(field.ident.span());
 
-    fields_tokens.push(quote_spanned! {field.ident.span()=>
-      ::protify::Field {
-        name: #proto_name.into(),
-        tag: #tag,
-        options: #options.into_iter().collect(),
-        type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
-        validators: ::protify::vec![],
-      }
-    });
-  }
+		fields_tokens.push(quote_spanned! {field.ident.span()=>
+		  ::protify::Field {
+			name: #proto_name.into(),
+			tag: #tag,
+			options: #options.into_iter().collect(),
+			type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
+			validators: ::protify::vec![],
+		  }
+		});
+	}
 
-  item.fields = Fields::Unit;
+	item.fields = Fields::Unit;
 
-  Ok(quote! {
-    impl ::protify::ProtoExtension for #ident {
-      fn proto_schema() -> ::protify::Extension {
-        ::protify::Extension {
-          target: ::protify::ExtensionTarget::#target,
-          fields: ::protify::vec![ #(#fields_tokens),* ]
-        }
-      }
-    }
-  })
+	Ok(quote! {
+	  impl ::protify::ProtoExtension for #ident {
+		fn proto_schema() -> ::protify::Extension {
+		  ::protify::Extension {
+			target: ::protify::ExtensionTarget::#target,
+			fields: ::protify::vec![ #(#fields_tokens),* ]
+		  }
+		}
+	  }
+	})
 }

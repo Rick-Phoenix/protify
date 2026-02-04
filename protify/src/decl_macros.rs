@@ -3,39 +3,39 @@
 use crate::*;
 
 macro_rules! pluralize {
-  ($count:expr) => {
-    if $count != 1 { "s" } else { "" }
-  };
+	($count:expr) => {
+		if $count != 1 { "s" } else { "" }
+	};
 }
 
 macro_rules! custom_error_messages_method {
-  ($kind:ident) => {
-    paste! {
-      /// Adds a map with custom error messages to the underlying validator.
-      ///
-      /// If a violation has no custom error message attached to it, it uses the default error message.
-      #[inline]
-      pub fn with_error_messages(
-        mut self,
-        error_messages: impl IntoIterator<Item = ([< $kind Violation >], impl Into<FixedStr>)>,
-      ) -> [< $kind ValidatorBuilder >]<SetErrorMessages<S>>
-    where
-      S::ErrorMessages: IsUnset,
-      {
-        let map: BTreeMap<[< $kind Violation >], FixedStr> = error_messages
-        .into_iter()
-        .map(|(v, m)| (v, m.into()))
-        .collect();
+	($kind:ident) => {
+		paste! {
+		  /// Adds a map with custom error messages to the underlying validator.
+		  ///
+		  /// If a violation has no custom error message attached to it, it uses the default error message.
+		  #[inline]
+		  pub fn with_error_messages(
+			mut self,
+			error_messages: impl IntoIterator<Item = ([< $kind Violation >], impl Into<FixedStr>)>,
+		  ) -> [< $kind ValidatorBuilder >]<SetErrorMessages<S>>
+		where
+		  S::ErrorMessages: IsUnset,
+		  {
+			let map: BTreeMap<[< $kind Violation >], FixedStr> = error_messages
+			.into_iter()
+			.map(|(v, m)| (v, m.into()))
+			.collect();
 
-        self.data.error_messages = Some(Box::new(map));
+			self.data.error_messages = Some(Box::new(map));
 
-        [< $kind ValidatorBuilder >] {
-          _state: PhantomData,
-          data: self.data,
-        }
-      }
-    }
-  };
+			[< $kind ValidatorBuilder >] {
+			  _state: PhantomData,
+			  data: self.data,
+			}
+		  }
+		}
+	};
 }
 
 #[doc(hidden)]
@@ -51,7 +51,7 @@ macro_rules! register_proto_data {
 #[cfg(not(feature = "inventory"))]
 #[macro_export]
 macro_rules! register_proto_data {
-  ($($tokens:tt)*) => {};
+	($($tokens:tt)*) => {};
 }
 
 /// This macro can be used to generate a [`ProtoOption`] with a concise syntax.
@@ -99,9 +99,9 @@ macro_rules! proto_option {
 /// ```
 #[macro_export]
 macro_rules! option_list {
-  ($list:expr) => {
-    $crate::OptionValue::new_list($list)
-  };
+	($list:expr) => {
+		$crate::OptionValue::new_list($list)
+	};
 }
 
 /// This macro can be used to create an object-like protobuf option. It follows the syntax of crates like maplit, for creating key-value pairs.
@@ -134,12 +134,12 @@ macro_rules! option_message {
 }
 
 macro_rules! length_rule_value {
-  ($name:literal, $value:expr) => {
-    &LengthRuleValue {
-      name: $name,
-      value: $value,
-    }
-  };
+	($name:literal, $value:expr) => {
+		&LengthRuleValue {
+			name: $name,
+			value: $value,
+		}
+	};
 }
 
 /// Brings a pre-defined proto file handle in scope so that it can be picked up by the proto items defined in the module where it's called.
@@ -186,15 +186,15 @@ macro_rules! length_rule_value {
 /// ```
 #[macro_export]
 macro_rules! inherit_proto_file {
-  ($file:path) => {
-    #[doc(hidden)]
-    #[allow(unused)]
-    const __PROTO_FILE: $crate::FileReference = ::protify::FileReference {
-      name: <$file as ::protify::FileSchema>::NAME,
-      package: <$file as ::protify::FileSchema>::PACKAGE,
-      extern_path: <$file as ::protify::FileSchema>::EXTERN_PATH,
-    };
-  };
+	($file:path) => {
+		#[doc(hidden)]
+		#[allow(unused)]
+		const __PROTO_FILE: $crate::FileReference = ::protify::FileReference {
+			name: <$file as ::protify::FileSchema>::NAME,
+			package: <$file as ::protify::FileSchema>::PACKAGE,
+			extern_path: <$file as ::protify::FileSchema>::EXTERN_PATH,
+		};
+	};
 }
 
 /// Brings a pre-defined proto file handle in scope so that it can be picked up by the proto items defined in the module where it's called.
@@ -239,65 +239,64 @@ macro_rules! inherit_proto_file {
 /// ```
 #[macro_export]
 macro_rules! use_proto_file {
-  ($file:path) => {
-    #[doc(hidden)]
-    #[allow(unused)]
-    const __PROTO_FILE: $crate::FileReference = ::protify::FileReference {
-      name: <$file as ::protify::FileSchema>::NAME,
-      package: <$file as ::protify::FileSchema>::PACKAGE,
-      extern_path: ::core::module_path!(),
-    };
-  };
+	($file:path) => {
+		#[doc(hidden)]
+		#[allow(unused)]
+		const __PROTO_FILE: $crate::FileReference = ::protify::FileReference {
+			name: <$file as ::protify::FileSchema>::NAME,
+			package: <$file as ::protify::FileSchema>::PACKAGE,
+			extern_path: ::core::module_path!(),
+		};
+	};
 }
 
 macro_rules! handle_ignore_always {
-  ($ignore:expr) => {
-    if matches!($ignore, Ignore::Always) {
-      return Ok(IsValid::Yes);
-    }
-  };
+	($ignore:expr) => {
+		if matches!($ignore, Ignore::Always) {
+			return Ok(IsValid::Yes);
+		}
+	};
 }
 
 macro_rules! handle_ignore_if_zero_value {
-  ($ignore:expr, $condition:expr) => {
-    if matches!($ignore, Ignore::IfZeroValue) && $condition {
-      return Ok(IsValid::Yes);
-    }
-  };
+	($ignore:expr, $condition:expr) => {
+		if matches!($ignore, Ignore::IfZeroValue) && $condition {
+			return Ok(IsValid::Yes);
+		}
+	};
 }
 
 macro_rules! impl_testing_methods {
-  () => {
-    #[cfg(feature = "cel")]
-    #[inline(never)]
-    #[cold]
-    fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
-      if !self.cel.is_empty() {
-        test_programs(&self.cel, val)
-      } else {
-        Ok(())
-      }
-    }
+	() => {
+		#[cfg(feature = "cel")]
+		#[inline(never)]
+		#[cold]
+		fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+			if !self.cel.is_empty() {
+				test_programs(&self.cel, val)
+			} else {
+				Ok(())
+			}
+		}
 
-    #[cfg(feature = "cel")]
-    #[inline(never)]
-    #[cold]
-    #[doc(hidden)]
-    fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-      self.check_cel_programs_with(Self::Target::default())
-    }
+		#[cfg(feature = "cel")]
+		#[inline(never)]
+		#[cold]
+		#[doc(hidden)]
+		fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+			self.check_cel_programs_with(Self::Target::default())
+		}
 
-    #[doc(hidden)]
-    #[inline(never)]
-    #[cold]
-    fn __cel_rules(&self) -> Vec<CelRule> {
-      self
-        .cel
-        .iter()
-        .map(|p| p.rule().clone())
-        .collect()
-    }
-  };
+		#[doc(hidden)]
+		#[inline(never)]
+		#[cold]
+		fn __cel_rules(&self) -> Vec<CelRule> {
+			self.cel
+				.iter()
+				.map(|p| p.rule().clone())
+				.collect()
+		}
+	};
 }
 
 /// Defines a new [`CelProgram`].
@@ -308,37 +307,37 @@ macro_rules! impl_testing_methods {
 /// - expr (expr, Into<[`FixedStr`]>): The actual CEL expression to use when validating the target.
 #[macro_export]
 macro_rules! cel_program {
-  (id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
-    $crate::CelRule {
-      id: $id.into(),
-      message: $msg.into(),
-      expression: $expr.into(),
-    }
-    .into()
-  };
+	(id = $id:expr, msg = $msg:expr, expr = $expr:expr) => {
+		$crate::CelRule {
+			id: $id.into(),
+			message: $msg.into(),
+			expression: $expr.into(),
+		}
+		.into()
+	};
 }
 
 macro_rules! impl_proto_type {
-  ($rust_type:ty, $proto_type:ident) => {
-    impl AsProtoType for $rust_type {
-      fn proto_type() -> ProtoType {
-        ProtoType::Scalar(ProtoScalar::$proto_type)
-      }
-    }
-  };
+	($rust_type:ty, $proto_type:ident) => {
+		impl AsProtoType for $rust_type {
+			fn proto_type() -> ProtoType {
+				ProtoType::Scalar(ProtoScalar::$proto_type)
+			}
+		}
+	};
 }
 
 macro_rules! impl_proto_map_key {
-  ($rust_type:ty, $enum_ident:ident) => {
-    impl AsProtoMapKey for $rust_type {
-      #[doc(hidden)]
-      #[allow(private_interfaces)]
-      const SEALED: crate::Sealed = crate::Sealed;
+	($rust_type:ty, $enum_ident:ident) => {
+		impl AsProtoMapKey for $rust_type {
+			#[doc(hidden)]
+			#[allow(private_interfaces)]
+			const SEALED: crate::Sealed = crate::Sealed;
 
-      #[doc(hidden)]
-      fn as_proto_map_key() -> ProtoMapKey {
-        ProtoMapKey::$enum_ident
-      }
-    }
-  };
+			#[doc(hidden)]
+			fn as_proto_map_key() -> ProtoMapKey {
+				ProtoMapKey::$enum_ident
+			}
+		}
+	};
 }

@@ -27,29 +27,29 @@ use protify::*;
 
 #[proto_oneof]
 pub enum NormalOneof {
-  // Tags must be set manually!
-  #[proto(tag = 1)]
-  A(i32),
-  #[proto(tag = 2)]
-  B(u32)
+	// Tags must be set manually!
+	#[proto(tag = 1)]
+	A(i32),
+	#[proto(tag = 2)]
+	B(u32),
 }
 
 // Generates `ProxiedOneofProto` as the proto-facing version
 #[proto_oneof(proxied)]
 pub enum ProxiedOneof {
-  #[proto(tag = 1)]
-  A(i32),
-  #[proto(tag = 2)]
-  B(u32)
+	#[proto(tag = 1)]
+	A(i32),
+	#[proto(tag = 2)]
+	B(u32),
 }
 
 fn main() {
-  use protify::*;
+	use protify::*;
 
-  // `ProxiedOneof` and `OneofProxy` methods
-  let oneof = ProxiedOneofProto::A(1);
-  let proxy = oneof.into_proxy();
-  let oneof_again = proxy.into_oneof();
+	// `ProxiedOneof` and `OneofProxy` methods
+	let oneof = ProxiedOneofProto::A(1);
+	let proxy = oneof.into_proxy();
+	let oneof_again = proxy.into_oneof();
 }
 ```
 
@@ -105,6 +105,6 @@ fn main() {
     - Type: list of Idents
     - Example: `#[proto(skip_checks(validators))]`
     - Description:
-        Disables the generation of tests. 
+        Disables the generation of tests.
         Currently, the allowed values are:
         - `validators`: disables the automatic generation of a test that checks the validity of the validators used by the message. The `check_validators` method will still be generated and be available for manual testing.

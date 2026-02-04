@@ -1,33 +1,33 @@
 use crate::*;
 
 pub fn fallback_derive_impls(target_ident: &Ident, kind: ItemKind) -> TokenStream2 {
-  let mut output = quote! {
-    impl Default for #target_ident {
-      fn default() -> Self {
-        unimplemented!()
-      }
-    }
+	let mut output = quote! {
+	  impl Default for #target_ident {
+		fn default() -> Self {
+		  unimplemented!()
+		}
+	  }
 
-    impl Clone for #target_ident {
-      fn clone(&self) -> Self {
-        unimplemented!()
-      }
-    }
+	  impl Clone for #target_ident {
+		fn clone(&self) -> Self {
+		  unimplemented!()
+		}
+	  }
 
-    impl core::fmt::Debug for #target_ident {
-      fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        unimplemented!()
-      }
-    }
+	  impl core::fmt::Debug for #target_ident {
+		fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		  unimplemented!()
+		}
+	  }
 
-    impl PartialEq for #target_ident {
-      fn eq(&self, _: &Self) -> bool {
-        unimplemented!()
-      }
-    }
-  };
+	  impl PartialEq for #target_ident {
+		fn eq(&self, _: &Self) -> bool {
+		  unimplemented!()
+		}
+	  }
+	};
 
-  output.extend(match kind {
+	output.extend(match kind {
       ItemKind::Oneof => {
         quote! {
           impl #target_ident {
@@ -70,8 +70,8 @@ pub fn fallback_derive_impls(target_ident: &Ident, kind: ItemKind) -> TokenStrea
     }
     );
 
-  if cfg!(feature = "cel") {
-    output.extend(match kind {
+	if cfg!(feature = "cel") {
+		output.extend(match kind {
         ItemKind::Oneof => quote! {
           impl ::protify::CelOneof for #target_ident {
             #[doc(hidden)]
@@ -101,7 +101,7 @@ pub fn fallback_derive_impls(target_ident: &Ident, kind: ItemKind) -> TokenStrea
           }
         },
       });
-  }
+	}
 
-  output
+	output
 }

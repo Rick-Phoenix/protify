@@ -8,59 +8,59 @@ To do that, you must first add the [`protify-build`](::protify_build) to the bui
 
 For convenience, the builder exports the [`DescriptorDataConfig`](protify_build::DescriptorDataConfig) struct, which you can use to gather information about the elements of a package while the validators are being set (which can often be useful to handle things like oneof attributes which aren't very ergonomic to set up in prost in a programmatic way).
 
-The [`DescriptorDataConfig::set_up_validators`](protify_build::DescriptorDataConfig::set_up_validators) method can then be used to set up the validators for the target packages while collecting the desided data. 
+The [`DescriptorDataConfig::set_up_validators`](protify_build::DescriptorDataConfig::set_up_validators) method can then be used to set up the validators for the target packages while collecting the desided data.
 
 If you desire to just set up the validators without gathering any other data, you can just call the omonimous [`set_up_validators`](protify_build::set_up_validators) function exported from the root of the crate.
 
 ```rust,ignore
 use std::{env, path::PathBuf};
 
-use protify_build::DescriptorDataConfig;
 use prost_build::Config;
+use protify_build::DescriptorDataConfig;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("cargo:rerun-if-changed=../proto");
+	println!("cargo:rerun-if-changed=../proto");
 
-    let out_dir = env::var("OUT_DIR")
-        .map(PathBuf::from)
-        .unwrap_or(env::temp_dir());
+	let out_dir = env::var("OUT_DIR")
+		.map(PathBuf::from)
+		.unwrap_or(env::temp_dir());
 
-    // Set path for descriptor output
-    let descriptor_path = out_dir.join("file_descriptor_set.bin");
+	// Set path for descriptor output
+	let descriptor_path = out_dir.join("file_descriptor_set.bin");
 
-    // Your proto files and dependencies
-    let include_paths = &["proto", "proto_deps"];
+	// Your proto files and dependencies
+	let include_paths = &["proto", "proto_deps"];
 
-    // Helper to get all the files in a directory 
-    let files = protify_build::get_proto_files("proto");
+	// Helper to get all the files in a directory
+	let files = protify_build::get_proto_files("proto");
 
-    let mut config = Config::new();
-    config
-        .file_descriptor_set_path(&descriptor_path)
-        // Required, if bytes fields are used
-        .bytes(["."])
-        .out_dir(&out_dir);
+	let mut config = Config::new();
+	config
+		.file_descriptor_set_path(&descriptor_path)
+		// Required, if bytes fields are used
+		.bytes(["."])
+		.out_dir(&out_dir);
 
-    let _ = builder::set_up_validators(
-        &mut config,
-        files,
-        include_paths,
-        // The packages for which you want to apply the validators.
-        // If a message has validators or is a field of another message
-        // with validators, then its package must be added here.
-        &["test_schemas.v1"]
-    )?;
+	let _ = builder::set_up_validators(
+		&mut config,
+		files,
+		include_paths,
+		// The packages for which you want to apply the validators.
+		// If a message has validators or is a field of another message
+		// with validators, then its package must be added here.
+		&["test_schemas.v1"],
+	)?;
 
-    // Compile the protos
-    config.compile_protos(files, include_paths)?;
+	// Compile the protos
+	config.compile_protos(files, include_paths)?;
 
-    // Emit env for descriptor location
-    println!(
-        "cargo:rustc-env=PROTO_DESCRIPTOR_SET={}",
-        descriptor_path.display()
-    );
+	// Emit env for descriptor location
+	println!(
+		"cargo:rustc-env=PROTO_DESCRIPTOR_SET={}",
+		descriptor_path.display()
+	);
 
-    Ok(())
+	Ok(())
 }
 ```
 

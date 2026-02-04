@@ -7,6 +7,8 @@
 //!
 //! Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, this crate aims to provide an experience that feels almost as simple and native as using `serde`.
 //!
+//! >ℹ️ **NOTE**: This readme is generated from the rust documentation. Read this in docs.rs to enable all links.
+//!
 #![doc = include_str!("./guide/schema_features.md")]
 //!
 //! For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
@@ -32,8 +34,8 @@ pub use prost;
 
 #[doc(hidden)]
 pub use alloc::{
-  boxed::Box, collections::BTreeMap, format, string::String, string::ToString, sync::Arc, vec,
-  vec::Vec,
+	boxed::Box, collections::BTreeMap, format, string::String, string::ToString, sync::Arc, vec,
+	vec::Vec,
 };
 
 #[cfg(doc)]
@@ -50,12 +52,12 @@ mod decl_macros;
 
 use alloc::{borrow::Cow, borrow::ToOwned, collections::BTreeSet};
 use core::{
-  borrow::Borrow,
-  fmt::{Debug, Display, Write},
-  hash::Hash,
-  marker::{PhantomData, Sized},
-  ops::Deref,
-  ops::Range,
+	borrow::Borrow,
+	fmt::{Debug, Display, Write},
+	hash::Hash,
+	marker::{PhantomData, Sized},
+	ops::Deref,
+	ops::Range,
 };
 
 #[cfg(not(feature = "std"))]
@@ -80,16 +82,16 @@ pub use inventory;
 
 pub use macros::*;
 pub mod macros {
-  #[cfg(feature = "cel")]
-  pub use protify_proc_macro::{CelOneof, CelValue};
+	#[cfg(feature = "cel")]
+	pub use protify_proc_macro::{CelOneof, CelValue};
 
-  #[cfg(feature = "reflection")]
-  pub use protify_proc_macro::{ProtoEnum, ValidatedMessage, ValidatedOneof};
+	#[cfg(feature = "reflection")]
+	pub use protify_proc_macro::{ProtoEnum, ValidatedMessage, ValidatedOneof};
 
-  pub use protify_proc_macro::{
-    Enum, Extension, Message, Oneof, Service, define_proto_file, proto_enum, proto_extension,
-    proto_message, proto_oneof, proto_package, proto_service,
-  };
+	pub use protify_proc_macro::{
+		Enum, Extension, Message, Oneof, Service, define_proto_file, proto_enum, proto_extension,
+		proto_message, proto_oneof, proto_package, proto_service,
+	};
 }
 
 pub use proto_types;
@@ -171,44 +173,44 @@ pub use std::sync::LazyLock as Lazy;
 #[inline]
 pub fn apply<I, O, F>(input: I, f: F) -> O
 where
-  F: FnOnce(I) -> O,
+	F: FnOnce(I) -> O,
 {
-  f(input)
+	f(input)
 }
 
 /// Helper trait to convert a type to [`Bytes`].
 ///
 /// It retains `& 'static` when possible, otherwise takes ownership of the value.
 pub trait IntoBytes {
-  fn into_bytes(self) -> Bytes;
+	fn into_bytes(self) -> Bytes;
 }
 
 impl<const N: usize> IntoBytes for &'static [u8; N] {
-  #[inline]
-  fn into_bytes(self) -> Bytes {
-    Bytes::from_static(self)
-  }
+	#[inline]
+	fn into_bytes(self) -> Bytes {
+		Bytes::from_static(self)
+	}
 }
 
 impl IntoBytes for &'static [u8] {
-  #[inline]
-  fn into_bytes(self) -> Bytes {
-    Bytes::from_static(self)
-  }
+	#[inline]
+	fn into_bytes(self) -> Bytes {
+		Bytes::from_static(self)
+	}
 }
 
 impl IntoBytes for Bytes {
-  #[inline]
-  fn into_bytes(self) -> Bytes {
-    self
-  }
+	#[inline]
+	fn into_bytes(self) -> Bytes {
+		self
+	}
 }
 
 impl IntoBytes for &Bytes {
-  #[inline]
-  fn into_bytes(self) -> Bytes {
-    self.clone()
-  }
+	#[inline]
+	fn into_bytes(self) -> Bytes {
+		self.clone()
+	}
 }
 
 #[cfg(feature = "regex")]
@@ -216,61 +218,61 @@ pub use regex_impls::*;
 
 #[cfg(feature = "regex")]
 mod regex_impls {
-  use regex::Regex;
-  use regex::bytes::Regex as BytesRegex;
+	use regex::Regex;
+	use regex::bytes::Regex as BytesRegex;
 
-  /// Utility trait to create a [`Regex`].
-  pub trait IntoRegex {
-    fn into_regex(self) -> Regex;
-  }
+	/// Utility trait to create a [`Regex`].
+	pub trait IntoRegex {
+		fn into_regex(self) -> Regex;
+	}
 
-  impl IntoRegex for &str {
-    #[track_caller]
-    #[inline]
-    fn into_regex(self) -> Regex {
-      Regex::new(self).unwrap()
-    }
-  }
+	impl IntoRegex for &str {
+		#[track_caller]
+		#[inline]
+		fn into_regex(self) -> Regex {
+			Regex::new(self).unwrap()
+		}
+	}
 
-  impl IntoRegex for Regex {
-    fn into_regex(self) -> Regex {
-      self
-    }
-  }
+	impl IntoRegex for Regex {
+		fn into_regex(self) -> Regex {
+			self
+		}
+	}
 
-  impl IntoRegex for &Regex {
-    #[inline]
-    fn into_regex(self) -> Regex {
-      self.clone()
-    }
-  }
+	impl IntoRegex for &Regex {
+		#[inline]
+		fn into_regex(self) -> Regex {
+			self.clone()
+		}
+	}
 
-  /// Utility trait to create a [`Regex`](BytesRegex).
-  pub trait IntoBytesRegex {
-    fn into_regex(self) -> BytesRegex;
-  }
+	/// Utility trait to create a [`Regex`](BytesRegex).
+	pub trait IntoBytesRegex {
+		fn into_regex(self) -> BytesRegex;
+	}
 
-  impl IntoBytesRegex for &str {
-    #[track_caller]
-    #[inline]
-    fn into_regex(self) -> BytesRegex {
-      BytesRegex::new(self).unwrap()
-    }
-  }
+	impl IntoBytesRegex for &str {
+		#[track_caller]
+		#[inline]
+		fn into_regex(self) -> BytesRegex {
+			BytesRegex::new(self).unwrap()
+		}
+	}
 
-  impl IntoBytesRegex for BytesRegex {
-    #[inline]
-    fn into_regex(self) -> BytesRegex {
-      self
-    }
-  }
+	impl IntoBytesRegex for BytesRegex {
+		#[inline]
+		fn into_regex(self) -> BytesRegex {
+			self
+		}
+	}
 
-  impl IntoBytesRegex for &BytesRegex {
-    #[inline]
-    fn into_regex(self) -> BytesRegex {
-      self.clone()
-    }
-  }
+	impl IntoBytesRegex for &BytesRegex {
+		#[inline]
+		fn into_regex(self) -> BytesRegex {
+			self.clone()
+		}
+	}
 }
 
 #[doc(hidden)]
@@ -290,31 +292,31 @@ impl<T> MaybeSerde for T {}
 #[cold]
 #[doc(hidden)]
 pub fn filter_validators(
-  validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
+	validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
 ) -> impl IntoIterator<Item = ValidatorSchema> {
-  validators.into_iter().flatten()
+	validators.into_iter().flatten()
 }
 
 #[inline(never)]
 #[cold]
 #[doc(hidden)]
 pub fn collect_validators(
-  validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
+	validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
 ) -> Vec<ValidatorSchema> {
-  validators.into_iter().flatten().collect()
+	validators.into_iter().flatten().collect()
 }
 
 #[doc(hidden)]
 pub static DEFAULT_MESSAGE_VALIDATOR: Lazy<MessageValidator> =
-  Lazy::new(|| MessageValidator::default());
+	Lazy::new(|| MessageValidator::default());
 
 #[doc(hidden)]
 pub static DEFAULT_ONEOF_VALIDATOR: Lazy<OneofValidator> = Lazy::new(|| OneofValidator::default());
 
 #[doc(hidden)]
 pub static DEFAULT_REQUIRED_ONEOF_VALIDATOR: Lazy<OneofValidator> = Lazy::new(|| OneofValidator {
-  required: true,
-  error_message: None,
+	required: true,
+	error_message: None,
 });
 
 #[inline(never)]
@@ -322,13 +324,13 @@ pub static DEFAULT_REQUIRED_ONEOF_VALIDATOR: Lazy<OneofValidator> = Lazy::new(||
 #[doc(hidden)]
 pub fn collect_options<I>(options: I, deprecated: bool) -> Vec<ProtoOption>
 where
-  I: IntoIterator<Item = ProtoOption>,
+	I: IntoIterator<Item = ProtoOption>,
 {
-  let mut output: Vec<ProtoOption> = options.into_iter().collect();
+	let mut output: Vec<ProtoOption> = options.into_iter().collect();
 
-  if deprecated {
-    output.push(proto_deprecated());
-  }
+	if deprecated {
+		output.push(proto_deprecated());
+	}
 
-  output
+	output
 }

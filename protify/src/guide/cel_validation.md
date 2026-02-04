@@ -2,7 +2,7 @@
 
 The `cel` feature unlocks [CEL](https://cel.dev/)-based validation, which can be very handy for making validators portable.
 
-If a CEL expressions fails to compile, **it will cause a panic**, so it is strongly advised to test each expression to avoid surprises at runtime. 
+If a CEL expressions fails to compile, **it will cause a panic**, so it is strongly advised to test each expression to avoid surprises at runtime.
 
 Unless manually disabled, these checks are automatically performed in the macros' output, as explained in the [`correctness`](crate::guide::correctness) section.
 
@@ -25,26 +25,30 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 // The program is compiled once and then wrapped in an Arc, so it can be cheaply cloned
 static REUSABLE_PROGRAM: Lazy<CelProgram> = Lazy::new(|| {
-    cel_program!(id = "my_prog", msg = "error_message", expr = "this.location == 'Isengard'")
+	cel_program!(
+		id = "my_prog",
+		msg = "error_message",
+		expr = "this.location == 'Isengard'"
+	)
 });
 
 #[proto_message]
 pub struct TheyAreTakingTheHobbitsTo {
-    pub location: String
+	pub location: String,
 }
 
 #[proto_message]
 pub struct ABalrogOfMorgoth {
-    // Here we are just cloning an Arc pointer to the lazily initialized program,
-    // not the program itself
-    #[proto(message, validate = |v| v.cel(REUSABLE_PROGRAM.clone()))]
-    pub what_did_you_say: Option<TheyAreTakingTheHobbitsTo>
+	// Here we are just cloning an Arc pointer to the lazily initialized program,
+	// not the program itself
+	#[proto(message, validate = |v| v.cel(REUSABLE_PROGRAM.clone()))]
+	pub what_did_you_say: Option<TheyAreTakingTheHobbitsTo>,
 }
 
 #[proto_message]
 pub struct TellMeWhereIsGandalf {
-    #[proto(message, validate = |v| v.cel(REUSABLE_PROGRAM.clone()))]
-    pub for_i_much_desire_to_speak_with_him: Option<TheyAreTakingTheHobbitsTo>
+	#[proto(message, validate = |v| v.cel(REUSABLE_PROGRAM.clone()))]
+	pub for_i_much_desire_to_speak_with_him: Option<TheyAreTakingTheHobbitsTo>,
 }
 ```
 

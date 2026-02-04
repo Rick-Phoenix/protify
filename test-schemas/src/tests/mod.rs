@@ -1,9 +1,9 @@
 #![allow(
-  clippy::needless_pass_by_value,
-  clippy::struct_field_names,
-  clippy::use_self,
-  clippy::derive_partial_eq_without_eq,
-  clippy::enum_variant_names
+	clippy::needless_pass_by_value,
+	clippy::struct_field_names,
+	clippy::use_self,
+	clippy::derive_partial_eq_without_eq,
+	clippy::enum_variant_names
 )]
 
 mod consistency_tests;
@@ -36,61 +36,61 @@ define_proto_file!(TESTING_FILE, package = TESTING_PKG);
 
 #[test]
 fn inferred_file_name() {
-  define_proto_file!(TESTING, package = TESTING_PKG);
+	define_proto_file!(TESTING, package = TESTING_PKG);
 
-  assert_eq_pretty!(TESTING_FILE::NAME, "testing.proto");
-  assert_eq_pretty!(TESTING::NAME, "testing.proto");
+	assert_eq_pretty!(TESTING_FILE::NAME, "testing.proto");
+	assert_eq_pretty!(TESTING::NAME, "testing.proto");
 }
 
 #[track_caller]
 pub(crate) fn assert_violation_id(msg: &impl ValidatedMessage, expected: &str, error: &str) {
-  let violations = msg.validate().unwrap_err().into_violations();
+	let violations = msg.validate().unwrap_err().into_violations();
 
-  assert_eq!(violations.len(), 1, "Expected a single violation");
-  assert_eq!(violations.first().unwrap().rule_id(), expected, "{error}");
+	assert_eq!(violations.len(), 1, "Expected a single violation");
+	assert_eq!(violations.first().unwrap().rule_id(), expected, "{error}");
 }
 
 #[proto_message]
 #[proto(skip_checks(all))]
 pub struct DirectMsg {
-  pub id: i32,
+	pub id: i32,
 }
 
 #[proto_message(proxied)]
 #[proto(skip_checks(all))]
 pub struct ProxiedMsg {
-  pub id: i32,
+	pub id: i32,
 }
 
 #[proto_enum]
 pub enum SimpleEnum {
-  Unspecified,
-  A,
-  B,
+	Unspecified,
+	A,
+	B,
 }
 
 #[proto_oneof]
 #[proto(skip_checks(all))]
 pub enum SimpleOneof {
-  #[proto(tag = 1)]
-  A(i32),
-  #[proto(tag = 2)]
-  B(u32),
+	#[proto(tag = 1)]
+	A(i32),
+	#[proto(tag = 2)]
+	B(u32),
 }
 
 #[test]
 fn test_keywords() {
-  let schema = RustKeywords::proto_schema();
+	let schema = RustKeywords::proto_schema();
 
-  let keywords = [
-    "as", "break", "const", "continue", "else", "enum", "false", "fn", "for", "if", "impl", "in",
-    "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "static", "struct",
-    "trait", "true", "type", "unsafe", "use", "where", "while", "abstract", "become", "box", "do",
-    "final", "macro", "override", "priv", "typeof", "unsized", "virtual", "yield", "try", "async",
-    "await",
-  ];
+	let keywords = [
+		"as", "break", "const", "continue", "else", "enum", "false", "fn", "for", "if", "impl",
+		"in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "static",
+		"struct", "trait", "true", "type", "unsafe", "use", "where", "while", "abstract", "become",
+		"box", "do", "final", "macro", "override", "priv", "typeof", "unsized", "virtual", "yield",
+		"try", "async", "await",
+	];
 
-  for (field, exp_name) in schema.fields().zip(keywords) {
-    assert_eq_pretty!(field.name, exp_name);
-  }
+	for (field, exp_name) in schema.fields().zip(keywords) {
+		assert_eq_pretty!(field.name, exp_name);
+	}
 }

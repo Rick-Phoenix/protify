@@ -30,20 +30,20 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 #[proto_message]
 pub struct Msg {
-  pub id: i32
+	pub id: i32,
 }
 
 // Generates the `ProxiedMsgProto` struct
 #[proto_message(proxied)]
 pub struct ProxiedMsg {
-  pub id: i32
+	pub id: i32,
 }
 
 fn main() {
-  // `MessageProxy` and `ProxiedMessage` methods
-  let msg = ProxiedMsgProto::default();
-  let proxy = msg.into_proxy();
-  let msg_again = proxy.into_message();
+	// `MessageProxy` and `ProxiedMessage` methods
+	let msg = ProxiedMsgProto::default();
+	let proxy = msg.into_proxy();
+	let msg_again = proxy.into_message();
 }
 ```
 

@@ -20,21 +20,20 @@ impl<T> IntoCel for T {}
 #[cfg(feature = "cel")]
 #[doc(hidden)]
 pub trait TryIntoCel: Clone {
-  fn __try_into_cel(self) -> Result<::cel::Value, CelError>;
+	fn __try_into_cel(self) -> Result<::cel::Value, CelError>;
 }
 
 #[cfg(feature = "cel")]
 impl<T, E> TryIntoCel for T
 where
-  T: TryInto<::cel::Value, Error = E> + Clone,
-  E: Display,
+	T: TryInto<::cel::Value, Error = E> + Clone,
+	E: Display,
 {
-  #[inline]
-  fn __try_into_cel(self) -> Result<::cel::Value, CelError> {
-    self
-      .try_into()
-      .map_err(|e| CelError::ConversionError(e.to_string()))
-  }
+	#[inline]
+	fn __try_into_cel(self) -> Result<::cel::Value, CelError> {
+		self.try_into()
+			.map_err(|e| CelError::ConversionError(e.to_string()))
+	}
 }
 
 /// A trait that enables conversion into [`cel::Value`](::cel::Value).
@@ -42,10 +41,10 @@ where
 /// Implemented by the [`proto_message`] macro.
 #[cfg(feature = "cel")]
 pub trait CelValue: Clone + TryInto<::cel::Value, Error = CelConversionError> {
-  #[inline]
-  fn try_into_cel(self) -> Result<::cel::Value, CelConversionError> {
-    self.try_into()
-  }
+	#[inline]
+	fn try_into_cel(self) -> Result<::cel::Value, CelConversionError> {
+		self.try_into()
+	}
 }
 
 /// A trait that enables conversion into [`cel::Value`](::cel::Value).
@@ -53,7 +52,7 @@ pub trait CelValue: Clone + TryInto<::cel::Value, Error = CelConversionError> {
 /// Implemented by the [`proto_oneof`] macro.
 #[cfg(feature = "cel")]
 pub trait CelOneof: Sized + TryInto<::cel::Value, Error = CelConversionError> {
-  fn try_into_cel(self) -> Result<(String, ::cel::Value), CelConversionError>;
+	fn try_into_cel(self) -> Result<(String, ::cel::Value), CelConversionError>;
 }
 
 #[cfg(not(feature = "cel"))]

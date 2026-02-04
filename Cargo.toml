@@ -33,6 +33,7 @@ repository = "https://github.com/Rick-Phoenix/protify"
 keywords = ["protobuf", "validation", "schema", "generation", "no_std"]
 
 [workspace.dependencies]
+indoc = "2"
 askama = { version = "0.15", default-features = false, features = [
   "derive",
   "config",

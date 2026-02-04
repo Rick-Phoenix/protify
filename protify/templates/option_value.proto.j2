@@ -6,15 +6,15 @@
   {% else %}
 [ {% for item in val ~%}
   {{+ item.render()? | indent(2) }}{% if !loop.last %}, {%+ endif ~%}
-  {% endfor ~%} 
+  {% endfor ~%}
   ]
   {% endif %}
 
 {% when Self::Message with (val) %}
 {
 {% for opt in val ~%}
-  {{+ opt.name +}}: {{+ opt.value.render()? | indent(2) +}}{% if !loop.last +%}, {%+ endif %}
-{% endfor ~%} 
+  {{+ opt.name +}}: {{+ opt.value.render()? | indent(2) +}}{% if !loop.last +%},{%+ endif %}
+{% endfor ~%}
 }
 {% when Self::Bool with (val) %}
   {{ val }}
@@ -23,7 +23,7 @@
 {% when Self::Int with (val) %}
   {{ val }}
 {% when Self::Float with (val) %}
-  {{ val }} 
+  {{ val }}
 {% when Self::Enum with (val) %}
   {{ val }}
 {% when Self::String with (val) %}

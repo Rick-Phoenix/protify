@@ -16,200 +16,201 @@ use super::*;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FloatValidator<Num>
 where
-  Num: FloatWrapper,
+	Num: FloatWrapper,
 {
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  pub cel: Vec<CelProgram>,
+	/// Adds custom validation using one or more [`CelRule`]s to this field.
+	pub cel: Vec<CelProgram>,
 
-  /// The conditions upon which this validator should be skipped.
-  pub ignore: Ignore,
+	/// The conditions upon which this validator should be skipped.
+	pub ignore: Ignore,
 
-  #[cfg_attr(feature = "serde", serde(skip))]
-  _wrapper: PhantomData<Num>,
+	#[cfg_attr(feature = "serde", serde(skip))]
+	_wrapper: PhantomData<Num>,
 
-  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
-  pub required: bool,
+	/// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
+	pub required: bool,
 
-  /// Represents the `abs` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
-  pub abs_tolerance: Num,
+	/// Represents the `abs` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+	pub abs_tolerance: Num,
 
-  /// Represents the `r2nd` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
-  pub rel_tolerance: Num,
+	/// Represents the `r2nd` parameter in the [`float_eq!`] macro, and is used in all arithmetic operations for the validated floats. For more information, see the [float_eq guide](https://jtempest.github.io/float_eq-rs/book/how_to/compare_floating_point_numbers.html).
+	pub rel_tolerance: Num,
 
-  /// Specifies that this field must be finite (i.e. it can't represent Infinity or NaN).
-  pub finite: bool,
+	/// Specifies that this field must be finite (i.e. it can't represent Infinity or NaN).
+	pub finite: bool,
 
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<Num>,
+	/// Specifies that only this specific value will be considered valid for this field.
+	pub const_: Option<Num>,
 
-  /// Specifies that this field's value will be valid only if it is smaller than the specified amount
-  pub lt: Option<Num>,
+	/// Specifies that this field's value will be valid only if it is smaller than the specified amount
+	pub lt: Option<Num>,
 
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
-  pub lte: Option<Num>,
+	/// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
+	pub lte: Option<Num>,
 
-  /// Specifies that this field's value will be valid only if it is greater than the specified amount
-  pub gt: Option<Num>,
+	/// Specifies that this field's value will be valid only if it is greater than the specified amount
+	pub gt: Option<Num>,
 
-  /// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
-  pub gte: Option<Num>,
+	/// Specifies that this field's value will be valid only if it is smaller than, or equal to, the specified amount
+	pub gte: Option<Num>,
 
-  /// Specifies that only the values in this list will be considered valid for this field.
-  pub in_: Option<SortedList<OrderedFloat<Num>>>,
+	/// Specifies that only the values in this list will be considered valid for this field.
+	pub in_: Option<SortedList<OrderedFloat<Num>>>,
 
-  /// Specifies that the values in this list will be considered NOT valid for this field.
-  pub not_in: Option<SortedList<OrderedFloat<Num>>>,
+	/// Specifies that the values in this list will be considered NOT valid for this field.
+	pub not_in: Option<SortedList<OrderedFloat<Num>>>,
 
-  /// A map of custom error messages.
-  pub error_messages: Option<ErrorMessages<Num::ViolationEnum>>,
+	/// A map of custom error messages.
+	pub error_messages: Option<ErrorMessages<Num::ViolationEnum>>,
 }
 
 impl<Num> FloatValidator<Num>
 where
-  Num: FloatWrapper,
+	Num: FloatWrapper,
 {
-  #[inline(never)]
-  #[cold]
-  fn custom_error_or_else(
-    &self,
-    violation: Num::ViolationEnum,
-    default: impl Fn() -> String,
-  ) -> String {
-    self
-      .error_messages
-      .as_deref()
-      .and_then(|map| map.get(&violation))
-      .map(|m| m.to_string())
-      .unwrap_or_else(default)
-  }
+	#[inline(never)]
+	#[cold]
+	fn custom_error_or_else(
+		&self,
+		violation: Num::ViolationEnum,
+		default: impl Fn() -> String,
+	) -> String {
+		self.error_messages
+			.as_deref()
+			.and_then(|map| map.get(&violation))
+			.map(|m| m.to_string())
+			.unwrap_or_else(default)
+	}
 }
 
 impl<Num> Default for FloatValidator<Num>
 where
-  Num: FloatWrapper + Default,
+	Num: FloatWrapper + Default,
 {
-  #[inline]
-  fn default() -> Self {
-    Self {
-      cel: Default::default(),
-      ignore: Default::default(),
-      _wrapper: Default::default(),
-      required: Default::default(),
-      abs_tolerance: Default::default(),
-      rel_tolerance: Default::default(),
-      finite: Default::default(),
-      const_: Default::default(),
-      lt: Default::default(),
-      lte: Default::default(),
-      gt: Default::default(),
-      gte: Default::default(),
-      in_: Default::default(),
-      not_in: Default::default(),
-      error_messages: Default::default(),
-    }
-  }
+	#[inline]
+	fn default() -> Self {
+		Self {
+			cel: Default::default(),
+			ignore: Default::default(),
+			_wrapper: Default::default(),
+			required: Default::default(),
+			abs_tolerance: Default::default(),
+			rel_tolerance: Default::default(),
+			finite: Default::default(),
+			const_: Default::default(),
+			lt: Default::default(),
+			lte: Default::default(),
+			gt: Default::default(),
+			gte: Default::default(),
+			in_: Default::default(),
+			not_in: Default::default(),
+			error_messages: Default::default(),
+		}
+	}
 }
 
 pub(crate) fn float_in_list<T>(target: T, list: &[OrderedFloat<T>], abs_tol: T, r2nd_tol: T) -> bool
 where
-  T: FloatCore + FloatEq<Tol = T>,
+	T: FloatCore + FloatEq<Tol = T>,
 {
-  let wrapped_target: OrderedFloat<T> = target.into();
+	let wrapped_target: OrderedFloat<T> = target.into();
 
-  // 1. Perform Binary Search
-  match list.binary_search(&wrapped_target) {
-    // Exact bit-for-bit match found
-    Ok(_) => true,
+	// 1. Perform Binary Search
+	match list.binary_search(&wrapped_target) {
+		// Exact bit-for-bit match found
+		Ok(_) => true,
 
-    // No exact match. 'idx' is the insertion point.
-    Err(idx) => {
-      // 2. Check the neighbor immediately AFTER the insertion point
-      if let Some(above) = list.get(idx)
-        && float_eq!(above.0, target, abs <= abs_tol, r2nd <= r2nd_tol)
-      {
-        return true;
-      }
+		// No exact match. 'idx' is the insertion point.
+		Err(idx) => {
+			// 2. Check the neighbor immediately AFTER the insertion point
+			if let Some(above) = list.get(idx)
+				&& float_eq!(above.0, target, abs <= abs_tol, r2nd <= r2nd_tol)
+			{
+				return true;
+			}
 
-      // 3. Check the neighbor immediately BEFORE the insertion point
-      if idx > 0
-        && let Some(below) = list.get(idx - 1)
-        && float_eq!(below.0, target, abs <= abs_tol, r2nd <= r2nd_tol)
-      {
-        return true;
-      }
+			// 3. Check the neighbor immediately BEFORE the insertion point
+			if idx > 0
+				&& let Some(below) = list.get(idx - 1)
+				&& float_eq!(below.0, target, abs <= abs_tol, r2nd <= r2nd_tol)
+			{
+				return true;
+			}
 
-      false
-    }
-  }
+			false
+		}
+	}
 }
 
 pub(crate) fn check_float_list_rules<T>(
-  in_list: Option<&[OrderedFloat<T>]>,
-  not_in_list: Option<&[OrderedFloat<T>]>,
-  abs_tol: T,
-  r2nd_tol: T,
+	in_list: Option<&[OrderedFloat<T>]>,
+	not_in_list: Option<&[OrderedFloat<T>]>,
+	abs_tol: T,
+	r2nd_tol: T,
 ) -> Result<(), OverlappingListsError>
 where
-  T: FloatCore + Debug + FloatEq<Tol = T>,
+	T: FloatCore + Debug + FloatEq<Tol = T>,
 {
-  if let Some(in_list) = in_list
-    && let Some(not_in_list) = not_in_list
-  {
-    let mut overlapping: Vec<T> = Vec::with_capacity(in_list.len());
+	if let Some(in_list) = in_list
+		&& let Some(not_in_list) = not_in_list
+	{
+		let mut overlapping: Vec<T> = Vec::with_capacity(in_list.len());
 
-    for item in in_list {
-      let is_overlapping = float_in_list(item.0, not_in_list, abs_tol, r2nd_tol);
+		for item in in_list {
+			let is_overlapping = float_in_list(item.0, not_in_list, abs_tol, r2nd_tol);
 
-      if is_overlapping {
-        overlapping.push(**item);
-      }
-    }
+			if is_overlapping {
+				overlapping.push(**item);
+			}
+		}
 
-    if overlapping.is_empty() {
-      return Ok(());
-    } else {
-      return Err(OverlappingListsError {
-        overlapping: overlapping
-          .into_iter()
-          .map(|i| format!("{i:#?}"))
-          .collect(),
-      });
-    }
-  }
+		if overlapping.is_empty() {
+			return Ok(());
+		} else {
+			return Err(OverlappingListsError {
+				overlapping: overlapping
+					.into_iter()
+					.map(|i| format!("{i:#?}"))
+					.collect(),
+			});
+		}
+	}
 
-  Ok(())
+	Ok(())
 }
 
 impl<Num> Validator<Num> for FloatValidator<Num>
 where
-  Num: FloatWrapper,
+	Num: FloatWrapper,
 {
-  type Target = Num;
+	type Target = Num;
 
-  impl_testing_methods!();
+	impl_testing_methods!();
 
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
+	#[inline(never)]
+	#[cold]
+	fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+		let mut errors = Vec::new();
 
-    macro_rules! check_prop_some {
+		macro_rules! check_prop_some {
       ($($id:ident),*) => {
         $(self.$id.is_some()) ||*
       };
     }
 
-    if self.const_.is_some()
-      && (!self.cel.is_empty() || self.finite || check_prop_some!(in_, not_in, lt, lte, gt, gte))
-    {
-      errors.push(ConsistencyError::ConstWithOtherRules);
-    }
+		if self.const_.is_some()
+			&& (!self.cel.is_empty()
+				|| self.finite
+				|| check_prop_some!(in_, not_in, lt, lte, gt, gte))
+		{
+			errors.push(ConsistencyError::ConstWithOtherRules);
+		}
 
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
+		if let Some(custom_messages) = self.error_messages.as_deref() {
+			let mut unused_messages: Vec<String> = Vec::new();
 
-      for key in custom_messages.keys() {
-        macro_rules! check_unused_messages {
+			for key in custom_messages.keys() {
+				macro_rules! check_unused_messages {
           ($($name:ident),*) => {
             paste! {
               $(
@@ -219,195 +220,195 @@ where
           };
         }
 
-        let is_used = check_unused_messages!(gt, gte, lt, lte, not_in)
-          || (*key == Num::REQUIRED_VIOLATION && self.required)
-          || (*key == Num::CONST_VIOLATION && self.const_.is_some())
-          || (*key == Num::IN_VIOLATION && self.in_.is_some())
-          || (*key == Num::FINITE_VIOLATION && self.finite);
+				let is_used = check_unused_messages!(gt, gte, lt, lte, not_in)
+					|| (*key == Num::REQUIRED_VIOLATION && self.required)
+					|| (*key == Num::CONST_VIOLATION && self.const_.is_some())
+					|| (*key == Num::IN_VIOLATION && self.in_.is_some())
+					|| (*key == Num::FINITE_VIOLATION && self.finite);
 
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
+				if !is_used {
+					unused_messages.push(format!("{key:?}"));
+				}
+			}
 
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
+			if !unused_messages.is_empty() {
+				errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+			}
+		}
 
-    #[cfg(feature = "cel")]
-    if let Err(e) = self.__check_cel_programs() {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
+		#[cfg(feature = "cel")]
+		if let Err(e) = self.__check_cel_programs() {
+			errors.extend(e.into_iter().map(ConsistencyError::from));
+		}
 
-    if let Err(e) = check_float_list_rules(
-      self.in_.as_deref(),
-      self.not_in.as_deref(),
-      self.abs_tolerance,
-      self.rel_tolerance,
-    ) {
-      errors.push(e.into());
-    }
+		if let Err(e) = check_float_list_rules(
+			self.in_.as_deref(),
+			self.not_in.as_deref(),
+			self.abs_tolerance,
+			self.rel_tolerance,
+		) {
+			errors.push(e.into());
+		}
 
-    if let Err(e) = check_comparable_rules(self.lt, self.lte, self.gt, self.gte) {
-      errors.push(e);
-    }
+		if let Err(e) = check_comparable_rules(self.lt, self.lte, self.gt, self.gte) {
+			errors.push(e);
+		}
 
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
+		}
+	}
 
-  fn execute_validation(
-    &self,
-    ctx: &mut ValidationCtx,
-    val: Option<&Self::Target>,
-  ) -> ValidationResult {
-    handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
+	fn execute_validation(
+		&self,
+		ctx: &mut ValidationCtx,
+		val: Option<&Self::Target>,
+	) -> ValidationResult {
+		handle_ignore_always!(&self.ignore);
+		handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.is_default()));
 
-    let mut is_valid = IsValid::Yes;
+		let mut is_valid = IsValid::Yes;
 
-    macro_rules! handle_violation {
-      ($id:ident, $default:expr) => {
-        paste::paste! {
-          is_valid &= ctx.add_violation(
-            Num::[< $id:snake:upper _VIOLATION >].into(),
-            self.custom_error_or_else(
-              Num::[< $id:snake:upper _VIOLATION >],
-              || $default
-            )
-          )?;
-        }
-      };
-    }
+		macro_rules! handle_violation {
+			($id:ident, $default:expr) => {
+				paste::paste! {
+				  is_valid &= ctx.add_violation(
+					Num::[< $id:snake:upper _VIOLATION >].into(),
+					self.custom_error_or_else(
+					  Num::[< $id:snake:upper _VIOLATION >],
+					  || $default
+					)
+				  )?;
+				}
+			};
+		}
 
-    if self.required && val.is_none_or(|v| v.is_default()) {
-      handle_violation!(Required, "is required".to_string());
-      return Ok(is_valid);
-    }
+		if self.required && val.is_none_or(|v| v.is_default()) {
+			handle_violation!(Required, "is required".to_string());
+			return Ok(is_valid);
+		}
 
-    if let Some(&val) = val {
-      if let Some(const_val) = self.const_ {
-        if !self.float_is_eq(const_val, val) {
-          handle_violation!(Const, format!("must be equal to {const_val}"));
-        }
+		if let Some(&val) = val {
+			if let Some(const_val) = self.const_ {
+				if !self.float_is_eq(const_val, val) {
+					handle_violation!(Const, format!("must be equal to {const_val}"));
+				}
 
-        // Using `const` implies no other rules
-        return Ok(is_valid);
-      }
+				// Using `const` implies no other rules
+				return Ok(is_valid);
+			}
 
-      if self.finite && !val.is_finite() {
-        handle_violation!(Finite, "must be a finite number".to_string());
-      }
+			if self.finite && !val.is_finite() {
+				handle_violation!(Finite, "must be a finite number".to_string());
+			}
 
-      if let Some(gt) = self.gt
-        && (val.is_nan() || self.float_is_eq(gt, val) || val < gt)
-      {
-        handle_violation!(Gt, format!("must be greater than {gt}"));
-      }
+			if let Some(gt) = self.gt
+				&& (val.is_nan() || self.float_is_eq(gt, val) || val < gt)
+			{
+				handle_violation!(Gt, format!("must be greater than {gt}"));
+			}
 
-      if let Some(gte) = self.gte
-        && (val.is_nan() || !self.float_is_eq(gte, val) && val < gte)
-      {
-        handle_violation!(Gte, format!("must be greater than or equal to {gte}"));
-      }
+			if let Some(gte) = self.gte
+				&& (val.is_nan() || !self.float_is_eq(gte, val) && val < gte)
+			{
+				handle_violation!(Gte, format!("must be greater than or equal to {gte}"));
+			}
 
-      if let Some(lt) = self.lt
-        && (val.is_nan() || self.float_is_eq(lt, val) || val > lt)
-      {
-        handle_violation!(Lt, format!("must be smaller than {lt}"));
-      }
+			if let Some(lt) = self.lt
+				&& (val.is_nan() || self.float_is_eq(lt, val) || val > lt)
+			{
+				handle_violation!(Lt, format!("must be smaller than {lt}"));
+			}
 
-      if let Some(lte) = self.lte
-        && (val.is_nan() || !self.float_is_eq(lte, val) && val > lte)
-      {
-        handle_violation!(Lte, format!("must be smaller than or equal to {lte}"));
-      }
+			if let Some(lte) = self.lte
+				&& (val.is_nan() || !self.float_is_eq(lte, val) && val > lte)
+			{
+				handle_violation!(Lte, format!("must be smaller than or equal to {lte}"));
+			}
 
-      if let Some(allowed_list) = &self.in_
-        && !float_in_list(val, allowed_list, self.abs_tolerance, self.rel_tolerance)
-      {
-        handle_violation!(
-          In,
-          format!(
-            "must be one of these values: {}",
-            OrderedFloat::<Num>::__format_list(allowed_list)
-          )
-        );
-      }
+			if let Some(allowed_list) = &self.in_
+				&& !float_in_list(val, allowed_list, self.abs_tolerance, self.rel_tolerance)
+			{
+				handle_violation!(
+					In,
+					format!(
+						"must be one of these values: {}",
+						OrderedFloat::<Num>::__format_list(allowed_list)
+					)
+				);
+			}
 
-      if let Some(forbidden_list) = &self.not_in
-        && float_in_list(val, forbidden_list, self.abs_tolerance, self.rel_tolerance)
-      {
-        handle_violation!(
-          NotIn,
-          format!(
-            "cannot be one of these values: {}",
-            OrderedFloat::<Num>::__format_list(forbidden_list)
-          )
-        );
-      }
+			if let Some(forbidden_list) = &self.not_in
+				&& float_in_list(val, forbidden_list, self.abs_tolerance, self.rel_tolerance)
+			{
+				handle_violation!(
+					NotIn,
+					format!(
+						"cannot be one of these values: {}",
+						OrderedFloat::<Num>::__format_list(forbidden_list)
+					)
+				);
+			}
 
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        let cel_ctx = ProgramsExecutionCtx {
-          programs: &self.cel,
-          value: val,
-          ctx,
-        };
+			#[cfg(feature = "cel")]
+			if !self.cel.is_empty() {
+				let cel_ctx = ProgramsExecutionCtx {
+					programs: &self.cel,
+					value: val,
+					ctx,
+				};
 
-        is_valid &= cel_ctx.execute_programs()?;
-      }
-    }
+				is_valid &= cel_ctx.execute_programs()?;
+			}
+		}
 
-    Ok(is_valid)
-  }
+		Ok(is_valid)
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn schema(&self) -> Option<ValidatorSchema> {
-    Some(ValidatorSchema {
-      schema: self.clone().into(),
-      cel_rules: self.__cel_rules(),
-      imports: vec!["buf/validate/validate.proto".into()],
-    })
-  }
+	#[inline(never)]
+	#[cold]
+	fn schema(&self) -> Option<ValidatorSchema> {
+		Some(ValidatorSchema {
+			schema: self.clone().into(),
+			cel_rules: self.__cel_rules(),
+			imports: vec!["buf/validate/validate.proto".into()],
+		})
+	}
 }
 
 impl<Num> FloatValidator<Num>
 where
-  Num: FloatWrapper,
+	Num: FloatWrapper,
 {
-  #[must_use]
-  #[inline]
-  pub fn builder() -> FloatValidatorBuilder<Num> {
-    FloatValidatorBuilder::default()
-  }
+	#[must_use]
+	#[inline]
+	pub fn builder() -> FloatValidatorBuilder<Num> {
+		FloatValidatorBuilder::default()
+	}
 
-  #[inline]
-  fn float_is_eq(&self, first: Num, second: Num) -> bool {
-    float_eq!(
-      first,
-      second,
-      abs <= self.abs_tolerance,
-      r2nd <= self.rel_tolerance
-    )
-  }
+	#[inline]
+	fn float_is_eq(&self, first: Num, second: Num) -> bool {
+		float_eq!(
+			first,
+			second,
+			abs <= self.abs_tolerance,
+			r2nd <= self.rel_tolerance
+		)
+	}
 }
 
 impl<N> From<FloatValidator<N>> for ProtoOption
 where
-  N: FloatWrapper,
+	N: FloatWrapper,
 {
-  #[inline(never)]
-  #[cold]
-  fn from(validator: FloatValidator<N>) -> Self {
-    let mut rules = OptionMessageBuilder::new();
+	#[inline(never)]
+	#[cold]
+	fn from(validator: FloatValidator<N>) -> Self {
+		let mut rules = OptionMessageBuilder::new();
 
-    macro_rules! set_options {
+		macro_rules! set_options {
       ($($name:ident),*) => {
         rules
         $(
@@ -416,40 +417,40 @@ where
       };
     }
 
-    set_options!(lt, lte, gt, gte);
+		set_options!(lt, lte, gt, gte);
 
-    rules
-      .maybe_set("const", validator.const_)
-      .set_boolean("finite", validator.finite)
-      .maybe_set(
-        "in",
-        validator
-          .in_
-          .map(|list| OptionValue::List(list.items.iter().map(|of| of.0).collect())),
-      )
-      .maybe_set(
-        "not_in",
-        validator
-          .not_in
-          .map(|list| OptionValue::List(list.items.iter().map(|of| of.0).collect())),
-      );
+		rules
+			.maybe_set("const", validator.const_)
+			.set_boolean("finite", validator.finite)
+			.maybe_set(
+				"in",
+				validator
+					.in_
+					.map(|list| OptionValue::List(list.items.iter().map(|of| of.0).collect())),
+			)
+			.maybe_set(
+				"not_in",
+				validator
+					.not_in
+					.map(|list| OptionValue::List(list.items.iter().map(|of| of.0).collect())),
+			);
 
-    let mut outer_rules = OptionMessageBuilder::new();
+		let mut outer_rules = OptionMessageBuilder::new();
 
-    if !rules.is_empty() {
-      outer_rules.set(N::type_name(), OptionValue::Message(rules.into()));
-    }
+		if !rules.is_empty() {
+			outer_rules.set(N::type_name(), OptionValue::Message(rules.into()));
+		}
 
-    outer_rules
-      .add_cel_options(validator.cel)
-      .set_required(validator.required)
-      .set_ignore(validator.ignore);
+		outer_rules
+			.add_cel_options(validator.cel)
+			.set_required(validator.required)
+			.set_ignore(validator.ignore);
 
-    Self {
-      name: "(buf.validate.field)".into(),
-      value: OptionValue::Message(outer_rules.into()),
-    }
-  }
+		Self {
+			name: "(buf.validate.field)".into(),
+			value: OptionValue::Message(outer_rules.into()),
+		}
+	}
 }
 
 impl_proto_type!(f32, Float);
@@ -457,47 +458,47 @@ impl_proto_type!(f64, Double);
 
 /// A sealed trait for protobuf-compatible floats
 pub trait FloatWrapper:
-  AsProtoType
-  + Default
-  + Copy
-  + PartialOrd
-  + PartialEq
-  + Into<OptionValue>
-  + Debug
-  + Display
-  + IntoCel
-  + ordered_float::FloatCore
-  + ordered_float::PrimitiveFloat
-  + float_eq::FloatEq<Tol = Self>
-  + Send
-  + Sync
+	AsProtoType
+	+ Default
+	+ Copy
+	+ PartialOrd
+	+ PartialEq
+	+ Into<OptionValue>
+	+ Debug
+	+ Display
+	+ IntoCel
+	+ ordered_float::FloatCore
+	+ ordered_float::PrimitiveFloat
+	+ float_eq::FloatEq<Tol = Self>
+	+ Send
+	+ Sync
 {
-  #[doc(hidden)]
-  type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync + MaybeSerde;
-  #[doc(hidden)]
-  const LT_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const LTE_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const GT_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const GTE_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const IN_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const NOT_IN_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const CONST_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const FINITE_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  const REQUIRED_VIOLATION: Self::ViolationEnum;
-  #[doc(hidden)]
-  #[allow(private_interfaces)]
-  const SEALED: Sealed;
+	#[doc(hidden)]
+	type ViolationEnum: Copy + Ord + Into<ViolationKind> + Debug + Send + Sync + MaybeSerde;
+	#[doc(hidden)]
+	const LT_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const LTE_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const GT_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const GTE_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const IN_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const NOT_IN_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const CONST_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const FINITE_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	const REQUIRED_VIOLATION: Self::ViolationEnum;
+	#[doc(hidden)]
+	#[allow(private_interfaces)]
+	const SEALED: Sealed;
 
-  #[doc(hidden)]
-  fn type_name() -> &'static str;
+	#[doc(hidden)]
+	fn type_name() -> &'static str;
 }
 
 macro_rules! impl_float_wrapper {

@@ -11,7 +11,7 @@ Proxied messages/oneofs unlock the following features:
 - We can use types that are not supported by prost
 - We can map an incoming type from another type via custom conversions
 
-By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required. 
+By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
 
 To provide custom conversions, you can use the `from_proto` and `into_proto` attributes on the container (to replace the automatically generated impl as a whole) or on individual fields/variants.
 
@@ -27,65 +27,67 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 // Generates a MsgProto struct that is prost-compatible
 #[proto_message(proxied)]
 pub struct Msg {
-    // Requires setting the type manually as the type
-    // is not prost-compatible
-    #[proto(string)]
-    // Must provide a custom `into_proto` impl because `Arc<str>` does not support `Into<String>`
-    #[proto(into_proto = |v| v.as_ref().to_string())]
-    pub name: Arc<str>,
-    // Ignored field. Conversion from proto will use `Default::default()` unless a custom
-    // conversion is specified
-    #[proto(ignore)]
-    pub rust_only: i32,
-    // In proxied messages, we can use `default` for oneofs
-    // so that using `Option` is not required.
-    // The default conversion will call `ProxiedOneofProto::default().into()`
-    // if the field is `None` in the proto struct.
-    #[proto(oneof(proxied, default, tags(1, 2)))]
-    pub oneof: ProxiedOneof,
-    // We can do the same for messages too
-    #[proto(message(default))]
-    pub message_with_default: Msg2,
-    // We can use the enum directly as the type
-    #[proto(enum_)]
-    pub enum_: TestEnum
+	// Requires setting the type manually as the type
+	// is not prost-compatible
+	#[proto(string)]
+	// Must provide a custom `into_proto` impl because `Arc<str>` does not support `Into<String>`
+	#[proto(into_proto = |v| v.as_ref().to_string())]
+	pub name: Arc<str>,
+	// Ignored field. Conversion from proto will use `Default::default()` unless a custom
+	// conversion is specified
+	#[proto(ignore)]
+	pub rust_only: i32,
+	// In proxied messages, we can use `default` for oneofs
+	// so that using `Option` is not required.
+	// The default conversion will call `ProxiedOneofProto::default().into()`
+	// if the field is `None` in the proto struct.
+	#[proto(oneof(proxied, default, tags(1, 2)))]
+	pub oneof: ProxiedOneof,
+	// We can do the same for messages too
+	#[proto(message(default))]
+	pub message_with_default: Msg2,
+	// We can use the enum directly as the type
+	#[proto(enum_)]
+	pub enum_: TestEnum,
 }
 
 #[proto_enum]
 pub enum TestEnum {
-    Unspecified, A, B
+	Unspecified,
+	A,
+	B,
 }
 
 // Direct implementation. The prost attributes will be directly
 // injected in it
 #[proto_message]
 pub struct Msg2 {
-    pub id: i32,
-    // In direct impls, enums are just integers
-    #[proto(enum_(TestEnum))]
-    pub enum_: i32
+	pub id: i32,
+	// In direct impls, enums are just integers
+	#[proto(enum_(TestEnum))]
+	pub enum_: i32,
 }
 
 // Generates the `ProxiedOneofProto` enum
 #[proto_oneof(proxied)]
 pub enum ProxiedOneof {
-    #[proto(string, tag = 1, into_proto = |v| v.as_ref().to_string())]
-    A(Arc<str>),
-    #[proto(tag = 2)]
-    B(u32),
+	#[proto(string, tag = 1, into_proto = |v| v.as_ref().to_string())]
+	A(Arc<str>),
+	#[proto(tag = 2)]
+	B(u32),
 }
 
 impl Default for ProxiedOneofProto {
-    fn default() -> Self {
-        Self::B(1)
-    }
+	fn default() -> Self {
+		Self::B(1)
+	}
 }
 
 fn main() {
-    let msg = MsgProto::default();
-    // Using the `ProxiedMessage` trait
-    let proxy = msg.into_proxy();
-    // Using the `MessageProxy` trait
-    let msg_again = proxy.into_message();
+	let msg = MsgProto::default();
+	// Using the `ProxiedMessage` trait
+	let proxy = msg.into_proxy();
+	// Using the `MessageProxy` trait
+	let msg_again = proxy.into_message();
 }
 ```

@@ -4,618 +4,617 @@ use core::hash::BuildHasher;
 pub use builder::MapValidatorBuilder;
 
 use proto_types::protovalidate::{
-  field_path_element::Subscript, violations_data::map_violations::*,
+	field_path_element::Subscript, violations_data::map_violations::*,
 };
 
 use super::*;
 
 /// Generic map trait.
 pub trait Map<K, V> {
-  fn length(&self) -> usize;
+	fn length(&self) -> usize;
 
-  fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
-  where
-    K: 'a,
-    V: 'a;
+	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
+	where
+		K: 'a,
+		V: 'a;
 
-  #[cfg(feature = "cel")]
-  fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
-  where
-    K: IntoCelKey,
-    V: TryIntoCel;
+	#[cfg(feature = "cel")]
+	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
+	where
+		K: IntoCelKey,
+		V: TryIntoCel;
 }
 
 impl<K, V> Map<K, V> for BTreeMap<K, V> {
-  #[inline]
-  fn length(&self) -> usize {
-    self.len()
-  }
+	#[inline]
+	fn length(&self) -> usize {
+		self.len()
+	}
 
-  #[cfg(feature = "cel")]
-  fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
-  where
-    K: IntoCelKey,
-    V: TryIntoCel,
-  {
-    try_convert_to_cel(self)
-  }
+	#[cfg(feature = "cel")]
+	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
+	where
+		K: IntoCelKey,
+		V: TryIntoCel,
+	{
+		try_convert_to_cel(self)
+	}
 
-  #[inline]
-  fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
-  where
-    K: 'a,
-    V: 'a,
-  {
-    self.iter()
-  }
+	#[inline]
+	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
+	where
+		K: 'a,
+		V: 'a,
+	{
+		self.iter()
+	}
 }
 
 impl<K, V, S> Map<K, V> for HashMap<K, V, S>
 where
-  S: BuildHasher,
+	S: BuildHasher,
 {
-  #[inline]
-  fn length(&self) -> usize {
-    self.len()
-  }
+	#[inline]
+	fn length(&self) -> usize {
+		self.len()
+	}
 
-  #[cfg(feature = "cel")]
-  fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
-  where
-    K: IntoCelKey,
-    V: TryIntoCel,
-  {
-    try_convert_to_cel(self)
-  }
+	#[cfg(feature = "cel")]
+	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
+	where
+		K: IntoCelKey,
+		V: TryIntoCel,
+	{
+		try_convert_to_cel(self)
+	}
 
-  #[inline]
-  fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
-  where
-    K: 'a,
-    V: 'a,
-  {
-    self.iter()
-  }
+	#[inline]
+	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
+	where
+		K: 'a,
+		V: 'a,
+	{
+		self.iter()
+	}
 }
 
 /// Map of values that support [`ProtoValidation`].
 pub trait ProtoMap<K, V>
 where
-  K: ProtoValidation,
-  V: ProtoValidation,
-  K::Stored: Sized,
-  V::Stored: Sized,
+	K: ProtoValidation,
+	V: ProtoValidation,
+	K::Stored: Sized,
+	V::Stored: Sized,
 {
-  type Target: Map<K::Stored, V::Stored>;
+	type Target: Map<K::Stored, V::Stored>;
 }
 
 impl<K, V> ProtoMap<K, V> for BTreeMap<K, V>
 where
-  K: ProtoValidation,
-  V: ProtoValidation,
-  K::Stored: Sized,
-  V::Stored: Sized,
+	K: ProtoValidation,
+	V: ProtoValidation,
+	K::Stored: Sized,
+	V::Stored: Sized,
 {
-  #[doc(hidden)]
-  type Target = BTreeMap<K::Stored, V::Stored>;
+	#[doc(hidden)]
+	type Target = BTreeMap<K::Stored, V::Stored>;
 }
 
 impl<K, V, S> ProtoMap<K, V> for HashMap<K, V, S>
 where
-  S: BuildHasher,
-  K: ProtoValidation,
-  V: ProtoValidation,
-  K::Stored: Sized,
-  V::Stored: Sized,
+	S: BuildHasher,
+	K: ProtoValidation,
+	V: ProtoValidation,
+	K::Stored: Sized,
+	V::Stored: Sized,
 {
-  #[doc(hidden)]
-  type Target = HashMap<K::Stored, V::Stored, S>;
+	#[doc(hidden)]
+	type Target = HashMap<K::Stored, V::Stored, S>;
 }
 
 impl<K, V> ProtoValidation for BTreeMap<K, V>
 where
-  Self: Clone,
-  K: ProtoValidation + Send + Sync + AsProtoType,
-  V: ProtoValidation + Send + Sync + AsProtoType,
-  K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
-  V::Stored: Sized + Clone + TryIntoCel,
+	Self: Clone,
+	K: ProtoValidation + Send + Sync + AsProtoType,
+	V: ProtoValidation + Send + Sync + AsProtoType,
+	K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
+	V::Stored: Sized + Clone + TryIntoCel,
 {
-  #[doc(hidden)]
-  type Target = BTreeMap<K::Stored, V::Stored>;
-  #[doc(hidden)]
-  type Stored = BTreeMap<K::Stored, V::Stored>;
-  type Validator = MapValidator<K, V>;
-  type ValidatorBuilder = MapValidatorBuilder<K, V>;
+	#[doc(hidden)]
+	type Target = BTreeMap<K::Stored, V::Stored>;
+	#[doc(hidden)]
+	type Stored = BTreeMap<K::Stored, V::Stored>;
+	type Validator = MapValidator<K, V>;
+	type ValidatorBuilder = MapValidatorBuilder<K, V>;
 
-  #[doc(hidden)]
-  type UniqueStore<'a>
-    = UnsupportedStore<Self::Target>
-  where
-    Self: 'a;
+	#[doc(hidden)]
+	type UniqueStore<'a>
+		= UnsupportedStore<Self::Target>
+	where
+		Self: 'a;
 
-  #[inline(never)]
-  #[cold]
-  #[doc(hidden)]
-  fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
-  where
-    Self: 'a,
-  {
-    UnsupportedStore::new()
-  }
+	#[inline(never)]
+	#[cold]
+	#[doc(hidden)]
+	fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
+	where
+		Self: 'a,
+	{
+		UnsupportedStore::new()
+	}
 
-  #[doc(hidden)]
-  const HAS_DEFAULT_VALIDATOR: bool = V::HAS_DEFAULT_VALIDATOR;
+	#[doc(hidden)]
+	const HAS_DEFAULT_VALIDATOR: bool = V::HAS_DEFAULT_VALIDATOR;
 }
 
 impl<K, V, S> ProtoValidation for HashMap<K, V, S>
 where
-  S: BuildHasher + Default + Clone,
-  Self: Clone,
-  K: ProtoValidation + Send + Sync + AsProtoType,
-  V: ProtoValidation + Send + Sync + AsProtoType,
-  K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
-  V::Stored: Sized + Clone + TryIntoCel,
+	S: BuildHasher + Default + Clone,
+	Self: Clone,
+	K: ProtoValidation + Send + Sync + AsProtoType,
+	V: ProtoValidation + Send + Sync + AsProtoType,
+	K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
+	V::Stored: Sized + Clone + TryIntoCel,
 {
-  #[doc(hidden)]
-  type Target = HashMap<K::Stored, V::Stored, S>;
-  #[doc(hidden)]
-  type Stored = HashMap<K::Stored, V::Stored, S>;
-  type Validator = MapValidator<K, V>;
-  type ValidatorBuilder = MapValidatorBuilder<K, V>;
+	#[doc(hidden)]
+	type Target = HashMap<K::Stored, V::Stored, S>;
+	#[doc(hidden)]
+	type Stored = HashMap<K::Stored, V::Stored, S>;
+	type Validator = MapValidator<K, V>;
+	type ValidatorBuilder = MapValidatorBuilder<K, V>;
 
-  #[doc(hidden)]
-  type UniqueStore<'a>
-    = UnsupportedStore<Self::Target>
-  where
-    Self: 'a;
+	#[doc(hidden)]
+	type UniqueStore<'a>
+		= UnsupportedStore<Self::Target>
+	where
+		Self: 'a;
 
-  #[inline(never)]
-  #[cold]
-  #[doc(hidden)]
-  fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
-  where
-    Self: 'a,
-  {
-    UnsupportedStore::new()
-  }
+	#[inline(never)]
+	#[cold]
+	#[doc(hidden)]
+	fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
+	where
+		Self: 'a,
+	{
+		UnsupportedStore::new()
+	}
 
-  #[doc(hidden)]
-  const HAS_DEFAULT_VALIDATOR: bool = V::HAS_DEFAULT_VALIDATOR;
+	#[doc(hidden)]
+	const HAS_DEFAULT_VALIDATOR: bool = V::HAS_DEFAULT_VALIDATOR;
 }
 
 impl<K, V, M, S> ValidatorBuilderFor<M> for MapValidatorBuilder<K, V, S>
 where
-  S: builder::state::State,
-  K: ProtoValidation + Send + Sync + AsProtoType,
-  V: ProtoValidation + Send + Sync + AsProtoType,
-  M: ProtoMap<K, V> + ToOwned,
-  M::Target: Clone + Default,
-  K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
-  V::Stored: Sized + Clone + TryIntoCel,
+	S: builder::state::State,
+	K: ProtoValidation + Send + Sync + AsProtoType,
+	V: ProtoValidation + Send + Sync + AsProtoType,
+	M: ProtoMap<K, V> + ToOwned,
+	M::Target: Clone + Default,
+	K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
+	V::Stored: Sized + Clone + TryIntoCel,
 {
-  type Validator = MapValidator<K, V>;
+	type Validator = MapValidator<K, V>;
 
-  #[inline]
-  fn build_validator(self) -> Self::Validator {
-    self.build()
-  }
+	#[inline]
+	fn build_validator(self) -> Self::Validator {
+		self.build()
+	}
 }
 
 impl<K, V, M> Validator<M> for MapValidator<K, V>
 where
-  K: ProtoValidation + Send + Sync + AsProtoType,
-  V: ProtoValidation + Send + Sync + AsProtoType,
-  M: ProtoMap<K, V> + ToOwned,
-  M::Target: Clone + Default,
-  K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
-  V::Stored: Sized + Clone + TryIntoCel,
+	K: ProtoValidation + Send + Sync + AsProtoType,
+	V: ProtoValidation + Send + Sync + AsProtoType,
+	M: ProtoMap<K, V> + ToOwned,
+	M::Target: Clone + Default,
+	K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
+	V::Stored: Sized + Clone + TryIntoCel,
 {
-  type Target = M::Target;
+	type Target = M::Target;
 
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-    <Self as Validator<M>>::check_cel_programs_with(self, M::Target::default())
-  }
+	#[cfg(feature = "cel")]
+	#[inline(never)]
+	#[cold]
+	fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+		<Self as Validator<M>>::check_cel_programs_with(self, M::Target::default())
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
+	#[inline(never)]
+	#[cold]
+	fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+		let mut errors = Vec::new();
 
-    #[cfg(feature = "cel")]
-    if let Err(e) = <Self as Validator<M>>::__check_cel_programs(self) {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
+		#[cfg(feature = "cel")]
+		if let Err(e) = <Self as Validator<M>>::__check_cel_programs(self) {
+			errors.extend(e.into_iter().map(ConsistencyError::from));
+		}
 
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
+		if let Some(custom_messages) = self.error_messages.as_deref() {
+			let mut unused_messages: Vec<String> = Vec::new();
 
-      for key in custom_messages.keys() {
-        let is_used = match key {
-          MapViolation::MinPairs => self.min_pairs.is_some(),
-          MapViolation::MaxPairs => self.max_pairs.is_some(),
-          _ => true,
-        };
+			for key in custom_messages.keys() {
+				let is_used = match key {
+					MapViolation::MinPairs => self.min_pairs.is_some(),
+					MapViolation::MaxPairs => self.max_pairs.is_some(),
+					_ => true,
+				};
 
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
+				if !is_used {
+					unused_messages.push(format!("{key:?}"));
+				}
+			}
 
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
+			if !unused_messages.is_empty() {
+				errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+			}
+		}
 
-    if let Err(e) = check_length_rules(
-      None,
-      length_rule_value!("min_pairs", self.min_pairs),
-      length_rule_value!("max_pairs", self.max_pairs),
-    ) {
-      errors.push(e);
-    }
+		if let Err(e) = check_length_rules(
+			None,
+			length_rule_value!("min_pairs", self.min_pairs),
+			length_rule_value!("max_pairs", self.max_pairs),
+		) {
+			errors.push(e);
+		}
 
-    if let Some(keys_validator) = &self.keys
-      && let Err(e) = keys_validator.check_consistency()
-    {
-      errors.extend(e);
-    }
+		if let Some(keys_validator) = &self.keys
+			&& let Err(e) = keys_validator.check_consistency()
+		{
+			errors.extend(e);
+		}
 
-    if let Some(values_validator) = &self.values
-      && let Err(e) = values_validator.check_consistency()
-    {
-      errors.extend(e);
-    }
+		if let Some(values_validator) = &self.values
+			&& let Err(e) = values_validator.check_consistency()
+		{
+			errors.extend(e);
+		}
 
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
+		}
+	}
 
-  #[doc(hidden)]
-  fn __cel_rules(&self) -> Vec<CelRule> {
-    let mut rules: Vec<CelRule> = self
-      .cel
-      .iter()
-      .map(|p| p.rule().clone())
-      .collect();
+	#[doc(hidden)]
+	fn __cel_rules(&self) -> Vec<CelRule> {
+		let mut rules: Vec<CelRule> = self
+			.cel
+			.iter()
+			.map(|p| p.rule().clone())
+			.collect();
 
-    rules.extend(self.keys.iter().flat_map(|k| k.__cel_rules()));
-    rules.extend(self.values.iter().flat_map(|v| v.__cel_rules()));
+		rules.extend(self.keys.iter().flat_map(|k| k.__cel_rules()));
+		rules.extend(self.values.iter().flat_map(|v| v.__cel_rules()));
 
-    rules
-  }
+		rules
+	}
 
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
-    let mut errors: Vec<CelError> = Vec::new();
+	#[cfg(feature = "cel")]
+	#[inline(never)]
+	#[cold]
+	fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+		let mut errors: Vec<CelError> = Vec::new();
 
-    if !self.cel.is_empty() {
-      match val.try_convert_to_cel() {
-        Ok(val) => {
-          if let Err(e) = test_programs(&self.cel, val) {
-            errors.extend(e)
-          }
-        }
-        Err(e) => errors.push(e),
-      }
-    }
+		if !self.cel.is_empty() {
+			match val.try_convert_to_cel() {
+				Ok(val) => {
+					if let Err(e) = test_programs(&self.cel, val) {
+						errors.extend(e)
+					}
+				}
+				Err(e) => errors.push(e),
+			}
+		}
 
-    if let Some(key_validator) = &self.keys {
-      match key_validator.__check_cel_programs() {
-        Ok(()) => {}
-        Err(errs) => errors.extend(errs),
-      };
-    }
+		if let Some(key_validator) = &self.keys {
+			match key_validator.__check_cel_programs() {
+				Ok(()) => {}
+				Err(errs) => errors.extend(errs),
+			};
+		}
 
-    if let Some(values_validator) = &self.values {
-      match values_validator.__check_cel_programs() {
-        Ok(()) => {}
-        Err(errs) => errors.extend(errs),
-      };
-    }
+		if let Some(values_validator) = &self.values {
+			match values_validator.__check_cel_programs() {
+				Ok(()) => {}
+				Err(errs) => errors.extend(errs),
+			};
+		}
 
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
+		}
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn schema(&self) -> Option<ValidatorSchema> {
-    Some(ValidatorSchema {
-      schema: self.clone().into(),
-      cel_rules: <Self as Validator<M>>::__cel_rules(self),
-      imports: vec!["buf/validate/validate.proto".into()],
-    })
-  }
+	#[inline(never)]
+	#[cold]
+	fn schema(&self) -> Option<ValidatorSchema> {
+		Some(ValidatorSchema {
+			schema: self.clone().into(),
+			cel_rules: <Self as Validator<M>>::__cel_rules(self),
+			imports: vec!["buf/validate/validate.proto".into()],
+		})
+	}
 
-  #[inline]
-  fn execute_validation(
-    &self,
-    ctx: &mut ValidationCtx,
-    val: Option<&Self::Target>,
-  ) -> ValidationResult {
-    self.validate_map(ctx, val)
-  }
+	#[inline]
+	fn execute_validation(
+		&self,
+		ctx: &mut ValidationCtx,
+		val: Option<&Self::Target>,
+	) -> ValidationResult {
+		self.validate_map(ctx, val)
+	}
 }
 
 /// Validator for types that implement [`ProtoMap`].
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(
-  feature = "serde",
-  derive(serde::Serialize, serde::Deserialize),
-  serde(bound(
-    serialize = "K::Validator: serde::Serialize, V::Validator: serde::Serialize",
-    deserialize = "K::Validator: serde::de::DeserializeOwned, V::Validator: serde::de::DeserializeOwned",
-  ))
+	feature = "serde",
+	derive(serde::Serialize, serde::Deserialize),
+	serde(bound(
+		serialize = "K::Validator: serde::Serialize, V::Validator: serde::Serialize",
+		deserialize = "K::Validator: serde::de::DeserializeOwned, V::Validator: serde::de::DeserializeOwned",
+	))
 )]
 pub struct MapValidator<K, V>
 where
-  K: ProtoValidation,
-  V: ProtoValidation,
+	K: ProtoValidation,
+	V: ProtoValidation,
 {
-  /// The validation rules to apply to the keys of this map field.
-  pub keys: Option<K::Validator>,
+	/// The validation rules to apply to the keys of this map field.
+	pub keys: Option<K::Validator>,
 
-  #[cfg_attr(feature = "serde", serde(skip))]
-  _key_type: PhantomData<K>,
-  #[cfg_attr(feature = "serde", serde(skip))]
-  _value_type: PhantomData<V>,
+	#[cfg_attr(feature = "serde", serde(skip))]
+	_key_type: PhantomData<K>,
+	#[cfg_attr(feature = "serde", serde(skip))]
+	_value_type: PhantomData<V>,
 
-  pub cel: Vec<CelProgram>,
+	pub cel: Vec<CelProgram>,
 
-  /// The validation rules to apply to the keys of this map field.
-  pub values: Option<V::Validator>,
-  /// The minimum amount of key-value pairs that this field should have in order to be valid.
-  pub min_pairs: Option<usize>,
-  /// The maximum amount of key-value pairs that this field should have in order to be valid.
-  pub max_pairs: Option<usize>,
-  pub ignore: Ignore,
+	/// The validation rules to apply to the keys of this map field.
+	pub values: Option<V::Validator>,
+	/// The minimum amount of key-value pairs that this field should have in order to be valid.
+	pub min_pairs: Option<usize>,
+	/// The maximum amount of key-value pairs that this field should have in order to be valid.
+	pub max_pairs: Option<usize>,
+	pub ignore: Ignore,
 
-  pub error_messages: Option<ErrorMessages<MapViolation>>,
+	pub error_messages: Option<ErrorMessages<MapViolation>>,
 }
 
 impl<K, V> MapValidator<K, V>
 where
-  K: ProtoValidation,
-  V: ProtoValidation,
+	K: ProtoValidation,
+	V: ProtoValidation,
 {
-  /// Validates the given map. Given as a separate method to avoid trait resolution issues given the implementation
-  /// for several kinds of map.
-  pub fn validate_map<M>(&self, ctx: &mut ValidationCtx, val: Option<&M>) -> ValidationResult
-  where
-    M: Map<K::Stored, V::Stored> + Clone,
-    K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
-    V::Stored: Sized + Clone + TryIntoCel,
-    K: AsProtoType,
-    V: AsProtoType,
-  {
-    handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.length() == 0));
+	/// Validates the given map. Given as a separate method to avoid trait resolution issues given the implementation
+	/// for several kinds of map.
+	pub fn validate_map<M>(&self, ctx: &mut ValidationCtx, val: Option<&M>) -> ValidationResult
+	where
+		M: Map<K::Stored, V::Stored> + Clone,
+		K::Stored: Sized + Clone + IntoCelKey + Into<Subscript>,
+		V::Stored: Sized + Clone + TryIntoCel,
+		K: AsProtoType,
+		V: AsProtoType,
+	{
+		handle_ignore_always!(&self.ignore);
+		handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.length() == 0));
 
-    let mut is_valid = IsValid::Yes;
+		let mut is_valid = IsValid::Yes;
 
-    if let Some(val) = val {
-      macro_rules! handle_violation {
-        ($id:ident, $default:expr) => {
-          is_valid &= ctx.add_violation(
-            ViolationKind::Map(MapViolation::$id),
-            self
-              .error_messages
-              .as_deref()
-              .and_then(|map| map.get(&MapViolation::$id))
-              .map(|m| Cow::Borrowed(m.as_ref()))
-              .unwrap_or_else(|| Cow::Owned($default)),
-          )?;
-        };
-      }
+		if let Some(val) = val {
+			macro_rules! handle_violation {
+				($id:ident, $default:expr) => {
+					is_valid &= ctx.add_violation(
+						ViolationKind::Map(MapViolation::$id),
+						self.error_messages
+							.as_deref()
+							.and_then(|map| map.get(&MapViolation::$id))
+							.map(|m| Cow::Borrowed(m.as_ref()))
+							.unwrap_or_else(|| Cow::Owned($default)),
+					)?;
+				};
+			}
 
-      if let Some(min_pairs) = self.min_pairs
-        && val.length() < min_pairs
-      {
-        handle_violation!(MinPairs, format!("must contain at least {min_pairs} pairs"));
-      }
+			if let Some(min_pairs) = self.min_pairs
+				&& val.length() < min_pairs
+			{
+				handle_violation!(MinPairs, format!("must contain at least {min_pairs} pairs"));
+			}
 
-      if let Some(max_pairs) = self.max_pairs
-        && val.length() > max_pairs
-      {
-        handle_violation!(
-          MaxPairs,
-          format!("cannot contain more than {max_pairs} pairs")
-        );
-      }
+			if let Some(max_pairs) = self.max_pairs
+				&& val.length() > max_pairs
+			{
+				handle_violation!(
+					MaxPairs,
+					format!("cannot contain more than {max_pairs} pairs")
+				);
+			}
 
-      let keys_validator = self.keys.as_ref();
+			let keys_validator = self.keys.as_ref();
 
-      let values_validator = self.values.as_ref();
+			let values_validator = self.values.as_ref();
 
-      if keys_validator.is_some() || values_validator.is_some() {
-        for (k, v) in val.items() {
-          let _ = ctx.field_context.as_mut().map(|fc| {
-            fc.subscript = Some(k.clone().into());
-            fc.map_key_type = Some(K::proto_type().into());
-            fc.map_value_type = Some(V::proto_type().into());
-          });
+			if keys_validator.is_some() || values_validator.is_some() {
+				for (k, v) in val.items() {
+					let _ = ctx.field_context.as_mut().map(|fc| {
+						fc.subscript = Some(k.clone().into());
+						fc.map_key_type = Some(K::proto_type().into());
+						fc.map_value_type = Some(V::proto_type().into());
+					});
 
-          if let Some(validator) = keys_validator {
-            let _ = ctx
-              .field_context
-              .as_mut()
-              .map(|fc| fc.field_kind = FieldKind::MapKey);
+					if let Some(validator) = keys_validator {
+						let _ = ctx
+							.field_context
+							.as_mut()
+							.map(|fc| fc.field_kind = FieldKind::MapKey);
 
-            is_valid &= validator.execute_validation(ctx, Some(k.borrow()))?;
-          }
+						is_valid &= validator.execute_validation(ctx, Some(k.borrow()))?;
+					}
 
-          if let Some(validator) = values_validator {
-            let _ = ctx
-              .field_context
-              .as_mut()
-              .map(|fc| fc.field_kind = FieldKind::MapValue);
+					if let Some(validator) = values_validator {
+						let _ = ctx
+							.field_context
+							.as_mut()
+							.map(|fc| fc.field_kind = FieldKind::MapValue);
 
-            is_valid &= validator.execute_validation(ctx, Some(v.borrow()))?;
-          }
-        }
+						is_valid &= validator.execute_validation(ctx, Some(v.borrow()))?;
+					}
+				}
 
-        let _ = ctx
-          .field_context
-          .as_mut()
-          .map(|fc| fc.subscript = None);
-        let _ = ctx
-          .field_context
-          .as_mut()
-          .map(|fc| fc.field_kind = FieldKind::default());
-      }
+				let _ = ctx
+					.field_context
+					.as_mut()
+					.map(|fc| fc.subscript = None);
+				let _ = ctx
+					.field_context
+					.as_mut()
+					.map(|fc| fc.field_kind = FieldKind::default());
+			}
 
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        match val.clone().try_convert_to_cel() {
-          Ok(cel_value) => {
-            let cel_ctx = ProgramsExecutionCtx {
-              programs: &self.cel,
-              value: cel_value,
-              ctx,
-            };
+			#[cfg(feature = "cel")]
+			if !self.cel.is_empty() {
+				match val.clone().try_convert_to_cel() {
+					Ok(cel_value) => {
+						let cel_ctx = ProgramsExecutionCtx {
+							programs: &self.cel,
+							value: cel_value,
+							ctx,
+						};
 
-            is_valid &= cel_ctx.execute_programs()?;
-          }
-          Err(e) => {
-            is_valid &= ctx.add_cel_error_violation(e)?;
-          }
-        };
-      }
-    }
+						is_valid &= cel_ctx.execute_programs()?;
+					}
+					Err(e) => {
+						is_valid &= ctx.add_cel_error_violation(e)?;
+					}
+				};
+			}
+		}
 
-    Ok(is_valid)
-  }
+		Ok(is_valid)
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn proto_option(&self) -> ProtoOption {
-    let mut rules = OptionMessageBuilder::new();
+	#[inline(never)]
+	#[cold]
+	fn proto_option(&self) -> ProtoOption {
+		let mut rules = OptionMessageBuilder::new();
 
-    rules
-      .maybe_set("min_pairs", self.min_pairs)
-      .maybe_set("max_pairs", self.max_pairs);
+		rules
+			.maybe_set("min_pairs", self.min_pairs)
+			.maybe_set("max_pairs", self.max_pairs);
 
-    if let Some(keys_option) = self.keys.as_ref().and_then(|k| k.schema()) {
-      rules.set("keys", keys_option.schema.value);
-    }
+		if let Some(keys_option) = self.keys.as_ref().and_then(|k| k.schema()) {
+			rules.set("keys", keys_option.schema.value);
+		}
 
-    if let Some(values_option) = self.values.as_ref().and_then(|v| v.schema()) {
-      rules.set("values", values_option.schema.value);
-    }
+		if let Some(values_option) = self.values.as_ref().and_then(|v| v.schema()) {
+			rules.set("values", values_option.schema.value);
+		}
 
-    let mut outer_rules = OptionMessageBuilder::new();
+		let mut outer_rules = OptionMessageBuilder::new();
 
-    if !rules.is_empty() {
-      outer_rules.set("map", OptionValue::Message(rules.into()));
-    }
+		if !rules.is_empty() {
+			outer_rules.set("map", OptionValue::Message(rules.into()));
+		}
 
-    outer_rules
-      .add_cel_options(self.cel.clone())
-      .set_ignore(self.ignore);
+		outer_rules
+			.add_cel_options(self.cel.clone())
+			.set_ignore(self.ignore);
 
-    ProtoOption {
-      name: "(buf.validate.field)".into(),
-      value: OptionValue::Message(outer_rules.into()),
-    }
-  }
+		ProtoOption {
+			name: "(buf.validate.field)".into(),
+			value: OptionValue::Message(outer_rules.into()),
+		}
+	}
 }
 
 impl<K: AsProtoMapKey, V: AsProtoType> AsProtoField for HashMap<K, V> {
-  fn as_proto_field() -> FieldType {
-    FieldType::Map {
-      keys: K::as_proto_map_key(),
-      values: V::proto_type(),
-    }
-  }
+	fn as_proto_field() -> FieldType {
+		FieldType::Map {
+			keys: K::as_proto_map_key(),
+			values: V::proto_type(),
+		}
+	}
 }
 
 impl<K: AsProtoMapKey, V: AsProtoType> AsProtoField for BTreeMap<K, V> {
-  fn as_proto_field() -> FieldType {
-    FieldType::Map {
-      keys: K::as_proto_map_key(),
-      values: V::proto_type(),
-    }
-  }
+	fn as_proto_field() -> FieldType {
+		FieldType::Map {
+			keys: K::as_proto_map_key(),
+			values: V::proto_type(),
+		}
+	}
 }
 
 impl<K, V> Default for MapValidator<K, V>
 where
-  K: ProtoValidation,
-  V: ProtoValidation,
+	K: ProtoValidation,
+	V: ProtoValidation,
 {
-  #[inline]
-  fn default() -> Self {
-    Self {
-      keys: None,
-      _key_type: PhantomData,
-      _value_type: PhantomData,
-      cel: vec![],
-      values: V::HAS_DEFAULT_VALIDATOR.then(|| V::Validator::default()),
-      min_pairs: None,
-      max_pairs: None,
-      ignore: Ignore::Unspecified,
-      error_messages: None,
-    }
-  }
+	#[inline]
+	fn default() -> Self {
+		Self {
+			keys: None,
+			_key_type: PhantomData,
+			_value_type: PhantomData,
+			cel: vec![],
+			values: V::HAS_DEFAULT_VALIDATOR.then(|| V::Validator::default()),
+			min_pairs: None,
+			max_pairs: None,
+			ignore: Ignore::Unspecified,
+			error_messages: None,
+		}
+	}
 }
 
 impl<K, V> Clone for MapValidator<K, V>
 where
-  K: ProtoValidation,
-  V: ProtoValidation,
+	K: ProtoValidation,
+	V: ProtoValidation,
 {
-  fn clone(&self) -> Self {
-    Self {
-      keys: self.keys.clone(),
-      _key_type: PhantomData,
-      _value_type: PhantomData,
-      cel: self.cel.clone(),
-      values: self.values.clone(),
-      min_pairs: self.min_pairs,
-      max_pairs: self.max_pairs,
-      ignore: self.ignore,
-      error_messages: self.error_messages.clone(),
-    }
-  }
+	fn clone(&self) -> Self {
+		Self {
+			keys: self.keys.clone(),
+			_key_type: PhantomData,
+			_value_type: PhantomData,
+			cel: self.cel.clone(),
+			values: self.values.clone(),
+			min_pairs: self.min_pairs,
+			max_pairs: self.max_pairs,
+			ignore: self.ignore,
+			error_messages: self.error_messages.clone(),
+		}
+	}
 }
 
 #[cfg(feature = "cel")]
 fn try_convert_to_cel<K, V>(map: impl IntoIterator<Item = (K, V)>) -> Result<::cel::Value, CelError>
 where
-  K: IntoCelKey,
-  V: TryIntoCel,
+	K: IntoCelKey,
+	V: TryIntoCel,
 {
-  let mut cel_map: HashMap<::cel::objects::Key, ::cel::Value> = HashMap::new();
+	let mut cel_map: HashMap<::cel::objects::Key, ::cel::Value> = HashMap::new();
 
-  for (k, v) in map {
-    cel_map.insert(k.into(), v.__try_into_cel()?);
-  }
+	for (k, v) in map {
+		cel_map.insert(k.into(), v.__try_into_cel()?);
+	}
 
-  Ok(::cel::Value::Map(::cel::objects::Map {
-    map: Arc::new(cel_map),
-  }))
+	Ok(::cel::Value::Map(::cel::objects::Map {
+		map: Arc::new(cel_map),
+	}))
 }
 
 impl<K, V> From<MapValidator<K, V>> for ProtoOption
 where
-  K: ProtoValidation,
-  V: ProtoValidation,
+	K: ProtoValidation,
+	V: ProtoValidation,
 {
-  #[inline(never)]
-  #[cold]
-  fn from(validator: MapValidator<K, V>) -> Self {
-    validator.proto_option()
-  }
+	#[inline(never)]
+	#[cold]
+	fn from(validator: MapValidator<K, V>) -> Self {
+		validator.proto_option()
+	}
 }

@@ -8,126 +8,125 @@ use super::*;
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BoolValidator {
-  /// Specifies that only this specific value will be considered valid for this field.
-  pub const_: Option<bool>,
-  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
-  pub required: bool,
-  /// The conditions upon which this validator should be skipped.
-  pub ignore: Ignore,
+	/// Specifies that only this specific value will be considered valid for this field.
+	pub const_: Option<bool>,
+	/// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
+	pub required: bool,
+	/// The conditions upon which this validator should be skipped.
+	pub ignore: Ignore,
 
-  /// A map of custom error messages.
-  pub error_messages: Option<ErrorMessages<BoolViolation>>,
+	/// A map of custom error messages.
+	pub error_messages: Option<ErrorMessages<BoolViolation>>,
 }
 
 impl_proto_type!(bool, Bool);
 impl_proto_map_key!(bool, Bool);
 
 impl Validator<bool> for BoolValidator {
-  type Target = bool;
+	type Target = bool;
 
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
+	#[inline(never)]
+	#[cold]
+	fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+		let mut errors = Vec::new();
 
-    if let Some(custom_messages) = self.error_messages.as_deref() {
-      let mut unused_messages: Vec<String> = Vec::new();
+		if let Some(custom_messages) = self.error_messages.as_deref() {
+			let mut unused_messages: Vec<String> = Vec::new();
 
-      for key in custom_messages.keys() {
-        let is_used = match key {
-          BoolViolation::Required => self.required,
-          BoolViolation::Const => self.const_.is_some(),
-          _ => true,
-        };
+			for key in custom_messages.keys() {
+				let is_used = match key {
+					BoolViolation::Required => self.required,
+					BoolViolation::Const => self.const_.is_some(),
+					_ => true,
+				};
 
-        if !is_used {
-          unused_messages.push(format!("{key:?}"));
-        }
-      }
+				if !is_used {
+					unused_messages.push(format!("{key:?}"));
+				}
+			}
 
-      if !unused_messages.is_empty() {
-        errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
-      }
-    }
+			if !unused_messages.is_empty() {
+				errors.push(ConsistencyError::UnusedCustomMessages(unused_messages));
+			}
+		}
 
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
+		}
+	}
 
-  fn execute_validation(
-    &self,
-    ctx: &mut ValidationCtx,
-    val: Option<&Self::Target>,
-  ) -> ValidationResult {
-    handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| !v));
+	fn execute_validation(
+		&self,
+		ctx: &mut ValidationCtx,
+		val: Option<&Self::Target>,
+	) -> ValidationResult {
+		handle_ignore_always!(&self.ignore);
+		handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| !v));
 
-    let mut is_valid = IsValid::Yes;
+		let mut is_valid = IsValid::Yes;
 
-    macro_rules! handle_violation {
-      ($id:ident, $default:expr) => {
-        is_valid &= ctx.add_violation(
-          ViolationKind::Bool(BoolViolation::$id),
-          self
-            .error_messages
-            .as_deref()
-            .and_then(|map| map.get(&BoolViolation::$id))
-            .map(|m| Cow::Borrowed(m.as_ref()))
-            .unwrap_or_else(|| Cow::Owned($default)),
-        )?;
-      };
-    }
+		macro_rules! handle_violation {
+			($id:ident, $default:expr) => {
+				is_valid &= ctx.add_violation(
+					ViolationKind::Bool(BoolViolation::$id),
+					self.error_messages
+						.as_deref()
+						.and_then(|map| map.get(&BoolViolation::$id))
+						.map(|m| Cow::Borrowed(m.as_ref()))
+						.unwrap_or_else(|| Cow::Owned($default)),
+				)?;
+			};
+		}
 
-    if self.required && val.is_none_or(|v| !v) {
-      handle_violation!(Required, "is required".to_string());
-      return Ok(is_valid);
-    }
+		if self.required && val.is_none_or(|v| !v) {
+			handle_violation!(Required, "is required".to_string());
+			return Ok(is_valid);
+		}
 
-    if let Some(&val) = val
-      && let Some(const_val) = self.const_
-      && val != const_val
-    {
-      handle_violation!(Const, format!("must be {const_val}"));
-    }
+		if let Some(&val) = val
+			&& let Some(const_val) = self.const_
+			&& val != const_val
+		{
+			handle_violation!(Const, format!("must be {const_val}"));
+		}
 
-    Ok(is_valid)
-  }
+		Ok(is_valid)
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn schema(&self) -> Option<ValidatorSchema> {
-    Some(ValidatorSchema {
-      schema: self.clone().into(),
-      cel_rules: self.__cel_rules(),
-      imports: vec!["buf/validate/validate.proto".into()],
-    })
-  }
+	#[inline(never)]
+	#[cold]
+	fn schema(&self) -> Option<ValidatorSchema> {
+		Some(ValidatorSchema {
+			schema: self.clone().into(),
+			cel_rules: self.__cel_rules(),
+			imports: vec!["buf/validate/validate.proto".into()],
+		})
+	}
 }
 
 impl From<BoolValidator> for ProtoOption {
-  #[inline(never)]
-  #[cold]
-  fn from(validator: BoolValidator) -> Self {
-    let mut rules = OptionMessageBuilder::new();
+	#[inline(never)]
+	#[cold]
+	fn from(validator: BoolValidator) -> Self {
+		let mut rules = OptionMessageBuilder::new();
 
-    rules.maybe_set("const", validator.const_);
+		rules.maybe_set("const", validator.const_);
 
-    let mut outer_rules = OptionMessageBuilder::new();
+		let mut outer_rules = OptionMessageBuilder::new();
 
-    if !rules.is_empty() {
-      outer_rules.set("bool", OptionValue::Message(rules.build()));
-    }
+		if !rules.is_empty() {
+			outer_rules.set("bool", OptionValue::Message(rules.build()));
+		}
 
-    outer_rules
-      .set_required(validator.required)
-      .set_ignore(validator.ignore);
+		outer_rules
+			.set_required(validator.required)
+			.set_ignore(validator.ignore);
 
-    Self {
-      name: "(buf.validate.field)".into(),
-      value: OptionValue::Message(outer_rules.build()),
-    }
-  }
+		Self {
+			name: "(buf.validate.field)".into(),
+			value: OptionValue::Message(outer_rules.build()),
+		}
+	}
 }

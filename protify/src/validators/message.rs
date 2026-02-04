@@ -5,207 +5,204 @@ use super::*;
 
 /// Trait that executes validation on a message, if the latter had validators assigned to it via the attributes in [`proto_message`].
 pub trait ValidatedMessage: ProtoValidation + Default + Clone {
-  /// Executes validation on this message, triggering the validators that have been assigned to it
-  /// via macro attributes, if there are any.
-  ///
-  /// Unlike the [`validate`](ValidatedMessage::validate) method, it sets `fail_fast` to `false`, so that
-  /// validation will continue even if a violation has already been found.
-  #[inline]
-  fn validate_all(&self) -> Result<(), ValidationErrors> {
-    if !Self::HAS_DEFAULT_VALIDATOR {
-      return Ok(());
-    }
+	/// Executes validation on this message, triggering the validators that have been assigned to it
+	/// via macro attributes, if there are any.
+	///
+	/// Unlike the [`validate`](ValidatedMessage::validate) method, it sets `fail_fast` to `false`, so that
+	/// validation will continue even if a violation has already been found.
+	#[inline]
+	fn validate_all(&self) -> Result<(), ValidationErrors> {
+		if !Self::HAS_DEFAULT_VALIDATOR {
+			return Ok(());
+		}
 
-    let mut ctx = ValidationCtx {
-      field_context: None,
-      parent_elements: vec![],
-      violations: ValidationErrors::new(),
-      fail_fast: false,
-    };
+		let mut ctx = ValidationCtx {
+			field_context: None,
+			parent_elements: vec![],
+			violations: ValidationErrors::new(),
+			fail_fast: false,
+		};
 
-    let _ = self.validate_with_ctx(&mut ctx);
+		let _ = self.validate_with_ctx(&mut ctx);
 
-    if ctx.violations.is_empty() {
-      Ok(())
-    } else {
-      Err(ctx.violations)
-    }
-  }
+		if ctx.violations.is_empty() {
+			Ok(())
+		} else {
+			Err(ctx.violations)
+		}
+	}
 
-  /// Executes validation on this message, triggering the validators that have been assigned to it
-  /// via macro attributes, if there are any.
-  ///
-  /// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
-  #[inline]
-  fn validate(&self) -> Result<(), ValidationErrors> {
-    if !Self::HAS_DEFAULT_VALIDATOR {
-      return Ok(());
-    }
+	/// Executes validation on this message, triggering the validators that have been assigned to it
+	/// via macro attributes, if there are any.
+	///
+	/// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
+	#[inline]
+	fn validate(&self) -> Result<(), ValidationErrors> {
+		if !Self::HAS_DEFAULT_VALIDATOR {
+			return Ok(());
+		}
 
-    let mut ctx = ValidationCtx::default();
+		let mut ctx = ValidationCtx::default();
 
-    let _ = self.validate_with_ctx(&mut ctx);
+		let _ = self.validate_with_ctx(&mut ctx);
 
-    if ctx.violations.is_empty() {
-      Ok(())
-    } else {
-      Err(ctx.violations)
-    }
-  }
+		if ctx.violations.is_empty() {
+			Ok(())
+		} else {
+			Err(ctx.violations)
+		}
+	}
 
-  /// Executes validation on this message, triggering the validators that have been assigned to it
-  /// via macro attributes, and returns `true` if the validation was successful.
-  ///
-  /// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
-  #[inline]
-  fn is_valid(&self) -> bool {
-    if Self::HAS_DEFAULT_VALIDATOR {
-      self.validate().is_ok()
-    } else {
-      true
-    }
-  }
+	/// Executes validation on this message, triggering the validators that have been assigned to it
+	/// via macro attributes, and returns `true` if the validation was successful.
+	///
+	/// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
+	#[inline]
+	fn is_valid(&self) -> bool {
+		if Self::HAS_DEFAULT_VALIDATOR {
+			self.validate().is_ok()
+		} else {
+			true
+		}
+	}
 
-  /// Executes validation on this message, triggering the validators that have been assigned to it
-  /// via macro attributes, if there are any, and returns the value if validation was successful.
-  ///
-  /// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
-  #[inline]
-  fn validated(self) -> Result<Self, ValidationErrors> {
-    if !Self::HAS_DEFAULT_VALIDATOR {
-      return Ok(self);
-    }
+	/// Executes validation on this message, triggering the validators that have been assigned to it
+	/// via macro attributes, if there are any, and returns the value if validation was successful.
+	///
+	/// Uses the default values for [`ValidationCtx`], including `fail_fast: true`.
+	#[inline]
+	fn validated(self) -> Result<Self, ValidationErrors> {
+		if !Self::HAS_DEFAULT_VALIDATOR {
+			return Ok(self);
+		}
 
-    match self.validate() {
-      Ok(()) => Ok(self),
-      Err(e) => Err(e),
-    }
-  }
+		match self.validate() {
+			Ok(()) => Ok(self),
+			Err(e) => Err(e),
+		}
+	}
 
-  /// Executes validation on this message, triggering the validators that have been assigned to it
-  /// via macro attributes, if there are any.
-  fn validate_with_ctx(&self, ctx: &mut ValidationCtx) -> ValidationResult;
+	/// Executes validation on this message, triggering the validators that have been assigned to it
+	/// via macro attributes, if there are any.
+	fn validate_with_ctx(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 
 impl<T, S: builder::State> ValidatorBuilderFor<T> for MessageValidatorBuilder<S>
 where
-  T: ValidatedMessage + PartialEq + TryIntoCel,
+	T: ValidatedMessage + PartialEq + TryIntoCel,
 {
-  type Validator = MessageValidator;
+	type Validator = MessageValidator;
 
-  #[inline]
-  fn build_validator(self) -> Self::Validator {
-    self.build()
-  }
+	#[inline]
+	fn build_validator(self) -> Self::Validator {
+		self.build()
+	}
 }
 
 impl<T> Validator<T> for MessageValidator
 where
-  T: ValidatedMessage + PartialEq + TryIntoCel,
+	T: ValidatedMessage + PartialEq + TryIntoCel,
 {
-  type Target = T;
+	type Target = T;
 
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
-    if self.cel.is_empty() {
-      Ok(())
-    } else {
-      test_programs(&self.cel, val)
-    }
-  }
+	#[cfg(feature = "cel")]
+	#[inline(never)]
+	#[cold]
+	fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+		if self.cel.is_empty() {
+			Ok(())
+		} else {
+			test_programs(&self.cel, val)
+		}
+	}
 
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  #[doc(hidden)]
-  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-    <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
-  }
+	#[cfg(feature = "cel")]
+	#[inline(never)]
+	#[cold]
+	#[doc(hidden)]
+	fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+		<Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
+	}
 
-  #[doc(hidden)]
-  #[inline(never)]
-  #[cold]
-  fn __cel_rules(&self) -> Vec<CelRule> {
-    self
-      .cel
-      .iter()
-      .map(|p| p.rule().clone())
-      .collect()
-  }
+	#[doc(hidden)]
+	#[inline(never)]
+	#[cold]
+	fn __cel_rules(&self) -> Vec<CelRule> {
+		self.cel
+			.iter()
+			.map(|p| p.rule().clone())
+			.collect()
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
+	#[inline(never)]
+	#[cold]
+	fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+		let mut errors = Vec::new();
 
-    #[cfg(feature = "cel")]
-    if let Err(e) = <Self as Validator<T>>::__check_cel_programs(self) {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
+		#[cfg(feature = "cel")]
+		if let Err(e) = <Self as Validator<T>>::__check_cel_programs(self) {
+			errors.extend(e.into_iter().map(ConsistencyError::from));
+		}
 
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
+		}
+	}
 
-  fn execute_validation(
-    &self,
-    ctx: &mut ValidationCtx,
-    val: Option<&Self::Target>,
-  ) -> ValidationResult {
-    handle_ignore_always!(&self.ignore);
-    handle_ignore_if_zero_value!(&self.ignore, val.is_none());
+	fn execute_validation(
+		&self,
+		ctx: &mut ValidationCtx,
+		val: Option<&Self::Target>,
+	) -> ValidationResult {
+		handle_ignore_always!(&self.ignore);
+		handle_ignore_if_zero_value!(&self.ignore, val.is_none());
 
-    let mut is_valid = IsValid::Yes;
+		let mut is_valid = IsValid::Yes;
 
-    if let Some(val) = val {
-      if let Some(field_context) = &mut ctx.field_context {
-        ctx
-          .parent_elements
-          .push(field_context.as_path_element());
-      }
+		if let Some(val) = val {
+			if let Some(field_context) = &mut ctx.field_context {
+				ctx.parent_elements
+					.push(field_context.as_path_element());
+			}
 
-      is_valid &= val.validate_with_ctx(ctx)?;
+			is_valid &= val.validate_with_ctx(ctx)?;
 
-      if ctx.field_context.is_some() {
-        ctx.parent_elements.pop();
-      }
+			if ctx.field_context.is_some() {
+				ctx.parent_elements.pop();
+			}
 
-      #[cfg(feature = "cel")]
-      if !self.cel.is_empty() {
-        let cel_ctx = ProgramsExecutionCtx {
-          programs: &self.cel,
-          value: val.clone(),
-          ctx,
-        };
+			#[cfg(feature = "cel")]
+			if !self.cel.is_empty() {
+				let cel_ctx = ProgramsExecutionCtx {
+					programs: &self.cel,
+					value: val.clone(),
+					ctx,
+				};
 
-        is_valid &= cel_ctx.execute_programs()?;
-      }
-    } else if self.required {
-      is_valid &= ctx.add_required_violation(
-        self
-          .required_error_message
-          .as_ref()
-          .map(|e| e.to_string()),
-      )?;
-    }
+				is_valid &= cel_ctx.execute_programs()?;
+			}
+		} else if self.required {
+			is_valid &= ctx.add_required_violation(
+				self.required_error_message
+					.as_ref()
+					.map(|e| e.to_string()),
+			)?;
+		}
 
-    Ok(is_valid)
-  }
+		Ok(is_valid)
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn schema(&self) -> Option<ValidatorSchema> {
-    Some(ValidatorSchema {
-      schema: self.clone().into(),
-      cel_rules: <Self as Validator<T>>::__cel_rules(self),
-      imports: vec!["buf/validate/validate.proto".into()],
-    })
-  }
+	#[inline(never)]
+	#[cold]
+	fn schema(&self) -> Option<ValidatorSchema> {
+		Some(ValidatorSchema {
+			schema: self.clone().into(),
+			cel_rules: <Self as Validator<T>>::__cel_rules(self),
+			imports: vec!["buf/validate/validate.proto".into()],
+		})
+	}
 }
 
 /// Default validator for messages when validated in their entirety (and not as a nested field).
@@ -215,117 +212,116 @@ where
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct CelValidator {
-  pub programs: Vec<CelProgram>,
+	pub programs: Vec<CelProgram>,
 }
 
 impl CelValidator {
-  /// Adds a new program to this validator.
-  #[must_use]
-  #[inline]
-  pub fn cel(mut self, program: CelProgram) -> Self {
-    self.programs.push(program);
-    self
-  }
+	/// Adds a new program to this validator.
+	#[must_use]
+	#[inline]
+	pub fn cel(mut self, program: CelProgram) -> Self {
+		self.programs.push(program);
+		self
+	}
 }
 
 impl<T> Validator<T> for CelValidator
 where
-  T: ValidatedMessage + PartialEq + TryIntoCel + Default + Clone,
+	T: ValidatedMessage + PartialEq + TryIntoCel + Default + Clone,
 {
-  type Target = T;
+	type Target = T;
 
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
-    if self.programs.is_empty() {
-      Ok(())
-    } else {
-      test_programs(&self.programs, val)
-    }
-  }
+	#[cfg(feature = "cel")]
+	#[inline(never)]
+	#[cold]
+	fn check_cel_programs_with(&self, val: Self::Target) -> Result<(), Vec<CelError>> {
+		if self.programs.is_empty() {
+			Ok(())
+		} else {
+			test_programs(&self.programs, val)
+		}
+	}
 
-  #[cfg(feature = "cel")]
-  #[inline(never)]
-  #[cold]
-  #[doc(hidden)]
-  fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
-    <Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
-  }
+	#[cfg(feature = "cel")]
+	#[inline(never)]
+	#[cold]
+	#[doc(hidden)]
+	fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
+		<Self as Validator<T>>::check_cel_programs_with(self, Self::Target::default())
+	}
 
-  #[doc(hidden)]
-  fn __cel_rules(&self) -> Vec<CelRule> {
-    self
-      .programs
-      .iter()
-      .map(|p| p.rule().clone())
-      .collect()
-  }
+	#[doc(hidden)]
+	fn __cel_rules(&self) -> Vec<CelRule> {
+		self.programs
+			.iter()
+			.map(|p| p.rule().clone())
+			.collect()
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
-    let mut errors = Vec::new();
+	#[inline(never)]
+	#[cold]
+	fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
+		let mut errors = Vec::new();
 
-    #[cfg(feature = "cel")]
-    if let Err(e) = <Self as Validator<T>>::__check_cel_programs(self) {
-      errors.extend(e.into_iter().map(ConsistencyError::from));
-    }
+		#[cfg(feature = "cel")]
+		if let Err(e) = <Self as Validator<T>>::__check_cel_programs(self) {
+			errors.extend(e.into_iter().map(ConsistencyError::from));
+		}
 
-    if errors.is_empty() {
-      Ok(())
-    } else {
-      Err(errors)
-    }
-  }
+		if errors.is_empty() {
+			Ok(())
+		} else {
+			Err(errors)
+		}
+	}
 
-  fn execute_validation(
-    &self,
-    ctx: &mut ValidationCtx,
-    val: Option<&Self::Target>,
-  ) -> ValidationResult {
-    let mut is_valid = IsValid::Yes;
+	fn execute_validation(
+		&self,
+		ctx: &mut ValidationCtx,
+		val: Option<&Self::Target>,
+	) -> ValidationResult {
+		let mut is_valid = IsValid::Yes;
 
-    if let Some(val) = val {
-      #[cfg(feature = "cel")]
-      if !self.programs.is_empty() {
-        let cel_ctx = ProgramsExecutionCtx {
-          programs: &self.programs,
-          value: val.clone(),
-          ctx,
-        };
+		if let Some(val) = val {
+			#[cfg(feature = "cel")]
+			if !self.programs.is_empty() {
+				let cel_ctx = ProgramsExecutionCtx {
+					programs: &self.programs,
+					value: val.clone(),
+					ctx,
+				};
 
-        is_valid &= cel_ctx.execute_programs()?;
-      }
-    }
+				is_valid &= cel_ctx.execute_programs()?;
+			}
+		}
 
-    Ok(is_valid)
-  }
+		Ok(is_valid)
+	}
 
-  #[inline(never)]
-  #[cold]
-  fn schema(&self) -> Option<ValidatorSchema> {
-    Some(ValidatorSchema {
-      schema: self.clone().into(),
-      cel_rules: <Self as Validator<T>>::__cel_rules(self),
-      imports: vec!["buf/validate/validate.proto".into()],
-    })
-  }
+	#[inline(never)]
+	#[cold]
+	fn schema(&self) -> Option<ValidatorSchema> {
+		Some(ValidatorSchema {
+			schema: self.clone().into(),
+			cel_rules: <Self as Validator<T>>::__cel_rules(self),
+			imports: vec!["buf/validate/validate.proto".into()],
+		})
+	}
 }
 
 impl From<CelValidator> for ProtoOption {
-  #[inline(never)]
-  #[cold]
-  fn from(value: CelValidator) -> Self {
-    let mut rules = OptionMessageBuilder::new();
+	#[inline(never)]
+	#[cold]
+	fn from(value: CelValidator) -> Self {
+		let mut rules = OptionMessageBuilder::new();
 
-    rules.add_cel_options(value.programs);
+		rules.add_cel_options(value.programs);
 
-    Self {
-      name: "(buf.validate.message)".into(),
-      value: OptionValue::Message(rules.into()),
-    }
-  }
+		Self {
+			name: "(buf.validate.message)".into(),
+			value: OptionValue::Message(rules.into()),
+		}
+	}
 }
 
 /// Defalt validator for messages used as fields of other messages.
@@ -333,33 +329,33 @@ impl From<CelValidator> for ProtoOption {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageValidator {
-  /// Adds custom validation using one or more [`CelRule`]s to this field.
-  pub cel: Vec<CelProgram>,
+	/// Adds custom validation using one or more [`CelRule`]s to this field.
+	pub cel: Vec<CelProgram>,
 
-  /// The conditions upon which this validator should be skipped.
-  pub ignore: Ignore,
+	/// The conditions upon which this validator should be skipped.
+	pub ignore: Ignore,
 
-  /// Specifies that the field must be set in order to be valid.
-  pub required: bool,
+	/// Specifies that the field must be set in order to be valid.
+	pub required: bool,
 
-  /// A custom error message to display for the `required` violation.
-  pub required_error_message: Option<FixedStr>,
+	/// A custom error message to display for the `required` violation.
+	pub required_error_message: Option<FixedStr>,
 }
 
 impl From<MessageValidator> for ProtoOption {
-  #[inline(never)]
-  #[cold]
-  fn from(validator: MessageValidator) -> Self {
-    let mut rules = OptionMessageBuilder::new();
+	#[inline(never)]
+	#[cold]
+	fn from(validator: MessageValidator) -> Self {
+		let mut rules = OptionMessageBuilder::new();
 
-    rules
-      .add_cel_options(validator.cel)
-      .set_required(validator.required)
-      .set_ignore(validator.ignore);
+		rules
+			.add_cel_options(validator.cel)
+			.set_required(validator.required)
+			.set_ignore(validator.ignore);
 
-    Self {
-      name: "(buf.validate.field)".into(),
-      value: OptionValue::Message(rules.into()),
-    }
-  }
+		Self {
+			name: "(buf.validate.field)".into(),
+			value: OptionValue::Message(rules.into()),
+		}
+	}
 }

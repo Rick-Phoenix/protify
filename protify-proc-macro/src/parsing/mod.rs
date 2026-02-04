@@ -2,40 +2,40 @@ use crate::*;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct AutoTests {
-  pub skip_consistency_checks: bool,
-  pub skip_oneof_tags_check: bool,
+	pub skip_consistency_checks: bool,
+	pub skip_oneof_tags_check: bool,
 }
 
 impl AutoTests {
-  pub fn parse(nested_meta: &ParseNestedMeta) -> syn::Result<Self> {
-    let mut skip_consistency_checks = false;
-    let mut skip_oneof_tags_check = false;
+	pub fn parse(nested_meta: &ParseNestedMeta) -> syn::Result<Self> {
+		let mut skip_consistency_checks = false;
+		let mut skip_oneof_tags_check = false;
 
-    nested_meta.parse_nested_meta(|meta| {
-      let ident_str = meta.ident_str()?;
+		nested_meta.parse_nested_meta(|meta| {
+			let ident_str = meta.ident_str()?;
 
-      match ident_str.as_str() {
-        "all" => {
-          skip_consistency_checks = true;
-          skip_oneof_tags_check = true;
-        }
-        "validators" => {
-          skip_consistency_checks = true;
-        }
-        "oneof_tags" => {
-          skip_oneof_tags_check = true;
-        }
-        _ => return Err(meta.error("Unknown attribute")),
-      };
+			match ident_str.as_str() {
+				"all" => {
+					skip_consistency_checks = true;
+					skip_oneof_tags_check = true;
+				}
+				"validators" => {
+					skip_consistency_checks = true;
+				}
+				"oneof_tags" => {
+					skip_oneof_tags_check = true;
+				}
+				_ => return Err(meta.error("Unknown attribute")),
+			};
 
-      Ok(())
-    })?;
+			Ok(())
+		})?;
 
-    Ok(Self {
-      skip_consistency_checks,
-      skip_oneof_tags_check,
-    })
-  }
+		Ok(Self {
+			skip_consistency_checks,
+			skip_oneof_tags_check,
+		})
+	}
 }
 
 mod validator_tokens;

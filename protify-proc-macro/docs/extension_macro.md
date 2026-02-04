@@ -17,16 +17,16 @@ proto_package!(MY_PKG, name = "my_pkg");
 
 #[proto_extension(target = MessageOptions)]
 pub struct MyExt {
-  #[proto(tag = 5000)]
-  cool_opt: String
+	#[proto(tag = 5000)]
+	cool_opt: String,
 }
 
 define_proto_file!(
-  MY_FILE,
-  name = "my_file.proto",
-  package = MY_PKG,
-  // Unlike other elements, extensions must always be added manually
-  extensions = [ MyExt ]
+	MY_FILE,
+	name = "my_file.proto",
+	package = MY_PKG,
+	// Unlike other elements, extensions must always be added manually
+	extensions = [MyExt]
 );
 ```
 

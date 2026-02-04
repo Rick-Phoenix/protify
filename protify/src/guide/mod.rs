@@ -23,10 +23,10 @@
 //!	- [Roadmap](crate::guide::roadmap)
 
 macro_rules! doc_mod {
-  ($name:ident) => {
-    #[doc = include_str!(concat!(stringify!($name), ".md"))]
-    pub mod $name {}
-  };
+	($name:ident) => {
+		#[doc = include_str!(concat!(stringify!($name), ".md"))]
+		pub mod $name {}
+	};
 }
 
 /// # Maximizing Code Elimination

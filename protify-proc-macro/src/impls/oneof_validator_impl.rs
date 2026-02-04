@@ -1,149 +1,150 @@
 use crate::*;
 
 pub fn generate_oneof_validator(
-  use_fallback: UseFallback,
-  oneof_ident: &Ident,
-  variants: &[FieldDataKind],
-  top_level_validators: &Validators,
+	use_fallback: UseFallback,
+	oneof_ident: &Ident,
+	variants: &[FieldDataKind],
+	top_level_validators: &Validators,
 ) -> TokenStream2 {
-  let mut validators_data = ValidatorsData {
-    has_non_default_validators: !top_level_validators.is_empty(),
-    default_check_tokens: Vec::new(),
-  };
+	let mut validators_data = ValidatorsData {
+		has_non_default_validators: !top_level_validators.is_empty(),
+		default_check_tokens: Vec::new(),
+	};
 
-  let validators_tokens = if *use_fallback {
-    quote! { unimplemented!() }
-  } else {
-    let top_level = top_level_validators.iter().map(|v| {
-      quote_spanned! {v.span=>
-        is_valid &= ::protify::Validator::<#oneof_ident>::execute_validation(
-          &(#v),
-          ctx.without_field_context(),
-          Some(self)
-        )?;
-      }
-    });
+	let validators_tokens = if *use_fallback {
+		quote! { unimplemented!() }
+	} else {
+		let top_level = top_level_validators.iter().map(|v| {
+			quote_spanned! {v.span=>
+			  is_valid &= ::protify::Validator::<#oneof_ident>::execute_validation(
+				&(#v),
+				ctx.without_field_context(),
+				Some(self)
+			  )?;
+			}
+		});
 
-    let variants_validators = variants
-      .iter()
-      .filter_map(|d| d.as_normal())
-      .filter_map(|d| {
-        let tokens = d.field_validator_tokens(oneof_ident, &mut validators_data, ItemKind::Oneof);
+		let variants_validators = variants
+			.iter()
+			.filter_map(|d| d.as_normal())
+			.filter_map(|d| {
+				let tokens =
+					d.field_validator_tokens(oneof_ident, &mut validators_data, ItemKind::Oneof);
 
-        (!tokens.is_empty()).then_some((d, tokens))
-      })
-      .map(|(data, validators)| {
-        let ident = &data.ident;
+				(!tokens.is_empty()).then_some((d, tokens))
+			})
+			.map(|(data, validators)| {
+				let ident = &data.ident;
 
-        quote_spanned! {data.span=>
-          Self::#ident(v) => {
-            #(#validators)*
-          }
-        }
-      });
+				quote_spanned! {data.span=>
+				  Self::#ident(v) => {
+					#(#validators)*
+				  }
+				}
+			});
 
-    let top_level_tokens = quote! { #(#top_level)* };
-    let variants_tokens = quote! { #(#variants_validators,)* };
+		let top_level_tokens = quote! { #(#top_level)* };
+		let variants_tokens = quote! { #(#variants_validators,)* };
 
-    if top_level_tokens.is_empty() && variants_tokens.is_empty() {
-      TokenStream2::new()
-    } else {
-      quote! {
-        #top_level_tokens
+		if top_level_tokens.is_empty() && variants_tokens.is_empty() {
+			TokenStream2::new()
+		} else {
+			quote! {
+			  #top_level_tokens
 
-        match self {
-          #variants_tokens
-          _ => {}
-        };
-      }
-    }
-  };
+			  match self {
+				#variants_tokens
+				_ => {}
+			  };
+			}
+		}
+	};
 
-  let has_validators = !validators_tokens.is_empty();
+	let has_validators = !validators_tokens.is_empty();
 
-  let ValidatorsData {
-    has_non_default_validators,
-    default_check_tokens,
-  } = validators_data;
+	let ValidatorsData {
+		has_non_default_validators,
+		default_check_tokens,
+	} = validators_data;
 
-  // In case a future reader finds this confusing.
-  // `has_validators` => whether there are any validators at all
-  // `has_non_default_validators` => whether there are non-default validators (which means that HAS_DEFAULT_VALIDATOR = true)
-  //
-  // The logic below determines the value of HAS_DEFAULT_VALIDATOR. If this oneof only contains default validators, we need to check the same constant in the items being validated to determine this.
-  #[allow(clippy::if_same_then_else)]
-  let has_default_validator = if has_non_default_validators {
-    quote! { true }
-    // This can never be true for oneofs, but we fall back to `true` just in case
-  } else if default_check_tokens.is_empty() {
-    quote! { true }
-  } else {
-    let mut tokens = TokenStream2::new();
+	// In case a future reader finds this confusing.
+	// `has_validators` => whether there are any validators at all
+	// `has_non_default_validators` => whether there are non-default validators (which means that HAS_DEFAULT_VALIDATOR = true)
+	//
+	// The logic below determines the value of HAS_DEFAULT_VALIDATOR. If this oneof only contains default validators, we need to check the same constant in the items being validated to determine this.
+	#[allow(clippy::if_same_then_else)]
+	let has_default_validator = if has_non_default_validators {
+		quote! { true }
+		// This can never be true for oneofs, but we fall back to `true` just in case
+	} else if default_check_tokens.is_empty() {
+		quote! { true }
+	} else {
+		let mut tokens = TokenStream2::new();
 
-    for (i, expr) in default_check_tokens.into_iter().enumerate() {
-      if i != 0 {
-        tokens.extend(quote! { || });
-      }
+		for (i, expr) in default_check_tokens.into_iter().enumerate() {
+			if i != 0 {
+				tokens.extend(quote! { || });
+			}
 
-      tokens.extend(expr);
-    }
+			tokens.extend(expr);
+		}
 
-    tokens
-  };
+		tokens
+	};
 
-  let inline_if_empty = (!has_validators).then(|| quote! { #[inline(always)] });
+	let inline_if_empty = (!has_validators).then(|| quote! { #[inline(always)] });
 
-  quote! {
-    impl ::protify::ValidatedOneof for #oneof_ident {
-      #inline_if_empty
-      fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
-        if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
-          return Ok(::protify::IsValid::Yes);
-        }
+	quote! {
+	  impl ::protify::ValidatedOneof for #oneof_ident {
+		#inline_if_empty
+		fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
+		  if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
+			return Ok(::protify::IsValid::Yes);
+		  }
 
-        let mut is_valid = ::protify::IsValid::Yes;
+		  let mut is_valid = ::protify::IsValid::Yes;
 
-        #validators_tokens
+		  #validators_tokens
 
-        Ok(is_valid)
-      }
-    }
+		  Ok(is_valid)
+		}
+	  }
 
-    impl ::protify::ProtoValidation for #oneof_ident {
-      #[doc(hidden)]
-      type Target = Self;
-      #[doc(hidden)]
-      type Stored = Self;
-      #[doc(hidden)]
-      type Validator = ::protify::OneofValidator;
-      #[doc(hidden)]
-      type ValidatorBuilder = ::protify::OneofValidatorBuilder;
+	  impl ::protify::ProtoValidation for #oneof_ident {
+		#[doc(hidden)]
+		type Target = Self;
+		#[doc(hidden)]
+		type Stored = Self;
+		#[doc(hidden)]
+		type Validator = ::protify::OneofValidator;
+		#[doc(hidden)]
+		type ValidatorBuilder = ::protify::OneofValidatorBuilder;
 
-      #[doc(hidden)]
-      type UniqueStore<'a>
-        = ::protify::LinearRefStore<'a, Self>
-      where
-        Self: 'a;
+		#[doc(hidden)]
+		type UniqueStore<'a>
+		  = ::protify::LinearRefStore<'a, Self>
+		where
+		  Self: 'a;
 
-      #[doc(hidden)]
-      const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
-      #[doc(hidden)]
-      const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
-    }
-  }
+		#[doc(hidden)]
+		const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
+		#[doc(hidden)]
+		const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
+	  }
+	}
 }
 
 impl OneofCtx<'_> {
-  pub fn generate_validator(&self) -> TokenStream2 {
-    let oneof_ident = self.proto_enum_ident;
+	pub fn generate_validator(&self) -> TokenStream2 {
+		let oneof_ident = self.proto_enum_ident;
 
-    generate_oneof_validator(
-      // For non-reflection implementations we don't skip fields if they don't have
-      // validators, so having empty fields means an error occurred
-      UseFallback::from(self.variants.is_empty()),
-      oneof_ident,
-      &self.variants,
-      &self.oneof_attrs.validators,
-    )
-  }
+		generate_oneof_validator(
+			// For non-reflection implementations we don't skip fields if they don't have
+			// validators, so having empty fields means an error occurred
+			UseFallback::from(self.variants.is_empty()),
+			oneof_ident,
+			&self.variants,
+			&self.oneof_attrs.validators,
+		)
+	}
 }

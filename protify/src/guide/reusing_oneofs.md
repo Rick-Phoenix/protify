@@ -2,11 +2,12 @@
 
 An extra feature brought by this library is the ability to reuse the same rust enum as a oneof across different messages. This method requires some constraints but can be useful to reduce code duplication.
 
-When a oneof is used in a message, a schema for a completely new oneof will be generated inside that message's definition in its proto file. It will contain the same variants, tags and options of the original instance, but the name will match the name of the field in the rust struct (escaping leading `r#` or trailing `_`), unless manually overridden with the `#[proto(name = "..")]` attribute. 
+When a oneof is used in a message, a schema for a completely new oneof will be generated inside that message's definition in its proto file. It will contain the same variants, tags and options of the original instance, but the name will match the name of the field in the rust struct (escaping leading `r#` or trailing `_`), unless manually overridden with the `#[proto(name = "..")]` attribute.
 
 All validators and options defined on the oneof as a field will be local to that instance.
 
 ```rust
+use indoc::indoc;
 use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
@@ -14,55 +15,63 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 #[proto_message]
 pub struct Msg1 {
-    // Tags have to be defined explicitly
-    // at the call site
-    #[proto(oneof(tags(1, 2)))]
-    pub oneof_1: Option<ReusedOneof>,
+	// Tags have to be defined explicitly
+	// at the call site
+	#[proto(oneof(tags(1, 2)))]
+	pub oneof_1: Option<ReusedOneof>,
 }
 
 #[proto_message]
 pub struct Msg2 {
-    // A new oneof will be created inside
-    // this message's representation,
-    // and any extra options
-    // are local to this instance
-    #[proto(oneof(tags(1, 2)), validate = |v| v.required())]
-    pub oneof_2: Option<ReusedOneof>,
+	// A new oneof will be created inside
+	// this message's representation,
+	// and any extra options
+	// are local to this instance
+	#[proto(oneof(tags(1, 2)), validate = |v| v.required())]
+	pub oneof_2: Option<ReusedOneof>,
 }
 
 #[proto_oneof]
 pub enum ReusedOneof {
-    // Tags have to be defined explicitly for oneofs
-    #[proto(tag = 1)]
-    ThingA(i32),
-    #[proto(tag = 2)]
-    ThingB(u32)
+	// Tags have to be defined explicitly for oneofs
+	#[proto(tag = 1)]
+	ThingA(i32),
+	#[proto(tag = 2)]
+	ThingB(u32),
 }
 
-let msg1 = Msg1::proto_schema().render_schema().unwrap();
-let msg2 = Msg2::proto_schema().render_schema().unwrap();
+fn main() {
+	let msg1 = Msg1::proto_schema().render_schema().unwrap();
+	let msg2 = Msg2::proto_schema().render_schema().unwrap();
 
-assert_eq!(msg1, 
-r"
-message Msg1 {
-  oneof oneof_1 {
-    int32 thing_a = 1;
-    uint32 thing_b = 2;
-  }
-}".trim_start());
+	assert_eq!(
+		msg1,
+		indoc! {"
+            message Msg1 {
+              oneof oneof_1 {
+                int32 thing_a = 1;
+                uint32 thing_b = 2;
+              }
+            }"
+		}
+	);
 
-// Notice how the oneof has a different name
-// And an option that is local to it
-assert_eq!(msg2, 
-r"
-message Msg2 {
-  oneof oneof_2 {
-    option (buf.validate.oneof).required = true;
+	// Notice how the oneof has a different name
+	// And an option that is local to it
+	assert_eq!(
+		msg2,
+		indoc! {"
+            message Msg2 {
+              oneof oneof_2 {
+                option (buf.validate.oneof).required = true;
 
-    int32 thing_a = 1;
-    uint32 thing_b = 2;
-  }
-}".trim_start());
+                int32 thing_a = 1;
+                uint32 thing_b = 2;
+              }
+            }"
+		}
+	);
+}
 ```
 
 # ⚠️ Avoiding Tag Mismatches

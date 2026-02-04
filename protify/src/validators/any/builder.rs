@@ -7,142 +7,142 @@ pub(crate) use state::*;
 /// Builder for [`AnyValidator`].
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AnyValidatorBuilder<S: State = Empty> {
-  _state: PhantomData<S>,
+	_state: PhantomData<S>,
 
-  data: AnyValidator,
+	data: AnyValidator,
 }
 
 impl<S: State> Default for AnyValidatorBuilder<S> {
-  #[inline]
-  fn default() -> Self {
-    Self {
-      _state: PhantomData,
-      data: AnyValidator::default(),
-    }
-  }
+	#[inline]
+	fn default() -> Self {
+		Self {
+			_state: PhantomData,
+			data: AnyValidator::default(),
+		}
+	}
 }
 
 impl AnyValidator {
-  #[must_use]
-  #[inline]
-  pub fn builder() -> AnyValidatorBuilder {
-    AnyValidatorBuilder::default()
-  }
+	#[must_use]
+	#[inline]
+	pub fn builder() -> AnyValidatorBuilder {
+		AnyValidatorBuilder::default()
+	}
 }
 
 impl ProtoValidation for Any {
-  #[doc(hidden)]
-  type Target = Self;
-  #[doc(hidden)]
-  type Stored = Self;
-  type Validator = AnyValidator;
-  type ValidatorBuilder = AnyValidatorBuilder;
+	#[doc(hidden)]
+	type Target = Self;
+	#[doc(hidden)]
+	type Stored = Self;
+	type Validator = AnyValidator;
+	type ValidatorBuilder = AnyValidatorBuilder;
 
-  #[doc(hidden)]
-  type UniqueStore<'a>
-    = RefHybridStore<'a, Self>
-  where
-    Self: 'a;
+	#[doc(hidden)]
+	type UniqueStore<'a>
+		= RefHybridStore<'a, Self>
+	where
+		Self: 'a;
 
-  #[doc(hidden)]
-  const HAS_DEFAULT_VALIDATOR: bool = false;
+	#[doc(hidden)]
+	const HAS_DEFAULT_VALIDATOR: bool = false;
 }
 
 impl<S: State> ValidatorBuilderFor<Any> for AnyValidatorBuilder<S> {
-  type Validator = AnyValidator;
-  #[inline]
-  fn build_validator(self) -> AnyValidator {
-    self.build()
-  }
+	type Validator = AnyValidator;
+	#[inline]
+	fn build_validator(self) -> AnyValidator {
+		self.build()
+	}
 }
 
 #[allow(
-  clippy::must_use_candidate,
-  clippy::use_self,
-  clippy::return_self_not_must_use
+	clippy::must_use_candidate,
+	clippy::use_self,
+	clippy::return_self_not_must_use
 )]
 impl<S: State> AnyValidatorBuilder<S> {
-  custom_error_messages_method!(Any);
+	custom_error_messages_method!(Any);
 
-  /// Adds a [`CelProgram`] to this validator.
-  #[inline]
-  pub fn cel(mut self, program: CelProgram) -> AnyValidatorBuilder<S> {
-    self.data.cel.push(program);
+	/// Adds a [`CelProgram`] to this validator.
+	#[inline]
+	pub fn cel(mut self, program: CelProgram) -> AnyValidatorBuilder<S> {
+		self.data.cel.push(program);
 
-    AnyValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		AnyValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that this validator should always be ignored.
-  #[inline]
-  pub fn ignore_always(mut self) -> AnyValidatorBuilder<SetIgnore<S>>
-  where
-    S::Ignore: IsUnset,
-  {
-    self.data.ignore = Ignore::Always;
+	/// Specifies that this validator should always be ignored.
+	#[inline]
+	pub fn ignore_always(mut self) -> AnyValidatorBuilder<SetIgnore<S>>
+	where
+		S::Ignore: IsUnset,
+	{
+		self.data.ignore = Ignore::Always;
 
-    AnyValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		AnyValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that the field must be set in order to be valid.
-  #[inline]
-  pub fn required(mut self) -> AnyValidatorBuilder<SetRequired<S>>
-  where
-    S::Required: IsUnset,
-  {
-    self.data.required = true;
+	/// Specifies that the field must be set in order to be valid.
+	#[inline]
+	pub fn required(mut self) -> AnyValidatorBuilder<SetRequired<S>>
+	where
+		S::Required: IsUnset,
+	{
+		self.data.required = true;
 
-    AnyValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		AnyValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that only the type URLs in this list will be considered valid for this field.
-  #[inline]
-  pub fn in_(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetIn<S>>
-  where
-    S::In: IsUnset,
-  {
-    self.data.in_ = Some(list.into_sorted_list());
+	/// Specifies that only the type URLs in this list will be considered valid for this field.
+	#[inline]
+	pub fn in_(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetIn<S>>
+	where
+		S::In: IsUnset,
+	{
+		self.data.in_ = Some(list.into_sorted_list());
 
-    AnyValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		AnyValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that the type URLs in this list will be considered NOT valid for this field.
-  #[inline]
-  pub fn not_in(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetNotIn<S>>
-  where
-    S::NotIn: IsUnset,
-  {
-    self.data.not_in = Some(list.into_sorted_list());
+	/// Specifies that the type URLs in this list will be considered NOT valid for this field.
+	#[inline]
+	pub fn not_in(mut self, list: impl IntoSortedList<FixedStr>) -> AnyValidatorBuilder<SetNotIn<S>>
+	where
+		S::NotIn: IsUnset,
+	{
+		self.data.not_in = Some(list.into_sorted_list());
 
-    AnyValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		AnyValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Builds the validator.
-  #[must_use]
-  #[inline]
-  pub fn build(self) -> AnyValidator {
-    self.data
-  }
+	/// Builds the validator.
+	#[must_use]
+	#[inline]
+	pub fn build(self) -> AnyValidator {
+		self.data
+	}
 }
 
 impl<S: State> From<AnyValidatorBuilder<S>> for ProtoOption {
-  #[inline(never)]
-  #[cold]
-  fn from(value: AnyValidatorBuilder<S>) -> Self {
-    value.build().into()
-  }
+	#[inline(never)]
+	#[cold]
+	fn from(value: AnyValidatorBuilder<S>) -> Self {
+		value.build().into()
+	}
 }

@@ -2,106 +2,106 @@ use crate::*;
 
 #[derive(Default)]
 pub struct OneofAttrs {
-  pub options: TokensOr<TokenStream2>,
-  pub from_proto: Option<PathOrClosure>,
-  pub into_proto: Option<PathOrClosure>,
-  pub forwarded_derives: Vec<Path>,
-  pub forwarded_attrs: Vec<Meta>,
-  pub is_proxied: bool,
-  pub auto_tests: AutoTests,
-  pub validators: Validators,
+	pub options: TokensOr<TokenStream2>,
+	pub from_proto: Option<PathOrClosure>,
+	pub into_proto: Option<PathOrClosure>,
+	pub forwarded_derives: Vec<Path>,
+	pub forwarded_attrs: Vec<Meta>,
+	pub is_proxied: bool,
+	pub auto_tests: AutoTests,
+	pub validators: Validators,
 }
 
 #[derive(Default)]
 pub struct OneofMacroAttrs {
-  pub is_proxied: bool,
+	pub is_proxied: bool,
 }
 
 impl OneofMacroAttrs {
-  pub fn parse(macro_attrs: TokenStream2) -> syn::Result<Self> {
-    let mut is_proxied = false;
+	pub fn parse(macro_attrs: TokenStream2) -> syn::Result<Self> {
+		let mut is_proxied = false;
 
-    let macro_attrs_parser = syn::meta::parser(|meta| {
-      let ident_str = meta.ident_str()?;
+		let macro_attrs_parser = syn::meta::parser(|meta| {
+			let ident_str = meta.ident_str()?;
 
-      match ident_str.as_str() {
-        "proxied" => {
-          is_proxied = true;
-        }
-        _ => return Err(meta.error("Unknown attribute")),
-      };
+			match ident_str.as_str() {
+				"proxied" => {
+					is_proxied = true;
+				}
+				_ => return Err(meta.error("Unknown attribute")),
+			};
 
-      Ok(())
-    });
+			Ok(())
+		});
 
-    macro_attrs_parser.parse2(macro_attrs)?;
+		macro_attrs_parser.parse2(macro_attrs)?;
 
-    Ok(Self { is_proxied })
-  }
+		Ok(Self { is_proxied })
+	}
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn process_oneof_attrs(
-  macro_attrs: OneofMacroAttrs,
-  attrs: &[Attribute],
+	macro_attrs: OneofMacroAttrs,
+	attrs: &[Attribute],
 ) -> Result<OneofAttrs, Error> {
-  let mut options = TokenStreamOr::new(|_| quote! { [] });
-  let mut from_proto: Option<PathOrClosure> = None;
-  let mut into_proto: Option<PathOrClosure> = None;
-  let mut forwarded_derives: Vec<Path> = Vec::new();
-  let mut auto_tests = AutoTests::default();
-  let mut validators = Validators::default();
-  let mut forwarded_attrs: Vec<Meta> = Vec::new();
+	let mut options = TokenStreamOr::new(|_| quote! { [] });
+	let mut from_proto: Option<PathOrClosure> = None;
+	let mut into_proto: Option<PathOrClosure> = None;
+	let mut forwarded_derives: Vec<Path> = Vec::new();
+	let mut auto_tests = AutoTests::default();
+	let mut validators = Validators::default();
+	let mut forwarded_attrs: Vec<Meta> = Vec::new();
 
-  parse_filtered_attrs(attrs, &["proto"], |meta| {
-    let ident = meta.path.require_ident()?.to_string();
+	parse_filtered_attrs(attrs, &["proto"], |meta| {
+		let ident = meta.path.require_ident()?.to_string();
 
-    match ident.as_str() {
-      "attr" => {
-        forwarded_attrs = meta.parse_list::<PunctuatedItems<Meta>>()?.list;
-      }
-      "validate" => {
-        validators.merge(meta.parse_value::<Validators>()?);
-      }
-      "skip_checks" => {
-        auto_tests = AutoTests::parse(&meta)?;
-      }
-      "derive" => {
-        forwarded_derives = meta.parse_list::<PathList>()?.list;
-      }
-      "options" => {
-        options.span = meta.input.span();
-        options.set(meta.expr_value()?.into_token_stream());
-      }
-      "from_proto" => {
-        from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
-      }
-      "into_proto" => {
-        into_proto = Some(meta.expr_value()?.as_path_or_closure()?);
-      }
-      _ => return Err(meta.error("Unknown attribute")),
-    };
+		match ident.as_str() {
+			"attr" => {
+				forwarded_attrs = meta.parse_list::<PunctuatedItems<Meta>>()?.list;
+			}
+			"validate" => {
+				validators.merge(meta.parse_value::<Validators>()?);
+			}
+			"skip_checks" => {
+				auto_tests = AutoTests::parse(&meta)?;
+			}
+			"derive" => {
+				forwarded_derives = meta.parse_list::<PathList>()?.list;
+			}
+			"options" => {
+				options.span = meta.input.span();
+				options.set(meta.expr_value()?.into_token_stream());
+			}
+			"from_proto" => {
+				from_proto = Some(meta.expr_value()?.as_path_or_closure()?);
+			}
+			"into_proto" => {
+				into_proto = Some(meta.expr_value()?.as_path_or_closure()?);
+			}
+			_ => return Err(meta.error("Unknown attribute")),
+		};
 
-    Ok(())
-  })?;
+		Ok(())
+	})?;
 
-  for validator in &validators {
-    if validator.kind.is_closure() {
-      bail_with_span!(
-        validator.span,
-        "Closures are not supported for oneofs at the top level"
-      );
-    }
-  }
+	for validator in &validators {
+		if validator.kind.is_closure() {
+			bail_with_span!(
+				validator.span,
+				"Closures are not supported for oneofs at the top level"
+			);
+		}
+	}
 
-  Ok(OneofAttrs {
-    options,
-    from_proto,
-    into_proto,
-    forwarded_derives,
-    is_proxied: macro_attrs.is_proxied,
-    auto_tests,
-    validators,
-    forwarded_attrs,
-  })
+	Ok(OneofAttrs {
+		options,
+		from_proto,
+		into_proto,
+		forwarded_derives,
+		is_proxied: macro_attrs.is_proxied,
+		auto_tests,
+		validators,
+		forwarded_attrs,
+	})
 }

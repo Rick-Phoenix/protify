@@ -1,150 +1,153 @@
 use crate::*;
 
 fn get_conversion_tokens(
-  type_info: &TypeInfo,
-  val_tokens: &TokenStream2,
-  span: Span,
+	type_info: &TypeInfo,
+	val_tokens: &TokenStream2,
+	span: Span,
 ) -> TokenStream2 {
-  match type_info.type_.as_ref() {
-    RustType::Box(_) => quote_spanned! {span=> ::protify::CelValue::try_into_cel(*#val_tokens)? },
-    RustType::Float(_)
-    | RustType::Uint(_)
-    | RustType::Int(_)
-    | RustType::Bool
-    | RustType::Bytes
-    | RustType::String => {
-      quote_spanned! {span=> #val_tokens.into() }
-    }
-    _ => {
-      quote_spanned! {span=> #val_tokens.try_into().map_err(::protify::proto_types::cel::CelConversionError::from)? }
-    }
-  }
+	match type_info.type_.as_ref() {
+		RustType::Box(_) => {
+			quote_spanned! {span=> ::protify::CelValue::try_into_cel(*#val_tokens)? }
+		}
+		RustType::Float(_)
+		| RustType::Uint(_)
+		| RustType::Int(_)
+		| RustType::Bool
+		| RustType::Bytes
+		| RustType::String => {
+			quote_spanned! {span=> #val_tokens.into() }
+		}
+		_ => {
+			quote_spanned! {span=> #val_tokens.try_into().map_err(::protify::proto_types::cel::CelConversionError::from)? }
+		}
+	}
 }
 
 pub fn derive_cel_value_oneof(item: &ItemEnum) -> Result<TokenStream2, Error> {
-  let enum_ident = &item.ident;
+	let enum_ident = &item.ident;
 
-  let variants = &item.variants;
+	let variants = &item.variants;
 
-  let mut match_arms = Vec::<TokenStream2>::new();
+	let mut match_arms = Vec::<TokenStream2>::new();
 
-  for variant in variants {
-    let variant_ident = &variant.ident;
-    let span = variant.ident.span();
-    let proto_name = to_snake_case(&variant_ident.to_string());
+	for variant in variants {
+		let variant_ident = &variant.ident;
+		let span = variant.ident.span();
+		let proto_name = to_snake_case(&variant_ident.to_string());
 
-    if let syn::Fields::Unnamed(fields) = &variant.fields
-      && let Some(variant_type) = &fields.unnamed.get(0)
-    {
-      let type_ident = &variant_type.ty;
+		if let syn::Fields::Unnamed(fields) = &variant.fields
+			&& let Some(variant_type) = &fields.unnamed.get(0)
+		{
+			let type_ident = &variant_type.ty;
 
-      let type_info = TypeInfo::from_type(type_ident)?;
+			let type_info = TypeInfo::from_type(type_ident)?;
 
-      let into_expression = get_conversion_tokens(&type_info, &quote_spanned! {span=> val }, span);
+			let into_expression =
+				get_conversion_tokens(&type_info, &quote_spanned! {span=> val }, span);
 
-      match_arms.push(quote_spanned! {span=>
-        #enum_ident::#variant_ident(val) => {
-          Ok((#proto_name.to_string(), #into_expression))
-        }
-      });
-    }
-  }
+			match_arms.push(quote_spanned! {span=>
+			  #enum_ident::#variant_ident(val) => {
+				Ok((#proto_name.to_string(), #into_expression))
+			  }
+			});
+		}
+	}
 
-  // We cannot rely on the try_into impl as is here, because we need to know
-  // the name of the specific oneof variant being used
-  Ok(quote! {
-    impl ::protify::CelOneof for #enum_ident {
-      #[allow(clippy::useless_conversion)]
-      #[allow(clippy::unnecessary_fallible_conversions)]
-      fn try_into_cel(self) -> Result<(String, ::protify::cel::Value), ::protify::proto_types::cel::CelConversionError> {
-        use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
+	// We cannot rely on the try_into impl as is here, because we need to know
+	// the name of the specific oneof variant being used
+	Ok(quote! {
+	  impl ::protify::CelOneof for #enum_ident {
+		#[allow(clippy::useless_conversion)]
+		#[allow(clippy::unnecessary_fallible_conversions)]
+		fn try_into_cel(self) -> Result<(String, ::protify::cel::Value), ::protify::proto_types::cel::CelConversionError> {
+		  use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
 
-        match self {
-          #(#match_arms),*
-        }
-      }
-    }
+		  match self {
+			#(#match_arms),*
+		  }
+		}
+	  }
 
-    impl TryFrom<#enum_ident> for ::protify::cel::Value {
-      type Error = ::protify::proto_types::cel::CelConversionError;
+	  impl TryFrom<#enum_ident> for ::protify::cel::Value {
+		type Error = ::protify::proto_types::cel::CelConversionError;
 
-      #[inline]
-      fn try_from(value: #enum_ident) -> Result<Self, Self::Error> {
-        Ok(<#enum_ident as ::protify::CelOneof>::try_into_cel(value)?.1)
-      }
-    }
-  })
+		#[inline]
+		fn try_from(value: #enum_ident) -> Result<Self, Self::Error> {
+		  Ok(<#enum_ident as ::protify::CelOneof>::try_into_cel(value)?.1)
+		}
+	  }
+	})
 }
 
 pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2, Error> {
-  let struct_name = &item.ident;
+	let struct_name = &item.ident;
 
-  let fields = if let syn::Fields::Named(fields) = &item.fields {
-    &fields.named
-  } else {
-    bail_call_site!("The `CelValue` derive macro only works on structs with named fields");
-  };
+	let fields = if let syn::Fields::Named(fields) = &item.fields {
+		&fields.named
+	} else {
+		bail_call_site!("The `CelValue` derive macro only works on structs with named fields");
+	};
 
-  let mut tokens = TokenStream2::new();
+	let mut tokens = TokenStream2::new();
 
-  for field in fields {
-    let field_ident = field.ident.as_ref().unwrap();
-    let span = field_ident.span();
-    let field_name = field_ident.to_string();
-    let mut is_oneof = false;
+	for field in fields {
+		let field_ident = field.ident.as_ref().unwrap();
+		let span = field_ident.span();
+		let field_name = field_ident.to_string();
+		let mut is_oneof = false;
 
-    for attr in &field.attrs {
-      if attr.path().is_ident("prost") {
-        let _ = attr.parse_nested_meta(|meta| {
-          if meta.path.is_ident("oneof") {
-            is_oneof = true;
-          }
-          Ok(())
-        });
-      }
-    }
+		for attr in &field.attrs {
+			if attr.path().is_ident("prost") {
+				let _ = attr.parse_nested_meta(|meta| {
+					if meta.path.is_ident("oneof") {
+						is_oneof = true;
+					}
+					Ok(())
+				});
+			}
+		}
 
-    if is_oneof {
-      tokens.extend(quote_spanned! {span=>
-        if let Some(oneof) = value.#field_ident {
-          let (oneof_field_name, cel_val) = ::protify::CelOneof::try_into_cel(oneof)?;
-          fields.insert(oneof_field_name.into(), cel_val);
-        }
-      });
-    } else {
-      let outer_type = TypeInfo::from_type(&field.ty)?;
+		if is_oneof {
+			tokens.extend(quote_spanned! {span=>
+			  if let Some(oneof) = value.#field_ident {
+				let (oneof_field_name, cel_val) = ::protify::CelOneof::try_into_cel(oneof)?;
+				fields.insert(oneof_field_name.into(), cel_val);
+			  }
+			});
+		} else {
+			let outer_type = TypeInfo::from_type(&field.ty)?;
 
-      let val_tokens = quote_spanned! {span=> val };
+			let val_tokens = quote_spanned! {span=> val };
 
-      match outer_type.type_.as_ref() {
-        RustType::Option(inner) => {
-          let conversion_tokens = get_conversion_tokens(inner, &val_tokens, span);
+			match outer_type.type_.as_ref() {
+				RustType::Option(inner) => {
+					let conversion_tokens = get_conversion_tokens(inner, &val_tokens, span);
 
-          tokens.extend(quote_spanned! {span=>
-            if let Some(val) = value.#field_ident {
-              fields.insert(#field_name.into(), #conversion_tokens);
-            } else {
-              fields.insert(#field_name.into(), ::protify::cel::Value::Null);
-            }
-          });
-        }
-        RustType::Vec(inner) => {
-          let conversion_tokens = get_conversion_tokens(inner, &val_tokens, span);
+					tokens.extend(quote_spanned! {span=>
+					  if let Some(val) = value.#field_ident {
+						fields.insert(#field_name.into(), #conversion_tokens);
+					  } else {
+						fields.insert(#field_name.into(), ::protify::cel::Value::Null);
+					  }
+					});
+				}
+				RustType::Vec(inner) => {
+					let conversion_tokens = get_conversion_tokens(inner, &val_tokens, span);
 
-          tokens.extend(quote_spanned! {span=>
-            let mut converted: Vec<::protify::cel::Value> = Vec::new();
-            for val in value.#field_ident {
-              converted.push(#conversion_tokens);
-            }
+					tokens.extend(quote_spanned! {span=>
+					  let mut converted: Vec<::protify::cel::Value> = Vec::new();
+					  for val in value.#field_ident {
+						converted.push(#conversion_tokens);
+					  }
 
-            fields.insert(#field_name.into(), ::protify::cel::Value::List(converted.into()));
-          });
-        }
+					  fields.insert(#field_name.into(), ::protify::cel::Value::List(converted.into()));
+					});
+				}
 
-        RustType::HashMap((_, v)) | RustType::BTreeMap((_, v)) => {
-          let values_conversion_tokens = get_conversion_tokens(v, &val_tokens, span);
+				RustType::HashMap((_, v)) | RustType::BTreeMap((_, v)) => {
+					let values_conversion_tokens = get_conversion_tokens(v, &val_tokens, span);
 
-          tokens.extend(quote_spanned! {span=>
+					tokens.extend(quote_spanned! {span=>
             let mut field_map: ::std::collections::HashMap<::protify::cel::objects::Key, ::protify::cel::Value> = ::std::collections::HashMap::new();
 
             for (key, val) in value.#field_ident {
@@ -153,36 +156,36 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
 
             fields.insert(#field_name.into(), ::protify::cel::Value::Map(field_map.into()));
           });
-        }
-        _ => {
-          let val_tokens = quote_spanned! {span=> value.#field_ident };
-          let conversion_tokens = get_conversion_tokens(&outer_type, &val_tokens, span);
+				}
+				_ => {
+					let val_tokens = quote_spanned! {span=> value.#field_ident };
+					let conversion_tokens = get_conversion_tokens(&outer_type, &val_tokens, span);
 
-          tokens.extend(quote_spanned! {span=>
-            fields.insert(#field_name.into(), #conversion_tokens);
-          });
-        }
-      };
-    }
-  }
+					tokens.extend(quote_spanned! {span=>
+					  fields.insert(#field_name.into(), #conversion_tokens);
+					});
+				}
+			};
+		}
+	}
 
-  Ok(quote! {
-    impl ::protify::CelValue for #struct_name {}
+	Ok(quote! {
+	  impl ::protify::CelValue for #struct_name {}
 
-    impl TryFrom<#struct_name> for ::protify::cel::Value {
-      type Error = ::protify::proto_types::cel::CelConversionError;
+	  impl TryFrom<#struct_name> for ::protify::cel::Value {
+		type Error = ::protify::proto_types::cel::CelConversionError;
 
-      #[allow(clippy::useless_conversion)]
-      #[allow(clippy::unnecessary_fallible_conversions)]
-      fn try_from(value: #struct_name) -> Result<Self, Self::Error> {
-        use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
+		#[allow(clippy::useless_conversion)]
+		#[allow(clippy::unnecessary_fallible_conversions)]
+		fn try_from(value: #struct_name) -> Result<Self, Self::Error> {
+		  use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
 
-        let mut fields: ::std::collections::HashMap<::protify::cel::objects::Key, ::protify::cel::Value> = std::collections::HashMap::new();
+		  let mut fields: ::std::collections::HashMap<::protify::cel::objects::Key, ::protify::cel::Value> = std::collections::HashMap::new();
 
-        #tokens
+		  #tokens
 
-        Ok(::protify::cel::Value::Map(fields.into()))
-      }
-    }
-  })
+		  Ok(::protify::cel::Value::Map(fields.into()))
+		}
+	  }
+	})
 }

@@ -5,32 +5,32 @@ use_proto_file!(TESTING_FILE);
 #[proto_oneof]
 #[proto(skip_checks(all))]
 pub enum TestOneof {
-  #[proto(tag = 100)]
-  A(String),
-  #[proto(tag = 200)]
-  B(i32),
+	#[proto(tag = 100)]
+	A(String),
+	#[proto(tag = 200)]
+	B(i32),
 }
 
 #[proto_message]
 #[proto(skip_checks(all))]
 pub struct WrongTagsTest {
-  #[proto(oneof(tags(1, 2)))]
-  pub oneof: Option<TestOneof>,
+	#[proto(oneof(tags(1, 2)))]
+	pub oneof: Option<TestOneof>,
 }
 
 #[test]
 fn wrong_oneof_tags_check() {
-  assert!(WrongTagsTest::__check_oneofs_tags().is_err())
+	assert!(WrongTagsTest::__check_oneofs_tags().is_err())
 }
 
 #[proto_message]
 #[proto(skip_checks(all))]
 pub struct CorrectTagsTest {
-  #[proto(oneof(tags(100, 200)))]
-  pub oneof: Option<TestOneof>,
+	#[proto(oneof(tags(100, 200)))]
+	pub oneof: Option<TestOneof>,
 }
 
 #[test]
 fn correct_oneof_tags_check() {
-  assert!(CorrectTagsTest::__check_oneofs_tags().is_ok());
+	assert!(CorrectTagsTest::__check_oneofs_tags().is_ok());
 }

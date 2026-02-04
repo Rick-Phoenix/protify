@@ -2,295 +2,297 @@ use crate::*;
 
 #[derive(Clone)]
 pub enum ProtoField {
-  Map(ProtoMap),
-  Oneof(OneofInfo),
-  Repeated(ProtoType),
-  Optional(ProtoType),
-  Single(ProtoType),
+	Map(ProtoMap),
+	Oneof(OneofInfo),
+	Repeated(ProtoType),
+	Optional(ProtoType),
+	Single(ProtoType),
 }
 
 impl ProtoField {
-  pub fn from_meta(
-    ident_str: &str,
-    meta: &ParseNestedMeta,
-    type_info: &TypeInfo,
-  ) -> syn::Result<Self> {
-    let output = match ident_str {
-      "repeated" => {
-        let inner_type_info = if let RustType::Vec(inner) = type_info.type_.as_ref() {
-          Some(inner.as_ref())
-        } else {
-          None
-        };
+	pub fn from_meta(
+		ident_str: &str,
+		meta: &ParseNestedMeta,
+		type_info: &TypeInfo,
+	) -> syn::Result<Self> {
+		let output = match ident_str {
+			"repeated" => {
+				let inner_type_info = if let RustType::Vec(inner) = type_info.type_.as_ref() {
+					Some(inner.as_ref())
+				} else {
+					None
+				};
 
-        let proto_type = meta.parse_inner_value(|meta| {
-          let inner_meta_ident = meta.path.require_ident()?.to_string();
+				let proto_type = meta.parse_inner_value(|meta| {
+					let inner_meta_ident = meta.path.require_ident()?.to_string();
 
-          ProtoType::from_nested_meta(&inner_meta_ident, &meta, inner_type_info)
-        })?;
+					ProtoType::from_nested_meta(&inner_meta_ident, &meta, inner_type_info)
+				})?;
 
-        Self::Repeated(proto_type)
-      }
-      "optional" => {
-        let inner_type_info = if let RustType::Option(inner) = type_info.type_.as_ref() {
-          Some(inner.as_ref())
-        } else {
-          None
-        };
+				Self::Repeated(proto_type)
+			}
+			"optional" => {
+				let inner_type_info = if let RustType::Option(inner) = type_info.type_.as_ref() {
+					Some(inner.as_ref())
+				} else {
+					None
+				};
 
-        let proto_type = meta.parse_inner_value(|meta| {
-          let inner_meta_ident = meta.path.require_ident()?.to_string();
+				let proto_type = meta.parse_inner_value(|meta| {
+					let inner_meta_ident = meta.path.require_ident()?.to_string();
 
-          ProtoType::from_nested_meta(&inner_meta_ident, &meta, inner_type_info)
-        })?;
+					ProtoType::from_nested_meta(&inner_meta_ident, &meta, inner_type_info)
+				})?;
 
-        Self::Optional(proto_type)
-      }
-      "map" => {
-        let map = parse_map_with_context(meta, &type_info.type_)?;
+				Self::Optional(proto_type)
+			}
+			"map" => {
+				let map = parse_map_with_context(meta, &type_info.type_)?;
 
-        Self::Map(map)
-      }
-      "oneof" => Self::Oneof(OneofInfo::parse(meta, type_info)?),
-      _ => {
-        let inferred_type = ProtoType::from_nested_meta(ident_str, meta, Some(type_info))?;
+				Self::Map(map)
+			}
+			"oneof" => Self::Oneof(OneofInfo::parse(meta, type_info)?),
+			_ => {
+				let inferred_type = ProtoType::from_nested_meta(ident_str, meta, Some(type_info))?;
 
-        Self::Single(inferred_type)
-      }
-    };
+				Self::Single(inferred_type)
+			}
+		};
 
-    Ok(output)
-  }
+		Ok(output)
+	}
 
-  // This one has to stay with `ProtoField` because it's used by the extension
-  // macro which does not create FieldData
-  pub fn proto_field_trait_target(&self, span: Span) -> TokenStream2 {
-    match self {
-      Self::Map(map) => {
-        let keys = map.keys.into_type().field_proto_type_tokens(span);
-        let values = map.values.field_proto_type_tokens(span);
+	// This one has to stay with `ProtoField` because it's used by the extension
+	// macro which does not create FieldData
+	pub fn proto_field_trait_target(&self, span: Span) -> TokenStream2 {
+		match self {
+			Self::Map(map) => {
+				let keys = map.keys.into_type().field_proto_type_tokens(span);
+				let values = map.values.field_proto_type_tokens(span);
 
-        if map.is_btree_map {
-          quote_spanned! {span=> ::protify::BTreeMap<#keys, #values> }
-        } else {
-          quote_spanned! {span=> ::std::collections::HashMap<#keys, #values> }
-        }
-      }
-      Self::Oneof { .. } => {
-        let error = Error::new(
-          span,
-          "Proto type tokens should not be called for oneofs, if you see this please report it as a bug",
-        );
+				if map.is_btree_map {
+					quote_spanned! {span=> ::protify::BTreeMap<#keys, #values> }
+				} else {
+					quote_spanned! {span=> ::std::collections::HashMap<#keys, #values> }
+				}
+			}
+			Self::Oneof { .. } => {
+				let error = Error::new(
+					span,
+					"Proto type tokens should not be called for oneofs, if you see this please report it as a bug",
+				);
 
-        error.into_compile_error()
-      }
-      Self::Repeated(proto_type) => {
-        let inner = proto_type.field_proto_type_tokens(span);
+				error.into_compile_error()
+			}
+			Self::Repeated(proto_type) => {
+				let inner = proto_type.field_proto_type_tokens(span);
 
-        quote_spanned! {span=> Vec<#inner> }
-      }
-      Self::Optional(proto_type) => {
-        let inner = proto_type.field_proto_type_tokens(span);
+				quote_spanned! {span=> Vec<#inner> }
+			}
+			Self::Optional(proto_type) => {
+				let inner = proto_type.field_proto_type_tokens(span);
 
-        quote_spanned! {span=> Option<#inner> }
-      }
-      Self::Single(proto_type) => proto_type.field_proto_type_tokens(span),
-    }
-  }
+				quote_spanned! {span=> Option<#inner> }
+			}
+			Self::Single(proto_type) => proto_type.field_proto_type_tokens(span),
+		}
+	}
 
-  // This one has to stay with `ProtoField` because it's used before
-  // FieldData is fully created
-  pub fn default_validator_expr(&self, span: Span) -> Option<ValidatorTokens> {
-    match self {
-      Self::Oneof(OneofInfo { .. }) => {
-        // Early return due to different `kind`
-        Some(ValidatorTokens {
-          expr: quote_spanned! {span=>
-            *::protify::DEFAULT_ONEOF_VALIDATOR
-          },
-          kind: ValidatorKind::DefaultOneof,
-          span,
-        })
-      }
-      Self::Map(map) => {
-        // Only offers a default if values are messages
-        map.values.as_message().map(|msg| {
-          let path = &msg.path;
+	// This one has to stay with `ProtoField` because it's used before
+	// FieldData is fully created
+	pub fn default_validator_expr(&self, span: Span) -> Option<ValidatorTokens> {
+		match self {
+			Self::Oneof(OneofInfo { .. }) => {
+				// Early return due to different `kind`
+				Some(ValidatorTokens {
+					expr: quote_spanned! {span=>
+					  *::protify::DEFAULT_ONEOF_VALIDATOR
+					},
+					kind: ValidatorKind::DefaultOneof,
+					span,
+				})
+			}
+			Self::Map(map) => {
+				// Only offers a default if values are messages
+				map.values.as_message().map(|msg| {
+					let path = &msg.path;
 
-          let keys_type = map.keys.into_type().validator_target_type(span);
+					let keys_type = map.keys.into_type().validator_target_type(span);
 
-          ValidatorTokens {
-            expr: quote_spanned! {span=>
-              ::protify::MapValidator::<#keys_type, #path>::default()
-            },
-            kind: ValidatorKind::DefaultCollection,
-            span,
-          }
-        })
-      }
-      Self::Repeated(inner) => {
-        // Only offers a default if the items are messages
-        inner.as_message().map(|msg| {
-          let path = &msg.path;
+					ValidatorTokens {
+						expr: quote_spanned! {span=>
+						  ::protify::MapValidator::<#keys_type, #path>::default()
+						},
+						kind: ValidatorKind::DefaultCollection,
+						span,
+					}
+				})
+			}
+			Self::Repeated(inner) => {
+				// Only offers a default if the items are messages
+				inner.as_message().map(|msg| {
+					let path = &msg.path;
 
-          ValidatorTokens {
-            expr: quote_spanned! {span=>
-              ::protify::RepeatedValidator::<#path>::default()
-            },
-            kind: ValidatorKind::DefaultCollection,
-            span,
-          }
-        })
-      }
-      Self::Optional(inner) | Self::Single(inner) => {
-        inner
-          .is_custom_message()
-          .then(|| ValidatorTokens {
-            expr: quote_spanned! {span=>
-              *::protify::DEFAULT_MESSAGE_VALIDATOR
-            },
-            kind: ValidatorKind::DefaultMessage,
-            span,
-          })
-      }
-    }
-  }
+					ValidatorTokens {
+						expr: quote_spanned! {span=>
+						  ::protify::RepeatedValidator::<#path>::default()
+						},
+						kind: ValidatorKind::DefaultCollection,
+						span,
+					}
+				})
+			}
+			Self::Optional(inner) | Self::Single(inner) => {
+				inner
+					.is_custom_message()
+					.then(|| ValidatorTokens {
+						expr: quote_spanned! {span=>
+						  *::protify::DEFAULT_MESSAGE_VALIDATOR
+						},
+						kind: ValidatorKind::DefaultMessage,
+						span,
+					})
+			}
+		}
+	}
 
-  // This one has to stay with `ProtoField` because it's used before
-  // FieldData is fully created
-  pub fn validator_target_type(&self, span: Span) -> TokenStream2 {
-    match self {
-      Self::Map(map) => {
-        let keys = map.keys.into_type().validator_target_type(span);
-        let values = map.values.validator_target_type(span);
+	// This one has to stay with `ProtoField` because it's used before
+	// FieldData is fully created
+	pub fn validator_target_type(&self, span: Span) -> TokenStream2 {
+		match self {
+			Self::Map(map) => {
+				let keys = map.keys.into_type().validator_target_type(span);
+				let values = map.values.validator_target_type(span);
 
-        if map.is_btree_map {
-          quote_spanned! {span=> ::protify::BTreeMap<#keys, #values> }
-        } else {
-          quote_spanned! {span=> ::std::collections::HashMap<#keys, #values> }
-        }
-      }
-      Self::Oneof(OneofInfo { path, .. }) => path.to_token_stream(),
-      Self::Repeated(proto_type) => {
-        let inner = proto_type.validator_target_type(span);
+				if map.is_btree_map {
+					quote_spanned! {span=> ::protify::BTreeMap<#keys, #values> }
+				} else {
+					quote_spanned! {span=> ::std::collections::HashMap<#keys, #values> }
+				}
+			}
+			Self::Oneof(OneofInfo { path, .. }) => path.to_token_stream(),
+			Self::Repeated(proto_type) => {
+				let inner = proto_type.validator_target_type(span);
 
-        quote_spanned! {span=> Vec<#inner> }
-      }
-      Self::Optional(proto_type) | Self::Single(proto_type) => {
-        proto_type.validator_target_type(span)
-      }
-    }
-  }
+				quote_spanned! {span=> Vec<#inner> }
+			}
+			Self::Optional(proto_type) | Self::Single(proto_type) => {
+				proto_type.validator_target_type(span)
+			}
+		}
+	}
 
-  pub fn default_into_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
-    // The base ident already has the correct span injected
-    let span = base_ident.span();
+	pub fn default_into_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
+		// The base ident already has the correct span injected
+		let span = base_ident.span();
 
-    match self {
-      Self::Oneof(OneofInfo { default, .. }) => {
-        if *default {
-          quote_spanned! {span=> Some(#base_ident.into()) }
-        } else {
-          quote_spanned! {span=> #base_ident.map(|v| v.into()) }
-        }
-      }
-      Self::Map(ProtoMap { .. }) => {
-        quote_spanned! {span=> #base_ident.into_iter().map(|(k, v)| (k.into(), v.into())).collect() }
-      }
-      Self::Repeated(_) => {
-        quote_spanned! {span=> #base_ident.into_iter().map(Into::into).collect() }
-      }
-      Self::Optional(inner) => {
-        let conversion = if let ProtoType::Message(MessageInfo { boxed: true, .. }) = inner {
-          quote_spanned! {span=> Box::new((*v).into()) }
-        } else {
-          quote_spanned! {span=> v.into() }
-        };
+		match self {
+			Self::Oneof(OneofInfo { default, .. }) => {
+				if *default {
+					quote_spanned! {span=> Some(#base_ident.into()) }
+				} else {
+					quote_spanned! {span=> #base_ident.map(|v| v.into()) }
+				}
+			}
+			Self::Map(ProtoMap { .. }) => {
+				quote_spanned! {span=> #base_ident.into_iter().map(|(k, v)| (k.into(), v.into())).collect() }
+			}
+			Self::Repeated(_) => {
+				quote_spanned! {span=> #base_ident.into_iter().map(Into::into).collect() }
+			}
+			Self::Optional(inner) => {
+				let conversion = if let ProtoType::Message(MessageInfo { boxed: true, .. }) = inner
+				{
+					quote_spanned! {span=> Box::new((*v).into()) }
+				} else {
+					quote_spanned! {span=> v.into() }
+				};
 
-        quote_spanned! {span=> #base_ident.map(|v| #conversion) }
-      }
-      // If a message is with `default`, then it would be processed here
-      Self::Single(inner) => {
-        if let ProtoType::Message(MessageInfo { boxed, default, .. }) = inner {
-          let conversion = if *boxed {
-            quote_spanned! {span=> Box::new((*#base_ident).into()) }
-          } else {
-            quote_spanned! {span=> #base_ident.into() }
-          };
+				quote_spanned! {span=> #base_ident.map(|v| #conversion) }
+			}
+			// If a message is with `default`, then it would be processed here
+			Self::Single(inner) => {
+				if let ProtoType::Message(MessageInfo { boxed, default, .. }) = inner {
+					let conversion = if *boxed {
+						quote_spanned! {span=> Box::new((*#base_ident).into()) }
+					} else {
+						quote_spanned! {span=> #base_ident.into() }
+					};
 
-          if *default {
-            quote_spanned! {span=> Some(#conversion) }
-          } else {
-            conversion
-          }
-        } else {
-          quote_spanned! {span=> #base_ident.into() }
-        }
-      }
-    }
-  }
+					if *default {
+						quote_spanned! {span=> Some(#conversion) }
+					} else {
+						conversion
+					}
+				} else {
+					quote_spanned! {span=> #base_ident.into() }
+				}
+			}
+		}
+	}
 
-  pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
-    // The base ident already has the correct span injected
-    let span = base_ident.span();
+	pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
+		// The base ident already has the correct span injected
+		let span = base_ident.span();
 
-    match self {
-      Self::Oneof(OneofInfo { default, .. }) => {
-        if *default {
-          quote_spanned! {span=> #base_ident.unwrap_or_default().into() }
-        } else {
-          quote_spanned! {span=> #base_ident.map(|v| v.into()) }
-        }
-      }
-      Self::Map(ProtoMap { values, .. }) => {
-        let base_ident2 = quote_spanned! {span=> v };
-        let values_converter = values.default_from_proto(&base_ident2);
+		match self {
+			Self::Oneof(OneofInfo { default, .. }) => {
+				if *default {
+					quote_spanned! {span=> #base_ident.unwrap_or_default().into() }
+				} else {
+					quote_spanned! {span=> #base_ident.map(|v| v.into()) }
+				}
+			}
+			Self::Map(ProtoMap { values, .. }) => {
+				let base_ident2 = quote_spanned! {span=> v };
+				let values_converter = values.default_from_proto(&base_ident2);
 
-        quote_spanned! {span=> #base_ident.into_iter().map(|(k, v)| (k.into(), #values_converter)).collect() }
-      }
-      Self::Repeated(proto_type) => {
-        let base_ident2 = quote_spanned! {span=> v };
-        let inner = proto_type.default_from_proto(&base_ident2);
+				quote_spanned! {span=> #base_ident.into_iter().map(|(k, v)| (k.into(), #values_converter)).collect() }
+			}
+			Self::Repeated(proto_type) => {
+				let base_ident2 = quote_spanned! {span=> v };
+				let inner = proto_type.default_from_proto(&base_ident2);
 
-        quote_spanned! {span=> #base_ident.into_iter().map(|v| #inner).collect() }
-      }
-      Self::Optional(proto_type) => {
-        let base_ident2 = quote_spanned! {span=> v };
-        let inner = proto_type.default_from_proto(&base_ident2);
+				quote_spanned! {span=> #base_ident.into_iter().map(|v| #inner).collect() }
+			}
+			Self::Optional(proto_type) => {
+				let base_ident2 = quote_spanned! {span=> v };
+				let inner = proto_type.default_from_proto(&base_ident2);
 
-        quote_spanned! {span=> #base_ident.map(|v| #inner) }
-      }
-      // If a message is with `default`, then it would be processed here
-      Self::Single(proto_type) => proto_type.default_from_proto(base_ident),
-    }
-  }
+				quote_spanned! {span=> #base_ident.map(|v| #inner) }
+			}
+			// If a message is with `default`, then it would be processed here
+			Self::Single(proto_type) => proto_type.default_from_proto(base_ident),
+		}
+	}
 
-  pub const fn message_info(&self) -> Option<&MessageInfo> {
-    match self {
-      Self::Map(map) => map.values.as_message(),
-      Self::Oneof(_) => None,
-      Self::Repeated(inner) | Self::Optional(inner) | Self::Single(inner) => inner.as_message(),
-    }
-  }
+	pub const fn message_info(&self) -> Option<&MessageInfo> {
+		match self {
+			Self::Map(map) => map.values.as_message(),
+			Self::Oneof(_) => None,
+			Self::Repeated(inner) | Self::Optional(inner) | Self::Single(inner) => {
+				inner.as_message()
+			}
+		}
+	}
 
-  pub const fn inner(&self) -> Option<&ProtoType> {
-    match self {
-      Self::Map(_) | Self::Oneof(_) => None,
-      Self::Repeated(inner) | Self::Optional(inner) | Self::Single(inner) => Some(inner),
-    }
-  }
+	pub const fn inner(&self) -> Option<&ProtoType> {
+		match self {
+			Self::Map(_) | Self::Oneof(_) => None,
+			Self::Repeated(inner) | Self::Optional(inner) | Self::Single(inner) => Some(inner),
+		}
+	}
 
-  pub fn is_enum(&self) -> bool {
-    self.inner().is_some_and(|inner| inner.is_enum())
-  }
+	pub fn is_enum(&self) -> bool {
+		self.inner().is_some_and(|inner| inner.is_enum())
+	}
 
-  pub fn is_message(&self) -> bool {
-    self
-      .inner()
-      .is_some_and(|inner| inner.is_message())
-  }
+	pub fn is_message(&self) -> bool {
+		self.inner()
+			.is_some_and(|inner| inner.is_message())
+	}
 
-  pub const fn is_oneof(&self) -> bool {
-    matches!(self, Self::Oneof(..))
-  }
+	pub const fn is_oneof(&self) -> bool {
+		matches!(self, Self::Oneof(..))
+	}
 }

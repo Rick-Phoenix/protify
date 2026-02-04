@@ -6,135 +6,135 @@ pub(crate) use state::*;
 /// Builder for [`BoolValidator`].
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BoolValidatorBuilder<S: State = Empty> {
-  _state: PhantomData<S>,
-  data: BoolValidator,
+	_state: PhantomData<S>,
+	data: BoolValidator,
 }
 
 impl ProtoValidation for bool {
-  #[doc(hidden)]
-  type Target = Self;
-  #[doc(hidden)]
-  type Stored = Self;
-  type Validator = BoolValidator;
-  type ValidatorBuilder = BoolValidatorBuilder;
+	#[doc(hidden)]
+	type Target = Self;
+	#[doc(hidden)]
+	type Stored = Self;
+	type Validator = BoolValidator;
+	type ValidatorBuilder = BoolValidatorBuilder;
 
-  #[doc(hidden)]
-  type UniqueStore<'a>
-    = CopyHybridStore<Self>
-  where
-    Self: 'a;
+	#[doc(hidden)]
+	type UniqueStore<'a>
+		= CopyHybridStore<Self>
+	where
+		Self: 'a;
 
-  #[doc(hidden)]
-  const HAS_DEFAULT_VALIDATOR: Self = false;
+	#[doc(hidden)]
+	const HAS_DEFAULT_VALIDATOR: Self = false;
 
-  #[doc(hidden)]
-  fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a> {
-    // This is likely to never be used in the first place, but
-    // uniqueness checks would fail after more than 2 elements anyway
-    CopyHybridStore::default_with_capacity(2)
-  }
+	#[doc(hidden)]
+	fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a> {
+		// This is likely to never be used in the first place, but
+		// uniqueness checks would fail after more than 2 elements anyway
+		CopyHybridStore::default_with_capacity(2)
+	}
 }
 impl<S: State> ValidatorBuilderFor<bool> for BoolValidatorBuilder<S> {
-  type Validator = BoolValidator;
-  #[inline]
-  fn build_validator(self) -> BoolValidator {
-    self.build()
-  }
+	type Validator = BoolValidator;
+	#[inline]
+	fn build_validator(self) -> BoolValidator {
+		self.build()
+	}
 }
 
 impl<S: State> Default for BoolValidatorBuilder<S> {
-  #[inline]
-  fn default() -> Self {
-    Self {
-      _state: PhantomData,
-      data: BoolValidator::default(),
-    }
-  }
+	#[inline]
+	fn default() -> Self {
+		Self {
+			_state: PhantomData,
+			data: BoolValidator::default(),
+		}
+	}
 }
 
 impl BoolValidator {
-  #[must_use]
-  #[inline]
-  pub fn builder() -> BoolValidatorBuilder {
-    BoolValidatorBuilder::default()
-  }
+	#[must_use]
+	#[inline]
+	pub fn builder() -> BoolValidatorBuilder {
+		BoolValidatorBuilder::default()
+	}
 }
 
 impl<S: State> From<BoolValidatorBuilder<S>> for ProtoOption {
-  #[inline(never)]
-  #[cold]
-  fn from(value: BoolValidatorBuilder<S>) -> Self {
-    value.build().into()
-  }
+	#[inline(never)]
+	#[cold]
+	fn from(value: BoolValidatorBuilder<S>) -> Self {
+		value.build().into()
+	}
 }
 
 #[allow(
-  clippy::must_use_candidate,
-  clippy::use_self,
-  clippy::return_self_not_must_use
+	clippy::must_use_candidate,
+	clippy::use_self,
+	clippy::return_self_not_must_use
 )]
 impl<S: State> BoolValidatorBuilder<S> {
-  custom_error_messages_method!(Bool);
+	custom_error_messages_method!(Bool);
 
-  /// Specifies that this validator should always be ignored.
-  #[inline]
-  pub fn ignore_always(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
-  where
-    S::Ignore: IsUnset,
-  {
-    self.data.ignore = Ignore::Always;
+	/// Specifies that this validator should always be ignored.
+	#[inline]
+	pub fn ignore_always(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
+	where
+		S::Ignore: IsUnset,
+	{
+		self.data.ignore = Ignore::Always;
 
-    BoolValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		BoolValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that this validator should be ignored if the value is either unset or equal to its protobuf zero value.
-  #[inline]
-  pub fn ignore_if_zero_value(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
-  where
-    S::Ignore: IsUnset,
-  {
-    self.data.ignore = Ignore::IfZeroValue;
+	/// Specifies that this validator should be ignored if the value is either unset or equal to its protobuf zero value.
+	#[inline]
+	pub fn ignore_if_zero_value(mut self) -> BoolValidatorBuilder<SetIgnore<S>>
+	where
+		S::Ignore: IsUnset,
+	{
+		self.data.ignore = Ignore::IfZeroValue;
 
-    BoolValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		BoolValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
-  #[inline]
-  pub fn required(mut self) -> BoolValidatorBuilder<SetRequired<S>>
-  where
-    S::Required: IsUnset,
-  {
-    self.data.required = true;
+	/// Specifies that the field must be set (if optional) or not equal to its zero value (if not optional) in order to be valid.
+	#[inline]
+	pub fn required(mut self) -> BoolValidatorBuilder<SetRequired<S>>
+	where
+		S::Required: IsUnset,
+	{
+		self.data.required = true;
 
-    BoolValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		BoolValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Specifies that only this specific value will be considered valid for this field.
-  #[inline]
-  pub fn const_(mut self, val: bool) -> BoolValidatorBuilder<SetConst<S>>
-  where
-    S::Const: IsUnset,
-  {
-    self.data.const_ = Some(val);
+	/// Specifies that only this specific value will be considered valid for this field.
+	#[inline]
+	pub fn const_(mut self, val: bool) -> BoolValidatorBuilder<SetConst<S>>
+	where
+		S::Const: IsUnset,
+	{
+		self.data.const_ = Some(val);
 
-    BoolValidatorBuilder {
-      _state: PhantomData,
-      data: self.data,
-    }
-  }
+		BoolValidatorBuilder {
+			_state: PhantomData,
+			data: self.data,
+		}
+	}
 
-  /// Builds the validator.
-  #[inline]
-  pub fn build(self) -> BoolValidator {
-    self.data
-  }
+	/// Builds the validator.
+	#[inline]
+	pub fn build(self) -> BoolValidator {
+		self.data
+	}
 }
