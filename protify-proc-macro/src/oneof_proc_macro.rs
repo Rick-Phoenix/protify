@@ -76,12 +76,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
   .unwrap_or_default_and_push_error(&mut errors);
 
   let proto_derives = if !errors.is_empty() {
-    FallbackImpls {
-      orig_ident: &item.ident,
-      proto_ident: proto_enum.as_ref().map(|se| &se.ident),
-      kind: ItemKind::Oneof,
-    }
-    .fallback_derive_impls()
+    fallback_derive_impls(&enum_to_process.ident, ItemKind::Oneof)
   } else if cfg!(feature = "cel") {
     // prost::Oneof already implements Debug and Default
     quote! {

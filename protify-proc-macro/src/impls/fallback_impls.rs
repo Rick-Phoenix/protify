@@ -1,46 +1,33 @@
 use crate::*;
 
-pub struct FallbackImpls<'a> {
-  pub orig_ident: &'a Ident,
-  pub proto_ident: Option<&'a Ident>,
-  pub kind: ItemKind,
-}
-
-impl<'a> FallbackImpls<'a> {
-  fn proto_ident(&self) -> &'a Ident {
-    self.proto_ident.unwrap_or(self.orig_ident)
-  }
-
-  pub fn fallback_derive_impls(&self) -> TokenStream2 {
-    let target_ident = self.proto_ident();
-
-    let mut output = quote! {
-      impl Default for #target_ident {
-        fn default() -> Self {
-          unimplemented!()
-        }
+pub fn fallback_derive_impls(target_ident: &Ident, kind: ItemKind) -> TokenStream2 {
+  let mut output = quote! {
+    impl Default for #target_ident {
+      fn default() -> Self {
+        unimplemented!()
       }
+    }
 
-      impl Clone for #target_ident {
-        fn clone(&self) -> Self {
-          unimplemented!()
-        }
+    impl Clone for #target_ident {
+      fn clone(&self) -> Self {
+        unimplemented!()
       }
+    }
 
-      impl std::fmt::Debug for #target_ident {
-        fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-          unimplemented!()
-        }
+    impl std::fmt::Debug for #target_ident {
+      fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        unimplemented!()
       }
+    }
 
-      impl PartialEq for #target_ident {
-        fn eq(&self, _: &Self) -> bool {
-          unimplemented!()
-        }
+    impl PartialEq for #target_ident {
+      fn eq(&self, _: &Self) -> bool {
+        unimplemented!()
       }
-    };
+    }
+  };
 
-    output.extend(match self.kind {
+  output.extend(match kind {
       ItemKind::Oneof => {
         quote! {
           impl #target_ident {
@@ -83,8 +70,8 @@ impl<'a> FallbackImpls<'a> {
     }
     );
 
-    if cfg!(feature = "cel") {
-      output.extend(match self.kind {
+  if cfg!(feature = "cel") {
+    output.extend(match kind {
         ItemKind::Oneof => quote! {
           impl ::protify::CelOneof for #target_ident {
             #[doc(hidden)]
@@ -114,8 +101,7 @@ impl<'a> FallbackImpls<'a> {
           }
         },
       });
-    }
-
-    output
   }
+
+  output
 }

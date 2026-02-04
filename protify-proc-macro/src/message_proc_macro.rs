@@ -60,12 +60,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
   .unwrap_or_default_and_push_error(&mut errors);
 
   let proto_derives = if !errors.is_empty() {
-    FallbackImpls {
-      orig_ident: &item.ident,
-      proto_ident: proto_struct.as_ref().map(|ps| &ps.ident),
-      kind: ItemKind::Message,
-    }
-    .fallback_derive_impls()
+    fallback_derive_impls(&struct_to_process.ident, ItemKind::Message)
   } else if cfg!(feature = "cel") {
     // prost::Message already implements Debug and Default
     quote! {
