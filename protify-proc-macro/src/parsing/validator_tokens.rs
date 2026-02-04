@@ -90,20 +90,13 @@ impl Validators {
     self.has_closure_validator &= other.has_closure_validator;
   }
 
-  pub fn span(&self) -> Span {
-    self
-      .validators
-      .first()
-      .as_ref()
-      .map_or_else(|| Span::call_site(), |v| v.span)
-  }
-
   pub fn from_single(validator: ValidatorTokens) -> Self {
     Self {
       has_closure_validator: validator.kind.is_closure(),
       validators: vec![validator],
     }
   }
+
   pub fn iter(&self) -> std::slice::Iter<'_, ValidatorTokens> {
     self.validators.iter()
   }
@@ -116,6 +109,8 @@ impl Validators {
         validator.expr = quote_spanned! {validator.span=> <#validator_target_type as ::protify::ProtoValidation>::validator_from_closure(#validator) };
 
         if proto_field.is_oneof() {
+          // We need to differentiate this because unlike other closures,
+          // this shouldn't be cached
           validator.kind = ValidatorKind::ClosureOneof;
         }
       }

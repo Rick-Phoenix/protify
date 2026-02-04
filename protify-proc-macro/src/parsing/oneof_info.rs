@@ -53,7 +53,7 @@ impl OneofInfo {
     let oneof_path = oneof_path
       .get_path_or_fallback(type_info.inner().as_path().as_ref())
       .ok_or_else(|| meta.error(
-        "Failed to infer the path to the oneof. If this is a proxied oneof, use `oneof(proxied)`, otherwise set the path manually with `oneof(MyOneofPath)`"
+        "Failed to infer the path to the oneof. If this is a proxied oneof, use `oneof(proxied)`, or `oneof(MyOneofPath)`"
     ))?;
 
     Ok(Self {

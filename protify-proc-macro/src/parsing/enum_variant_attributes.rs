@@ -11,7 +11,7 @@ pub fn process_derive_enum_variants_attrs(
   variant_ident: &Ident,
   attrs: &[Attribute],
 ) -> Result<EnumVariantAttrs, Error> {
-  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
+  let mut options = TokenStreamOr::new(|_| quote! { [] });
   let mut name: Option<String> = None;
   let mut deprecated = false;
 

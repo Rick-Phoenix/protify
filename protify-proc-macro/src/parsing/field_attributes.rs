@@ -67,7 +67,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
 
   let mut validators = Validators::default();
   let mut tag: Option<ParsedNum> = None;
-  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
+  let mut options = TokenStreamOr::new(|_| quote! { [] });
   let mut name: Option<String> = None;
   let mut proto_field: Option<ProtoField> = None;
   let mut is_ignored = false;
@@ -76,6 +76,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
   let mut deprecated = false;
   let mut forwarded_attrs: Vec<Meta> = Vec::new();
   let field_ident = field.ident()?.clone();
+  let ident_str = field_ident.to_string();
   let type_info = TypeInfo::from_type(field.get_type()?)?;
 
   for attr in field.attributes() {
@@ -190,7 +191,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
       RustType::Box(inner) => {
         return Err(error!(
           inner,
-          "You seem to be using Box<T>. If you meant to use a boxed message, mark it as a message"
+          "You seem to be using Box<T>, but a proto type is not specified. If you are using a boxed message, mark the field as a message"
         ));
       }
       RustType::Vec(inner) => {
@@ -210,7 +211,8 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     }
   };
 
-  // These handle the default validator logic inside of them
+  // We don't add the default validator if we had a closure
+  // because those handle the default validator logic on thier own
   if !validators.has_closure_validator
     && let Some(default) = proto_field.default_validator_expr(field_span)
   {
@@ -223,7 +225,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
 
   let proto_name = name.unwrap_or_else(|| {
     if field.is_variant() {
-      to_snake_case(&field_ident.to_string())
+      to_snake_case(&ident_str)
     } else {
       rust_ident_to_proto_name(&field_ident)
     }
@@ -238,7 +240,7 @@ pub fn process_field_data(field: FieldOrVariant) -> Result<FieldDataKind, Error>
     from_proto,
     into_proto,
     span: field_span,
-    ident_str: field_ident.to_string(),
+    ident_str,
     ident: field_ident,
     type_info,
     deprecated,

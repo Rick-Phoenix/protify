@@ -10,8 +10,8 @@ use std::{
   ops::{Deref, Range},
 };
 
-use attributes::*;
 use bool_enum::bool_enum;
+use parsing::*;
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, format_ident, quote, quote_spanned};
@@ -32,7 +32,6 @@ use crate::{
   proto_map::*, proto_types::*, service_macro::*,
 };
 
-mod attributes;
 mod builder_macro;
 #[cfg(feature = "cel")]
 mod cel_try_into;
@@ -47,6 +46,7 @@ mod message_schema_impl;
 mod oneof_proc_macro;
 mod oneof_schema_impl;
 mod package_macro;
+mod parsing;
 mod path_utils;
 mod proto_field;
 mod proto_map;

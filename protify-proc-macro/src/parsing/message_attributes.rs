@@ -62,7 +62,7 @@ pub fn process_message_attrs(
 ) -> Result<MessageAttrs, Error> {
   let mut reserved_names: Vec<String> = Vec::new();
   let mut reserved_numbers = ReservedNumbers::default();
-  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
+  let mut options = TokenStreamOr::new(|_| quote! { [] });
   let mut proto_name: Option<ParsedStr> = None;
   let mut from_proto: Option<PathOrClosure> = None;
   let mut into_proto: Option<PathOrClosure> = None;
@@ -125,13 +125,7 @@ pub fn process_message_attrs(
               forwarded_derives = meta.parse_list::<PathList>()?.list;
             }
             "parent_message" => {
-              parent_message = Some(
-                meta
-                  .expr_value()?
-                  .as_path()?
-                  .require_ident()?
-                  .clone(),
-              );
+              parent_message = Some(meta.parse_value()?);
             }
             "options" => {
               options.span = meta.input.span();
@@ -164,8 +158,7 @@ pub fn process_message_attrs(
     }
   }
 
-  let name = proto_name
-    .unwrap_or_else(|| ParsedStr::with_default_span(to_pascal_case(&struct_ident.to_string())));
+  let name = proto_name.unwrap_or_else(|| ParsedStr::with_default_span(struct_ident.to_string()));
 
   Ok(MessageAttrs {
     reserved_names,

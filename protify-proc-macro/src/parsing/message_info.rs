@@ -43,15 +43,18 @@ impl MessageInfo {
     let path = if let ItemPathEntry::Path(msg_path) = item_path {
       msg_path
     } else {
-      // If type_info is None, it means the input was incorrect anyway (i.e. `repeated` without a Vec)
-      // So the type we get at this point is already unnested by one degree
+      // The type we get at this point is already unnested depending on what the input type (and attribute) was.
+      // i.e. `repeated` + `Vec<T>` => T
+      //
+      // If type_info is None, it means the input was incorrect (i.e. `repeated` without a Vec)
       let inferred_path = type_info
         .and_then(|type_info| match type_info.type_.as_ref() {
           // This still has to be checked because a message may not be marked as `optional`
-          // So we might have to unnest the Option first
+          // so we might have to unnest the Option first
           RustType::Option(inner) => {
             if inner.is_box() {
               boxed = true;
+              // Unnesting the Box
               inner.inner().as_path()
             } else {
               inner.as_path()

@@ -18,7 +18,7 @@ pub fn process_derive_enum_attrs(
 ) -> Result<EnumAttrs, Error> {
   let mut reserved_names: Vec<String> = Vec::new();
   let mut reserved_numbers = ReservedNumbers::default();
-  let mut options = TokensOr::<TokenStream2>::new(|_| quote! { [] });
+  let mut options = TokenStreamOr::new(|_| quote! { [] });
   let mut proto_name: Option<ParsedStr> = None;
   let mut parent_message: Option<Ident> = None;
   let mut deprecated = false;
@@ -63,13 +63,7 @@ pub fn process_derive_enum_attrs(
               reserved_numbers = numbers;
             }
             "parent_message" => {
-              parent_message = Some(
-                meta
-                  .expr_value()?
-                  .as_path()?
-                  .require_ident()?
-                  .clone(),
-              );
+              parent_message = Some(meta.parse_value::<Ident>()?);
             }
             "options" => {
               options.span = meta.input.span();
@@ -88,8 +82,7 @@ pub fn process_derive_enum_attrs(
     }
   }
 
-  let name = proto_name
-    .unwrap_or_else(|| ParsedStr::with_default_span(to_pascal_case(&enum_ident.to_string())));
+  let name = proto_name.unwrap_or_else(|| ParsedStr::with_default_span(enum_ident.to_string()));
 
   Ok(EnumAttrs {
     reserved_names,
