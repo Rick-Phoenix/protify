@@ -24,7 +24,7 @@ fn extract_oneof_data(item: &mut ItemEnum) -> Result<OneofDataReflection, Error>
           "skip_checks" => {
             auto_tests = AutoTests::parse(&meta)?;
           }
-          _ => return Err(meta.error("Unknown attribute")),
+          _ => drain_token_stream!(meta.input),
         };
 
         Ok(())
