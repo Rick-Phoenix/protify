@@ -94,10 +94,10 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 
 		quote_spanned! {*span=>
 		  ::protify::ServiceHandler {
-			name: #name.into(),
-			request: <#request as ::protify::MessagePath>::proto_path(),
-			response: <#response as ::protify::MessagePath>::proto_path(),
-			options: ::protify::collect_options(#options, #deprecated)
+				name: #name.into(),
+				request: <#request as ::protify::MessagePath>::proto_path(),
+				response: <#response as ::protify::MessagePath>::proto_path(),
+				options: ::protify::collect_options(#options, #deprecated)
 		  }
 		}
 	});
@@ -107,22 +107,22 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 	  #vis struct #ident;
 
 	  ::protify::register_proto_data! {
-		::protify::RegistryService {
-		  package: __PROTO_FILE.package,
-		  service: || <#ident as ::protify::ProtoService>::proto_schema()
-		}
+			::protify::RegistryService {
+				package: __PROTO_FILE.package,
+				service: || <#ident as ::protify::ProtoService>::proto_schema()
+			}
 	  }
 
 	  impl ::protify::ProtoService for #ident {
-		fn proto_schema() -> ::protify::Service {
-		  ::protify::Service {
-			name: #service_name.into(),
-			file: __PROTO_FILE.name.into(),
-			package: __PROTO_FILE.package.into(),
-			handlers: ::protify::vec![ #(#handlers_tokens),* ],
-			options: ::protify::collect_options(#service_options, #deprecated)
-		  }
-		}
+			fn proto_schema() -> ::protify::Service {
+				::protify::Service {
+					name: #service_name.into(),
+					file: __PROTO_FILE.name.into(),
+					package: __PROTO_FILE.package.into(),
+					handlers: ::protify::vec![ #(#handlers_tokens),* ],
+					options: ::protify::collect_options(#service_options, #deprecated)
+				}
+			}
 	  }
 	})
 }

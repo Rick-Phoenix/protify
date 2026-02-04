@@ -28,10 +28,10 @@ impl FieldData {
 		if let ProtoField::Oneof(OneofInfo { path, .. }) = proto_field {
 			quote_spanned! {*span=>
 			  ::protify::MessageEntry::Oneof(
-				<#path as ::protify::ProtoOneof>::proto_schema()
-				  .with_name(#proto_name)
-				  .with_options(#options)
-				  .with_validators(::protify::filter_validators([ #(#validator_schema_tokens),* ]))
+					<#path as ::protify::ProtoOneof>::proto_schema()
+						.with_name(#proto_name)
+						.with_options(#options)
+						.with_validators(::protify::filter_validators([ #(#validator_schema_tokens),* ]))
 			  )
 			}
 		} else {
@@ -39,11 +39,11 @@ impl FieldData {
 
 			quote_spanned! {*span=>
 			  ::protify::Field {
-				name: #proto_name.into(),
-				tag: #tag,
-				options: ::protify::collect_options(#options, #deprecated),
-				type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
-				validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
+					name: #proto_name.into(),
+					tag: #tag,
+					options: ::protify::collect_options(#options, #deprecated),
+					type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
+					validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
 			  }
 			}
 		}
@@ -80,7 +80,7 @@ impl MessageCtx<'_> {
 					} else {
 						quote_spanned! {data.span=>
 						  ::protify::MessageEntry::Field(
-							#field_schema
+								#field_schema
 						  )
 						}
 					}
@@ -94,7 +94,7 @@ impl MessageCtx<'_> {
 		let name_method = if let Some(parent) = parent_message {
 			quote_spanned! {parent.span()=>
 			  static __NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
-				format!("{}.{}", <#parent as ::protify::ProtoMessage>::proto_name(), #proto_name)
+					format!("{}.{}", <#parent as ::protify::ProtoMessage>::proto_name(), #proto_name)
 			  });
 
 			  &*__NAME
@@ -136,88 +136,88 @@ impl MessageCtx<'_> {
 
 		quote! {
 		  ::protify::register_proto_data! {
-			::protify::RegistryMessage {
-			  package: #package,
-			  parent_message: #registry_parent_message,
-			  message: || <#proto_struct as ::protify::ProtoMessage>::proto_schema()
-			}
+				::protify::RegistryMessage {
+					package: #package,
+					parent_message: #registry_parent_message,
+					message: || <#proto_struct as ::protify::ProtoMessage>::proto_schema()
+				}
 		  }
 
 		  impl ::protify::AsProtoType for #proto_struct {
-			fn proto_type() -> ::protify::ProtoType {
-			  ::protify::ProtoType::Message(
-				<Self as ::protify::MessagePath>::proto_path()
-			  )
-			}
+				fn proto_type() -> ::protify::ProtoType {
+					::protify::ProtoType::Message(
+						<Self as ::protify::MessagePath>::proto_path()
+					)
+				}
 		  }
 
 		  impl ::protify::prost::Name for #proto_struct {
-			#[doc(hidden)]
-			const PACKAGE: &str = <Self as ::protify::ProtoMessage>::PACKAGE;
-			#[doc(hidden)]
-			const NAME: &str = <Self as ::protify::ProtoMessage>::SHORT_NAME;
+				#[doc(hidden)]
+				const PACKAGE: &str = <Self as ::protify::ProtoMessage>::PACKAGE;
+				#[doc(hidden)]
+				const NAME: &str = <Self as ::protify::ProtoMessage>::SHORT_NAME;
 
-			#[doc(hidden)]
-			fn full_name() -> ::protify::String {
-			  <Self as ::protify::ProtoMessage>::full_name().into()
-			}
+				#[doc(hidden)]
+				fn full_name() -> ::protify::String {
+					<Self as ::protify::ProtoMessage>::full_name().into()
+				}
 
-			#[doc(hidden)]
-			fn type_url() -> ::protify::String {
-			  <Self as ::protify::ProtoMessage>::type_url().into()
-			}
+				#[doc(hidden)]
+				fn type_url() -> ::protify::String {
+					<Self as ::protify::ProtoMessage>::type_url().into()
+				}
 		  }
 
 		  impl ::protify::MessagePath for #proto_struct {
-			fn proto_path() -> ::protify::ProtoPath {
-			  ::protify::ProtoPath {
-				name: <Self as ::protify::ProtoMessage>::proto_name().into(),
-				file: #file_name.into(),
-				package: #package.into(),
-			  }
-			}
+				fn proto_path() -> ::protify::ProtoPath {
+					::protify::ProtoPath {
+						name: <Self as ::protify::ProtoMessage>::proto_name().into(),
+						file: #file_name.into(),
+						package: #package.into(),
+					}
+				}
 		  }
 
 		  impl ::protify::ProtoMessage for #proto_struct {
-			const PACKAGE: &str = #package;
-			const SHORT_NAME: &str = #proto_name;
+				const PACKAGE: &str = #package;
+				const SHORT_NAME: &str = #proto_name;
 
-			fn type_url() -> &'static str {
-			  static URL: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
-				format!("/{}", <#proto_struct as ::protify::ProtoMessage>::full_name())
-			  });
+				fn type_url() -> &'static str {
+					static URL: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
+						format!("/{}", <#proto_struct as ::protify::ProtoMessage>::full_name())
+					});
 
-			  &*URL
-			}
+					&*URL
+				}
 
-			fn full_name() -> &'static str {
-			  static NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
-				format!("{}.{}", <#proto_struct as ::protify::ProtoMessage>::PACKAGE, <#proto_struct as ::protify::ProtoMessage>::proto_name())
-			  });
+				fn full_name() -> &'static str {
+					static NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
+						format!("{}.{}", <#proto_struct as ::protify::ProtoMessage>::PACKAGE, <#proto_struct as ::protify::ProtoMessage>::proto_name())
+					});
 
-			  &*NAME
-			}
+					&*NAME
+				}
 
-			fn proto_name() -> &'static str {
-			  #name_method
-			}
+				fn proto_name() -> &'static str {
+					#name_method
+				}
 
-			fn proto_schema() -> ::protify::MessageSchema {
-			  ::protify::MessageSchema {
-				short_name: #proto_name.into(),
-				name: <Self as ::protify::ProtoMessage>::proto_name().into(),
-				file: #file_name.into(),
-				package: #package.into(),
-				reserved_names: vec![ #(#reserved_names.into()),* ],
-				reserved_numbers: #reserved_numbers,
-				options: ::protify::collect_options(#message_options, #deprecated),
-				messages: vec![],
-				enums: vec![],
-				entries: vec![ #entries_tokens ],
-				validators: ::protify::collect_validators([ #(::protify::Validator::<#proto_struct>::schema(&#validators)),* ]),
-				rust_path:  format!("::{}::{}", #module_path, #rust_ident_str).into()
-			  }
-			}
+				fn proto_schema() -> ::protify::MessageSchema {
+					::protify::MessageSchema {
+						short_name: #proto_name.into(),
+						name: <Self as ::protify::ProtoMessage>::proto_name().into(),
+						file: #file_name.into(),
+						package: #package.into(),
+						reserved_names: vec![ #(#reserved_names.into()),* ],
+						reserved_numbers: #reserved_numbers,
+						options: ::protify::collect_options(#message_options, #deprecated),
+						messages: vec![],
+						enums: vec![],
+						entries: vec![ #entries_tokens ],
+						validators: ::protify::collect_validators([ #(::protify::Validator::<#proto_struct>::schema(&#validators)),* ]),
+						rust_path:  format!("::{}::{}", #module_path, #rust_ident_str).into()
+					}
+				}
 		  }
 		}
 	}

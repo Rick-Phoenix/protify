@@ -115,15 +115,15 @@ impl FieldData {
 			} else {
 				quote_spanned! {*span=>
 				  ctx.with_field_context(
-					::protify::FieldContext {
-					  name: #proto_name.into(),
-					  tag: #tag,
-					  field_type: #field_type,
-					  map_key_type: None,
-					  map_value_type: None,
-					  subscript: None,
-					  field_kind: Default::default(),
-					}
+						::protify::FieldContext {
+							name: #proto_name.into(),
+							tag: #tag,
+							field_type: #field_type,
+							map_key_type: None,
+							map_value_type: None,
+							subscript: None,
+							field_kind: Default::default(),
+						}
 				  ),
 				  #argument
 				}
@@ -135,21 +135,21 @@ impl FieldData {
 
 				quote_spanned! {*span=>
 				  is_valid &= {
-					static #static_ident: ::protify::Lazy<#validator_name> = ::protify::Lazy::new(|| {
-					  #validator_expr
-					});
+						static #static_ident: ::protify::Lazy<#validator_name> = ::protify::Lazy::new(|| {
+							#validator_expr
+						});
 
-					::protify::Validator::<#validator_target_type>::execute_validation(
-					  &*#static_ident,
-					  #validate_args
-					)?
+						::protify::Validator::<#validator_target_type>::execute_validation(
+							&*#static_ident,
+							#validate_args
+						)?
 				  };
 				}
 			} else {
 				quote_spanned! {*span=>
 				  is_valid &= ::protify::Validator::<#validator_target_type>::execute_validation(
-					&(#validator_expr),
-					#validate_args
+						&(#validator_expr),
+						#validate_args
 				  )?;
 				}
 			};
@@ -157,7 +157,7 @@ impl FieldData {
 			let output = if kind.is_default() {
 				quote_spanned! {*span=>
 				  if <#validator_target_type as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
-					#validator_call
+						#validator_call
 				  }
 				}
 			} else {
@@ -292,40 +292,40 @@ pub fn generate_message_validator(
 
 	quote! {
 	  impl ::protify::ValidatedMessage for #target_ident {
-		#inline_if_empty
-		fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
-		  if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
-			return Ok(::protify::IsValid::Yes);
-		  }
+			#inline_if_empty
+			fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
+				if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
+					return Ok(::protify::IsValid::Yes);
+				}
 
-		  let mut is_valid = ::protify::IsValid::Yes;
+				let mut is_valid = ::protify::IsValid::Yes;
 
-		  #validators_tokens
+				#validators_tokens
 
-		  Ok(is_valid)
-		}
+				Ok(is_valid)
+			}
 	  }
 
 	  impl ::protify::ProtoValidation for #target_ident {
-		#[doc(hidden)]
-		type Target = Self;
-		#[doc(hidden)]
-		type Stored = Self;
-		#[doc(hidden)]
-		type Validator = ::protify::MessageValidator;
-		#[doc(hidden)]
-		type ValidatorBuilder = ::protify::MessageValidatorBuilder;
+			#[doc(hidden)]
+			type Target = Self;
+			#[doc(hidden)]
+			type Stored = Self;
+			#[doc(hidden)]
+			type Validator = ::protify::MessageValidator;
+			#[doc(hidden)]
+			type ValidatorBuilder = ::protify::MessageValidatorBuilder;
 
-		#[doc(hidden)]
-		type UniqueStore<'a>
-		  = ::protify::LinearRefStore<'a, Self>
-		where
-		  Self: 'a;
+			#[doc(hidden)]
+			type UniqueStore<'a>
+				= ::protify::LinearRefStore<'a, Self>
+			where
+				Self: 'a;
 
-		#[doc(hidden)]
-		const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
-		#[doc(hidden)]
-		const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
+			#[doc(hidden)]
+			const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
+			#[doc(hidden)]
+			const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
 	  }
 	}
 }

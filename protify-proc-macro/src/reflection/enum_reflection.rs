@@ -29,28 +29,28 @@ pub fn enum_reflection_derive(item: &ItemEnum) -> TokenStream2 {
 
 	quote! {
 	  impl ::protify::ProtoEnum for #ident {
-		#[inline]
-		fn proto_name() -> &'static str {
-		  #name
-		}
+			#[inline]
+			fn proto_name() -> &'static str {
+				#name
+			}
 	  }
 
 	  impl ::protify::ProtoValidation for #ident {
-		#[doc(hidden)]
-		type Target = i32;
-		#[doc(hidden)]
-		type Stored = i32;
-		type Validator = ::protify::EnumValidator<#ident>;
-		type ValidatorBuilder = ::protify::EnumValidatorBuilder<#ident>;
+			#[doc(hidden)]
+			type Target = i32;
+			#[doc(hidden)]
+			type Stored = i32;
+			type Validator = ::protify::EnumValidator<#ident>;
+			type ValidatorBuilder = ::protify::EnumValidatorBuilder<#ident>;
 
-		#[doc(hidden)]
-		type UniqueStore<'a>
-		  = ::protify::CopyHybridStore<i32>
-		  where
-			Self: 'a;
+			#[doc(hidden)]
+			type UniqueStore<'a>
+				= ::protify::CopyHybridStore<i32>
+				where
+				Self: 'a;
 
-		#[doc(hidden)]
-		const HAS_DEFAULT_VALIDATOR: bool = false;
+			#[doc(hidden)]
+			const HAS_DEFAULT_VALIDATOR: bool = false;
 	  }
 	}
 }

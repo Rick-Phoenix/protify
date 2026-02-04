@@ -17,9 +17,9 @@ pub fn generate_oneof_validator(
 		let top_level = top_level_validators.iter().map(|v| {
 			quote_spanned! {v.span=>
 			  is_valid &= ::protify::Validator::<#oneof_ident>::execute_validation(
-				&(#v),
-				ctx.without_field_context(),
-				Some(self)
+					&(#v),
+					ctx.without_field_context(),
+					Some(self)
 			  )?;
 			}
 		});
@@ -38,7 +38,7 @@ pub fn generate_oneof_validator(
 
 				quote_spanned! {data.span=>
 				  Self::#ident(v) => {
-					#(#validators)*
+						#(#validators)*
 				  }
 				}
 			});
@@ -53,8 +53,8 @@ pub fn generate_oneof_validator(
 			  #top_level_tokens
 
 			  match self {
-				#variants_tokens
-				_ => {}
+					#variants_tokens
+					_ => {}
 			  };
 			}
 		}
@@ -96,40 +96,40 @@ pub fn generate_oneof_validator(
 
 	quote! {
 	  impl ::protify::ValidatedOneof for #oneof_ident {
-		#inline_if_empty
-		fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
-		  if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
-			return Ok(::protify::IsValid::Yes);
-		  }
+			#inline_if_empty
+			fn validate_with_ctx(&self, ctx: &mut ::protify::ValidationCtx) -> ::protify::ValidationResult {
+				if !<Self as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
+					return Ok(::protify::IsValid::Yes);
+				}
 
-		  let mut is_valid = ::protify::IsValid::Yes;
+				let mut is_valid = ::protify::IsValid::Yes;
 
-		  #validators_tokens
+				#validators_tokens
 
-		  Ok(is_valid)
-		}
+				Ok(is_valid)
+			}
 	  }
 
 	  impl ::protify::ProtoValidation for #oneof_ident {
-		#[doc(hidden)]
-		type Target = Self;
-		#[doc(hidden)]
-		type Stored = Self;
-		#[doc(hidden)]
-		type Validator = ::protify::OneofValidator;
-		#[doc(hidden)]
-		type ValidatorBuilder = ::protify::OneofValidatorBuilder;
+			#[doc(hidden)]
+			type Target = Self;
+			#[doc(hidden)]
+			type Stored = Self;
+			#[doc(hidden)]
+			type Validator = ::protify::OneofValidator;
+			#[doc(hidden)]
+			type ValidatorBuilder = ::protify::OneofValidatorBuilder;
 
-		#[doc(hidden)]
-		type UniqueStore<'a>
-		  = ::protify::LinearRefStore<'a, Self>
-		where
-		  Self: 'a;
+			#[doc(hidden)]
+			type UniqueStore<'a>
+				= ::protify::LinearRefStore<'a, Self>
+			where
+				Self: 'a;
 
-		#[doc(hidden)]
-		const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
-		#[doc(hidden)]
-		const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
+			#[doc(hidden)]
+			const HAS_DEFAULT_VALIDATOR: bool = #has_default_validator;
+			#[doc(hidden)]
+			const HAS_SHALLOW_VALIDATION: bool = #has_non_default_validators;
 	  }
 	}
 }

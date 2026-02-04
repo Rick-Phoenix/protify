@@ -13,11 +13,11 @@ pub fn builder_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
 		  #[doc(hidden)]
 		  impl<S: State> State for #ident<S> {
-			type #id = Set<members::#id>;
-			#(
-			  type #others = S::#others;
-			)*
-			const SEALED: sealed::Sealed = sealed::Sealed;
+				type #id = Set<members::#id>;
+				#(
+					type #others = S::#others;
+				)*
+				const SEALED: sealed::Sealed = sealed::Sealed;
 		  }
 		}
 	});
@@ -26,30 +26,30 @@ pub fn builder_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 	  use core::marker::PhantomData;
 
 	  mod sealed {
-		pub(super) struct Sealed;
+			pub(super) struct Sealed;
 	  }
 
 	  pub trait State: Sized {
-		#(
-		  type #idents;
-		)*
-		#[doc(hidden)]
-		const SEALED: sealed::Sealed;
+			#(
+				type #idents;
+			)*
+			#[doc(hidden)]
+			const SEALED: sealed::Sealed;
 	  }
 
 	  #[doc(hidden)]
 	  mod members {
-		#(
-		  pub struct #idents;
-		)*
+			#(
+				pub struct #idents;
+			)*
 	  }
 
 	  #[doc(hidden)]
 	  impl State for Empty {
-		#(
-		  type #idents = Unset<members::#idents>;
-		)*
-		const SEALED: sealed::Sealed = sealed::Sealed;
+			#(
+				type #idents = Unset<members::#idents>;
+			)*
+			const SEALED: sealed::Sealed = sealed::Sealed;
 	  }
 
 	  #(#setter_types)*

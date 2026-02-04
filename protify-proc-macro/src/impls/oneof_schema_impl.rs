@@ -25,17 +25,17 @@ impl OneofCtx<'_> {
 
 		quote! {
 		  impl ::protify::ProtoOneof for #enum_ident {
-			#[doc(hidden)]
-			const TAGS: &[i32] = &[ #(#tags),* ];
+				#[doc(hidden)]
+				const TAGS: &[i32] = &[ #(#tags),* ];
 
-			fn proto_schema() -> ::protify::Oneof {
-			  ::protify::Oneof {
-				name: stringify!(#enum_ident).into(),
-				fields: vec![ #variants_tokens ],
-				options: #options_tokens.into_iter().collect(),
-				validators: ::protify::collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]),
-			  }
-			}
+				fn proto_schema() -> ::protify::Oneof {
+					::protify::Oneof {
+						name: stringify!(#enum_ident).into(),
+						fields: vec![ #variants_tokens ],
+						options: #options_tokens.into_iter().collect(),
+						validators: ::protify::collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]),
+					}
+				}
 		  }
 		}
 	}

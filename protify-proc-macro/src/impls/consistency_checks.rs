@@ -33,9 +33,9 @@ pub fn generate_oneofs_tags_checks(
 		  #[cfg(test)]
 		  #[test]
 		  fn #test_fn_ident() {
-			if let Err(e) = #item_ident::__check_oneofs_tags() {
-			  panic!("{e}")
-			}
+				if let Err(e) = #item_ident::__check_oneofs_tags() {
+					panic!("{e}")
+				}
 		  }
 		}
 	});
@@ -45,14 +45,14 @@ pub fn generate_oneofs_tags_checks(
 
 	  #[cfg(test)]
 	  impl #item_ident {
-		#[doc(hidden)]
-		#[allow(unused)]
-		#[track_caller]
-		pub fn __check_oneofs_tags() -> Result<(), String> {
-		  #(#oneofs_tags_checks)*
+			#[doc(hidden)]
+			#[allow(unused)]
+			#[track_caller]
+			pub fn __check_oneofs_tags() -> Result<(), String> {
+				#(#oneofs_tags_checks)*
 
-		  Ok(())
-		}
+				Ok(())
+			}
 	  }
 	}
 }
@@ -70,7 +70,7 @@ pub fn generate_validators_consistency_checks(
 		.chain(top_level_validators.iter().map(|v| {
 			quote! {
 			  if let Err(errs) = ::protify::Validator::<#item_ident>::check_consistency(&#v) {
-				top_level_errors.extend(errs);
+					top_level_errors.extend(errs);
 			  }
 			}
 		}));
@@ -85,9 +85,9 @@ pub fn generate_validators_consistency_checks(
 		  #[cfg(test)]
 		  #[test]
 		  fn #test_fn_ident() {
-			if let Err(e) = #item_ident::check_validators() {
-			  panic!("{e}")
-			}
+				if let Err(e) = #item_ident::check_validators() {
+					panic!("{e}")
+				}
 		  }
 		}
 	});
@@ -97,25 +97,25 @@ pub fn generate_validators_consistency_checks(
 
 	  #[cfg(test)]
 	  impl #item_ident {
-		#[allow(unused)]
-		#[track_caller]
-		pub fn check_validators() -> Result<(), ::protify::TestError> {
-		  let mut field_errors: ::protify::Vec<::protify::FieldError> = ::protify::Vec::new();
-		  let mut top_level_errors: ::protify::Vec<::protify::ConsistencyError> = ::protify::Vec::new();
+			#[allow(unused)]
+			#[track_caller]
+			pub fn check_validators() -> Result<(), ::protify::TestError> {
+				let mut field_errors: ::protify::Vec<::protify::FieldError> = ::protify::Vec::new();
+				let mut top_level_errors: ::protify::Vec<::protify::ConsistencyError> = ::protify::Vec::new();
 
-		  #(#consistency_checks)*
+				#(#consistency_checks)*
 
-		  if !field_errors.is_empty() || !top_level_errors.is_empty() {
-			return Err(::protify::TestError {
-				item_name: stringify!(#item_ident),
-				field_errors,
-				top_level_errors
-			  }
-			);
-		  }
+				if !field_errors.is_empty() || !top_level_errors.is_empty() {
+					return Err(::protify::TestError {
+						item_name: stringify!(#item_ident),
+						field_errors,
+						top_level_errors
+						}
+					);
+				}
 
-		  Ok(())
-		}
+				Ok(())
+			}
 	  }
 	}
 }

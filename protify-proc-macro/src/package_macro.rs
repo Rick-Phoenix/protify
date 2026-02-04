@@ -41,11 +41,11 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 		  #[cfg(test)]
 		  #[test]
 		  fn #test_fn_ident() {
-			let pkg = <#pkg_ident as ::protify::PackageSchema>::get_package();
+				let pkg = <#pkg_ident as ::protify::PackageSchema>::get_package();
 
-			if let Err(e) = pkg.check_unique_cel_rules() {
-			  panic!("{e}");
-			}
+				if let Err(e) = pkg.check_unique_cel_rules() {
+					panic!("{e}");
+				}
 		  }
 		}
 	});
@@ -55,18 +55,18 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 	  pub struct #pkg_ident;
 
 	  impl ::protify::PackageSchema for #pkg_ident {
-		const NAME: &str = #pkg_name;
+			const NAME: &str = #pkg_name;
 
-		fn files() -> ::protify::Vec<::protify::ProtoFile> {
-		  ::protify::vec![ #(<#files as ::protify::FileSchema>::file_schema()),* ]
-		}
+			fn files() -> ::protify::Vec<::protify::ProtoFile> {
+				::protify::vec![ #(<#files as ::protify::FileSchema>::file_schema()),* ]
+			}
 	  }
 
 	  impl #pkg_ident {
-		#[doc = concat!("Returns the fully built ", #pkg_name, " protobuf package.")]
-		pub fn get_package() -> ::protify::Package {
-		  <Self as ::protify::PackageSchema>::get_package()
-		}
+			#[doc = concat!("Returns the fully built ", #pkg_name, " protobuf package.")]
+			pub fn get_package() -> ::protify::Package {
+				<Self as ::protify::PackageSchema>::get_package()
+			}
 	  }
 
 	  #test_impl

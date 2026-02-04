@@ -169,10 +169,10 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 	let inventory_call = (!no_emit).then(|| {
 		quote! {
 		  ::protify::register_proto_data! {
-			::protify::RegistryFile {
-			  file: || <#file_ident as ::protify::FileSchema>::file_schema(),
-			  package: <#package as ::protify::PackageSchema>::NAME
-			}
+				::protify::RegistryFile {
+					file: || <#file_ident as ::protify::FileSchema>::file_schema(),
+					package: <#package as ::protify::PackageSchema>::NAME
+				}
 		  }
 		}
 	});
@@ -181,33 +181,33 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 	  #[doc(hidden)]
 	  #[allow(unused)]
 	  const __PROTO_FILE: ::protify::FileReference = ::protify::FileReference {
-		name: #file,
-		package: <#package as ::protify::PackageSchema>::NAME,
-		extern_path: #extern_path,
+			name: #file,
+			package: <#package as ::protify::PackageSchema>::NAME,
+			extern_path: #extern_path,
 	  };
 
 	  #[allow(non_camel_case_types)]
 	  pub(crate) struct #file_ident;
 
 	  impl ::protify::FileSchema for #file_ident {
-		const NAME: &str = #file;
-		const PACKAGE: &str = <#package as ::protify::PackageSchema>::NAME;
-		const EXTERN_PATH: &str = #extern_path;
+			const NAME: &str = #file;
+			const PACKAGE: &str = <#package as ::protify::PackageSchema>::NAME;
+			const EXTERN_PATH: &str = #extern_path;
 
-		fn file_schema() -> ::protify::ProtoFile {
-		  let mut file = ::protify::ProtoFile::new(#file, <#package as ::protify::PackageSchema>::NAME);
+			fn file_schema() -> ::protify::ProtoFile {
+				let mut file = ::protify::ProtoFile::new(#file, <#package as ::protify::PackageSchema>::NAME);
 
-		  file
-			.with_edition(#edition)
-			.with_messages([ #(#messages),* ])
-			.with_services([ #(#services::proto_schema()),* ])
-			.with_enums([ #(#enums::proto_schema()),* ])
-			.with_extensions([ #(#extensions::proto_schema()),* ])
-			.with_imports(#imports)
-			.with_options(#options);
+				file
+				.with_edition(#edition)
+				.with_messages([ #(#messages),* ])
+				.with_services([ #(#services::proto_schema()),* ])
+				.with_enums([ #(#enums::proto_schema()),* ])
+				.with_extensions([ #(#extensions::proto_schema()),* ])
+				.with_imports(#imports)
+				.with_options(#options);
 
-		  file
-		}
+				file
+			}
 	  }
 
 	  #inventory_call

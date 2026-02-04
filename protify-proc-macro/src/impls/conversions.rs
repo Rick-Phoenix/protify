@@ -34,21 +34,21 @@ impl ProtoConversions<'_> {
 		let proxy_trait_impl = if kind.is_message() {
 			quote! {
 			  impl ::protify::MessageProxy for #proxy_ident {
-				type Message = #proto_ident;
+					type Message = #proto_ident;
 			  }
 
 			  impl ::protify::ProxiedMessage for #proto_ident {
-				type Proxy = #proxy_ident;
+					type Proxy = #proxy_ident;
 			  }
 			}
 		} else {
 			quote! {
 			  impl ::protify::OneofProxy for #proxy_ident {
-				type Oneof = #proto_ident;
+					type Oneof = #proto_ident;
 			  }
 
 			  impl ::protify::ProxiedOneof for #proto_ident {
-				type Proxy = #proxy_ident;
+					type Proxy = #proxy_ident;
 			  }
 			}
 		};
@@ -128,13 +128,13 @@ impl ProtoConversions<'_> {
 			match kind {
 				ItemKind::Oneof => quote! {
 				  match value {
-					#(#tokens),*
+						#(#tokens),*
 				  }
 				},
 				ItemKind::Message => {
 					quote! {
 					  Self {
-						#(#tokens),*
+							#(#tokens),*
 					  }
 					}
 				}
@@ -144,9 +144,9 @@ impl ProtoConversions<'_> {
 		quote! {
 		  #[allow(clippy::useless_conversion)]
 		  impl From<#proto_ident> for #proxy_ident {
-			fn from(value: #proto_ident) -> Self {
-			  #conversion_body
-			}
+				fn from(value: #proto_ident) -> Self {
+					#conversion_body
+				}
 		  }
 		}
 	}
@@ -219,13 +219,13 @@ impl ProtoConversions<'_> {
 			match kind {
 				ItemKind::Oneof => quote! {
 				  match value {
-					#(#tokens),*
+						#(#tokens),*
 				  }
 				},
 				ItemKind::Message => {
 					quote! {
 					  Self {
-						#(#tokens),*
+							#(#tokens),*
 					  }
 					}
 				}
@@ -235,9 +235,9 @@ impl ProtoConversions<'_> {
 		quote! {
 		  #[allow(clippy::useless_conversion)]
 		  impl From<#proxy_ident> for #proto_ident {
-			fn from(value: #proxy_ident) -> Self {
-			  #conversion_body
-			}
+				fn from(value: #proxy_ident) -> Self {
+					#conversion_body
+				}
 		  }
 		}
 	}

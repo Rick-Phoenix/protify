@@ -47,7 +47,7 @@ pub fn derive_cel_value_oneof(item: &ItemEnum) -> Result<TokenStream2, Error> {
 
 			match_arms.push(quote_spanned! {span=>
 			  #enum_ident::#variant_ident(val) => {
-				Ok((#proto_name.to_string(), #into_expression))
+					Ok((#proto_name.to_string(), #into_expression))
 			  }
 			});
 		}
@@ -57,24 +57,24 @@ pub fn derive_cel_value_oneof(item: &ItemEnum) -> Result<TokenStream2, Error> {
 	// the name of the specific oneof variant being used
 	Ok(quote! {
 	  impl ::protify::CelOneof for #enum_ident {
-		#[allow(clippy::useless_conversion)]
-		#[allow(clippy::unnecessary_fallible_conversions)]
-		fn try_into_cel(self) -> Result<(String, ::protify::cel::Value), ::protify::proto_types::cel::CelConversionError> {
-		  use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
+			#[allow(clippy::useless_conversion)]
+			#[allow(clippy::unnecessary_fallible_conversions)]
+			fn try_into_cel(self) -> Result<(String, ::protify::cel::Value), ::protify::proto_types::cel::CelConversionError> {
+				use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
 
-		  match self {
-			#(#match_arms),*
-		  }
-		}
+				match self {
+					#(#match_arms),*
+				}
+			}
 	  }
 
 	  impl TryFrom<#enum_ident> for ::protify::cel::Value {
-		type Error = ::protify::proto_types::cel::CelConversionError;
+			type Error = ::protify::proto_types::cel::CelConversionError;
 
-		#[inline]
-		fn try_from(value: #enum_ident) -> Result<Self, Self::Error> {
-		  Ok(<#enum_ident as ::protify::CelOneof>::try_into_cel(value)?.1)
-		}
+			#[inline]
+			fn try_from(value: #enum_ident) -> Result<Self, Self::Error> {
+				Ok(<#enum_ident as ::protify::CelOneof>::try_into_cel(value)?.1)
+			}
 	  }
 	})
 }
@@ -125,9 +125,9 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
 
 					tokens.extend(quote_spanned! {span=>
 					  if let Some(val) = value.#field_ident {
-						fields.insert(#field_name.into(), #conversion_tokens);
-					  } else {
-						fields.insert(#field_name.into(), ::protify::cel::Value::Null);
+							fields.insert(#field_name.into(), #conversion_tokens);
+						} else {
+							fields.insert(#field_name.into(), ::protify::cel::Value::Null);
 					  }
 					});
 				}
@@ -137,7 +137,7 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
 					tokens.extend(quote_spanned! {span=>
 					  let mut converted: Vec<::protify::cel::Value> = Vec::new();
 					  for val in value.#field_ident {
-						converted.push(#conversion_tokens);
+							converted.push(#conversion_tokens);
 					  }
 
 					  fields.insert(#field_name.into(), ::protify::cel::Value::List(converted.into()));
@@ -173,19 +173,19 @@ pub(crate) fn derive_cel_value_struct(item: &ItemStruct) -> Result<TokenStream2,
 	  impl ::protify::CelValue for #struct_name {}
 
 	  impl TryFrom<#struct_name> for ::protify::cel::Value {
-		type Error = ::protify::proto_types::cel::CelConversionError;
+			type Error = ::protify::proto_types::cel::CelConversionError;
 
-		#[allow(clippy::useless_conversion)]
-		#[allow(clippy::unnecessary_fallible_conversions)]
-		fn try_from(value: #struct_name) -> Result<Self, Self::Error> {
-		  use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
+			#[allow(clippy::useless_conversion)]
+			#[allow(clippy::unnecessary_fallible_conversions)]
+			fn try_from(value: #struct_name) -> Result<Self, Self::Error> {
+				use ::protify::{CelOneof as __CelOneof, CelValue as __CelValue};
 
-		  let mut fields: ::std::collections::HashMap<::protify::cel::objects::Key, ::protify::cel::Value> = std::collections::HashMap::new();
+				let mut fields: ::std::collections::HashMap<::protify::cel::objects::Key, ::protify::cel::Value> = std::collections::HashMap::new();
 
-		  #tokens
+				#tokens
 
-		  Ok(::protify::cel::Value::Map(fields.into()))
-		}
+				Ok(::protify::cel::Value::Map(fields.into()))
+			}
 	  }
 	})
 }

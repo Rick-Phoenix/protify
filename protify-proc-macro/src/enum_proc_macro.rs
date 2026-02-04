@@ -128,7 +128,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 	let proto_name_method = if let Some(parent) = &parent_message {
 		quote_spanned! {parent.span()=>
 		  static __FULL_NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
-			::protify::format!("{}.{}", <#parent as ::protify::ProtoMessage>::proto_name(), #proto_name)
+				::protify::format!("{}.{}", <#parent as ::protify::ProtoMessage>::proto_name(), #proto_name)
 		  });
 
 		  &*__FULL_NAME
@@ -181,7 +181,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 
 		quote! {
 		  match name {
-			#(#tokens,)*
+				#(#tokens,)*
 			_ => None
 		  }
 		}
@@ -202,7 +202,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 
 		quote! {
 		  match self {
-			#(#tokens),*
+				#(#tokens),*
 		  }
 		}
 	};
@@ -222,8 +222,8 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 
 		quote! {
 		  match value {
-			#(#tokens,)*
-			_ => Err(::protify::prost::UnknownEnumValue(value))
+				#(#tokens,)*
+				_ => Err(::protify::prost::UnknownEnumValue(value))
 		  }
 		}
 	};
@@ -259,100 +259,100 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 	  #item
 
 	  ::protify::register_proto_data! {
-		::protify::RegistryEnum {
-		  parent_message: #parent_message_registry,
-		  package: #package,
-		  enum_: || <#enum_ident as ::protify::ProtoEnumSchema>::proto_schema()
-		}
+			::protify::RegistryEnum {
+				parent_message: #parent_message_registry,
+				package: #package,
+				enum_: || <#enum_ident as ::protify::ProtoEnumSchema>::proto_schema()
+			}
 	  }
 
 	  impl TryFrom<i32> for #enum_ident {
-		type Error = ::protify::prost::UnknownEnumValue;
+			type Error = ::protify::prost::UnknownEnumValue;
 
-		#[inline]
-		fn try_from(value: i32) -> Result<Self, Self::Error> {
-		  #try_from_impl
-		}
+			#[inline]
+			fn try_from(value: i32) -> Result<Self, Self::Error> {
+				#try_from_impl
+			}
 	  }
 
 	  impl Default for #enum_ident {
-		#[inline]
-		fn default() -> Self {
-		  #enum_ident::#first_variant_ident
-		}
+			#[inline]
+			fn default() -> Self {
+				#enum_ident::#first_variant_ident
+			}
 	  }
 
 	  impl From<#enum_ident> for i32 {
-		#[inline]
-		fn from(value: #enum_ident) -> i32 {
-		  value as i32
-		}
+			#[inline]
+			fn from(value: #enum_ident) -> i32 {
+				value as i32
+			}
 	  }
 
 	  impl ::protify::ProtoValidation for #enum_ident {
-		#[doc(hidden)]
-		type Target = i32;
-		#[doc(hidden)]
-		type Stored = i32;
-		type Validator = ::protify::EnumValidator<#enum_ident>;
-		type ValidatorBuilder = ::protify::EnumValidatorBuilder<#enum_ident>;
+			#[doc(hidden)]
+			type Target = i32;
+			#[doc(hidden)]
+			type Stored = i32;
+			type Validator = ::protify::EnumValidator<#enum_ident>;
+			type ValidatorBuilder = ::protify::EnumValidatorBuilder<#enum_ident>;
 
-		#[doc(hidden)]
-		type UniqueStore<'a>
-		  = ::protify::CopyHybridStore<i32>
-		where
-		  Self: 'a;
+			#[doc(hidden)]
+			type UniqueStore<'a>
+				= ::protify::CopyHybridStore<i32>
+			where
+				Self: 'a;
 
-		#[doc(hidden)]
-		const HAS_DEFAULT_VALIDATOR: bool = false;
+			#[doc(hidden)]
+			const HAS_DEFAULT_VALIDATOR: bool = false;
 	  }
 
 	  impl ::protify::AsProtoType for #enum_ident {
-		fn proto_type() -> ::protify::ProtoType {
-		  ::protify::ProtoType::Enum(
-			<Self as ::protify::ProtoEnumSchema>::proto_path()
-		  )
-		}
+			fn proto_type() -> ::protify::ProtoType {
+				::protify::ProtoType::Enum(
+					<Self as ::protify::ProtoEnumSchema>::proto_path()
+				)
+			}
 	  }
 
 	  impl ::protify::ProtoEnum for #enum_ident {
-		fn proto_name() -> &'static str {
-		  #proto_name_method
-		}
+			fn proto_name() -> &'static str {
+				#proto_name_method
+			}
 	  }
 
 	  impl ::protify::ProtoEnumSchema for #enum_ident {
-		fn proto_path() -> ::protify::ProtoPath {
-		  ::protify::ProtoPath {
-			name: <Self as ::protify::ProtoEnum>::proto_name().into(),
-			file: #file_name.into(),
-			package: #package.into(),
-		  }
-		}
+			fn proto_path() -> ::protify::ProtoPath {
+				::protify::ProtoPath {
+					name: <Self as ::protify::ProtoEnum>::proto_name().into(),
+					file: #file_name.into(),
+					package: #package.into(),
+				}
+			}
 
-		#[inline]
-		fn as_proto_name(&self) -> &'static str {
-		  #as_str_impl
-		}
+			#[inline]
+			fn as_proto_name(&self) -> &'static str {
+				#as_str_impl
+			}
 
-		#[inline]
-		fn from_proto_name(name: &str) -> Option<Self> {
-		  #from_str_impl
-		}
+			#[inline]
+			fn from_proto_name(name: &str) -> Option<Self> {
+				#from_str_impl
+			}
 
-		fn proto_schema() -> ::protify::EnumSchema {
-		  ::protify::EnumSchema {
-			short_name: #proto_name.into(),
-			name: <Self as ::protify::ProtoEnum>::proto_name().into(),
-			file: #file_name.into(),
-			package: #package.into(),
-			variants: ::protify::vec! [ #variants_tokens ],
-			reserved_names: ::protify::vec![ #(#reserved_names.into()),* ],
-			reserved_numbers: #reserved_numbers,
-			options: ::protify::collect_options(#enum_options, #deprecated),
-			rust_path:  ::protify::format!("::{}::{}", #module_path, #rust_ident_str).into()
-		  }
-		}
+			fn proto_schema() -> ::protify::EnumSchema {
+				::protify::EnumSchema {
+					short_name: #proto_name.into(),
+					name: <Self as ::protify::ProtoEnum>::proto_name().into(),
+					file: #file_name.into(),
+					package: #package.into(),
+					variants: ::protify::vec! [ #variants_tokens ],
+					reserved_names: ::protify::vec![ #(#reserved_names.into()),* ],
+					reserved_numbers: #reserved_numbers,
+					options: ::protify::collect_options(#enum_options, #deprecated),
+					rust_path:  ::protify::format!("::{}::{}", #module_path, #rust_ident_str).into()
+				}
+			}
 	  }
 
 	  #error

@@ -123,34 +123,34 @@ pub fn well_known_type_impl_macro(input: TokenStream2) -> syn::Result<TokenStrea
 		let message_impls = type_.is_message().then(|| {
 			quote! {
 			  impl ValidatedMessage for #target {
-				#[inline(always)]
-				#[doc(hidden)]
-				fn validate_with_ctx(&self, _: &mut ValidationCtx) -> ValidationResult {
-				  Ok(IsValid::Yes)
-				}
+					#[inline(always)]
+					#[doc(hidden)]
+					fn validate_with_ctx(&self, _: &mut ValidationCtx) -> ValidationResult {
+						Ok(IsValid::Yes)
+					}
 			  }
 			}
 		});
 
 		quote! {
 		  impl ProtoValidation for #target {
-			#[doc(hidden)]
-			type ValidatorBuilder = NoOpValidatorBuilder<Self>;
-			#[doc(hidden)]
-			type Stored = Self;
-			#[doc(hidden)]
-			type Target = Self;
-			#[doc(hidden)]
-			type Validator = NoOpValidator<Self>;
+				#[doc(hidden)]
+				type ValidatorBuilder = NoOpValidatorBuilder<Self>;
+				#[doc(hidden)]
+				type Stored = Self;
+				#[doc(hidden)]
+				type Target = Self;
+				#[doc(hidden)]
+				type Validator = NoOpValidator<Self>;
 
-			#[doc(hidden)]
-			type UniqueStore<'a>
-			  = #unique_store_tokens
-			  where
-				Self: 'a;
+				#[doc(hidden)]
+				type UniqueStore<'a>
+					= #unique_store_tokens
+					where
+					Self: 'a;
 
-			#[doc(hidden)]
-			const HAS_DEFAULT_VALIDATOR: bool = false;
+				#[doc(hidden)]
+				const HAS_DEFAULT_VALIDATOR: bool = false;
 		  }
 
 		  #message_impls
@@ -160,31 +160,31 @@ pub fn well_known_type_impl_macro(input: TokenStream2) -> syn::Result<TokenStrea
 	let proto_type_impl = if type_.is_message() {
 		quote! {
 		  impl MessagePath for #target {
-			fn proto_path() -> ProtoPath {
-			  ProtoPath {
-				name: #name.into(),
-				package: #package.into(),
-				file: #file.into(),
-			  }
-			}
+				fn proto_path() -> ProtoPath {
+					ProtoPath {
+					name: #name.into(),
+					package: #package.into(),
+					file: #file.into(),
+					}
+				}
 		  }
 
 		  impl AsProtoType for #target {
-			fn proto_type() -> ProtoType {
-			  ProtoType::Message(Self::proto_path())
-			}
+				fn proto_type() -> ProtoType {
+					ProtoType::Message(Self::proto_path())
+				}
 		  }
 		}
 	} else {
 		quote! {
 		  impl AsProtoType for #target {
-			fn proto_type() -> ProtoType {
-			  ProtoType::Enum(ProtoPath {
-				name: #name.into(),
-				package: #package.into(),
-				file: #file.into(),
-			  })
-			}
+				fn proto_type() -> ProtoType {
+					ProtoType::Enum(ProtoPath {
+					name: #name.into(),
+					package: #package.into(),
+					file: #file.into(),
+					})
+				}
 		  }
 		}
 	};
