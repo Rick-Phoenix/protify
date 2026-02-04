@@ -76,7 +76,7 @@ The cardinality of the field should be inferred automatically in most cases from
     - Type: string
     - Example: `#[proto(name = "abc")]`
     - Description:
-        Specifies the name of the field. Overrides the default behaviour, which uses the snake_case name of the field.
+        Specifies the name of the field. Overrides the default behaviour, which uses the snake_case name of the field, escaping any leading `r#` or trailing `_`.
 
 - `from_proto`
     - Type: function Path or closure

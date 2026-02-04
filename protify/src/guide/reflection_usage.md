@@ -69,4 +69,3 @@ After doing this, all of the selected messages will implement [`ValidatedMessage
 If the `cel` feature is enabled, [`CelValue`](crate::CelValue) and [`CelOneof`](crate::CelOneof) will also be implemented for messages and oneofs.
 
 Just like the non-reflection-based version of this crate, this will also automatically generate a `check_validators` method on each message and oneof, as well as a test that automatically calls this method and panics on failure, in order to ensure that validators represent valid configurations. For more information about this, visit the [`correctness`](crate::guide::correctness) section.
-

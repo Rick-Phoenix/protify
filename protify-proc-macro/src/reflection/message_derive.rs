@@ -56,9 +56,9 @@ fn extract_fields_data(item: &mut ItemStruct) -> Result<ReflectionMsgData, Error
     for attr in &field.attrs {
       if attr.path().is_ident("prost") {
         attr.parse_nested_meta(|meta| {
-          let ident_str = meta.ident_str()?;
+          let meta_ident_str = meta.ident_str()?;
 
-          match ident_str.as_str() {
+          match meta_ident_str.as_str() {
             "map" => {
               let val = meta.parse_value::<LitStr>()?.value();
               let (_, value) = val
