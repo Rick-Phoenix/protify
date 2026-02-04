@@ -1,4 +1,5 @@
-use std::fs;
+use std::fs::File;
+use std::io::Write;
 use std::process::Command;
 use syn::{Expr, Lit, Meta};
 
@@ -38,7 +39,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		}
 	}
 
-	fs::write("README.md", readme_content.trim())?;
+	let mut file = File::create(concat!(env!("CARGO_MANIFEST_DIR"), "/../README.md"))?;
+
+	write!(
+		file,
+		r#"
+<p align="center">
+<img src="https://github.com/Rick-Phoenix/protify/blob/main/assets/logo.jpg?raw=true">
+</p>
+
+"#
+	)?;
+
+	write!(file, "{}", readme_content.trim())?;
+
 	println!("README.md updated successfully!");
 
 	Ok(())
