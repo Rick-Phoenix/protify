@@ -45,8 +45,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		file,
 		r#"
 <p align="center">
-<img src="https://github.com/Rick-Phoenix/protify/blob/main/assets/logo.jpg?raw=true">
+<img alt="protify logo" src="https://github.com/Rick-Phoenix/protify/blob/main/assets/logo.jpg?raw=true">
 </p>
+
+<div align="center">
+<div>
+
+![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white) ![License](https://img.shields.io/github/license/Rick-Phoenix/protify)
+
+[![Sponsor](https://img.shields.io/badge/GitHub%20Sponsors-30363D?&logo=GitHub-Sponsors&logoColor=EA4AAA)](https://github.com/sponsors/Rick-Phoenix)
+
+</div>
+</div>
 
 "#
 	)?;
