@@ -66,6 +66,11 @@ pub fn generate_oneof_validator(
     default_check_tokens,
   } = validators_data;
 
+  // In case a future reader finds this confusing.
+  // `has_validators` => whether there are any validators at all
+  // `has_non_default_validators` => whether there are non-default validators (which means that HAS_DEFAULT_VALIDATOR = true)
+  //
+  // The logic below determines the value of HAS_DEFAULT_VALIDATOR. If this oneof only contains default validators, we need to check the same constant in the items being validated to determine this.
   #[allow(clippy::if_same_then_else)]
   let has_default_validator = if has_non_default_validators {
     quote! { true }

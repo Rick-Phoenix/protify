@@ -37,6 +37,7 @@ pub fn field_validator_tokens(
     if !validators_data.has_non_default_validators {
       if kind.is_default() {
         if let Some(msg_info) = field_data.message_info()
+				  // We ignore Box<Self>
           && !msg_info.is_self(input_ident)
         {
           let path = &msg_info.path;
@@ -44,6 +45,8 @@ pub fn field_validator_tokens(
           validators_data
             .default_check_tokens
             .push(if msg_info.boxed {
+              // Found recursion. We must check if the item has validators
+              // for primitives
               quote! {
                 <#path as ::protify::ProtoValidation>::HAS_SHALLOW_VALIDATION
               }
@@ -81,9 +84,11 @@ pub fn field_validator_tokens(
         }
         RustType::Box(_) => quote_spanned! (*span=> self.#ident.as_deref()),
         _ => {
+          // If oneofs or messages are used with `default`, they would not be wrapped in `Option`
+          // so we handle them here, knowing that they will be wrapped in `Option` in the proto struct/enum
           if matches!(
             proto_field,
-            ProtoField::Single(ProtoType::Message(MessageInfo { .. })) | ProtoField::Oneof(_)
+            ProtoField::Single(ProtoType::Message(_)) | ProtoField::Oneof(_)
           ) {
             quote_spanned! (*span=> self.#ident.as_ref())
           } else if let ProtoField::Single(inner) = proto_field
@@ -101,6 +106,7 @@ pub fn field_validator_tokens(
     let validator_target_type = proto_field.validator_target_type(*span);
 
     let validate_args = if proto_field.is_oneof() {
+      // Oneofs override `field_context` anyway
       quote_spanned! {*span=>
         ctx,
         #argument
@@ -189,6 +195,7 @@ pub fn generate_message_validator(
       } else {
         let validator_static_ident = format_ident!("__VALIDATOR_{i}");
 
+				// Validator contains CEL rules, so we cache it
         quote_spanned! {v.span=>
           is_valid &= {
             static #validator_static_ident: ::protify::Lazy<::protify::CelValidator> = ::protify::Lazy::new(|| {
@@ -231,7 +238,9 @@ pub fn generate_message_validator(
         }
       } else {
         // Top level validators often include CEL validation which requires cloning
-        // and heavier operations, so they should go last
+        // and heavier operations, so they should go last.
+        //
+        // We should also preserve the initial `field_context` in case the message was nested
         quote! {
           let top_level_field_context = ::core::mem::take(&mut ctx.field_context);
 
@@ -254,6 +263,11 @@ pub fn generate_message_validator(
 
   let inline_if_empty = (!has_validators).then(|| quote! { #[inline(always)] });
 
+  // In case a future reader finds this confusing.
+  // `has_validators` => whether there are any validators at all
+  // `has_non_default_validators` => whether there are non-default validators (which means that HAS_DEFAULT_VALIDATOR = true)
+  //
+  // The logic below determines the value of HAS_DEFAULT_VALIDATOR. If this message only contains default validators, we need to check the same constant in the items being validated to determine this.
   let has_default_validator = if has_non_default_validators {
     quote! { true }
     // Means we only encountered boxed self for defaults, so it's false
