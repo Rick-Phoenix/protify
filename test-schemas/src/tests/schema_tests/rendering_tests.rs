@@ -120,7 +120,12 @@ fn custom_validators_schema() {
 fn rendering_test() {
 	let pkg = RENDERING_PKG::get_package();
 
-	let output1 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/rendering_test"));
+	let test_output_dir = PathBuf::from(concat!(
+		env!("CARGO_MANIFEST_DIR"),
+		"/src/tests/rendering_test"
+	));
+
+	let output1 = test_output_dir.join("output1");
 
 	if output1.exists() {
 		fs::remove_dir_all(&output1).unwrap();
@@ -149,7 +154,7 @@ fn rendering_test() {
 
 	let manual_pkg = Package::new("rendering").with_files([ManualFile::file_schema()]);
 
-	let output2 = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/rendering_test2"));
+	let output2 = test_output_dir.join("output2");
 
 	if output2.exists() {
 		fs::remove_dir_all(&output2).unwrap();
@@ -161,6 +166,14 @@ fn rendering_test() {
 	let second_content = fs::read_to_string(output2.join("rendering.proto")).unwrap();
 
 	assert_eq_pretty!(first_content, second_content);
+
+	let expected_output_reference =
+		fs::read_to_string(test_output_dir.join("expected_rendering_output.proto")).unwrap();
+
+	assert_eq_pretty!(first_content, expected_output_reference);
+
+	fs::remove_dir_all(output1).unwrap();
+	fs::remove_dir_all(output2).unwrap();
 }
 
 #[test]
