@@ -147,7 +147,9 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
 ///
 /// For a comprehensive guide of how to set up a package, visit the [`package setup`](protify::guide::package_setup) section.
 ///
-/// The first parameter of the macro is the ident that will be used for the generated constant that will hold the package handle, which will be used to generate the package and its proto files.
+/// The **first parameter** of the macro is the ident that will be used for the generated constant that will hold the package handle, which will be used to generate the package and its proto files.
+///
+/// To distinguish the package handle from a normal rust type, it is advised to use SCREAMING_CASE casing.
 ///
 ///The other parameters are not positional and are as follows:
 ///
@@ -162,7 +164,7 @@ pub fn define_proto_file(input: TokenStream) -> TokenStream {
 ///   - Type: Ident
 ///   - Example: `proto_package!(MY_PKG, name = "my_pkg", no_cel_test)`
 ///   - Description:
-///       By default, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
+///       By default, if the `cel` feature is enabled, the macro will automatically generate a test that will check for collisions of CEL rules with the same ID within the same message. You can use this ident to disable this behaviour. The [`check_unique_cel_rules`](crate::Package::check_unique_cel_rules) method will still be available if you want to call it manually inside a test.
 ///
 /// As explained in the [`package setup`](protify::guide::package_setup) section, when the `inventory` feature is disabled, the files of a given package must be added manually, inside a bracketed list.
 ///

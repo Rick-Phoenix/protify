@@ -10,7 +10,7 @@ proto_package!(MY_PKG, name = "my_pkg");
 
 The ident that is used as the first argument will be the ident for this package handle, which will be a unit struct that implements [`PackageSchema`](crate::PackageSchema). There should be only one of these for each package.
 
-ℹ️ **NOTE**: By default, this macro also generates a test that ensures that there aren't CEL rules with the same ID within the same message scope. If you want to disable this, you can provide `no_cel_test` as one of the arguments. 
+ℹ️ **NOTE**: By default, if the `cel` feature is enabled, this macro also generates a test that ensures that there aren't CEL rules with the same ID within the same message scope. If you want to disable this, you can provide `no_cel_test` as one of the arguments. 
 
 This handle will serve two purposes. One is to serve as a reference for each file definition, and the other one is to be able to generate the fully built [`Package`](crate::Package) struct, which can then be used to generate the `.proto` files, and to access the rust import path of each item to use when setting up tonic, with the [`extern_paths`](crate::Package::extern_paths) method.
 
