@@ -1,4 +1,6 @@
-# Protify
+<p align="center">
+ <img src="https://github.com/Rick-Phoenix/protify/blob/main/assets/logo.jpg?raw=true">
+ </p>
 
  Protify is a library that aims to vastly simplify working with protobuf in a rust project. It offers a rust-first approach in defining protobuf models, so that every element in a protobuf package (messages, enums, oneofs, services, extensions, files) can be fully defined in rust code, and then the respective proto files can be generated from it as a compilation artifact, rather than it being the other way around.
 
