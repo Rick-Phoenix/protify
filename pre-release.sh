@@ -16,15 +16,20 @@ fi
 if [[ "$EXEC_RELEASE" = true ]]; then
 	echo "Starting pre-release process for version ${VERSION}..."
 
-	echo "Generating changelog..."
-	git cliff --tag "$VERSION" -o "CHANGELOG.md"
+	if [[ -n $(git status --porcelain README.md) ]]; then
+		echo "Committing the updated readme..."
+		git add "README.md"
+		git commit -m "chore(release): update README"
+	fi
 
-	git add "CHANGELOG.md"
+	if [[ "$VERSION" != "0.1.0" ]]; then
+		echo "Generating changelog..."
+		git cliff --tag "$VERSION" -o "CHANGELOG.md"
 
-	if [[ -n $(git status --porcelain "CHANGELOG.md") ]]; then
-		echo "Committing the new changelog..."
-		git commit -m "chore(release): update changelog for ${VERSION}"
-	else
-		echo "No changes in changelog."
+		if [[ -n $(git status --porcelain "CHANGELOG.md") ]]; then
+			echo "Committing the new changelog..."
+			git add "CHANGELOG.md"
+			git commit -m "chore(release): update changelog for ${VERSION}"
+		fi
 	fi
 fi

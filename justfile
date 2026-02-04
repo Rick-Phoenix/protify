@@ -36,7 +36,7 @@ test-renders:
     cargo test -p test-schemas rendering_test -- -q --nocapture
 
 release version exec="": test-all gen-readme
-    ../pre_release.sh {{ version }} {{ exec }}
+    ./pre_release.sh {{ version }} {{ exec }}
     cargo release {{ version }} {{ exec }}
 
 build-docs: gen-readme

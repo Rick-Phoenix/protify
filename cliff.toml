@@ -1,7 +1,7 @@
 [changelog]
 body = """
 {%- macro print_commit(commit) -%}
-    - ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/Rick-Phoenix/proto-types/commit/{{ commit.id }})) \
+    - [{{ commit.id | truncate(length=7, end="") }}](https://github.com/Rick-Phoenix/proto-types/commit/{{ commit.id }}) \
         {% if commit.scope %}{{ commit.scope }}: {% endif %}\
         {% if commit.breaking %}[**BREAKING**] {% endif %}\
         {{ commit.message | trim | upper_first }}\
