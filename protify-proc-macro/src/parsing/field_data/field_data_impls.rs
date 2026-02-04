@@ -1,16 +1,6 @@
 use crate::*;
 
 impl FieldData {
-  pub const fn message_info(&self) -> Option<&MessageInfo> {
-    match &self.proto_field {
-      ProtoField::Map(map) => map.values.as_message(),
-      ProtoField::Oneof(_) => None,
-      ProtoField::Repeated(inner) | ProtoField::Optional(inner) | ProtoField::Single(inner) => {
-        inner.as_message()
-      }
-    }
-  }
-
   pub fn consistency_check_tokens(&self) -> Option<TokenStream2> {
     let validators = self
       .validators
@@ -44,7 +34,12 @@ impl FieldData {
         inner.descriptor_type_tokens(self.span)
       }
       ProtoField::Oneof { .. } => {
-        quote_spanned! {self.span=> compile_error!("Validator tokens should not be triggered for a oneof field, please report this bug if you see it") }
+        let error = Error::new(
+          self.span,
+          "Validator tokens should not be triggered for a oneof field, please report this bug if you see it",
+        );
+
+        error.into_compile_error()
       }
     }
   }
@@ -115,7 +110,7 @@ impl FieldData {
     }
   }
 
-  pub fn output_proto_type(&self, item_kind: ItemKind) -> Type {
+  pub fn prost_compatible_type(&self, item_kind: ItemKind) -> Type {
     match &self.proto_field {
       ProtoField::Map(map) => {
         let keys = map.keys.into_type().output_proto_type(self.span);
@@ -143,6 +138,7 @@ impl FieldData {
       ProtoField::Single(inner) => {
         let output_type = inner.output_proto_type(self.span);
 
+        // Message fields must be `Option` only if we're not in a oneof
         if inner.is_message() && item_kind.is_message() {
           parse_quote_spanned! {self.span=> Option<#output_type> }
         } else {

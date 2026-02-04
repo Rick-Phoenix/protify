@@ -281,7 +281,7 @@ where
       dst_field.attributes_mut().push(prost_attr);
 
       if impl_kind.is_proxied() {
-        let prost_compatible_type = field_data.output_proto_type(item_kind);
+        let prost_compatible_type = field_data.prost_compatible_type(item_kind);
         *dst_field.type_mut()? = prost_compatible_type;
 
         if let ProtoField::Oneof(OneofInfo { default: false, .. }) = &field_data.proto_field

@@ -23,13 +23,13 @@ impl ProtoField {
           None
         };
 
-        let inner = meta.parse_inner_value(|meta| {
-          let inner_ident = meta.path.require_ident()?.to_string();
+        let proto_type = meta.parse_inner_value(|meta| {
+          let inner_meta_ident = meta.path.require_ident()?.to_string();
 
-          ProtoType::from_nested_meta(&inner_ident, &meta, inner_type_info)
+          ProtoType::from_nested_meta(&inner_meta_ident, &meta, inner_type_info)
         })?;
 
-        Self::Repeated(inner)
+        Self::Repeated(proto_type)
       }
       "optional" => {
         let inner_type_info = if let RustType::Option(inner) = type_info.type_.as_ref() {
@@ -38,13 +38,13 @@ impl ProtoField {
           None
         };
 
-        let inner = meta.parse_inner_value(|meta| {
-          let inner_ident = meta.path.require_ident()?.to_string();
+        let proto_type = meta.parse_inner_value(|meta| {
+          let inner_meta_ident = meta.path.require_ident()?.to_string();
 
-          ProtoType::from_nested_meta(&inner_ident, &meta, inner_type_info)
+          ProtoType::from_nested_meta(&inner_meta_ident, &meta, inner_type_info)
         })?;
 
-        Self::Optional(inner)
+        Self::Optional(proto_type)
       }
       "map" => {
         let map = parse_map_with_context(meta, &type_info.type_)?;
@@ -64,7 +64,7 @@ impl ProtoField {
 
   // This one has to stay with `ProtoField` because it's used by the extension
   // macro which does not create FieldData
-  pub fn proto_field_target_type(&self, span: Span) -> TokenStream2 {
+  pub fn proto_field_trait_target(&self, span: Span) -> TokenStream2 {
     match self {
       Self::Map(map) => {
         let keys = map.keys.into_type().field_proto_type_tokens(span);
@@ -76,9 +76,14 @@ impl ProtoField {
           quote_spanned! {span=> ::std::collections::HashMap<#keys, #values> }
         }
       }
-      Self::Oneof { .. } => quote! {
-         compile_error!("Proto type tokens should not be called for oneofs, if you see this please report it as a bug")
-      },
+      Self::Oneof { .. } => {
+        let error = Error::new(
+          span,
+          "Proto type tokens should not be called for oneofs, if you see this please report it as a bug",
+        );
+
+        error.into_compile_error()
+      }
       Self::Repeated(proto_type) => {
         let inner = proto_type.field_proto_type_tokens(span);
 
@@ -96,58 +101,59 @@ impl ProtoField {
   // This one has to stay with `ProtoField` because it's used before
   // FieldData is fully created
   pub fn default_validator_expr(&self, span: Span) -> Option<ValidatorTokens> {
-    let expr = match self {
+    match self {
       Self::Oneof(OneofInfo { .. }) => {
-        return Some(ValidatorTokens {
+        // Early return due to different `kind`
+        Some(ValidatorTokens {
           expr: quote_spanned! {span=>
             *::protify::DEFAULT_ONEOF_VALIDATOR
           },
           kind: ValidatorKind::DefaultOneof,
           span,
-        });
+        })
       }
       Self::Map(map) => {
         // Only offers a default if values are messages
-        if let ProtoType::Message(MessageInfo { path, .. }) = &map.values {
+        map.values.as_message().map(|msg| {
+          let path = &msg.path;
+
           let keys_type = map.keys.into_type().validator_target_type(span);
 
-          Some(quote_spanned! {span=>
-            ::protify::MapValidator::<#keys_type, #path>::default()
-          })
-        } else {
-          None
-        }
+          ValidatorTokens {
+            expr: quote_spanned! {span=>
+              ::protify::MapValidator::<#keys_type, #path>::default()
+            },
+            kind: ValidatorKind::DefaultCollection,
+            span,
+          }
+        })
       }
       Self::Repeated(inner) => {
         // Only offers a default if the items are messages
-        if let ProtoType::Message(MessageInfo { path, .. }) = inner {
-          Some(quote_spanned! {span=>
-            ::protify::RepeatedValidator::<#path>::default()
-          })
-        } else {
-          None
-        }
+        inner.as_message().map(|msg| {
+          let path = &msg.path;
+
+          ValidatorTokens {
+            expr: quote_spanned! {span=>
+              ::protify::RepeatedValidator::<#path>::default()
+            },
+            kind: ValidatorKind::DefaultCollection,
+            span,
+          }
+        })
       }
       Self::Optional(inner) | Self::Single(inner) => {
-        if let ProtoType::Message(MessageInfo { .. }) = inner {
-          return Some(ValidatorTokens {
+        inner
+          .is_custom_message()
+          .then(|| ValidatorTokens {
             expr: quote_spanned! {span=>
               *::protify::DEFAULT_MESSAGE_VALIDATOR
             },
             kind: ValidatorKind::DefaultMessage,
             span,
-          });
-        } else {
-          None
-        }
+          })
       }
-    };
-
-    expr.map(|expr| ValidatorTokens {
-      expr,
-      span,
-      kind: ValidatorKind::DefaultCollection,
-    })
+    }
   }
 
   // This one has to stay with `ProtoField` because it's used before
@@ -177,6 +183,7 @@ impl ProtoField {
   }
 
   pub fn default_into_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
+    // The base ident already has the correct span injected
     let span = base_ident.span();
 
     match self {
@@ -224,6 +231,7 @@ impl ProtoField {
   }
 
   pub fn default_from_proto(&self, base_ident: &TokenStream2) -> TokenStream2 {
+    // The base ident already has the correct span injected
     let span = base_ident.span();
 
     match self {
@@ -254,6 +262,14 @@ impl ProtoField {
       }
       // If a message is with `default`, then it would be processed here
       Self::Single(proto_type) => proto_type.default_from_proto(base_ident),
+    }
+  }
+
+  pub const fn message_info(&self) -> Option<&MessageInfo> {
+    match self {
+      Self::Map(map) => map.values.as_message(),
+      Self::Oneof(_) => None,
+      Self::Repeated(inner) | Self::Optional(inner) | Self::Single(inner) => inner.as_message(),
     }
   }
 

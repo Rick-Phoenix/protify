@@ -41,14 +41,14 @@ pub fn process_extension_derive(
       );
     }
 
-    let proto_field_target_type = proto_field.proto_field_target_type(field.ident.span());
+    let proto_field_trait_target = proto_field.proto_field_trait_target(field.ident.span());
 
     fields_tokens.push(quote_spanned! {field.ident.span()=>
       ::protify::Field {
         name: #proto_name.into(),
         tag: #tag,
         options: #options.into_iter().collect(),
-        type_: <#proto_field_target_type as ::protify::AsProtoField>::as_proto_field(),
+        type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
         validators: ::protify::vec![],
       }
     });

@@ -56,7 +56,7 @@ impl ProtoMapKeys {
       "sfixed64" => Self::Sfixed64,
       "fixed32" => Self::Fixed32,
       "fixed64" => Self::Fixed64,
-      _ => bail_with_span!(span, "Type {str} is not a supported map key primitive"),
+      _ => bail_with_span!(span, "Type `{str}` is not a supported map key primitive"),
     };
 
     Ok(output)

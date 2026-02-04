@@ -26,6 +26,10 @@ pub enum ProtoType {
 }
 
 impl ProtoType {
+  pub const fn is_custom_message(&self) -> bool {
+    matches!(self, Self::Message(_))
+  }
+
   pub const fn is_message(&self) -> bool {
     matches!(
       self,

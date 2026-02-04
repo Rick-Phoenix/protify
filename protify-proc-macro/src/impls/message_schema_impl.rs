@@ -35,14 +35,14 @@ impl FieldData {
         )
       }
     } else {
-      let proto_field_target_type = proto_field.proto_field_target_type(*span);
+      let proto_field_trait_target = proto_field.proto_field_trait_target(*span);
 
       quote_spanned! {*span=>
         ::protify::Field {
           name: #proto_name.into(),
           tag: #tag,
           options: ::protify::collect_options(#options, #deprecated),
-          type_: <#proto_field_target_type as ::protify::AsProtoField>::as_proto_field(),
+          type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
           validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
         }
       }

@@ -37,7 +37,7 @@ impl FieldData {
 
       if !validators_data.has_non_default_validators {
         if kind.is_default() {
-          if let Some(msg_info) = self.message_info()
+          if let Some(msg_info) = proto_field.message_info()
 					// We ignore Box<Self>
 					&& !msg_info.is_self(input_ident)
           {
