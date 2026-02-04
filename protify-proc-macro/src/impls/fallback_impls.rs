@@ -14,8 +14,8 @@ pub fn fallback_derive_impls(target_ident: &Ident, kind: ItemKind) -> TokenStrea
       }
     }
 
-    impl std::fmt::Debug for #target_ident {
-      fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    impl core::fmt::Debug for #target_ident {
+      fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         unimplemented!()
       }
     }
@@ -61,7 +61,7 @@ pub fn fallback_derive_impls(target_ident: &Ident, kind: ItemKind) -> TokenStrea
 
             fn encode_raw(&self, _: &mut impl ::protify::prost::bytes::buf::BufMut) { unimplemented!() }
 
-            fn merge_field(&mut self, _: u32, _: prost::encoding::WireType, _: &mut impl ::protify::prost::bytes::buf::Buf, _: prost::encoding::DecodeContext) -> std::result::Result<(), prost::DecodeError> { unimplemented!() }
+            fn merge_field(&mut self, _: u32, _: prost::encoding::WireType, _: &mut impl ::protify::prost::bytes::buf::Buf, _: prost::encoding::DecodeContext) -> core::result::Result<(), prost::DecodeError> { unimplemented!() }
 
             fn clear(&mut self) {}
           }

@@ -29,9 +29,9 @@ impl FieldData {
       quote_spanned! {*span=>
         ::protify::MessageEntry::Oneof(
           <#path as ::protify::ProtoOneof>::proto_schema()
-          .with_name(#proto_name)
-          .with_options(#options)
-          .with_validators(::protify::filter_validators([ #(#validator_schema_tokens),* ]))
+            .with_name(#proto_name)
+            .with_options(#options)
+            .with_validators(::protify::filter_validators([ #(#validator_schema_tokens),* ]))
         )
       }
     } else {
