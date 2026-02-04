@@ -2,6 +2,8 @@ Protify is a library that aims to vastly simplify working with protobuf in a rus
 
  Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, this crate aims to provide an experience that feels almost as simple and native as using `serde`.
 
+ >ℹ️ **NOTE**: This readme is generated from the rust documentation. Read this in docs.rs to enable all links.
+
 # Schema Features
 
 Each element of a protobuf file can be defined with a proc or attribute macro. Options for each element can be composed and assigned programmatically.
@@ -14,51 +16,53 @@ use protify::*;
 // Creates a new package
 proto_package!(MY_PKG, name = "my_pkg");
 // Creates a new file
-define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG, extensions = [ MyExt ]);
+define_proto_file!(
+	MY_FILE,
+	name = "my_file.proto",
+	package = MY_PKG,
+	extensions = [MyExt]
+);
 
 fn create_option(value: i32) -> ProtoOption {
-    proto_option!("(my_custom_opt)" => value)
+	proto_option!("(my_custom_opt)" => value)
 }
 
 #[proto_extension(target = MessageOptions)]
 pub struct MyExt {
-    #[proto(tag = 5000)]
-    cool_opt: String
+	#[proto(tag = 5000)]
+	cool_opt: String,
 }
 
 #[proto_service]
 enum MyService {
-    Service1 {
-        request: MyMsg,
-        response: MyMsg
-    }
+	Service1 { request: MyMsg, response: MyMsg },
 }
 
 #[proto_message]
 #[proto(reserved_numbers(22, 23..30))]
 #[proto(reserved_names("name1", "name2"))]
 pub struct MyMsg {
-    // Programmatically creating options
-    #[proto(options = [ create_option(25) ])]
-    pub id: i32,
-    #[proto(oneof(tags(1, 2)))]
-    pub oneof: Option<MyOneof>
+	// Programmatically creating options
+	#[proto(options = [ create_option(25) ])]
+	pub id: i32,
+	#[proto(oneof(tags(1, 2)))]
+	pub oneof: Option<MyOneof>,
 }
 
 #[proto_oneof]
 pub enum MyOneof {
-    #[proto(tag = 1)]
-    A(i32),
-    #[proto(tag = 2)]
-    B(u32),
+	#[proto(tag = 1)]
+	A(i32),
+	#[proto(tag = 2)]
+	B(u32),
 }
 
 #[proto_message]
 pub struct MyMsg2 {
-    pub id: i32,
-    // Reusing the same oneof
-    #[proto(oneof(tags(1, 2)))]
-    pub oneof: Option<MyOneof>
+	pub id: i32,
+	// Reusing the same oneof
+	#[proto(oneof(tags(1, 2)))]
+	pub oneof: Option<MyOneof>,
 }
 
 // Tags are assigned automatically
@@ -66,9 +70,9 @@ pub struct MyMsg2 {
 #[proto_enum]
 #[proto(reserved_numbers(20, 25..30))]
 pub enum MyEnum {
-    Unspecified,
-    A,
-    B
+	Unspecified,
+	A,
+	B,
 }
 ```
 
@@ -105,66 +109,68 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 // Generates a MsgProto struct that is prost-compatible
 #[proto_message(proxied)]
 pub struct Msg {
-    // Requires setting the type manually as the type
-    // is not prost-compatible
-    #[proto(string)]
-    // Must provide a custom `into_proto` impl because `Arc<str>` does not support `Into<String>`
-    #[proto(into_proto = |v| v.as_ref().to_string())]
-    pub name: Arc<str>,
-    // Ignored field. Conversion from proto will use `Default::default()` unless a custom
-    // conversion is specified
-    #[proto(ignore)]
-    pub rust_only: i32,
-    // In proxied messages, we can use `default` for oneofs
-    // so that using `Option` is not required.
-    // The default conversion will call `ProxiedOneofProto::default().into()`
-    // if the field is `None` in the proto struct.
-    #[proto(oneof(proxied, default, tags(1, 2)))]
-    pub oneof: ProxiedOneof,
-    // We can do the same for messages too
-    #[proto(message(default))]
-    pub message_with_default: Msg2,
-    // We can use the enum directly as the type
-    #[proto(enum_)]
-    pub enum_: TestEnum
+	// Requires setting the type manually as the type
+	// is not prost-compatible
+	#[proto(string)]
+	// Must provide a custom `into_proto` impl because `Arc<str>` does not support `Into<String>`
+	#[proto(into_proto = |v| v.as_ref().to_string())]
+	pub name: Arc<str>,
+	// Ignored field. Conversion from proto will use `Default::default()` unless a custom
+	// conversion is specified
+	#[proto(ignore)]
+	pub rust_only: i32,
+	// In proxied messages, we can use `default` for oneofs
+	// so that using `Option` is not required.
+	// The default conversion will call `ProxiedOneofProto::default().into()`
+	// if the field is `None` in the proto struct.
+	#[proto(oneof(proxied, default, tags(1, 2)))]
+	pub oneof: ProxiedOneof,
+	// We can do the same for messages too
+	#[proto(message(default))]
+	pub message_with_default: Msg2,
+	// We can use the enum directly as the type
+	#[proto(enum_)]
+	pub enum_: TestEnum,
 }
 
 #[proto_enum]
 pub enum TestEnum {
-    Unspecified, A, B
+	Unspecified,
+	A,
+	B,
 }
 
 // Direct implementation. The prost attributes will be directly
 // injected in it
 #[proto_message]
 pub struct Msg2 {
-    pub id: i32,
-    // In direct impls, enums are just integers
-    #[proto(enum_(TestEnum))]
-    pub enum_: i32
+	pub id: i32,
+	// In direct impls, enums are just integers
+	#[proto(enum_(TestEnum))]
+	pub enum_: i32,
 }
 
 // Generates the `ProxiedOneofProto` enum
 #[proto_oneof(proxied)]
 pub enum ProxiedOneof {
-    #[proto(string, tag = 1, into_proto = |v| v.as_ref().to_string())]
-    A(Arc<str>),
-    #[proto(tag = 2)]
-    B(u32),
+	#[proto(string, tag = 1, into_proto = |v| v.as_ref().to_string())]
+	A(Arc<str>),
+	#[proto(tag = 2)]
+	B(u32),
 }
 
 impl Default for ProxiedOneofProto {
-    fn default() -> Self {
-        Self::B(1)
-    }
+	fn default() -> Self {
+		Self::B(1)
+	}
 }
 
 fn main() {
-    let msg = MsgProto::default();
-    // Using the `ProxiedMessage` trait
-    let proxy = msg.into_proxy();
-    // Using the `MessageProxy` trait
-    let msg_again = proxy.into_message();
+	let msg = MsgProto::default();
+	// Using the `ProxiedMessage` trait
+	let proxy = msg.into_proxy();
+	// Using the `MessageProxy` trait
+	let msg_again = proxy.into_message();
 }
 ```
 
@@ -176,21 +182,21 @@ An important benefit that comes from having a "rust-first" approach when definin
 And with proxies, the interactions with a database becomes even easier, because we can have the proto-facing struct with a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
 
 ```rust
-use protify::*;
-use protify::proto_types::Timestamp;
 use diesel::prelude::*;
+use protify::proto_types::Timestamp;
+use protify::*;
 
 proto_package!(DB_TEST, name = "db_test", no_cel_test);
 define_proto_file!(DB_TEST_FILE, name = "db_test.proto", package = DB_TEST);
 
 mod schema {
-  diesel::table! {
-    users {
-      id -> Integer,
-      name -> Text,
-      created_at -> Timestamp
-    }
-  }
+	diesel::table! {
+	  users {
+		id -> Integer,
+		name -> Text,
+		created_at -> Timestamp
+	  }
+	}
 }
 
 // If we want to use the message as is for the db model
@@ -199,15 +205,15 @@ mod schema {
 #[diesel(table_name = schema::users)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct User {
-  #[diesel(skip_insertion)]
-  pub id: i32,
-  pub name: String,
-  #[diesel(skip_insertion)]
-  // We need this to keep `Option` for this field
-  // which is necessary for protobuf
-  #[diesel(select_expression = schema::users::columns::created_at.nullable())]
-  #[proto(timestamp)]
-  pub created_at: Option<Timestamp>,
+	#[diesel(skip_insertion)]
+	pub id: i32,
+	pub name: String,
+	#[diesel(skip_insertion)]
+	// We need this to keep `Option` for this field
+	// which is necessary for protobuf
+	#[diesel(select_expression = schema::users::columns::created_at.nullable())]
+	#[proto(timestamp)]
+	pub created_at: Option<Timestamp>,
 }
 
 // If we want to use the proxy as the db model, for example
@@ -217,20 +223,20 @@ pub struct User {
 #[diesel(table_name = schema::users)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct ProxiedUser {
-  #[diesel(skip_insertion)]
-  pub id: i32,
-  pub name: String,
-  #[diesel(skip_insertion)]
-  #[proto(timestamp, from_proto = |v| v.unwrap_or_default())]
-  pub created_at: Timestamp,
+	#[diesel(skip_insertion)]
+	pub id: i32,
+	pub name: String,
+	#[diesel(skip_insertion)]
+	#[proto(timestamp, from_proto = |v| v.unwrap_or_default())]
+	pub created_at: Timestamp,
 }
 
 fn main() {
-    use schema::users::dsl::*;
+	use schema::users::dsl::*;
 
-    let conn = &mut SqliteConnection::establish(":memory:").unwrap();
+	let conn = &mut SqliteConnection::establish(":memory:").unwrap();
 
-    let table_query = r"
+	let table_query = r"
     CREATE TABLE users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -238,52 +244,56 @@ fn main() {
       );
     ";
 
-    diesel::sql_query(table_query)
-      .execute(conn)
-      .expect("Failed to create the table");
+	diesel::sql_query(table_query)
+		.execute(conn)
+		.expect("Failed to create the table");
 
-    let insert_user = User {
-        id: 0,
-        name: "Gandalf".to_string(),
-        created_at: None
-    };
+	let insert_user = User {
+		id: 0,
+		name: "Gandalf".to_string(),
+		created_at: None,
+	};
 
-    diesel::insert_into(users)
-        .values(&insert_user)
-        .execute(conn).expect("Failed to insert user");
+	diesel::insert_into(users)
+		.values(&insert_user)
+		.execute(conn)
+		.expect("Failed to insert user");
 
-    let queried_user = users
-        .filter(id.eq(1))
-        .select(User::as_select())
-        .get_result(conn).expect("Failed to query user");
+	let queried_user = users
+		.filter(id.eq(1))
+		.select(User::as_select())
+		.get_result(conn)
+		.expect("Failed to query user");
 
-    assert_eq!(queried_user.id, 1);
-    assert_eq!(queried_user.name, "Gandalf");
-    // The timestamp will be populated by the database upon insertion
-    assert_ne!(queried_user.created_at.unwrap(), Timestamp::default());
+	assert_eq!(queried_user.id, 1);
+	assert_eq!(queried_user.name, "Gandalf");
+	// The timestamp will be populated by the database upon insertion
+	assert_ne!(queried_user.created_at.unwrap(), Timestamp::default());
 
-    let proxied_user = ProxiedUser {
-        id: 0,
-        name: "Aragorn".to_string(),
-        created_at: Default::default()
-    };
+	let proxied_user = ProxiedUser {
+		id: 0,
+		name: "Aragorn".to_string(),
+		created_at: Default::default(),
+	};
 
-    diesel::insert_into(users)
-        .values(&proxied_user)
-        .execute(conn).expect("Failed to insert user");
+	diesel::insert_into(users)
+		.values(&proxied_user)
+		.execute(conn)
+		.expect("Failed to insert user");
 
-    let queried_proxied_user = users
-        .filter(id.eq(2))
-        .select(ProxiedUser::as_select())
-        .get_result(conn).expect("Failed to query user");
+	let queried_proxied_user = users
+		.filter(id.eq(2))
+		.select(ProxiedUser::as_select())
+		.get_result(conn)
+		.expect("Failed to query user");
 
-    assert_eq!(queried_proxied_user.id, 2);
-    assert_eq!(queried_proxied_user.name, "Aragorn");
+	assert_eq!(queried_proxied_user.id, 2);
+	assert_eq!(queried_proxied_user.name, "Aragorn");
 
-    // Now we have the message, with the `created_at` field populated
-    let msg = queried_proxied_user.into_message();
+	// Now we have the message, with the `created_at` field populated
+	let msg = queried_proxied_user.into_message();
 
-    assert_ne!(msg.created_at.unwrap(), Timestamp::default());
+	assert_ne!(msg.created_at.unwrap(), Timestamp::default());
 }
 ```
 
@@ -311,45 +321,43 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 // We can define logic to programmatically compose validators
 fn prefix_validator(prefix: &'static str) -> StringValidator {
-    StringValidator::builder()
-        .prefix(prefix)
-        .build()
+	StringValidator::builder().prefix(prefix).build()
 }
 
 #[proto_message]
 // Top level validation using a CEL program
 #[proto(validate = |v| v.cel(cel_program!(id = "my_rule", msg = "oopsie", expr = "this.id == 50")))]
 pub struct MyMsg {
-    // Field validator
-    // Type-safe and lsp-friendly!
-    // The argument of the closure is the IntValidator builder,
-    // so we are going to get autocomplete suggestions
-    // for its specific methods.
-    #[proto(validate = |v| v.gt(0))]
-    pub id: i32,
+	// Field validator
+	// Type-safe and lsp-friendly!
+	// The argument of the closure is the IntValidator builder,
+	// so we are going to get autocomplete suggestions
+	// for its specific methods.
+	#[proto(validate = |v| v.gt(0))]
+	pub id: i32,
 
-    // Repeated validator
-    #[proto(validate = |v| v.items(|i| i.gt(0)))]
-    pub repeated_nums: Vec<i32>,
+	// Repeated validator
+	#[proto(validate = |v| v.items(|i| i.gt(0)))]
+	pub repeated_nums: Vec<i32>,
 
-    // Map validator
-    #[proto(validate = |m| m.keys(|k| k.gt(0)).values(|v| v.min_len(5)))]
-    pub map_field: HashMap<i32, String>,
+	// Map validator
+	#[proto(validate = |m| m.keys(|k| k.gt(0)).values(|v| v.min_len(5)))]
+	pub map_field: HashMap<i32, String>,
 
-    #[proto(oneof(tags(1, 2)))]
-    #[proto(validate = |v| v.required())]
-    pub oneof: Option<MyOneof>
+	#[proto(oneof(tags(1, 2)))]
+	#[proto(validate = |v| v.required())]
+	pub oneof: Option<MyOneof>,
 }
 
 #[proto_oneof]
 pub enum MyOneof {
-    #[proto(tag = 1)]
-    // Same thing for oneof variants
-    #[proto(validate = |v| v.gt(0))]
-    A(i32),
-    // Multiple validators, including a programmatically built one!
-    #[proto(tag = 2, validate = [ |v| v.min_len(5), prefix_validator("abc") ])]
-    B(String),
+	#[proto(tag = 1)]
+	// Same thing for oneof variants
+	#[proto(validate = |v| v.gt(0))]
+	A(i32),
+	// Multiple validators, including a programmatically built one!
+	#[proto(tag = 2, validate = [ |v| v.min_len(5), prefix_validator("abc") ])]
+	B(String),
 }
 ```
 
@@ -373,19 +381,19 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 // Function validator
 fn validate_number(ctx: &mut ValidationCtx, val: Option<&i32>) -> ValidationResult {
-    let mut is_valid = IsValid::Yes;
+	let mut is_valid = IsValid::Yes;
 
-    if val.is_none() {
-        // IsValid is a boolean-like enum, so it can be used with
-        // bit operators
-        is_valid &= ctx.add_required_violation(
-            // Optionally, we can provide a custom error message
-            Some("number must be set".to_string())
-        )?; // Validators use `Result`s to handle `fail-fast` scenarios
-            // and trigger early exit
-    }
+	if val.is_none() {
+		// IsValid is a boolean-like enum, so it can be used with
+		// bit operators
+		is_valid &= ctx.add_required_violation(
+			// Optionally, we can provide a custom error message
+			Some("number must be set".to_string()),
+		)?; // Validators use `Result`s to handle `fail-fast` scenarios
+		// and trigger early exit
+	}
 
-    Ok(is_valid)
+	Ok(is_valid)
 }
 
 pub struct CustomValidator;
@@ -396,51 +404,57 @@ pub struct CustomValidator;
 static CACHED_VALIDATOR: Lazy<CustomValidator> = Lazy::new(|| CustomValidator);
 
 impl Validator<MyMsg> for CustomValidator {
-    type Target = MyMsg;
+	type Target = MyMsg;
 
-    fn execute_validation(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> ValidationResult
-    {
-        validate_number(ctx, val.map(|v| &v.id))
-    }
+	fn execute_validation(
+		&self,
+		ctx: &mut ValidationCtx,
+		val: Option<&Self::Target>,
+	) -> ValidationResult {
+		validate_number(ctx, val.map(|v| &v.id))
+	}
 }
 
 #[proto_message]
 // Using the custom validators at the top level
 #[proto(validate = [ CustomValidator, *CACHED_VALIDATOR ])]
 pub struct MyMsg {
-    // Using a function validator
-    #[proto(validate = from_fn(validate_number))]
-    pub id: i32,
+	// Using a function validator
+	#[proto(validate = from_fn(validate_number))]
+	pub id: i32,
 
-    #[proto(oneof(tags(1, 2)))]
-    // Using a variety of closure and custom validators
-    #[proto(validate = [ |v| v.required(), CustomValidator, *CACHED_VALIDATOR ])]
-    pub oneof: Option<MyOneof>
+	#[proto(oneof(tags(1, 2)))]
+	// Using a variety of closure and custom validators
+	#[proto(validate = [ |v| v.required(), CustomValidator, *CACHED_VALIDATOR ])]
+	pub oneof: Option<MyOneof>,
 }
 
 impl Validator<MyOneof> for CustomValidator {
-    type Target = MyOneof;
+	type Target = MyOneof;
 
-    fn execute_validation(&self, ctx: &mut ValidationCtx, val: Option<&Self::Target>) -> ValidationResult
-    {
-        if let Some(oneof) = val
-            && let MyOneof::A(int) = oneof
-        {
-            validate_number(ctx, Some(&int))
-        } else {
-            Ok(IsValid::Yes)
-        }
-    }
+	fn execute_validation(
+		&self,
+		ctx: &mut ValidationCtx,
+		val: Option<&Self::Target>,
+	) -> ValidationResult {
+		if let Some(oneof) = val
+			&& let MyOneof::A(int) = oneof
+		{
+			validate_number(ctx, Some(&int))
+		} else {
+			Ok(IsValid::Yes)
+		}
+	}
 }
 
 #[proto_oneof]
 // Same thing for oneofs
 #[proto(validate = [ CustomValidator, *CACHED_VALIDATOR ])]
 pub enum MyOneof {
-    #[proto(tag = 1, validate = from_fn(validate_number))]
-    A(i32),
-    #[proto(tag = 2)]
-    B(u32),
+	#[proto(tag = 1, validate = from_fn(validate_number))]
+	A(i32),
+	#[proto(tag = 2)]
+	B(u32),
 }
 ```
 
@@ -485,6 +499,7 @@ In order to make validation settings portable, each validator can optionally imp
 All default validators implement this method and output the options in the `protovalidate` format.
 
 ```rust
+use indoc::indoc;
 use protify::*;
 
 proto_package!(MY_PKG, name = "my_pkg");
@@ -492,23 +507,29 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 #[proto_message]
 pub struct MyMsg {
-    #[proto(validate = |v| v.min_len(3).max_len(32))]
-    pub name: String
+	#[proto(validate = |v| v.min_len(3).max_len(32))]
+	pub name: String,
 }
 
-let schema = MyMsg::proto_schema();
+fn main() {
+	let schema = MyMsg::proto_schema();
 
-assert_eq!(MyMsg::proto_schema().render_schema().unwrap(),
-r"message MyMsg {
-  string name = 1 [
-    (buf.validate.field) = {
-      string: {
-        min_len: 3,
-        max_len: 32
-      }
-    }
-  ];
-}")
+	assert_eq!(
+		MyMsg::proto_schema().render_schema().unwrap(),
+		indoc! {"
+            message MyMsg {
+              string name = 1 [
+                (buf.validate.field) = {
+                  string: {
+                    min_len: 3,
+                    max_len: 32
+                  }
+                }
+              ];
+            }"
+		}
+	)
+}
 ```
 
 
