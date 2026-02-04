@@ -38,7 +38,7 @@ impl ToTokens for MessageExpr {
 
       if !nested_enums.is_empty() {
         tokens.extend(quote! {
-          .with_nested_enums([ #(#nested_enums::proto_schema()),* ])
+          .with_nested_enums([ #(<#nested_enums as ::protify::ProtoEnumSchema>::proto_schema()),* ])
         });
       }
     }
@@ -97,8 +97,7 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
   let mut name: Option<String> = None;
   let mut package: Option<Path> = None;
   let mut options = TokenStreamOr::new(|_| quote! { ::protify::vec![] });
-  let mut extern_path =
-    TokensOr::<LitStr>::new(|span| quote_spanned! (span=> ::core::module_path!()));
+  let mut extern_path = TokensOr::<LitStr>::new(|_| quote! { ::core::module_path!() });
   let mut imports = TokenStreamOr::new(|_| quote! { ::protify::Vec::<&'static str>::new() });
   let mut extensions: Vec<Path> = Vec::new();
   let mut edition = TokenStreamOr::new(|_| quote! { ::protify::Edition::Proto3 });
@@ -157,7 +156,14 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
   let file_ident = file_ident
     .ok_or_else(|| error_call_site!("Missing file ident (must be the first argument)"))?;
-  let file = name.ok_or_else(|| error_call_site!("Missing `file` attribute"))?;
+  let file = name.unwrap_or_else(|| {
+    let ident_str = file_ident.to_string();
+    let cleaned_name = ident_str
+      .strip_suffix("_FILE")
+      .unwrap_or(&ident_str);
+
+    format!("{}.proto", to_snake_case(cleaned_name))
+  });
   let package = package.ok_or_else(|| error_call_site!("Missing `package` attribute"))?;
 
   let inventory_call = (!no_emit).then(|| {

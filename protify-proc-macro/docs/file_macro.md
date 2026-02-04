@@ -4,22 +4,40 @@ A file must always be in scope for any given item definition (oneof, enum, messa
 
 For more information about how to manage proto files, visit the [dedicated section](protify::guide::managing_files).
 
+## Positional Arguments
+
 The first argument is the ident that will be used for the file handle, which will be a unit struct that implements [`FileSchema`](protify::FileSchema).
 
-The other parameters are not positional and are as follows:
+In order to distinguish the file handle from a normal rust type, it is advised to use the SCREAMING_CASE casing.
 
-- `name` (required)
-    - Type: string
-    - Example: `define_proto_file!(MY_FILE, name = "my_file.proto")`
-    - Description:
-        The name of the file.
+## Named Arguments
 
 - `package` (required)
     - Type: Ident
     - Example: `define_proto_file!(MY_FILE, package = MY_PKG)`
     - Description:
-        The ident of the package handle.
+        The ident of the package handle, which is created with the [`proto_package`](protify::proto_package) macro.
 
+- `name`
+    - Type: string
+    - Example: `define_proto_file!(MY_FILE, name = "my_file.proto")`
+    - Description:
+        The name of the file. If missing, it will be assumed to be the snake_case name of the file ident. If the file ident ends with the `_FILE` suffix, this will be stripped.
+
+        ```rust
+        use protify::*;
+
+        proto_package!(TESTING_PKG, name = "testing");
+
+        define_proto_file!(TESTING_FILE, package = TESTING_PKG);
+
+        fn main() {
+          define_proto_file!(TESTING, package = TESTING_PKG);
+
+          assert_eq!(TESTING_FILE::NAME, "testing.proto");
+          assert_eq!(TESTING::NAME, "testing.proto");
+        }
+        ```
 
 - `extern_path`
     - Type: string

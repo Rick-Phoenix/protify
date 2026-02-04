@@ -32,7 +32,15 @@ use std::collections::HashMap;
 
 proto_package!(TESTING_PKG, name = "testing", no_cel_test);
 
-define_proto_file!(TESTING, name = "testing.proto", package = TESTING_PKG);
+define_proto_file!(TESTING_FILE, package = TESTING_PKG);
+
+#[test]
+fn inferred_file_name() {
+  define_proto_file!(TESTING, package = TESTING_PKG);
+
+  assert_eq_pretty!(TESTING_FILE::NAME, "testing.proto");
+  assert_eq_pretty!(TESTING::NAME, "testing.proto");
+}
 
 #[track_caller]
 pub(crate) fn assert_violation_id(msg: &impl ValidatedMessage, expected: &str, error: &str) {

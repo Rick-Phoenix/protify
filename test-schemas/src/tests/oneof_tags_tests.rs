@@ -1,6 +1,6 @@
 use super::*;
 
-use_proto_file!(TESTING);
+use_proto_file!(TESTING_FILE);
 
 #[proto_oneof]
 #[proto(skip_checks(all))]

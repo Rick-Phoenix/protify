@@ -19,6 +19,8 @@ define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
 
 For the full macro reference, visit the documentation for [`define_proto_file!`](crate::define_proto_file).
 
+ℹ️ **NOTE**: Only one file can be in scope for a given module. You can use the `file` attribute to assign a file manually for items in a module if you want to override the file that they are assigned to.
+
 ## Reusing Files
 
 If you want to define items in different rust files and place them into the same proto file, you can use one of two macros to bring the file into scope, with slightly different behaviour:
