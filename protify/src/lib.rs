@@ -3,11 +3,13 @@
 #![deny(clippy::std_instead_of_alloc)]
 #![deny(clippy::std_instead_of_core)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+//! # Protify
+//!
 //! Protify is a library that aims to vastly simplify working with protobuf in a rust project. It offers a rust-first approach in defining protobuf models, so that every element in a protobuf package (messages, enums, oneofs, services, extensions, files) can be fully defined in rust code, and then the respective proto files can be generated from it as a compilation artifact, rather than it being the other way around.
 //!
 //! Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, this crate aims to provide an experience that feels almost as simple and native as using `serde`.
 //!
-//! >ℹ️ **NOTE**: This readme is generated from the rust documentation. Read this in docs.rs to enable all links.
+//! >ℹ️ **NOTE**: This readme is generated from the rust documentation. Read this in docs.rs to ensure that links work correctly.
 //!
 #![doc = include_str!("./guide/schema_features.md")]
 //!
