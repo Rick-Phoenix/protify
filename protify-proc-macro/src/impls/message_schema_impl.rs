@@ -89,7 +89,7 @@ impl MessageCtx<'_> {
       quote! { #(#tokens),* }
     };
 
-    let proto_struct = self.proto_struct_ident();
+    let proto_struct = self.proto_struct_ident;
 
     let name_method = if let Some(parent) = parent_message {
       quote_spanned! {parent.span()=>

@@ -122,17 +122,15 @@ pub fn generate_validators_consistency_checks(
 
 impl MessageCtx<'_> {
   pub fn generate_consistency_checks(&self) -> TokenStream2 {
-    let item_ident = self.proto_struct_ident();
-
     let validators_checks = generate_validators_consistency_checks(
-      item_ident,
+      self.proto_struct_ident,
       &self.fields_data,
       self.message_attrs.auto_tests,
       &self.message_attrs.validators,
     );
 
     let oneofs_checks = generate_oneofs_tags_checks(
-      item_ident,
+      self.proto_struct_ident,
       &self.fields_data,
       self.message_attrs.auto_tests,
       &self.message_attrs.name,

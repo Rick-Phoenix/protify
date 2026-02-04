@@ -22,7 +22,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
   let FieldsCtx {
     mut fields_data,
     mut manually_set_tags,
-  } = extract_fields_data(
+  } = FieldsCtx::extract_fields_data(
     item.fields.len(),
     item
       .fields
@@ -135,8 +135,10 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
   };
 
   let message_ctx = MessageCtx {
-    orig_struct_ident: &item.ident,
-    shadow_struct_ident: proto_struct.as_ref().map(|ps| &ps.ident),
+    proto_struct_ident: proto_struct
+      .as_ref()
+      .map(|ps| &ps.ident)
+      .unwrap_or(&item.ident),
     fields_data,
     message_attrs: &message_attrs,
   };
@@ -160,19 +162,9 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
 }
 
 pub struct MessageCtx<'a> {
-  pub orig_struct_ident: &'a Ident,
-  pub shadow_struct_ident: Option<&'a Ident>,
+  pub proto_struct_ident: &'a Ident,
   pub fields_data: Vec<FieldDataKind>,
   pub message_attrs: &'a MessageAttrs,
-}
-
-impl<'a> MessageCtx<'a> {
-  pub fn proto_struct_ident(&'a self) -> &'a Ident {
-    self
-      .shadow_struct_ident
-      .as_ref()
-      .unwrap_or(&self.orig_struct_ident)
-  }
 }
 
 #[derive(Default)]
@@ -354,31 +346,31 @@ where
   }
 }
 
-pub fn extract_fields_data<'a, I>(len: usize, fields: I) -> syn::Result<FieldsCtx>
-where
-  I: IntoIterator<Item = FieldOrVariant<'a>>,
-{
-  let mut fields_data: Vec<FieldDataKind> = Vec::with_capacity(len);
-  let mut manually_set_tags: Vec<ParsedNum> = Vec::with_capacity(len);
+impl FieldsCtx {
+  pub fn extract_fields_data<'a, I>(len: usize, fields: I) -> syn::Result<Self>
+  where
+    I: IntoIterator<Item = FieldOrVariant<'a>>,
+  {
+    let mut fields_data: Vec<FieldDataKind> = Vec::with_capacity(len);
+    let mut manually_set_tags: Vec<ParsedNum> = Vec::with_capacity(len);
 
-  for field in fields {
-    let field_data_kind = process_field_data(field)?;
+    for field in fields {
+      let field_data_kind = process_field_data(field)?;
 
-    if let FieldDataKind::Normal(data) = &field_data_kind {
-      if let Some(tag) = data.tag {
-        manually_set_tags.push(tag);
-      } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
-        manually_set_tags.extend(tags);
+      if let FieldDataKind::Normal(data) = &field_data_kind {
+        if let Some(tag) = data.tag {
+          manually_set_tags.push(tag);
+        } else if let ProtoField::Oneof(OneofInfo { tags, .. }) = &data.proto_field {
+          manually_set_tags.extend(tags);
+        }
       }
+
+      fields_data.push(field_data_kind);
     }
 
-    fields_data.push(field_data_kind);
+    Ok(Self {
+      fields_data,
+      manually_set_tags,
+    })
   }
-
-  manually_set_tags.shrink_to_fit();
-
-  Ok(FieldsCtx {
-    fields_data,
-    manually_set_tags,
-  })
 }

@@ -39,7 +39,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
   let FieldsCtx {
     mut fields_data,
     mut manually_set_tags,
-  } = extract_fields_data(
+  } = FieldsCtx::extract_fields_data(
     item.variants.len(),
     item
       .variants
