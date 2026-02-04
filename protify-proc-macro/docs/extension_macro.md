@@ -25,7 +25,7 @@ define_proto_file!(
   MY_FILE,
   name = "my_file.proto",
   package = MY_PKG,
-  // We can then use the extension in a file
+  // Unlike other elements, extensions must always be added manually
   extensions = [ MyExt ]
 );
 ```

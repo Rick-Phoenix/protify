@@ -64,7 +64,7 @@ In order to distinguish the file handle from a normal rust type, it is advised t
     - Type: bracketed list of Paths
     - Example: `define_proto_file!(MY_FILE, extensions = [ MyExtension ])`
     - Description:
-        Specifies the extensions for the given file. The items inside the list should be structs marked with the `#[proto_extension]` macro or implementors of [`ProtoExtension`](crate::ProtoExtension).
+        Specifies the extensions for the given file. The items inside the list should be structs marked with the `#[proto_extension]` macro or implementors of [`ProtoExtension`](crate::ProtoExtension). Unlike other elements, extensions must always be added manually to a file.
 
 
 - `edition`
