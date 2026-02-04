@@ -28,7 +28,7 @@ pub fn generate_oneof_validator(
       .iter()
       .filter_map(|d| d.as_normal())
       .filter_map(|d| {
-        let tokens = field_validator_tokens(oneof_ident, &mut validators_data, d, ItemKind::Oneof);
+        let tokens = d.field_validator_tokens(oneof_ident, &mut validators_data, ItemKind::Oneof);
 
         (!tokens.is_empty()).then_some((d, tokens))
       })

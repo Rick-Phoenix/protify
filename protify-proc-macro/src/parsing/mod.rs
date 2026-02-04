@@ -44,7 +44,7 @@ mod extension_field_attributes;
 pub use extension_field_attributes::*;
 mod enum_attributes;
 mod enum_variant_attributes;
-mod field_attributes;
+mod field_data;
 mod message_attributes;
 mod message_info;
 mod oneof_attributes;
@@ -55,7 +55,7 @@ mod tag_allocator;
 
 pub use enum_attributes::*;
 pub use enum_variant_attributes::*;
-pub use field_attributes::*;
+pub use field_data::*;
 pub use message_attributes::*;
 pub use message_info::*;
 pub use oneof_attributes::*;

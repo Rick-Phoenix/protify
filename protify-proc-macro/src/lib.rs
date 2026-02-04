@@ -28,27 +28,20 @@ use syn_utils::*;
 
 use crate::{
   enum_proc_macro::*, extension_macro::*, file_macro::*, impls::*, internals::*,
-  message_proc_macro::*, oneof_proc_macro::*, package_macro::*, proto_field::*, proto_map::*,
-  proto_types::*, service_macro::*,
+  message_proc_macro::*, oneof_proc_macro::*, package_macro::*, service_macro::*,
 };
 
 #[cfg(feature = "cel")]
 mod cel_try_into;
 mod enum_proc_macro;
 mod extension_macro;
-mod field_data;
 mod file_macro;
 mod impls;
 mod internals;
 mod message_proc_macro;
-mod message_schema_impl;
 mod oneof_proc_macro;
-mod oneof_schema_impl;
 mod package_macro;
 mod parsing;
-mod proto_field;
-mod proto_map;
-mod proto_types;
 #[cfg(feature = "reflection")]
 mod reflection;
 mod service_macro;

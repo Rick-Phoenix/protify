@@ -1,6 +1,8 @@
 use crate::*;
 
 mod fallback_impls;
+mod message_schema_impl;
+mod oneof_schema_impl;
 pub use fallback_impls::*;
 mod conversions;
 pub use oneof_validator_impl::*;

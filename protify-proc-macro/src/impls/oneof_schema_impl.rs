@@ -1,4 +1,4 @@
-use crate::{message_schema_impl::field_schema_tokens, *};
+use crate::*;
 
 impl OneofCtx<'_> {
   pub fn generate_schema_impl(&self) -> TokenStream2 {
@@ -11,7 +11,7 @@ impl OneofCtx<'_> {
         .variants
         .iter()
         .filter_map(|v| v.as_normal())
-        .map(|data| field_schema_tokens(data));
+        .map(|data| data.field_schema_tokens());
 
       quote! { #(#tokens),* }
     };

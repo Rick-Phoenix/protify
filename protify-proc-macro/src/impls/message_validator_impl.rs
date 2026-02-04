@@ -8,165 +8,167 @@ pub struct ValidatorsData {
   pub default_check_tokens: Vec<TokenStream2>,
 }
 
-pub fn field_validator_tokens(
-  input_ident: &Ident,
-  validators_data: &mut ValidatorsData,
-  field_data: &FieldData,
-  item_kind: ItemKind,
-) -> Vec<TokenStream2> {
-  let FieldData {
-    ident,
-    ident_str,
-    tag,
-    validators,
-    proto_name,
-    proto_field,
-    type_info,
-    ..
-  } = field_data;
+impl FieldData {
+  pub fn field_validator_tokens(
+    &self,
+    input_ident: &Ident,
+    validators_data: &mut ValidatorsData,
+    item_kind: ItemKind,
+  ) -> Vec<TokenStream2> {
+    let Self {
+      ident,
+      ident_str,
+      tag,
+      validators,
+      proto_name,
+      proto_field,
+      type_info,
+      ..
+    } = self;
 
-  let mut tokens: Vec<TokenStream2> = Vec::with_capacity(validators.validators.len());
+    let mut tokens: Vec<TokenStream2> = Vec::with_capacity(validators.validators.len());
 
-  for v in validators {
-    let ValidatorTokens {
-      expr: validator_expr,
-      kind,
-      span,
-    } = v;
+    for v in validators {
+      let ValidatorTokens {
+        expr: validator_expr,
+        kind,
+        span,
+      } = v;
 
-    if !validators_data.has_non_default_validators {
-      if kind.is_default() {
-        if let Some(msg_info) = field_data.message_info()
-				  // We ignore Box<Self>
-          && !msg_info.is_self(input_ident)
-        {
-          let path = &msg_info.path;
+      if !validators_data.has_non_default_validators {
+        if kind.is_default() {
+          if let Some(msg_info) = self.message_info()
+					// We ignore Box<Self>
+					&& !msg_info.is_self(input_ident)
+          {
+            let path = &msg_info.path;
 
-          validators_data
-            .default_check_tokens
-            .push(if msg_info.boxed {
-              // Found recursion. We must check if the item has validators
-              // for primitives
-              quote! {
-                <#path as ::protify::ProtoValidation>::HAS_SHALLOW_VALIDATION
-              }
-            } else {
-              quote! {
-                <#path as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR
-              }
+            validators_data
+              .default_check_tokens
+              .push(if msg_info.boxed {
+                // Found recursion. We must check if the item has validators
+                // for primitives
+                quote! {
+                  <#path as ::protify::ProtoValidation>::HAS_SHALLOW_VALIDATION
+                }
+              } else {
+                quote! {
+                  <#path as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR
+                }
+              });
+          } else if let ProtoField::Oneof(oneof) = proto_field {
+            let path = &oneof.path;
+
+            validators_data.default_check_tokens.push(quote! {
+              <#path as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR
             });
-        } else if let ProtoField::Oneof(oneof) = proto_field {
-          let path = &oneof.path;
+          }
+        } else {
+          validators_data.has_non_default_validators = true;
+        }
+      }
 
-          validators_data.default_check_tokens.push(quote! {
-            <#path as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR
-          });
+      let argument = match item_kind {
+        ItemKind::Oneof => quote_spanned! {*span=> Some(v) },
+
+        ItemKind::Message => match type_info.type_.as_ref() {
+          RustType::Option(inner) => {
+            if inner.is_box()
+              || proto_field
+                .inner()
+                .is_some_and(|i| matches!(i, ProtoType::Bytes | ProtoType::String))
+            {
+              quote_spanned! (*span=> self.#ident.as_deref())
+            } else {
+              quote_spanned! (*span=> self.#ident.as_ref())
+            }
+          }
+          RustType::Box(_) => quote_spanned! (*span=> self.#ident.as_deref()),
+          _ => {
+            // If oneofs or messages are used with `default`, they would not be wrapped in `Option`
+            // so we handle them here, knowing that they will be wrapped in `Option` in the proto struct/enum
+            if matches!(
+              proto_field,
+              ProtoField::Single(ProtoType::Message(_)) | ProtoField::Oneof(_)
+            ) {
+              quote_spanned! (*span=> self.#ident.as_ref())
+            } else if let ProtoField::Single(inner) = proto_field
+              && matches!(inner, ProtoType::Bytes | ProtoType::String)
+            {
+              quote_spanned! (*span=> Some(self.#ident.as_ref()))
+            } else {
+              quote_spanned! (*span=> Some(&self.#ident))
+            }
+          }
+        },
+      };
+
+      let field_type = self.descriptor_type_tokens();
+      let validator_target_type = proto_field.validator_target_type(*span);
+
+      let validate_args = if proto_field.is_oneof() {
+        // Oneofs override `field_context` anyway
+        quote_spanned! {*span=>
+          ctx,
+          #argument
         }
       } else {
-        validators_data.has_non_default_validators = true;
-      }
+        quote_spanned! {*span=>
+          ctx.with_field_context(
+            ::protify::FieldContext {
+              name: #proto_name.into(),
+              tag: #tag,
+              field_type: #field_type,
+              map_key_type: None,
+              map_value_type: None,
+              subscript: None,
+              field_kind: Default::default(),
+            }
+          ),
+          #argument
+        }
+      };
+
+      let validator_call = if kind.should_be_cached() {
+        let static_ident = format_ident!("{}_VALIDATOR", to_upper_snake_case(ident_str));
+        let validator_name = self.validator_name();
+
+        quote_spanned! {*span=>
+          is_valid &= {
+            static #static_ident: ::protify::Lazy<#validator_name> = ::protify::Lazy::new(|| {
+              #validator_expr
+            });
+
+            ::protify::Validator::<#validator_target_type>::execute_validation(
+              &*#static_ident,
+              #validate_args
+            )?
+          };
+        }
+      } else {
+        quote_spanned! {*span=>
+          is_valid &= ::protify::Validator::<#validator_target_type>::execute_validation(
+            &(#validator_expr),
+            #validate_args
+          )?;
+        }
+      };
+
+      let output = if kind.is_default() {
+        quote_spanned! {*span=>
+          if <#validator_target_type as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
+            #validator_call
+          }
+        }
+      } else {
+        validator_call
+      };
+
+      tokens.push(output);
     }
 
-    let argument = match item_kind {
-      ItemKind::Oneof => quote_spanned! {*span=> Some(v) },
-
-      ItemKind::Message => match type_info.type_.as_ref() {
-        RustType::Option(inner) => {
-          if inner.is_box()
-            || proto_field
-              .inner()
-              .is_some_and(|i| matches!(i, ProtoType::Bytes | ProtoType::String))
-          {
-            quote_spanned! (*span=> self.#ident.as_deref())
-          } else {
-            quote_spanned! (*span=> self.#ident.as_ref())
-          }
-        }
-        RustType::Box(_) => quote_spanned! (*span=> self.#ident.as_deref()),
-        _ => {
-          // If oneofs or messages are used with `default`, they would not be wrapped in `Option`
-          // so we handle them here, knowing that they will be wrapped in `Option` in the proto struct/enum
-          if matches!(
-            proto_field,
-            ProtoField::Single(ProtoType::Message(_)) | ProtoField::Oneof(_)
-          ) {
-            quote_spanned! (*span=> self.#ident.as_ref())
-          } else if let ProtoField::Single(inner) = proto_field
-            && matches!(inner, ProtoType::Bytes | ProtoType::String)
-          {
-            quote_spanned! (*span=> Some(self.#ident.as_ref()))
-          } else {
-            quote_spanned! (*span=> Some(&self.#ident))
-          }
-        }
-      },
-    };
-
-    let field_type = field_data.descriptor_type_tokens();
-    let validator_target_type = proto_field.validator_target_type(*span);
-
-    let validate_args = if proto_field.is_oneof() {
-      // Oneofs override `field_context` anyway
-      quote_spanned! {*span=>
-        ctx,
-        #argument
-      }
-    } else {
-      quote_spanned! {*span=>
-        ctx.with_field_context(
-          ::protify::FieldContext {
-            name: #proto_name.into(),
-            tag: #tag,
-            field_type: #field_type,
-            map_key_type: None,
-            map_value_type: None,
-            subscript: None,
-            field_kind: Default::default(),
-          }
-        ),
-        #argument
-      }
-    };
-
-    let validator_call = if kind.should_be_cached() {
-      let static_ident = format_ident!("{}_VALIDATOR", to_upper_snake_case(ident_str));
-      let validator_name = field_data.validator_name();
-
-      quote_spanned! {*span=>
-        is_valid &= {
-          static #static_ident: ::protify::Lazy<#validator_name> = ::protify::Lazy::new(|| {
-            #validator_expr
-          });
-
-          ::protify::Validator::<#validator_target_type>::execute_validation(
-            &*#static_ident,
-            #validate_args
-          )?
-        };
-      }
-    } else {
-      quote_spanned! {*span=>
-        is_valid &= ::protify::Validator::<#validator_target_type>::execute_validation(
-          &(#validator_expr),
-          #validate_args
-        )?;
-      }
-    };
-
-    let output = if kind.is_default() {
-      quote_spanned! {*span=>
-        if <#validator_target_type as ::protify::ProtoValidation>::HAS_DEFAULT_VALIDATOR {
-          #validator_call
-        }
-      }
-    } else {
-      validator_call
-    };
-
-    tokens.push(output);
+    tokens
   }
-
-  tokens
 }
 
 pub fn generate_message_validator(
@@ -216,7 +218,7 @@ pub fn generate_message_validator(
       .iter()
       .filter_map(|d| d.as_normal())
       .flat_map(|d| {
-        field_validator_tokens(target_ident, &mut validators_data, d, ItemKind::Message)
+        d.field_validator_tokens(target_ident, &mut validators_data, ItemKind::Message)
       });
 
     let top_level_tokens = quote! { #(#top_level)* };

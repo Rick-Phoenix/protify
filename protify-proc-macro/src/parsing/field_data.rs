@@ -1,3 +1,11 @@
+mod field_data_impls;
+mod proto_field;
+pub use proto_field::*;
+mod proto_types;
+pub use proto_types::*;
+mod proto_map;
+pub use proto_map::*;
+
 use crate::*;
 
 #[derive(Clone)]

@@ -1,48 +1,50 @@
 use crate::*;
 
-pub fn field_schema_tokens(data: &FieldData) -> TokenStream2 {
-  let FieldData {
-    tag,
-    validators,
-    options,
-    proto_name,
-    proto_field,
-    deprecated,
-    span,
-    ..
-  } = data;
+impl FieldData {
+  pub fn field_schema_tokens(&self) -> TokenStream2 {
+    let Self {
+      tag,
+      validators,
+      options,
+      proto_name,
+      proto_field,
+      deprecated,
+      span,
+      ..
+    } = self;
 
-  let validator_schema_tokens = validators
-    .iter()
-    // For default validators (messages only) we skip the schema generation
-    .filter(|v| !v.kind.is_default())
-    .map(|e| {
-      let validator_target_type = proto_field.validator_target_type(*span);
+    let validator_schema_tokens = validators
+      .iter()
+      // For default validators (messages only) we skip the schema generation
+      .filter(|v| !v.kind.is_default())
+      .map(|e| {
+        let validator_target_type = proto_field.validator_target_type(*span);
 
+        quote_spanned! {*span=>
+          ::protify::Validator::<#validator_target_type>::schema(&#e)
+        }
+      });
+
+    if let ProtoField::Oneof(OneofInfo { path, .. }) = proto_field {
       quote_spanned! {*span=>
-        ::protify::Validator::<#validator_target_type>::schema(&#e)
-      }
-    });
-
-  if let ProtoField::Oneof(OneofInfo { path, .. }) = proto_field {
-    quote_spanned! {*span=>
-      ::protify::MessageEntry::Oneof(
-        <#path as ::protify::ProtoOneof>::proto_schema()
+        ::protify::MessageEntry::Oneof(
+          <#path as ::protify::ProtoOneof>::proto_schema()
           .with_name(#proto_name)
           .with_options(#options)
           .with_validators(::protify::filter_validators([ #(#validator_schema_tokens),* ]))
-      )
-    }
-  } else {
-    let proto_field_target_type = proto_field.proto_field_target_type(*span);
+        )
+      }
+    } else {
+      let proto_field_target_type = proto_field.proto_field_target_type(*span);
 
-    quote_spanned! {*span=>
-      ::protify::Field {
-        name: #proto_name.into(),
-        tag: #tag,
-        options: ::protify::collect_options(#options, #deprecated),
-        type_: <#proto_field_target_type as ::protify::AsProtoField>::as_proto_field(),
-        validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
+      quote_spanned! {*span=>
+        ::protify::Field {
+          name: #proto_name.into(),
+          tag: #tag,
+          options: ::protify::collect_options(#options, #deprecated),
+          type_: <#proto_field_target_type as ::protify::AsProtoField>::as_proto_field(),
+          validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
+        }
       }
     }
   }
@@ -71,14 +73,14 @@ impl MessageCtx<'_> {
         .iter()
         .filter_map(|d| d.as_normal())
         .map(|data| {
-          let field = field_schema_tokens(data);
+          let field_schema = data.field_schema_tokens();
 
           if data.proto_field.is_oneof() {
-            field
+            field_schema
           } else {
             quote_spanned! {data.span=>
               ::protify::MessageEntry::Field(
-                #field
+                #field_schema
               )
             }
           }
