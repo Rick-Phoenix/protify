@@ -4,7 +4,7 @@ use crate::*;
 // the parent message name with a method, this one gets it from an attribute
 // therefore we cannot pass it from the proc macro to this one,
 // only via reflection
-pub fn basic_enum_derive(item: &ItemEnum) -> TokenStream2 {
+pub fn enum_reflection_derive(item: &ItemEnum) -> TokenStream2 {
   let mut name: Option<String> = None;
 
   for attr in &item.attrs {
@@ -25,7 +25,7 @@ pub fn basic_enum_derive(item: &ItemEnum) -> TokenStream2 {
   }
 
   let ident = &item.ident;
-  let name = name.unwrap_or_else(|| to_pascal_case(&item.ident.to_string()));
+  let name = name.unwrap_or_else(|| item.ident.to_string());
 
   quote! {
     impl ::protify::ProtoEnum for #ident {

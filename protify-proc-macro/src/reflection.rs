@@ -17,12 +17,14 @@ mod field_mask_rules;
 mod field_rules;
 mod map_rules;
 mod message_rules;
-mod oneof_derive;
+mod oneof_reflection;
 mod repeated_rules;
 mod timestamp_rules;
-pub use oneof_derive::*;
-mod message_derive;
-pub use message_derive::*;
+pub use oneof_reflection::*;
+mod enum_reflection;
+pub use enum_reflection::*;
+mod message_reflection;
+pub use message_reflection::*;
 
 pub struct BuilderTokens {
   pub builder_expr: TokenStream2,
@@ -47,12 +49,12 @@ impl BuilderTokens {
     let Self {
       mut builder_expr,
       methods_tokens,
-      ..
+      span,
     } = self;
 
     methods_tokens.to_tokens(&mut builder_expr);
 
-    quote! {
+    quote_spanned! {span=>
       ::protify::#builder_expr
     }
   }
@@ -155,7 +157,7 @@ impl ProtoMapKeys {
       Kind::Sfixed64 => Self::Sfixed64,
       Kind::Bool => Self::Bool,
       Kind::String => Self::String,
-      _ => unreachable!(),
+      _ => unreachable!("Invalid map key type"),
     }
   }
 }
@@ -189,7 +191,10 @@ impl ProtoField {
           is_btree_map = true;
           v
         }
-        _ => bail!(type_info, "Found map descriptor on a non HashMap field"),
+        _ => bail!(
+          type_info,
+          "Found map descriptor on a field that is neither HashMap nor BTreeMap"
+        ),
       };
 
       let values = ProtoType::from_descriptor(
@@ -206,6 +211,7 @@ impl ProtoField {
     } else if desc.supports_presence() {
       Self::Optional(ProtoType::from_descriptor(
         desc.kind(),
+        // To detect `Option<Box<T>>`
         type_info.inner(),
         found_enum_path,
       )?)
@@ -251,6 +257,8 @@ impl ProtoType {
         "google.protobuf.FieldMask" => Self::FieldMask,
         _ => {
           let mut boxed = false;
+          // If the type is `Option<Box<T>>` we receive `Box<T>` here,
+          // if it's `Option<T>` we receive T
           let inner = if type_info.is_box() {
             boxed = true;
             type_info.inner()

@@ -36,8 +36,6 @@ mod attributes;
 mod builder_macro;
 #[cfg(feature = "cel")]
 mod cel_try_into;
-#[cfg(feature = "reflection")]
-mod enum_derive;
 mod enum_proc_macro;
 mod extension_macro;
 mod field_data;
@@ -105,7 +103,7 @@ pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
 pub fn enum_derive(input: TokenStream) -> TokenStream {
   let item = parse_macro_input!(input as ItemEnum);
 
-  enum_derive::basic_enum_derive(&item).into()
+  reflection::enum_reflection_derive(&item).into()
 }
 
 #[doc(hidden)]

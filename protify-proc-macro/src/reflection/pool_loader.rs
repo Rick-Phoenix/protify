@@ -4,7 +4,7 @@ use prost_reflect::{DescriptorPool, ExtensionDescriptor};
 
 pub static DESCRIPTOR_POOL: LazyLock<DescriptorPool> = LazyLock::new(|| {
   let descriptor_set_path = std::env::var("PROTO_DESCRIPTOR_SET")
-        .expect("PROTO_DESCRIPTOR_SET environment variable not set. This is required to access Protobuf schema information.");
+        .expect("PROTO_DESCRIPTOR_SET environment variable not set. This is required by protify to access Protobuf schema information.");
   let descriptor_set_bytes = fs::read(&descriptor_set_path)
     .unwrap_or_else(|e| panic!("Failed to read descriptor set from {descriptor_set_path}: {e}"));
   DescriptorPool::decode(descriptor_set_bytes.as_slice())
