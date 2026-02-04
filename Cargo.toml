@@ -19,6 +19,12 @@ debug = 1
 opt-level = 1
 debug = false
 
+[workspace.metadata.release]
+tag = false
+allow-branch = ["main"]
+enable-all-features = true
+shared-version = true
+
 [workspace.package]
 edition = "2024"
 license = "MPL-2.0"
