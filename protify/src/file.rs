@@ -37,9 +37,8 @@ impl ProtoFile {
 			.sort_unstable_by_key(|s| s.name.clone());
 	}
 
-	/// Creates a new instance.
+	#[doc(hidden)]
 	#[must_use]
-	#[inline]
 	pub fn new(name: &'static str, package: &'static str) -> Self {
 		Self {
 			name: name.into(),
@@ -54,14 +53,14 @@ impl ProtoFile {
 		}
 	}
 
-	/// Adds the specified [`ProtoOption`]s to this file.
+	#[doc(hidden)]
 	#[inline]
-	pub fn with_options(&mut self, options: impl IntoIterator<Item = ProtoOption>) -> &mut Self {
-		self.options.extend(options);
+	pub fn with_options(&mut self, options: Vec<ProtoOption>) -> &mut Self {
+		self.options = options;
 		self
 	}
 
-	/// Adds the specified imports to this file.
+	#[doc(hidden)]
 	#[inline]
 	pub fn with_imports(
 		&mut self,
@@ -72,45 +71,40 @@ impl ProtoFile {
 		self
 	}
 
-	/// Mutates the [`Edition`] of this file.
+	#[doc(hidden)]
 	#[inline]
 	pub const fn with_edition(&mut self, edition: Edition) -> &mut Self {
 		self.edition = edition;
 		self
 	}
 
-	/// Adds the given [`MessageSchema`]s to this file.
-	#[inline]
-	pub fn with_messages<I: IntoIterator<Item = MessageSchema>>(
-		&mut self,
-		messages: I,
-	) -> &mut Self {
-		for mut message in messages {
+	#[doc(hidden)]
+	pub fn with_messages(&mut self, mut messages: Vec<MessageSchema>) -> &mut Self {
+		for message in &mut messages {
 			message.register_imports(&mut self.imports);
 			message.file = self.name.clone();
-
-			self.messages.push(message);
 		}
+
+		self.messages.append(&mut messages);
 
 		self
 	}
 
-	/// Adds the given [`EnumSchema`]s to this file.
+	#[doc(hidden)]
 	#[inline]
-	pub fn with_enums<I: IntoIterator<Item = EnumSchema>>(&mut self, enums: I) -> &mut Self {
-		for mut enum_ in enums {
+	pub fn with_enums(&mut self, mut enums: Vec<EnumSchema>) -> &mut Self {
+		for enum_ in &mut enums {
 			enum_.file = self.name.clone();
-
-			self.enums.push(enum_);
 		}
+
+		self.enums.append(&mut enums);
 
 		self
 	}
 
-	/// Adds the given [`Service`]s to this file.
-	#[inline]
-	pub fn with_services<I: IntoIterator<Item = Service>>(&mut self, services: I) -> &mut Self {
-		for service in services {
+	#[doc(hidden)]
+	pub fn with_services(&mut self, mut services: Vec<Service>) -> &mut Self {
+		for service in &services {
 			for (request, response) in service
 				.handlers
 				.iter()
@@ -123,26 +117,22 @@ impl ProtoFile {
 			if *service.file != *self.name {
 				self.imports.set.insert(service.file.clone());
 			}
-
-			self.services.push(service);
 		}
+
+		self.services.append(&mut services);
 
 		self
 	}
 
-	/// Adds the given [`Extension`]s to this file, as well as the import `google/protobuf/descriptor.proto`.
-	#[inline]
-	pub fn with_extensions<I: IntoIterator<Item = Extension>>(
-		&mut self,
-		extensions: I,
-	) -> &mut Self {
-		self.imports
-			.set
-			.insert("google/protobuf/descriptor.proto".into());
-
-		for ext in extensions {
-			self.extensions.push(ext);
+	#[doc(hidden)]
+	pub fn with_extensions(&mut self, mut extensions: Vec<Extension>) -> &mut Self {
+		if !extensions.is_empty() {
+			self.imports
+				.set
+				.insert("google/protobuf/descriptor.proto".into());
 		}
+
+		self.extensions.append(&mut extensions);
 
 		self
 	}
@@ -195,15 +185,29 @@ impl Display for Edition {
 /// HashSet wrapper for a file's imports. Skips insertion if the file is equal to the origin file.
 #[derive(PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct FileImports {
 	pub set: HashSet<FixedStr>,
 	pub file: FixedStr,
+	#[cfg_attr(feature = "serde", serde(skip))]
 	pub(crate) added_validate_proto: bool,
 }
 
 impl Extend<FixedStr> for FileImports {
 	fn extend<T: IntoIterator<Item = FixedStr>>(&mut self, iter: T) {
-		self.set.extend(iter);
+		let iter = iter.into_iter();
+
+		let reserve = if self.set.is_empty() {
+			iter.size_hint().0
+		} else {
+			iter.size_hint().0.div_ceil(2)
+		};
+
+		self.set.reserve(reserve);
+
+		for import in iter {
+			self.insert_internal(import);
+		}
 	}
 }
 
@@ -217,9 +221,8 @@ impl IntoIterator for FileImports {
 }
 
 impl FileImports {
-	/// Creates a new instance.
 	#[must_use]
-	pub fn new(file: impl Into<FixedStr>) -> Self {
+	pub(crate) fn new(file: impl Into<FixedStr>) -> Self {
 		Self {
 			file: file.into(),
 			set: HashSet::default(),
@@ -235,42 +238,25 @@ impl FileImports {
 		}
 	}
 
-	pub(crate) fn insert_internal<S>(&mut self, import: S)
-	where
-		S: AsRef<str> + Into<FixedStr>,
-	{
-		let import_str = import.as_ref();
-
-		if *import_str != *self.file {
-			if import_str == "buf/validate/validate.proto" {
+	pub(crate) fn insert_internal(&mut self, import: FixedStr) {
+		if *import != *self.file {
+			if import == "buf/validate/validate.proto" {
 				self.insert_validate_proto();
 			} else {
-				self.set.insert(import.into());
+				self.set.insert(import);
 			}
 		}
 	}
 
-	/// Inserts the import in the list, if the path is not the same as the hosting file.
-	pub fn insert<S>(&mut self, import: S)
-	where
-		S: AsRef<str> + Into<FixedStr>,
-	{
-		if self.file != import.as_ref() {
-			self.set.insert(import.into());
-		}
-	}
-
-	/// Inserts an import from a [`ProtoPath`], if the file is not the same as the hosting file.
-	pub fn insert_from_path(&mut self, path: &ProtoPath) {
+	pub(crate) fn insert_from_path(&mut self, path: &ProtoPath) {
 		if path.file != self.file {
 			self.set.insert(path.file.clone());
 		}
 	}
 
-	/// Turns the list of imports into a sorted vector of [`FixedStr`].
 	#[must_use]
-	pub fn as_sorted_vec(&self) -> Vec<FixedStr> {
-		let mut imports: Vec<FixedStr> = self.set.iter().cloned().collect();
+	pub(crate) fn as_sorted_vec(&self) -> Vec<&FixedStr> {
+		let mut imports: Vec<&FixedStr> = self.set.iter().collect();
 
 		imports.sort_unstable();
 

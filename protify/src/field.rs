@@ -60,6 +60,7 @@ pub struct ValidatorSchema {
 
 impl ValidatorSchema {
 	/// Creates a new instance.
+	#[inline]
 	pub const fn new(schema: ProtoOption) -> Self {
 		Self {
 			schema,
@@ -72,6 +73,7 @@ impl ValidatorSchema {
 	///
 	/// This does not affect the schema output and is purely for the duplication check logic.
 	#[must_use]
+	#[inline]
 	pub fn with_cel_rules(mut self, cel_rules: Vec<CelRule>) -> Self {
 		self.cel_rules = cel_rules;
 		self
@@ -79,6 +81,7 @@ impl ValidatorSchema {
 
 	/// Sets a list of imports that will be added to the file where this [`ValidatorSchema`] is used.
 	#[must_use]
+	#[inline]
 	pub fn with_imports(mut self, imports: Vec<FixedStr>) -> Self {
 		self.imports = imports;
 		self

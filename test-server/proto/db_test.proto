@@ -3,7 +3,6 @@ syntax = "proto3";
 package db_test;
 
 import "buf/validate/validate.proto";
-import "google/protobuf/descriptor.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 

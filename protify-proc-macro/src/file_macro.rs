@@ -201,12 +201,12 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 
 				file
 				.with_edition(#edition)
-				.with_messages([ #(#messages),* ])
-				.with_services([ #(#services::proto_schema()),* ])
-				.with_enums([ #(#enums::proto_schema()),* ])
-				.with_extensions([ #(#extensions::proto_schema()),* ])
+				.with_messages(::protify::vec![ #(#messages),* ])
+				.with_services(::protify::vec![ #(#services::proto_schema()),* ])
+				.with_enums(::protify::vec![ #(#enums::proto_schema()),* ])
+				.with_extensions(::protify::vec![ #(#extensions::proto_schema()),* ])
 				.with_imports(#imports)
-				.with_options(#options);
+				.with_options(::protify::__collect_options(#options, false));
 
 				file
 			}

@@ -110,7 +110,7 @@ pub(crate) fn collect_package(package: &'static str) -> Package {
 		files
 			.get_mut(&msg.file)
 			.unwrap_or_else(|| panic!("Could not find the data for file {}", msg.file))
-			.with_messages([msg]);
+			.with_messages(vec![msg]);
 	}
 
 	for service_entry in inventory::iter::<RegistryService>().filter(|rs| rs.package == package) {
@@ -119,7 +119,7 @@ pub(crate) fn collect_package(package: &'static str) -> Package {
 		files
 			.get_mut(&service.file)
 			.unwrap_or_else(|| panic!("Could not find the data for file {}", service.file))
-			.with_services([service]);
+			.with_services(vec![service]);
 	}
 
 	let files: Vec<ProtoFile> = files

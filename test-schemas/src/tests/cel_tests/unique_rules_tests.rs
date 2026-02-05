@@ -19,7 +19,7 @@ struct FieldDuplicateRules {
 fn field_duplicate_rules() {
 	let mut file = ProtoFile::new("abc", "abc");
 
-	file.with_messages([FieldDuplicateRules::proto_schema()]);
+	file.with_messages(vec![FieldDuplicateRules::proto_schema()]);
 
 	let package = Package::new("abc").with_files([file]);
 
@@ -38,7 +38,7 @@ struct MsgDuplicateRules {
 fn msg_duplicate_rules() {
 	let mut file = ProtoFile::new("abc", "abc");
 
-	file.with_messages([MsgDuplicateRules::proto_schema()]);
+	file.with_messages(vec![MsgDuplicateRules::proto_schema()]);
 
 	let package = Package::new("abc").with_files([file]);
 
@@ -57,7 +57,7 @@ struct MsgAndFieldDuplicateRules {
 fn msg_and_field_duplicate_rules() {
 	let mut file = ProtoFile::new("abc", "abc");
 
-	file.with_messages([MsgAndFieldDuplicateRules::proto_schema()]);
+	file.with_messages(vec![MsgAndFieldDuplicateRules::proto_schema()]);
 
 	let package = Package::new("abc").with_files([file]);
 
@@ -85,7 +85,7 @@ struct MsgAndOneofDuplicateRules {
 fn msg_and_oneof_duplicate_rules() {
 	let mut file = ProtoFile::new("abc", "abc");
 
-	file.with_messages([MsgAndOneofDuplicateRules::proto_schema()]);
+	file.with_messages(vec![MsgAndOneofDuplicateRules::proto_schema()]);
 
 	let package = Package::new("abc").with_files([file]);
 
@@ -105,7 +105,7 @@ struct FieldAndOneofDuplicateRules {
 fn field_and_oneof_duplicate_rules() {
 	let mut file = ProtoFile::new("abc", "abc");
 
-	file.with_messages([FieldAndOneofDuplicateRules::proto_schema()]);
+	file.with_messages(vec![FieldAndOneofDuplicateRules::proto_schema()]);
 
 	let package = Package::new("abc").with_files([file]);
 
@@ -132,7 +132,7 @@ struct OneofDuplicateRules {
 fn oneof_duplicate_rules() {
 	let mut file = ProtoFile::new("abc", "abc");
 
-	file.with_messages([OneofDuplicateRules::proto_schema()]);
+	file.with_messages(vec![OneofDuplicateRules::proto_schema()]);
 
 	let package = Package::new("abc").with_files([file]);
 
@@ -153,7 +153,7 @@ struct BenignDuplicateRules {
 fn benign_duplicate_rules() {
 	let mut file = ProtoFile::new("abc", "abc");
 
-	file.with_messages([BenignDuplicateRules::proto_schema()]);
+	file.with_messages(vec![BenignDuplicateRules::proto_schema()]);
 
 	let package = Package::new("abc").with_files([file]);
 
