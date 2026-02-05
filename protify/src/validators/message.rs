@@ -251,6 +251,8 @@ where
 	}
 
 	#[doc(hidden)]
+	#[inline(never)]
+	#[cold]
 	fn __cel_rules(&self) -> Vec<CelRule> {
 		self.programs
 			.iter()

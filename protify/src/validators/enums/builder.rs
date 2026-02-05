@@ -61,11 +61,7 @@ impl<T: ProtoEnum, S: State> EnumValidatorBuilder<T, S> {
 	where
 		S::ErrorMessages: IsUnset,
 	{
-		let map: BTreeMap<EnumViolation, FixedStr> = error_messages
-			.into_iter()
-			.map(|(v, m)| (v, m.into()))
-			.collect();
-		self.data.error_messages = Some(Box::new(map));
+		self.data.error_messages = Some(collect_error_messages(error_messages));
 
 		EnumValidatorBuilder {
 			_state: PhantomData,

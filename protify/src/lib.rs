@@ -245,6 +245,7 @@ mod regex_impls {
 	}
 
 	impl IntoRegex for Regex {
+		#[inline]
 		fn into_regex(self) -> Regex {
 			self
 		}

@@ -47,11 +47,7 @@ where
 	where
 		S::ErrorMessages: IsUnset,
 	{
-		let map: BTreeMap<Num::ViolationEnum, FixedStr> = error_messages
-			.into_iter()
-			.map(|(v, m)| (v, m.into()))
-			.collect();
-		self.data.error_messages = Some(Box::new(map));
+		self.data.error_messages = Some(collect_error_messages(error_messages));
 
 		FloatValidatorBuilder {
 			_state: PhantomData,

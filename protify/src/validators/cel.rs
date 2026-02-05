@@ -170,14 +170,9 @@ mod cel_impls {
 		}
 	}
 
-	/// Tests the validity of CEL programs.
-	///
-	/// # Panics
-	///
-	/// Panics if one of the CEL expressions failed to compile.
 	#[inline(never)]
 	#[cold]
-	pub fn test_programs<T>(programs: &[CelProgram], value: T) -> Result<(), Vec<CelError>>
+	pub(crate) fn test_programs<T>(programs: &[CelProgram], value: T) -> Result<(), Vec<CelError>>
 	where
 		T: TryIntoCel,
 	{

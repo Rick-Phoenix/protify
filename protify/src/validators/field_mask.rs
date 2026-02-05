@@ -107,7 +107,6 @@ impl Validator<FieldMask> for FieldMaskValidator {
 		}
 	}
 
-	#[inline]
 	fn execute_validation(
 		&self,
 		ctx: &mut ValidationCtx,

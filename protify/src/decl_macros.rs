@@ -14,7 +14,7 @@ macro_rules! custom_error_messages_method {
 		  /// Adds a map with custom error messages to the underlying validator.
 		  ///
 		  /// If a violation has no custom error message attached to it, it uses the default error message.
-		  #[inline]
+			#[inline]
 		  pub fn with_error_messages(
 			mut self,
 			error_messages: impl IntoIterator<Item = ([< $kind Violation >], impl Into<FixedStr>)>,
@@ -22,17 +22,12 @@ macro_rules! custom_error_messages_method {
 		where
 		  S::ErrorMessages: IsUnset,
 		  {
-			let map: BTreeMap<[< $kind Violation >], FixedStr> = error_messages
-			.into_iter()
-			.map(|(v, m)| (v, m.into()))
-			.collect();
+				self.data.error_messages = Some(collect_error_messages(error_messages));
 
-			self.data.error_messages = Some(Box::new(map));
-
-			[< $kind ValidatorBuilder >] {
-			  _state: PhantomData,
-			  data: self.data,
-			}
+				[< $kind ValidatorBuilder >] {
+					_state: PhantomData,
+					data: self.data,
+				}
 		  }
 		}
 	};
@@ -163,11 +158,11 @@ macro_rules! length_rule_value {
 ///   pub fn mod_path() -> &'static str {
 ///     module_path!()
 ///   }
-///  
+///
 ///   mod re_exported {
 ///     use super::MY_FILE;
 ///     use protify::*;
-///  
+///
 ///     // The file is now in scope, and will be picked up automatically by all items defined in this module
 ///     // The items will have the extern path of the parent, so `::cratename::example`
 ///     inherit_proto_file!(MY_FILE);
@@ -212,7 +207,7 @@ macro_rules! inherit_proto_file {
 ///   use super::*;
 ///   proto_package!(MY_PKG, name = "my_pkg");
 ///   define_proto_file!(MY_FILE, name = "my_file.proto", package = MY_PKG);
-///  
+///
 ///   pub mod submod {
 ///     use super::MY_FILE;
 ///     use protify::*;
@@ -220,7 +215,7 @@ macro_rules! inherit_proto_file {
 ///     pub fn mod_path() -> &'static str {
 ///       module_path!()
 ///     }
-///  
+///
 ///     // The file is now in scope, and will be picked up automatically by all items defined in this module
 ///     // The items will have the extern path of the `module_path!()` output in here, so `::cratename::example::submod`
 ///     use_proto_file!(MY_FILE);
@@ -320,6 +315,7 @@ macro_rules! cel_program {
 macro_rules! impl_proto_type {
 	($rust_type:ty, $proto_type:ident) => {
 		impl AsProtoType for $rust_type {
+			#[inline]
 			fn proto_type() -> ProtoType {
 				ProtoType::Scalar(ProtoScalar::$proto_type)
 			}
@@ -335,6 +331,8 @@ macro_rules! impl_proto_map_key {
 			const SEALED: crate::Sealed = crate::Sealed;
 
 			#[doc(hidden)]
+			#[cold]
+			#[inline]
 			fn as_proto_map_key() -> ProtoMapKey {
 				ProtoMapKey::$enum_ident
 			}

@@ -100,11 +100,6 @@ where
 	where
 		S::ErrorMessages: IsUnset,
 	{
-		let map: BTreeMap<RepeatedViolation, FixedStr> = error_messages
-			.into_iter()
-			.map(|(v, m)| (v, m.into()))
-			.collect();
-
 		RepeatedValidatorBuilder {
 			_state: PhantomData,
 			_inner_type: self._inner_type,
@@ -114,7 +109,7 @@ where
 			max_items: self.max_items,
 			unique: self.unique,
 			ignore: self.ignore,
-			error_messages: Some(Box::new(map)),
+			error_messages: Some(collect_error_messages(error_messages)),
 		}
 	}
 

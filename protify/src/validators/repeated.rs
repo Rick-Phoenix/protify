@@ -79,6 +79,7 @@ where
 }
 
 impl<T: AsProtoType> AsProtoField for Vec<T> {
+	#[cold]
 	fn as_proto_field() -> FieldType {
 		FieldType::Repeated(T::proto_type())
 	}
@@ -102,7 +103,7 @@ where
 	where
 		Self: 'a;
 
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	#[doc(hidden)]
 	fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
@@ -209,6 +210,8 @@ where
 	}
 
 	#[doc(hidden)]
+	#[inline(never)]
+	#[cold]
 	fn __cel_rules(&self) -> Vec<CelRule> {
 		let mut rules: Vec<CelRule> = self
 			.cel

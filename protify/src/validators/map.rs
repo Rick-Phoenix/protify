@@ -11,14 +11,17 @@ use super::*;
 
 /// Generic map trait.
 pub trait Map<K, V> {
+	#[doc(hidden)]
 	fn length(&self) -> usize;
 
+	#[doc(hidden)]
 	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
 	where
 		K: 'a,
 		V: 'a;
 
 	#[cfg(feature = "cel")]
+	#[doc(hidden)]
 	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
 	where
 		K: IntoCelKey,
@@ -27,11 +30,13 @@ pub trait Map<K, V> {
 
 impl<K, V> Map<K, V> for BTreeMap<K, V> {
 	#[inline]
+	#[doc(hidden)]
 	fn length(&self) -> usize {
 		self.len()
 	}
 
 	#[cfg(feature = "cel")]
+	#[doc(hidden)]
 	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
 	where
 		K: IntoCelKey,
@@ -41,6 +46,7 @@ impl<K, V> Map<K, V> for BTreeMap<K, V> {
 	}
 
 	#[inline]
+	#[doc(hidden)]
 	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
 	where
 		K: 'a,
@@ -55,11 +61,13 @@ where
 	S: BuildHasher,
 {
 	#[inline]
+	#[doc(hidden)]
 	fn length(&self) -> usize {
 		self.len()
 	}
 
 	#[cfg(feature = "cel")]
+	#[doc(hidden)]
 	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
 	where
 		K: IntoCelKey,
@@ -69,6 +77,7 @@ where
 	}
 
 	#[inline]
+	#[doc(hidden)]
 	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
 	where
 		K: 'a,
@@ -86,6 +95,7 @@ where
 	K::Stored: Sized,
 	V::Stored: Sized,
 {
+	#[doc(hidden)]
 	type Target: Map<K::Stored, V::Stored>;
 }
 
@@ -133,7 +143,7 @@ where
 	where
 		Self: 'a;
 
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	#[doc(hidden)]
 	fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
@@ -169,7 +179,7 @@ where
 	where
 		Self: 'a;
 
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	#[doc(hidden)]
 	fn __make_unique_store<'a>(_: &Self::Validator, _: usize) -> Self::UniqueStore<'a>
@@ -277,6 +287,8 @@ where
 	}
 
 	#[doc(hidden)]
+	#[inline(never)]
+	#[cold]
 	fn __cel_rules(&self) -> Vec<CelRule> {
 		let mut rules: Vec<CelRule> = self
 			.cel
@@ -532,6 +544,7 @@ where
 }
 
 impl<K: AsProtoMapKey, V: AsProtoType> AsProtoField for HashMap<K, V> {
+	#[cold]
 	fn as_proto_field() -> FieldType {
 		FieldType::Map {
 			keys: K::as_proto_map_key(),
@@ -541,6 +554,7 @@ impl<K: AsProtoMapKey, V: AsProtoType> AsProtoField for HashMap<K, V> {
 }
 
 impl<K: AsProtoMapKey, V: AsProtoType> AsProtoField for BTreeMap<K, V> {
+	#[cold]
 	fn as_proto_field() -> FieldType {
 		FieldType::Map {
 			keys: K::as_proto_map_key(),

@@ -14,12 +14,23 @@ use super::*;
 /// and transforms owned strings into `Box<str>` to save size.
 ///
 /// Supports [`From`] with [`String`], `Arc<str>`, `&Arc<str>`, `Box<str>` and `&'static str`.
-#[derive(Debug, Clone, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum FixedStr {
 	Static(&'static str),
 	Shared(Arc<str>),
 	Boxed(Box<str>),
+}
+
+impl Clone for FixedStr {
+	#[inline]
+	fn clone(&self) -> Self {
+		match self {
+			Self::Static(str) => Self::Static(str),
+			Self::Shared(arc) => Self::Shared(arc.clone()),
+			Self::Boxed(boxed) => Self::clone_boxed(boxed),
+		}
+	}
 }
 
 impl Default for FixedStr {
@@ -42,6 +53,11 @@ impl<'de> serde::Deserialize<'de> for FixedStr {
 }
 
 impl FixedStr {
+	#[inline(never)]
+	fn clone_boxed(b: &str) -> Self {
+		Self::Boxed(b.into())
+	}
+
 	/// Checks if the [`FixedStr`] is `&'static str` or `Arc<str>`.
 	#[must_use]
 	#[inline]

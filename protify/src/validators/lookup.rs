@@ -139,6 +139,7 @@ pub struct UnsupportedStore<T: ?Sized> {
 #[allow(clippy::new_without_default, clippy::must_use_candidate)]
 impl<T: ?Sized> UnsupportedStore<T> {
 	#[cold]
+	#[inline]
 	pub const fn new() -> Self {
 		Self {
 			_marker: PhantomData,
@@ -149,13 +150,13 @@ impl<T: ?Sized> UnsupportedStore<T> {
 impl<'a, T: ?Sized> UniqueStore<'a> for UnsupportedStore<T> {
 	type Item = T;
 
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	fn default_with_capacity(_size: usize) -> Self {
 		Self::new()
 	}
 
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	fn insert(&mut self, _item: &'a Self::Item) -> bool {
 		true
@@ -263,6 +264,7 @@ pub struct SortedList<T: Ord> {
 }
 
 impl<T: Ord> Clone for SortedList<T> {
+	#[inline]
 	fn clone(&self) -> Self {
 		Self {
 			items: self.items.clone(),
@@ -284,6 +286,7 @@ impl<T: Ord> IntoSortedList<T> for SortedList<T> {
 }
 
 impl<T: Ord> IntoSortedList<T> for &SortedList<T> {
+	#[inline]
 	fn into_sorted_list(self) -> SortedList<T> {
 		self.clone()
 	}

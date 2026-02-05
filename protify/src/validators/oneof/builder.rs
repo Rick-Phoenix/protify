@@ -11,6 +11,7 @@ pub struct OneofValidatorBuilder<S: State = Empty> {
 }
 
 impl<S: State> Default for OneofValidatorBuilder<S> {
+	#[inline]
 	fn default() -> Self {
 		Self {
 			_state: Default::default(),

@@ -120,11 +120,6 @@ where
 	where
 		S::ErrorMessages: IsUnset,
 	{
-		let map: BTreeMap<MapViolation, FixedStr> = error_messages
-			.into_iter()
-			.map(|(v, m)| (v, m.into()))
-			.collect();
-
 		MapValidatorBuilder {
 			_state: PhantomData,
 			cel: self.cel,
@@ -135,7 +130,7 @@ where
 			min_pairs: self.min_pairs,
 			max_pairs: self.max_pairs,
 			ignore: self.ignore,
-			error_messages: Some(Box::new(map)),
+			error_messages: Some(collect_error_messages(error_messages)),
 		}
 	}
 

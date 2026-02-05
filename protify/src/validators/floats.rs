@@ -530,6 +530,7 @@ macro_rules! impl_float_wrapper {
         const SEALED: Sealed = Sealed;
 
         #[doc(hidden)]
+				#[inline]
         fn type_name() -> &'static str {
           stringify!([< $proto_type:lower >])
         }

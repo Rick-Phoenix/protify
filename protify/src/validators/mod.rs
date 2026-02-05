@@ -71,7 +71,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
 
 	// This is necessary to gather rules from validators like repeated or map which need to gather nested rules
 	#[doc(hidden)]
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	fn __cel_rules(&self) -> Vec<CelRule> {
 		vec![]
@@ -81,14 +81,14 @@ pub trait Validator<T: ?Sized>: Send + Sync {
 	///
 	/// If a schema representation is present, whenever a validator is used by a message or a oneof,
 	/// its schema representation will be present in the generated protobuf files.
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	fn schema(&self) -> Option<ValidatorSchema> {
 		None
 	}
 
 	/// Checks if the inputs of the validators are valid.
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	fn check_consistency(&self) -> Result<(), Vec<ConsistencyError>> {
 		Ok(())
@@ -100,7 +100,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
 	///
 	/// Panics if one of the CEL expressions failed to compile.
 	#[cfg(feature = "cel")]
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	fn check_cel_programs_with(
 		&self,
@@ -110,7 +110,7 @@ pub trait Validator<T: ?Sized>: Send + Sync {
 	}
 
 	#[cfg(feature = "cel")]
-	#[inline(never)]
+	#[inline]
 	#[cold]
 	#[doc(hidden)]
 	fn __check_cel_programs(&self) -> Result<(), Vec<CelError>> {
@@ -322,6 +322,24 @@ where
 
 /// Stores custom error messages in default validators.
 type ErrorMessages<T> = Box<BTreeMap<T, FixedStr>>;
+
+#[inline(never)]
+#[cold]
+#[allow(clippy::unnecessary_box_returns)]
+pub(crate) fn collect_error_messages<V, M>(
+	error_messages: impl IntoIterator<Item = (V, M)>,
+) -> ErrorMessages<V>
+where
+	V: Ord + Eq,
+	M: Into<FixedStr>,
+{
+	let map: BTreeMap<V, FixedStr> = error_messages
+		.into_iter()
+		.map(|(id, msg)| (id, msg.into()))
+		.collect();
+
+	Box::new(map)
+}
 
 mod builder_internals;
 #[doc(hidden)]
