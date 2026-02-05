@@ -30,8 +30,8 @@ impl FieldData {
 			  ::protify::MessageEntry::Oneof(
 					<#path as ::protify::ProtoOneof>::proto_schema()
 						.with_name(#proto_name)
-						.with_options(#options)
-						.with_validators(::protify::__filter_validators([ #(#validator_schema_tokens),* ]))
+						.with_options(::protify::__collect_options(#options, false))
+						.with_validators(::protify::__collect_validators([ #(#validator_schema_tokens),* ]))
 			  )
 			}
 		} else {

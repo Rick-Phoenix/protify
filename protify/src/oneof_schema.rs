@@ -142,7 +142,7 @@ impl Oneof {
 			.chain(self.validators.iter().map(|v| &v.schema))
 	}
 
-	/// Mutates the name of the oneof.
+	#[doc(hidden)]
 	#[must_use]
 	#[inline]
 	pub fn with_name(mut self, name: impl Into<FixedStr>) -> Self {
@@ -150,22 +150,19 @@ impl Oneof {
 		self
 	}
 
-	/// Adds [`ValidatorSchema`]s to this oneof.
+	#[doc(hidden)]
 	#[must_use]
 	#[inline]
-	pub fn with_validators<I: IntoIterator<Item = ValidatorSchema>>(
-		mut self,
-		validators: I,
-	) -> Self {
-		self.validators.extend(validators);
+	pub fn with_validators(mut self, mut validators: Vec<ValidatorSchema>) -> Self {
+		self.validators.append(&mut validators);
 		self
 	}
 
-	/// Adds [`ProtoOption`]s to this oneof.
+	#[doc(hidden)]
 	#[must_use]
 	#[inline]
-	pub fn with_options<I: IntoIterator<Item = ProtoOption>>(mut self, options: I) -> Self {
-		self.options.extend(options);
+	pub fn with_options(mut self, mut options: Vec<ProtoOption>) -> Self {
+		self.options.append(&mut options);
 		self
 	}
 }

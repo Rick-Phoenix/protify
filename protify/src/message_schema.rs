@@ -120,14 +120,14 @@ impl MessageSchema {
 		})
 	}
 
-	/// Adds one or more nested [`MessageSchema`]s to this message.
+	#[doc(hidden)]
 	#[must_use]
 	pub fn with_nested_messages(mut self, messages: Vec<Self>) -> Self {
 		self.messages.extend(messages);
 		self
 	}
 
-	/// Adds one or more nested [`EnumSchema`]s to this message.
+	#[doc(hidden)]
 	#[must_use]
 	pub fn with_nested_enums(mut self, enums: Vec<EnumSchema>) -> Self {
 		self.enums.extend(enums);
