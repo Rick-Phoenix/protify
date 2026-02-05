@@ -47,15 +47,19 @@ impl Field {
 /// that can be generated inside a message's options in the target protobuf file.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct ValidatorSchema {
-	pub(crate) schema: ProtoOption,
-	/// The CEL rules belonging to this validator. They are stored separately so that the containing [`Package`] can check if there are multiple rules with the same ID within the same message scope.
-	pub(crate) cel_rules: Vec<CelRule>,
-	/// The imports that should be added to the receiving proto file.
-	pub(crate) imports: Vec<FixedStr>,
+	pub schema: ProtoOption,
+	/// Adds several rules to this validator schema so that the containing [`Package`] can check if there are multiple rules with the same ID within the same message scope.
+	///
+	/// This does not affect the schema output and is purely for the duplication check logic.
+	pub cel_rules: Vec<CelRule>,
+	/// Sets a list of imports that will be added to the file where this [`ValidatorSchema`] is used.
+	pub imports: Vec<FixedStr>,
 }
 
 impl ValidatorSchema {
+	/// Creates a new instance.
 	pub const fn new(schema: ProtoOption) -> Self {
 		Self {
 			schema,
@@ -64,19 +68,19 @@ impl ValidatorSchema {
 		}
 	}
 
+	/// Adds several rules to this validator schema so that the containing [`Package`] can check if there are multiple rules with the same ID within the same message scope.
+	///
+	/// This does not affect the schema output and is purely for the duplication check logic.
 	#[must_use]
 	pub fn with_cel_rules(mut self, cel_rules: Vec<CelRule>) -> Self {
 		self.cel_rules = cel_rules;
 		self
 	}
 
+	/// Sets a list of imports that will be added to the file where this [`ValidatorSchema`] is used.
 	#[must_use]
 	pub fn with_imports(mut self, imports: Vec<FixedStr>) -> Self {
 		self.imports = imports;
 		self
-	}
-
-	pub fn cel_rules(&self) -> &[CelRule] {
-		&self.cel_rules
 	}
 }

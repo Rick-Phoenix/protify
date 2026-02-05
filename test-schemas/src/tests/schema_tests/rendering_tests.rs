@@ -437,7 +437,7 @@ fn message_schema_output() {
 	let cel_rules: Vec<&CelRule> = schema
 		.validators
 		.iter()
-		.flat_map(|v| v.cel_rules())
+		.flat_map(|v| &v.cel_rules)
 		.collect();
 	assert_eq_pretty!(cel_rules, &[msg_rule().rule(), msg_rule().rule()]);
 	assert_eq_pretty!(schema.reserved_numbers, &[1..2, 2..3, 3..9]);
