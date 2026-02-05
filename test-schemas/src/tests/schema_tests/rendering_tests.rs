@@ -24,14 +24,11 @@ define_proto_file!(
 struct CustomValidator;
 
 fn custom_validator_schema() -> ValidatorSchema {
-	ValidatorSchema {
-		schema: ProtoOption {
-			name: "(custom_validator.setting)".into(),
-			value: true.into(),
-		},
-		cel_rules: vec![],
-		imports: vec!["custom_validator/validator.proto".into()],
-	}
+	ValidatorSchema::new(ProtoOption {
+		name: "(custom_validator.setting)".into(),
+		value: true.into(),
+	})
+	.with_imports(vec!["custom_validator/validator.proto".into()])
 }
 
 impl Validator<OneofWithCustomValidator> for CustomValidator {
@@ -244,8 +241,8 @@ fn extension_schema_output() {
 	assert_eq_pretty!(field1.tag, 5000);
 	assert_eq_pretty!(field1.options, test_options());
 	assert_eq_pretty!(
-		field1.type_,
-		FieldType::Normal(ProtoType::Scalar(ProtoScalar::String))
+		&field1.type_,
+		&FieldType::Normal(ProtoType::Scalar(ProtoScalar::String))
 	);
 
 	let field2 = schema.fields.last().unwrap();
@@ -253,8 +250,8 @@ fn extension_schema_output() {
 	assert_eq_pretty!(field2.name, "name2");
 	assert_eq_pretty!(field2.tag, 5001);
 	assert_eq_pretty!(
-		field2.type_,
-		FieldType::Normal(ProtoType::Scalar(ProtoScalar::String))
+		&field2.type_,
+		&FieldType::Normal(ProtoType::Scalar(ProtoScalar::String))
 	);
 }
 
@@ -440,7 +437,7 @@ fn message_schema_output() {
 	let cel_rules: Vec<&CelRule> = schema
 		.validators
 		.iter()
-		.flat_map(|v| &v.cel_rules)
+		.flat_map(|v| v.cel_rules())
 		.collect();
 	assert_eq_pretty!(cel_rules, &[msg_rule().rule(), msg_rule().rule()]);
 	assert_eq_pretty!(schema.reserved_numbers, &[1..2, 2..3, 3..9]);
@@ -511,14 +508,11 @@ fn message_schema_output() {
 
 	assert_eq_pretty!(
 		oneof.validators.first().unwrap().clone(),
-		ValidatorSchema {
-			schema: ProtoOption {
-				name: "(buf.validate.oneof).required".into(),
-				value: true.into(),
-			},
-			cel_rules: vec![],
-			imports: vec!["buf/validate/validate.proto".into()],
-		},
+		ValidatorSchema::new(ProtoOption {
+			name: "(buf.validate.oneof).required".into(),
+			value: true.into(),
+		})
+		.with_imports(vec!["buf/validate/validate.proto".into()]),
 		"oneof.required option should be present"
 	);
 

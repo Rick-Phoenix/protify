@@ -29,12 +29,12 @@ impl OneofCtx<'_> {
 				const TAGS: &[i32] = &[ #(#tags),* ];
 
 				fn proto_schema() -> ::protify::Oneof {
-					::protify::Oneof {
-						name: stringify!(#enum_ident).into(),
-						fields: vec![ #variants_tokens ],
-						options: #options_tokens.into_iter().collect(),
-						validators: ::protify::collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]),
-					}
+					::protify::Oneof::builder()
+						.name(stringify!(#enum_ident).into())
+						.fields(vec![ #variants_tokens ])
+						.options(#options_tokens.into_iter().collect())
+						.validators(::protify::collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]))
+						.build()
 				}
 		  }
 		}

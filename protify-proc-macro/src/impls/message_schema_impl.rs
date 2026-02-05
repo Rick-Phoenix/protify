@@ -38,13 +38,13 @@ impl FieldData {
 			let proto_field_trait_target = proto_field.proto_field_trait_target(*span);
 
 			quote_spanned! {*span=>
-			  ::protify::Field {
-					name: #proto_name.into(),
-					tag: #tag,
-					options: ::protify::collect_options(#options, #deprecated),
-					type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
-					validators: ::protify::collect_validators([ #(#validator_schema_tokens),* ]),
-			  }
+			  ::protify::Field::builder()
+					.name(#proto_name.into())
+					.tag(#tag)
+					.options(::protify::collect_options(#options, #deprecated))
+					.type_(<#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field())
+					.validators(::protify::collect_validators([ #(#validator_schema_tokens),* ]))
+					.build()
 			}
 		}
 	}
@@ -203,20 +203,20 @@ impl MessageCtx<'_> {
 				}
 
 				fn proto_schema() -> ::protify::MessageSchema {
-					::protify::MessageSchema {
-						short_name: #proto_name.into(),
-						name: <Self as ::protify::ProtoMessage>::proto_name().into(),
-						file: #file_name.into(),
-						package: #package.into(),
-						reserved_names: vec![ #(#reserved_names.into()),* ],
-						reserved_numbers: #reserved_numbers,
-						options: ::protify::collect_options(#message_options, #deprecated),
-						messages: vec![],
-						enums: vec![],
-						entries: vec![ #entries_tokens ],
-						validators: ::protify::collect_validators([ #(::protify::Validator::<#proto_struct>::schema(&#validators)),* ]),
-						rust_path:  format!("::{}::{}", #module_path, #rust_ident_str).into()
-					}
+					::protify::MessageSchema::builder()
+						.short_name(#proto_name.into())
+						.name(<Self as ::protify::ProtoMessage>::proto_name().into())
+						.file(#file_name.into())
+						.package(#package.into())
+						.reserved_names(vec![ #(#reserved_names.into()),* ])
+						.reserved_numbers(#reserved_numbers)
+						.options(::protify::collect_options(#message_options, #deprecated))
+						.messages(vec![])
+						.enums(vec![])
+						.entries(vec![ #entries_tokens ])
+						.validators(::protify::collect_validators([ #(::protify::Validator::<#proto_struct>::schema(&#validators)),* ]))
+						.rust_path(format!("::{}::{}", #module_path, #rust_ident_str).into())
+						.build()
 				}
 		  }
 		}

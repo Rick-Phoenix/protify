@@ -166,13 +166,6 @@ where
 }
 
 impl OptionMessage {
-	#[must_use]
-	#[inline]
-	/// Creates a new instance.
-	pub fn new() -> Self {
-		Self::default()
-	}
-
 	/// Gets the value of a given key, if found.
 	#[inline]
 	#[must_use]
@@ -299,6 +292,7 @@ where
 }
 
 impl From<Arc<[ProtoOption]>> for OptionMessage {
+	#[inline]
 	fn from(value: Arc<[ProtoOption]>) -> Self {
 		Self { inner: value }
 	}
@@ -403,6 +397,7 @@ impl<const S: usize> From<[ProtoOption; S]> for OptionValue {
 }
 
 impl From<OptionMessageBuilder> for OptionMessage {
+	#[inline]
 	fn from(value: OptionMessageBuilder) -> Self {
 		value.build()
 	}

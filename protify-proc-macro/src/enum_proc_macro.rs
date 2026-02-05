@@ -149,19 +149,23 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 		quote! { unimplemented!() }
 	} else {
 		let tokens = variants_data.iter().map(|var| {
-    let EnumVariantCtx {
-      name,
-      options,
-      tag,
-      deprecated,
-      span,
-      ..
-    } = var;
+			let EnumVariantCtx {
+				name,
+				options,
+				tag,
+				deprecated,
+				span,
+				..
+			} = var;
 
-    quote_spanned! {*span=>
-      ::protify::EnumVariant { name: #name.into(), options: ::protify::collect_options(#options, #deprecated), tag: #tag, }
-    }
-  });
+			quote_spanned! {*span=>
+			  ::protify::EnumVariant::builder()
+						.name(#name.into())
+						.options(::protify::collect_options(#options, #deprecated))
+						.tag(#tag)
+						.build()
+			}
+		});
 
 		quote! { #(#tokens),* }
 	};
@@ -341,17 +345,17 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 			}
 
 			fn proto_schema() -> ::protify::EnumSchema {
-				::protify::EnumSchema {
-					short_name: #proto_name.into(),
-					name: <Self as ::protify::ProtoEnum>::proto_name().into(),
-					file: #file_name.into(),
-					package: #package.into(),
-					variants: ::protify::vec! [ #variants_tokens ],
-					reserved_names: ::protify::vec![ #(#reserved_names.into()),* ],
-					reserved_numbers: #reserved_numbers,
-					options: ::protify::collect_options(#enum_options, #deprecated),
-					rust_path:  ::protify::format!("::{}::{}", #module_path, #rust_ident_str).into()
-				}
+				::protify::EnumSchema::builder()
+					.short_name(#proto_name.into())
+					.name(<Self as ::protify::ProtoEnum>::proto_name().into())
+					.file(#file_name.into())
+					.package(#package.into())
+					.variants(::protify::vec! [ #variants_tokens ])
+					.reserved_names(::protify::vec![ #(#reserved_names.into()),* ])
+					.reserved_numbers(#reserved_numbers)
+					.options(::protify::collect_options(#enum_options, #deprecated))
+					.rust_path(::protify::format!("::{}::{}", #module_path, #rust_ident_str).into())
+					.build()
 			}
 	  }
 

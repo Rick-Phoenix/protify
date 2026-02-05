@@ -68,6 +68,7 @@ chrono = { version = "0.4", default-features = false, features = [
 tonic = { workspace = true, optional = true }
 prost = { workspace = true }
 document-features = { workspace = true, optional = true }
+bon = { version = "3.8", default-features = false, features = ["alloc"] }
 
 [features]
 default = ["std", "regex", "cel", "chrono", "inventory"]
@@ -99,6 +100,7 @@ chrono-wasm = ["chrono", "chrono/wasmbind", "proto-types/chrono-wasm"]
 ## Enables the std library features.
 std = [
   "dep:askama",
+  "bon/std",
   "prost/std",
   "ordermap/std",
   "ordered-float/std",

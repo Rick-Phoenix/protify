@@ -119,7 +119,8 @@ pub trait ValidatedOneof: ProtoValidation + Clone {
 }
 
 /// Schema representation for a protobuf oneof.
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Builder)]
+#[non_exhaustive]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Oneof {
 	pub name: FixedStr,

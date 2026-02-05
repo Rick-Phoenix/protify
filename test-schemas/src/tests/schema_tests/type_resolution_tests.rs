@@ -34,8 +34,8 @@ fn int_wrappers_resolution() {
 
 	for (field, exp_type) in schema.fields().zip(outputs) {
 		assert_eq_pretty!(
-			field.type_,
-			FieldType::Normal(ProtoType::Scalar(exp_type)),
+			&field.type_,
+			&FieldType::Normal(ProtoType::Scalar(exp_type)),
 			"expected field {} to have the type {exp_type}",
 			field.name
 		);
@@ -67,6 +67,6 @@ fn map_type_resolution() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, exp_type)
+		assert_eq_pretty!(&field.type_, &exp_type)
 	}
 }

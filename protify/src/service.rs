@@ -8,10 +8,11 @@ pub trait ProtoService {
 }
 
 /// A struct representing a protobuf service.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Builder)]
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "service.proto.j2"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct Service {
 	pub name: FixedStr,
 	pub file: FixedStr,
@@ -29,8 +30,9 @@ impl Service {
 }
 
 /// A struct that represents a protobuf service handler.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Builder)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct ServiceHandler {
 	pub name: FixedStr,
 	pub options: Vec<ProtoOption>,

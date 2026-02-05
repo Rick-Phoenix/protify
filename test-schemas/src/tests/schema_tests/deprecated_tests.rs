@@ -13,7 +13,7 @@ pub enum DeprecatedEnum1 {
 fn deprecated_enum1() {
 	let schema = DeprecatedEnum1::proto_schema();
 
-	assert_eq_pretty!(schema.options[0], proto_deprecated());
+	assert_eq_pretty!(schema.options[0], __proto_deprecated());
 }
 
 #[proto_enum]
@@ -27,7 +27,7 @@ pub enum DeprecatedEnum2 {
 fn deprecated_enum2() {
 	let schema = DeprecatedEnum2::proto_schema();
 
-	assert_eq_pretty!(schema.options[0], proto_deprecated());
+	assert_eq_pretty!(schema.options[0], __proto_deprecated());
 }
 
 #[proto_enum]
@@ -59,7 +59,7 @@ pub enum DeprecatedEnumVariant1 {
 fn deprecated_enum_variant1() {
 	let schema = DeprecatedEnumVariant1::proto_schema();
 
-	assert_eq_pretty!(schema.variants[0].options[0], proto_deprecated());
+	assert_eq_pretty!(schema.variants[0].options[0], __proto_deprecated());
 }
 
 #[proto_enum]
@@ -73,7 +73,7 @@ pub enum DeprecatedEnumVariant2 {
 fn deprecated_enum_variant2() {
 	let schema = DeprecatedEnumVariant2::proto_schema();
 
-	assert_eq_pretty!(schema.variants[0].options[0], proto_deprecated());
+	assert_eq_pretty!(schema.variants[0].options[0], __proto_deprecated());
 }
 
 #[proto_enum]
@@ -104,7 +104,7 @@ struct DeprecatedMsg1 {
 fn deprecated_msg1() {
 	let schema = DeprecatedMsg1::proto_schema();
 
-	assert_eq_pretty!(schema.options[0], proto_deprecated());
+	assert_eq_pretty!(schema.options[0], __proto_deprecated());
 }
 
 #[proto_message]
@@ -117,7 +117,7 @@ struct DeprecatedMsg2 {
 fn deprecated_msg2() {
 	let schema = DeprecatedMsg2::proto_schema();
 
-	assert_eq_pretty!(schema.options[0], proto_deprecated());
+	assert_eq_pretty!(schema.options[0], __proto_deprecated());
 }
 
 #[proto_message]
@@ -149,7 +149,7 @@ fn deprecated_msg_field1() {
 
 	assert_eq_pretty!(
 		schema.entries[0].as_field().unwrap().options[0],
-		proto_deprecated()
+		__proto_deprecated()
 	);
 }
 
@@ -165,7 +165,7 @@ fn deprecated_msg_field2() {
 
 	assert_eq_pretty!(
 		schema.entries[0].as_field().unwrap().options[0],
-		proto_deprecated()
+		__proto_deprecated()
 	);
 }
 
@@ -204,7 +204,7 @@ enum DeprecatedOneofVariant1 {
 fn deprecated_oneof_variant1() {
 	let schema = DeprecatedOneofVariant1::proto_schema();
 
-	assert_eq_pretty!(schema.fields[0].options[0], proto_deprecated());
+	assert_eq_pretty!(schema.fields[0].options[0], __proto_deprecated());
 }
 
 #[allow(unused)]
@@ -221,7 +221,7 @@ enum DeprecatedOneofVariant2 {
 fn deprecated_oneof_variant2() {
 	let schema = DeprecatedOneofVariant2::proto_schema();
 
-	assert_eq_pretty!(schema.fields[0].options[0], proto_deprecated());
+	assert_eq_pretty!(schema.fields[0].options[0], __proto_deprecated());
 }
 
 #[allow(unused)]
@@ -258,7 +258,7 @@ enum DeprecatedService1 {
 fn deprecated_service1() {
 	let schema = DeprecatedService1::proto_schema();
 
-	assert_eq_pretty!(schema.options[0], proto_deprecated());
+	assert_eq_pretty!(schema.options[0], __proto_deprecated());
 }
 
 #[proto_service]
@@ -274,7 +274,7 @@ enum DeprecatedService2 {
 fn deprecated_service2() {
 	let schema = DeprecatedService2::proto_schema();
 
-	assert_eq_pretty!(schema.options[0], proto_deprecated());
+	assert_eq_pretty!(schema.options[0], __proto_deprecated());
 }
 
 #[proto_service]
@@ -310,7 +310,7 @@ enum DeprecatedHandler1 {
 fn deprecated_handler1() {
 	let schema = DeprecatedHandler1::proto_schema();
 
-	assert_eq_pretty!(schema.handlers[0].options[0], proto_deprecated());
+	assert_eq_pretty!(schema.handlers[0].options[0], __proto_deprecated());
 }
 
 #[proto_service]
@@ -326,7 +326,7 @@ enum DeprecatedHandler2 {
 fn deprecated_handler2() {
 	let schema = DeprecatedHandler2::proto_schema();
 
-	assert_eq_pretty!(schema.handlers[0].options[0], proto_deprecated());
+	assert_eq_pretty!(schema.handlers[0].options[0], __proto_deprecated());
 }
 
 #[proto_service]

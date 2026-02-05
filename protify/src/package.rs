@@ -41,6 +41,7 @@ pub trait PackageSchema {
 /// A struct representing a protobuf package.
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct Package {
 	pub name: FixedStr,
 	pub files: Vec<ProtoFile>,

@@ -44,13 +44,13 @@ pub fn process_extension_derive(
 		let proto_field_trait_target = proto_field.proto_field_trait_target(field.ident.span());
 
 		fields_tokens.push(quote_spanned! {field.ident.span()=>
-			::protify::Field {
-				name: #proto_name.into(),
-				tag: #tag,
-				options: #options.into_iter().collect(),
-				type_: <#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field(),
-				validators: ::protify::vec![],
-		  }
+			::protify::Field::builder()
+				.name(#proto_name.into())
+				.tag(#tag)
+				.options(#options.into_iter().collect())
+				.type_(<#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field())
+				.validators(::protify::vec![])
+				.build()
 		});
 	}
 
@@ -59,10 +59,10 @@ pub fn process_extension_derive(
 	Ok(quote! {
 	  impl ::protify::ProtoExtension for #ident {
 			fn proto_schema() -> ::protify::Extension {
-				::protify::Extension {
-					target: ::protify::ExtensionTarget::#target,
-					fields: ::protify::vec![ #(#fields_tokens),* ]
-				}
+				::protify::Extension::builder()
+					.target(::protify::ExtensionTarget::#target)
+					.fields(::protify::vec![ #(#fields_tokens),* ])
+					.build()
 			}
 	  }
 	})

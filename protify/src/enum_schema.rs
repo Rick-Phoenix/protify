@@ -54,13 +54,13 @@ pub trait ProtoEnumSchema: ProtoEnum {
 }
 
 /// A struct representing a protobuf enum.
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Builder)]
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "enum.proto.j2"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct EnumSchema {
 	pub short_name: FixedStr,
-	/// The short name of the enum, preceded by the name of the parent messages, if there are any.
 	pub name: FixedStr,
 	pub package: FixedStr,
 	pub file: FixedStr,
@@ -69,15 +69,6 @@ pub struct EnumSchema {
 	pub reserved_names: Vec<FixedStr>,
 	pub options: Vec<ProtoOption>,
 	pub rust_path: FixedStr,
-}
-
-/// A struct representing a protobuf enum variant.
-#[derive(Debug, Default, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EnumVariant {
-	pub name: FixedStr,
-	pub tag: i32,
-	pub options: Vec<ProtoOption>,
 }
 
 impl EnumSchema {
@@ -94,4 +85,14 @@ impl EnumSchema {
 	pub(crate) fn render_reserved_numbers(&self) -> Option<String> {
 		render_reserved_numbers(&self.reserved_numbers)
 	}
+}
+
+/// A struct representing a protobuf enum variant.
+#[derive(Debug, Default, Clone, PartialEq, Builder)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
+pub struct EnumVariant {
+	pub name: FixedStr,
+	pub tag: i32,
+	pub options: Vec<ProtoOption>,
 }

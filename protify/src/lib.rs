@@ -60,6 +60,7 @@ pub use ::cel;
 mod decl_macros;
 
 use alloc::{borrow::Cow, borrow::ToOwned, collections::BTreeSet};
+use bon::Builder;
 use core::{
 	borrow::Borrow,
 	fmt::{Debug, Display, Write},
@@ -338,7 +339,7 @@ where
 	let mut output: Vec<ProtoOption> = options.into_iter().collect();
 
 	if deprecated {
-		output.push(proto_deprecated());
+		output.push(__proto_deprecated());
 	}
 
 	output

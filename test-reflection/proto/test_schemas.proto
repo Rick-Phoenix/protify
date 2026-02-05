@@ -67,8 +67,8 @@ message AnyRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this.value == b'a'"
         }
       ]
@@ -85,7 +85,7 @@ message AnyRules {
         not_in: [
           "/type_url"
         ]
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -95,7 +95,7 @@ message BTreeMapTest {
   map<int32, int32> map = 1 [
     (buf.validate.field) = {
       map: {
-        min_pairs: 1, 
+        min_pairs: 1,
         max_pairs: 2
       }
     }
@@ -108,8 +108,8 @@ message BadCelOneofTest {
       (buf.validate.field) = {
         cel: [
           {
-            id: "abc", 
-            message: "hi", 
+            id: "abc",
+            message: "hi",
             expression: "hi"
           }
         ]
@@ -124,8 +124,8 @@ message BadFieldRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "abc", 
-          message: "hi", 
+          id: "abc",
+          message: "hi",
           expression: "hi"
         }
       ]
@@ -137,8 +137,8 @@ message BadMsgRules {
   option (buf.validate.message) = {
     cel: [
       {
-        id: "abc", 
-        message: "hi", 
+        id: "abc",
+        message: "hi",
         expression: "hi"
       }
     ]
@@ -164,7 +164,7 @@ message BoolRules {
     (buf.validate.field) = {
       bool: {
         const: true
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -172,7 +172,7 @@ message BoolRules {
     (buf.validate.field) = {
       bool: {
         const: true
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -278,8 +278,8 @@ message BytesRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this == b'a'"
         }
       ]
@@ -294,7 +294,7 @@ message BytesRules {
     (buf.validate.field) = {
       bytes: {
         const: "a"
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -302,7 +302,7 @@ message BytesRules {
     (buf.validate.field) = {
       bytes: {
         const: "b"
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -352,7 +352,7 @@ message ConstRulesTest {
   string string = 1 [
     (buf.validate.field) = {
       string: {
-        min_len: 3, 
+        min_len: 3,
         const: "abc"
       }
     }
@@ -360,7 +360,7 @@ message ConstRulesTest {
   bytes bytes = 2 [
     (buf.validate.field) = {
       bytes: {
-        min_len: 3, 
+        min_len: 3,
         const: "abc"
       }
     }
@@ -368,7 +368,7 @@ message ConstRulesTest {
   int32 int = 3 [
     (buf.validate.field) = {
       int32: {
-        gt: 2, 
+        gt: 2,
         const: 3
       }
     }
@@ -376,7 +376,7 @@ message ConstRulesTest {
   float float = 4 [
     (buf.validate.field) = {
       float: {
-        gt: 2, 
+        gt: 2,
         const: 3
       }
     }
@@ -384,7 +384,7 @@ message ConstRulesTest {
   google.protobuf.Duration duration = 5 [
     (buf.validate.field) = {
       duration: {
-        const: { seconds: 1, nanos: 0 }, 
+        const: { seconds: 1, nanos: 0 },
         gt: { seconds: 0, nanos: 0 }
       }
     }
@@ -392,7 +392,7 @@ message ConstRulesTest {
   google.protobuf.Timestamp timestamp = 6 [
     (buf.validate.field) = {
       timestamp: {
-        gt: { seconds: 0, nanos: 0 }, 
+        gt: { seconds: 0, nanos: 0 },
         const: { seconds: 1, nanos: 0 }
       }
     }
@@ -402,7 +402,7 @@ message ConstRulesTest {
       field_mask: {
         const: {
           paths: ["abc"]
-        }, 
+        },
         in: ["abc"]
       }
     }
@@ -410,7 +410,7 @@ message ConstRulesTest {
   TestEnum enum_field = 8 [
     (buf.validate.field) = {
       enum: {
-        const: 1, 
+        const: 1,
         defined_only: true
       }
     }
@@ -430,8 +430,8 @@ message DefaultValidatorTestCel {
   option (buf.validate.message) = {
     cel: [
       {
-        id: "id_is_1", 
-        message: "abc", 
+        id: "id_is_1",
+        message: "abc",
         expression: "this.id == 1"
       }
     ]
@@ -511,8 +511,8 @@ message DoubleRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -529,7 +529,7 @@ message DoubleRules {
     (buf.validate.field) = {
       double: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -537,7 +537,7 @@ message DoubleRules {
     (buf.validate.field) = {
       double: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -617,7 +617,7 @@ message DurationRules {
     (buf.validate.field) = {
       duration: {
         const: { seconds: 0, nanos: 0 }
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -625,8 +625,8 @@ message DurationRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this < duration('5m')"
         }
       ]
@@ -653,7 +653,7 @@ message EnumRules {
     (buf.validate.field) = {
       enum: {
         not_in: [1]
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -668,8 +668,8 @@ message EnumRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this == 1"
         }
       ]
@@ -684,7 +684,7 @@ message EnumRules {
     (buf.validate.field) = {
       enum: {
         not_in: [1]
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -694,7 +694,7 @@ message FailFastTest {
   string string = 3 [
     (buf.validate.field) = {
       string: {
-        max_len: 1, 
+        max_len: 1,
         not_in: ["abc"]
       }
     }
@@ -702,7 +702,7 @@ message FailFastTest {
   bytes bytes = 4 [
     (buf.validate.field) = {
       bytes: {
-        max_len: 1, 
+        max_len: 1,
         not_in: ["abc"]
       }
     }
@@ -710,7 +710,7 @@ message FailFastTest {
   int32 int = 5 [
     (buf.validate.field) = {
       int32: {
-        gt: 1, 
+        gt: 1,
         not_in: [1]
       }
     }
@@ -718,7 +718,7 @@ message FailFastTest {
   float float = 6 [
     (buf.validate.field) = {
       float: {
-        gt: 1, 
+        gt: 1,
         not_in: [1]
       }
     }
@@ -726,7 +726,7 @@ message FailFastTest {
   google.protobuf.Duration duration = 7 [
     (buf.validate.field) = {
       duration: {
-        gt: { seconds: 0, nanos: 0 }, 
+        gt: { seconds: 0, nanos: 0 },
         not_in: [
           { seconds: 0, nanos: 0 }
         ]
@@ -736,7 +736,7 @@ message FailFastTest {
   google.protobuf.Timestamp timestamp = 8 [
     (buf.validate.field) = {
       timestamp: {
-        within: { seconds: 10, nanos: 0 }, 
+        within: { seconds: 10, nanos: 0 },
         gt_now: true
       }
     }
@@ -744,7 +744,7 @@ message FailFastTest {
   google.protobuf.FieldMask field_mask = 9 [
     (buf.validate.field) = {
       field_mask: {
-        in: ["abc"], 
+        in: ["abc"],
         not_in: ["abcde"]
       }
     }
@@ -752,7 +752,7 @@ message FailFastTest {
   TestEnum enum_field = 10 [
     (buf.validate.field) = {
       enum: {
-        defined_only: true, 
+        defined_only: true,
         not_in: [45]
       }
     }
@@ -804,8 +804,8 @@ message FieldMaskRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this.paths[0] == 'tom_bombadil'"
         }
       ]
@@ -822,7 +822,7 @@ message FieldMaskRules {
         not_in: [
           "tom_bombadil"
         ]
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -880,8 +880,8 @@ message Fixed32Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -898,7 +898,7 @@ message Fixed32Rules {
     (buf.validate.field) = {
       fixed32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -906,7 +906,7 @@ message Fixed32Rules {
     (buf.validate.field) = {
       fixed32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -964,8 +964,8 @@ message Fixed64Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -982,7 +982,7 @@ message Fixed64Rules {
     (buf.validate.field) = {
       fixed64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -990,7 +990,7 @@ message Fixed64Rules {
     (buf.validate.field) = {
       fixed64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1048,8 +1048,8 @@ message FloatRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -1066,7 +1066,7 @@ message FloatRules {
     (buf.validate.field) = {
       float: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1074,7 +1074,7 @@ message FloatRules {
     (buf.validate.field) = {
       float: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1139,8 +1139,8 @@ message Int32Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -1157,7 +1157,7 @@ message Int32Rules {
     (buf.validate.field) = {
       int32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1165,7 +1165,7 @@ message Int32Rules {
     (buf.validate.field) = {
       int32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1223,8 +1223,8 @@ message Int64Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -1241,7 +1241,7 @@ message Int64Rules {
     (buf.validate.field) = {
       int64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1249,7 +1249,7 @@ message Int64Rules {
     (buf.validate.field) = {
       int64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1259,12 +1259,12 @@ message MapTests {
   map<string, string> string_test = 1 [
     (buf.validate.field) = {
       map: {
-        min_pairs: 1, 
+        min_pairs: 1,
         keys: {
           string: {
             const: "abc"
           }
-        }, 
+        },
         values: {
           string: {
             const: "abc"
@@ -1276,12 +1276,12 @@ message MapTests {
   map<sint32, sint32> wrappers_test = 2 [
     (buf.validate.field) = {
       map: {
-        min_pairs: 1, 
+        min_pairs: 1,
         keys: {
           sint32: {
             const: 1
           }
-        }, 
+        },
         values: {
           sint32: {
             const: 1
@@ -1310,11 +1310,11 @@ message MapTests {
         keys: {
           int32: {
             gte: 2
-          }, 
+          },
           cel: [
             {
-              id: "key_rule", 
-              message: "abc", 
+              id: "key_rule",
+              message: "abc",
               expression: "this <= 15"
             }
           ]
@@ -1328,11 +1328,11 @@ message MapTests {
         values: {
           int32: {
             gte: 2
-          }, 
+          },
           cel: [
             {
-              id: "value_rule", 
-              message: "abc", 
+              id: "value_rule",
+              message: "abc",
               expression: "this <= 15"
             }
           ]
@@ -1344,11 +1344,11 @@ message MapTests {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "1 in this && this[1] == 1"
         }
-      ], 
+      ],
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1387,8 +1387,8 @@ message OneofTests {
       (buf.validate.field) = {
         cel: [
           {
-            id: "string_cel_rule", 
-            message: "abc", 
+            id: "string_cel_rule",
+            message: "abc",
             expression: "this != 'b'"
           }
         ]
@@ -1398,8 +1398,8 @@ message OneofTests {
       (buf.validate.field) = {
         cel: [
           {
-            id: "recursive_cel_rule", 
-            message: "abc", 
+            id: "recursive_cel_rule",
+            message: "abc",
             expression: "this.string != 'c'"
           }
         ]
@@ -1412,7 +1412,7 @@ message RepeatedTests {
   repeated string string_test = 1 [
     (buf.validate.field) = {
       repeated: {
-        min_items: 1, 
+        min_items: 1,
         items: {
           string: {
             const: "abc"
@@ -1424,7 +1424,7 @@ message RepeatedTests {
   repeated sint32 wrappers_test = 2 [
     (buf.validate.field) = {
       repeated: {
-        min_items: 1, 
+        min_items: 1,
         items: {
           sint32: {
             const: 1
@@ -1450,8 +1450,8 @@ message RepeatedTests {
         items: {
           cel: [
             {
-              id: "cel_rule", 
-              message: "abc", 
+              id: "cel_rule",
+              message: "abc",
               expression: "this == 1"
             }
           ]
@@ -1463,11 +1463,11 @@ message RepeatedTests {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this[0] == 1"
         }
-      ], 
+      ],
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1573,8 +1573,8 @@ message Sfixed32Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -1591,7 +1591,7 @@ message Sfixed32Rules {
     (buf.validate.field) = {
       sfixed32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1599,7 +1599,7 @@ message Sfixed32Rules {
     (buf.validate.field) = {
       sfixed32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1657,8 +1657,8 @@ message Sfixed64Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -1675,7 +1675,7 @@ message Sfixed64Rules {
     (buf.validate.field) = {
       sfixed64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1683,7 +1683,7 @@ message Sfixed64Rules {
     (buf.validate.field) = {
       sfixed64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1758,8 +1758,8 @@ message Sint32Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -1776,7 +1776,7 @@ message Sint32Rules {
     (buf.validate.field) = {
       sint32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1784,7 +1784,7 @@ message Sint32Rules {
     (buf.validate.field) = {
       sint32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1842,8 +1842,8 @@ message Sint64Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -1860,7 +1860,7 @@ message Sint64Rules {
     (buf.validate.field) = {
       sint64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1868,7 +1868,7 @@ message Sint64Rules {
     (buf.validate.field) = {
       sint64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -1963,8 +1963,8 @@ message StringRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this == 'a'"
         }
       ]
@@ -1979,7 +1979,7 @@ message StringRules {
     (buf.validate.field) = {
       string: {
         const: "a"
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -1987,7 +1987,7 @@ message StringRules {
     (buf.validate.field) = {
       string: {
         const: "b"
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -2120,7 +2120,7 @@ message StringRules {
   string header_name_strict_test = 35 [
     (buf.validate.field) = {
       string: {
-        well_known_regex: KNOWN_REGEX_HTTP_HEADER_NAME, 
+        well_known_regex: KNOWN_REGEX_HTTP_HEADER_NAME,
         strict: true
       }
     }
@@ -2135,7 +2135,7 @@ message StringRules {
   string header_value_strict_test = 37 [
     (buf.validate.field) = {
       string: {
-        well_known_regex: KNOWN_REGEX_HTTP_HEADER_VALUE, 
+        well_known_regex: KNOWN_REGEX_HTTP_HEADER_VALUE,
         strict: true
       }
     }
@@ -2215,7 +2215,7 @@ message TimestampRules {
     (buf.validate.field) = {
       timestamp: {
         const: { seconds: 0, nanos: 0 }
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -2223,8 +2223,8 @@ message TimestampRules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this < timestamp('2024-01-01T00:00:00Z')"
         }
       ]
@@ -2284,8 +2284,8 @@ message Uint32Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -2302,7 +2302,7 @@ message Uint32Rules {
     (buf.validate.field) = {
       uint32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -2310,7 +2310,7 @@ message Uint32Rules {
     (buf.validate.field) = {
       uint32: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -2368,8 +2368,8 @@ message Uint64Rules {
     (buf.validate.field) = {
       cel: [
         {
-          id: "cel_rule", 
-          message: "abc", 
+          id: "cel_rule",
+          message: "abc",
           expression: "this != 0"
         }
       ]
@@ -2386,7 +2386,7 @@ message Uint64Rules {
     (buf.validate.field) = {
       uint64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_IF_ZERO_VALUE
     }
   ];
@@ -2394,7 +2394,7 @@ message Uint64Rules {
     (buf.validate.field) = {
       uint64: {
         const: 1
-      }, 
+      },
       ignore: IGNORE_ALWAYS
     }
   ];
@@ -2424,7 +2424,7 @@ message UniqueFloats {
   repeated float unique_floats = 1 [
     (buf.validate.field) = {
       repeated: {
-        unique: true, 
+        unique: true,
         items: {
         }
       }

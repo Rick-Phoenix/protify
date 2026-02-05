@@ -34,3 +34,4 @@ cel = []
 
 [dev-dependencies]
 protify = { path = "../protify" }
+indoc = { workspace = true }

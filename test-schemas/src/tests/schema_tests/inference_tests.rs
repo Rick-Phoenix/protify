@@ -33,7 +33,7 @@ fn enum_inference() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, exp_type);
+		assert_eq_pretty!(&field.type_, &exp_type);
 	}
 }
 
@@ -70,7 +70,7 @@ fn proxied_enum_inference() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, exp_type);
+		assert_eq_pretty!(&field.type_, &exp_type);
 	}
 }
 
@@ -107,7 +107,7 @@ fn primitive_inference() {
 	);
 
 	for (field, exp_type) in schema.fields().zip(expected_types) {
-		assert_eq_pretty!(field.type_, exp_type);
+		assert_eq_pretty!(&field.type_, &exp_type);
 	}
 }
 
@@ -133,7 +133,7 @@ fn cardinality_inference() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, exp_type);
+		assert_eq_pretty!(&field.type_, &exp_type);
 	}
 }
 
@@ -168,7 +168,7 @@ fn message_inference() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, exp_type);
+		assert_eq_pretty!(&field.type_, &exp_type);
 	}
 }
 
@@ -221,8 +221,8 @@ fn proxied_inference() {
 	let msg_field = schema.entries.last().unwrap();
 
 	assert_eq_pretty!(
-		msg_field.as_field().unwrap().type_,
-		FieldType::Normal(ProtoType::Message(ProxiedMsgProto::proto_path()))
+		&msg_field.as_field().unwrap().type_,
+		&FieldType::Normal(ProtoType::Message(ProxiedMsgProto::proto_path()))
 	);
 }
 
@@ -257,7 +257,7 @@ fn int_wrappers() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, FieldType::Normal(exp_type))
+		assert_eq_pretty!(&field.type_, &FieldType::Normal(exp_type))
 	}
 }
 
@@ -292,7 +292,7 @@ fn optional_int_wrappers() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, FieldType::Optional(exp_type))
+		assert_eq_pretty!(&field.type_, &FieldType::Optional(exp_type))
 	}
 }
 
@@ -327,7 +327,7 @@ fn repeated_int_wrappers() {
 	];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, FieldType::Repeated(exp_type))
+		assert_eq_pretty!(&field.type_, &FieldType::Repeated(exp_type))
 	}
 }
 
@@ -368,6 +368,6 @@ fn map_int_wrappers() {
 	let exp_types = create_exp_types![Sint32, Sint64, Sfixed32, Sfixed64, Fixed32, Fixed64];
 
 	for (field, exp_type) in schema.fields().zip(exp_types) {
-		assert_eq_pretty!(field.type_, exp_type)
+		assert_eq_pretty!(&field.type_, &exp_type)
 	}
 }

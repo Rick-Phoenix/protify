@@ -21,10 +21,7 @@ fn field_duplicate_rules() {
 
 	file.with_messages([FieldDuplicateRules::proto_schema()]);
 
-	let package = Package {
-		name: "abc".into(),
-		files: vec![file],
-	};
+	let package = Package::new("abc").with_files([file]);
 
 	assert!(package.check_unique_cel_rules().is_err());
 }
@@ -43,10 +40,7 @@ fn msg_duplicate_rules() {
 
 	file.with_messages([MsgDuplicateRules::proto_schema()]);
 
-	let package = Package {
-		name: "abc".into(),
-		files: vec![file],
-	};
+	let package = Package::new("abc").with_files([file]);
 
 	assert!(package.check_unique_cel_rules().is_err());
 }
@@ -65,10 +59,7 @@ fn msg_and_field_duplicate_rules() {
 
 	file.with_messages([MsgAndFieldDuplicateRules::proto_schema()]);
 
-	let package = Package {
-		name: "abc".into(),
-		files: vec![file],
-	};
+	let package = Package::new("abc").with_files([file]);
 
 	assert!(package.check_unique_cel_rules().is_err());
 }
@@ -96,10 +87,7 @@ fn msg_and_oneof_duplicate_rules() {
 
 	file.with_messages([MsgAndOneofDuplicateRules::proto_schema()]);
 
-	let package = Package {
-		name: "abc".into(),
-		files: vec![file],
-	};
+	let package = Package::new("abc").with_files([file]);
 
 	assert!(package.check_unique_cel_rules().is_err());
 }
@@ -119,10 +107,7 @@ fn field_and_oneof_duplicate_rules() {
 
 	file.with_messages([FieldAndOneofDuplicateRules::proto_schema()]);
 
-	let package = Package {
-		name: "abc".into(),
-		files: vec![file],
-	};
+	let package = Package::new("abc").with_files([file]);
 
 	assert!(package.check_unique_cel_rules().is_err());
 }
@@ -149,10 +134,7 @@ fn oneof_duplicate_rules() {
 
 	file.with_messages([OneofDuplicateRules::proto_schema()]);
 
-	let package = Package {
-		name: "abc".into(),
-		files: vec![file],
-	};
+	let package = Package::new("abc").with_files([file]);
 
 	assert!(package.check_unique_cel_rules().is_err());
 }
@@ -173,10 +155,7 @@ fn benign_duplicate_rules() {
 
 	file.with_messages([BenignDuplicateRules::proto_schema()]);
 
-	let package = Package {
-		name: "abc".into(),
-		files: vec![file],
-	};
+	let package = Package::new("abc").with_files([file]);
 
 	assert!(package.check_unique_cel_rules().is_ok());
 }

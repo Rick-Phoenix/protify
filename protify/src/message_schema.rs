@@ -71,10 +71,11 @@ pub trait ProtoMessage: Default + MessagePath {
 }
 
 /// A struct that represents a protobuf message.
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Builder)]
 #[cfg_attr(feature = "std", derive(Template))]
 #[cfg_attr(feature = "std", template(path = "message.proto.j2"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct MessageSchema {
 	pub short_name: FixedStr,
 	/// The short name of the enum, preceded by the name of the parent messages, if there are any.
@@ -124,14 +125,14 @@ impl MessageSchema {
 
 	/// Adds one or more nested [`MessageSchema`]s to this message.
 	#[must_use]
-	pub fn with_nested_messages(mut self, messages: impl IntoIterator<Item = Self>) -> Self {
+	pub fn with_nested_messages(mut self, messages: Vec<Self>) -> Self {
 		self.messages.extend(messages);
 		self
 	}
 
 	/// Adds one or more nested [`EnumSchema`]s to this message.
 	#[must_use]
-	pub fn with_nested_enums(mut self, enums: impl IntoIterator<Item = EnumSchema>) -> Self {
+	pub fn with_nested_enums(mut self, enums: Vec<EnumSchema>) -> Self {
 		self.enums.extend(enums);
 		self
 	}

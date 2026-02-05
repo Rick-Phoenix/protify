@@ -1,8 +1,9 @@
 use crate::*;
 
 /// A struct representing a protobuf Extension.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Builder)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct Extension {
 	pub target: ExtensionTarget,
 	pub fields: Vec<Field>,

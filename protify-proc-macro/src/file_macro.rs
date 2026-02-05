@@ -32,13 +32,13 @@ impl ToTokens for MessageExpr {
 		{
 			if !nested_messages.is_empty() {
 				tokens.extend(quote! {
-				  .with_nested_messages([ #(#nested_messages),* ])
+				  .with_nested_messages(::protify::vec![ #(#nested_messages),* ])
 				});
 			}
 
 			if !nested_enums.is_empty() {
 				tokens.extend(quote! {
-				  .with_nested_enums([ #(<#nested_enums as ::protify::ProtoEnumSchema>::proto_schema()),* ])
+				  .with_nested_enums(::protify::vec![ #(<#nested_enums as ::protify::ProtoEnumSchema>::proto_schema()),* ])
 				});
 			}
 		}
