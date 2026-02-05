@@ -13,7 +13,7 @@ pub struct Field {
 }
 
 impl Field {
-	/// Collects all the options of the field, including those created by the schema representations of validators.
+	/// Collects all the options of the field, including those created by the [`ValidatorSchema`]s.
 	pub fn options_with_validators(&self) -> impl Iterator<Item = &options::ProtoOption> {
 		self.options
 			.iter()

@@ -9,11 +9,10 @@ message {{+ short_name +}} {
   {{+ numbers ~}}
 {%~ endif %}
 
-  {% let all_options = options_with_validators() %}
-  {%~ for option in all_options.iter() +%}
+  {%~ for option in options_with_validators() +%}
   option {{+ option.name +}} = {{+ option.value | indent(2) }};
   {% endfor +%}
-  {% call macros::empty_line_if(!all_options.is_empty()) %}{% endcall %}
+  {% call macros::empty_line_if(has_options()) %}{% endcall %}
 
 {% for enum_ in enums %}
 {%+ filter indent(2) ~%}
@@ -31,13 +30,12 @@ message {{+ short_name +}} {
 {% match entry %}
   {%~ when MessageEntry::Oneof(oneof) +%}
   oneof {{+ oneof.name +}} {
-    {% let all_options = oneof.options_with_validators() %}
     {% filter indent(4) %}
-    {% for option in all_options.iter() ~%}
+    {% for option in oneof.options_with_validators() ~%}
     option {{+ option.name +}} = {{+ option.value }};
     {% endfor %}
     {% endfilter ~%}
-    {% call macros::empty_line_if(!all_options.is_empty()) %}{% endcall %}
+    {% call macros::empty_line_if(oneof.has_options()) %}{% endcall %}
     {%~ for field in oneof.fields ~%}
     {%+ call macros::render_field(field, package, 4) %}{% endcall %}
     {% endfor +%}

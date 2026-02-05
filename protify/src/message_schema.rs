@@ -99,14 +99,11 @@ impl MessageSchema {
 		self.render()
 	}
 
-	/// Collects all the options of the field, including those created by the schema representations of validators.
-	#[must_use]
-	pub fn options_with_validators(&self) -> Vec<ProtoOption> {
+	/// Iterates all the options of the field, including those created by the [`ValidatorSchema`]s..
+	pub fn options_with_validators(&self) -> impl Iterator<Item = &options::ProtoOption> {
 		self.options
-			.clone()
-			.into_iter()
-			.chain(self.validators.iter().map(|v| v.schema.clone()))
-			.collect()
+			.iter()
+			.chain(self.validators.iter().map(|v| &v.schema))
 	}
 
 	/// Returns an iterator that flattens the fields of the message and those contained in its oneofs.
@@ -198,6 +195,11 @@ impl MessageEntry {
 }
 
 impl MessageSchema {
+	#[must_use]
+	pub(crate) const fn has_options(&self) -> bool {
+		!self.options.is_empty() || !self.validators.is_empty()
+	}
+
 	pub(crate) fn render_reserved_names(&self) -> Option<String> {
 		render_reserved_names(&self.reserved_names)
 	}

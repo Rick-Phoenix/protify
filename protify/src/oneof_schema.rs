@@ -130,14 +130,16 @@ pub struct Oneof {
 }
 
 impl Oneof {
-	/// Collects all the options of the oneof, including those created by the schema representations of validators.
 	#[must_use]
-	pub fn options_with_validators(&self) -> Vec<ProtoOption> {
+	pub(crate) const fn has_options(&self) -> bool {
+		!self.options.is_empty() || !self.validators.is_empty()
+	}
+
+	/// Iterates all the options of the oneof, including those created by the [`ValidatorSchema`]s.
+	pub fn options_with_validators(&self) -> impl Iterator<Item = &options::ProtoOption> {
 		self.options
-			.clone()
-			.into_iter()
-			.chain(self.validators.iter().map(|v| v.schema.clone()))
-			.collect()
+			.iter()
+			.chain(self.validators.iter().map(|v| &v.schema))
 	}
 
 	/// Mutates the name of the oneof.
