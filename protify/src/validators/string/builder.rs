@@ -216,7 +216,7 @@ impl<S: State> StringValidatorBuilder<S> {
 	where
 		S::Pattern: IsUnset,
 	{
-		self.data.pattern = Some(val.into_regex());
+		self.data.pattern = Some(val.__into_regex());
 
 		StringValidatorBuilder {
 			_state: PhantomData,
@@ -374,7 +374,7 @@ impl<S: State> StringValidatorBuilder<S> {
 		r#"
      `hostname` specifies that the field value must be a valid hostname, for
      example "foo.example.com".
-    
+
      A valid hostname follows the rules below:
      - The name consists of one or more labels, separated by a dot (".").
      - Each label can be 1 to 63 alphanumeric characters.
@@ -392,7 +392,7 @@ impl<S: State> StringValidatorBuilder<S> {
     IPv4 addresses are expected in the dotted decimal format—for example, "192.168.5.21".
     IPv6 addresses are expected in their text representation—for example, "::1",
     or "2001:0DB8:ABCD:0012::0".
-    
+
     Both formats are well-defined in the internet standard [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
     Zone identifiers for IPv6 addresses (for example, "fe80::a%en1") are supported.
   "#
@@ -416,7 +416,7 @@ impl<S: State> StringValidatorBuilder<S> {
 		r#"
     `uri` specifies that the field value must be a valid URI, for example
     "https://example.com/foo/bar?baz=quux#frag".
-    
+
     URI is defined in the internet standard [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
     Zone Identifiers in IPv6 address literals are supported ([RFC 6874](https://datatracker.ietf.org/doc/html/rfc6874)).
   "#
@@ -526,12 +526,12 @@ impl<S: State> StringValidatorBuilder<S> {
 		r#"
     `host_and_port` specifies that the field value must be valid host/port
     pair—for example, "example.com:8080".
-    
+
     The host can be one of:
     - An IPv4 address in dotted decimal format—for example, "192.168.5.21".
     - An IPv6 address enclosed in square brackets—for example, "[2001:0DB8:ABCD:0012::F1]".
     - A hostname—for example, "example.com".
-    
+
     The port is separated by a colon. It must be non-empty, with a decimal number
     in the range of 0-65535, inclusive.
   "#
@@ -540,9 +540,9 @@ impl<S: State> StringValidatorBuilder<S> {
 	well_known_impl!(
 		HeaderNameLoose,
 		r"
-    Specifies that the value must be a valid HTTP header name. 
+    Specifies that the value must be a valid HTTP header name.
 
-    All characters are considered valid except for `\r\n\0`. 
+    All characters are considered valid except for `\r\n\0`.
     Use `header_name_strict` for stricter enforcement."
 	);
 	#[cfg(feature = "regex")]
@@ -554,9 +554,9 @@ impl<S: State> StringValidatorBuilder<S> {
 	well_known_impl!(
 		HeaderValueLoose,
 		r"
-    Specifies that the value must be a valid HTTP header value. 
+    Specifies that the value must be a valid HTTP header value.
 
-    All characters are considered valid except for `\r\n\0`. 
+    All characters are considered valid except for `\r\n\0`.
     Use `header_value_strict` for stricter enforcement."
 	);
 	#[cfg(feature = "regex")]

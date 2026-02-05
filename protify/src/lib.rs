@@ -192,33 +192,34 @@ where
 ///
 /// It retains `& 'static` when possible, otherwise takes ownership of the value.
 pub trait IntoBytes {
-	fn into_bytes(self) -> Bytes;
+	#[doc(hidden)]
+	fn __into_bytes(self) -> Bytes;
 }
 
 impl<const N: usize> IntoBytes for &'static [u8; N] {
 	#[inline]
-	fn into_bytes(self) -> Bytes {
+	fn __into_bytes(self) -> Bytes {
 		Bytes::from_static(self)
 	}
 }
 
 impl IntoBytes for &'static [u8] {
 	#[inline]
-	fn into_bytes(self) -> Bytes {
+	fn __into_bytes(self) -> Bytes {
 		Bytes::from_static(self)
 	}
 }
 
 impl IntoBytes for Bytes {
 	#[inline]
-	fn into_bytes(self) -> Bytes {
+	fn __into_bytes(self) -> Bytes {
 		self
 	}
 }
 
 impl IntoBytes for &Bytes {
 	#[inline]
-	fn into_bytes(self) -> Bytes {
+	fn __into_bytes(self) -> Bytes {
 		self.clone()
 	}
 }
@@ -231,56 +232,58 @@ mod regex_impls {
 	use regex::Regex;
 	use regex::bytes::Regex as BytesRegex;
 
-	/// Utility trait to create a [`Regex`].
+	/// Utility trait to create a [`Regex`](regex::Regex).
 	pub trait IntoRegex {
-		fn into_regex(self) -> Regex;
+		#[doc(hidden)]
+		fn __into_regex(self) -> Regex;
 	}
 
 	impl IntoRegex for &str {
 		#[track_caller]
 		#[inline]
-		fn into_regex(self) -> Regex {
+		fn __into_regex(self) -> Regex {
 			Regex::new(self).unwrap()
 		}
 	}
 
 	impl IntoRegex for Regex {
 		#[inline]
-		fn into_regex(self) -> Regex {
+		fn __into_regex(self) -> Regex {
 			self
 		}
 	}
 
 	impl IntoRegex for &Regex {
 		#[inline]
-		fn into_regex(self) -> Regex {
+		fn __into_regex(self) -> Regex {
 			self.clone()
 		}
 	}
 
-	/// Utility trait to create a [`Regex`](BytesRegex).
+	/// Utility trait to create a [`Regex`](regex::bytes::Regex).
 	pub trait IntoBytesRegex {
-		fn into_regex(self) -> BytesRegex;
+		#[doc(hidden)]
+		fn __into_regex(self) -> BytesRegex;
 	}
 
 	impl IntoBytesRegex for &str {
 		#[track_caller]
 		#[inline]
-		fn into_regex(self) -> BytesRegex {
+		fn __into_regex(self) -> BytesRegex {
 			BytesRegex::new(self).unwrap()
 		}
 	}
 
 	impl IntoBytesRegex for BytesRegex {
 		#[inline]
-		fn into_regex(self) -> BytesRegex {
+		fn __into_regex(self) -> BytesRegex {
 			self
 		}
 	}
 
 	impl IntoBytesRegex for &BytesRegex {
 		#[inline]
-		fn into_regex(self) -> BytesRegex {
+		fn __into_regex(self) -> BytesRegex {
 			self.clone()
 		}
 	}

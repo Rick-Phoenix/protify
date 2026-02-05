@@ -60,7 +60,7 @@ impl OptionValue {
 
 	/// Creates a new bytes option value.
 	pub fn new_bytes(bytes: impl IntoBytes) -> Self {
-		Self::Bytes(bytes.into_bytes())
+		Self::Bytes(bytes.__into_bytes())
 	}
 }
 

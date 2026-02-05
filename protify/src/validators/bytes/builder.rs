@@ -201,7 +201,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 	where
 		S::Pattern: IsUnset,
 	{
-		self.data.pattern = Some(val.into_regex());
+		self.data.pattern = Some(val.__into_regex());
 
 		BytesValidatorBuilder {
 			_state: PhantomData,
@@ -215,7 +215,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 	where
 		S::Prefix: IsUnset,
 	{
-		self.data.prefix = Some(val.into_bytes());
+		self.data.prefix = Some(val.__into_bytes());
 
 		BytesValidatorBuilder {
 			_state: PhantomData,
@@ -229,7 +229,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 	where
 		S::Suffix: IsUnset,
 	{
-		self.data.suffix = Some(val.into_bytes());
+		self.data.suffix = Some(val.__into_bytes());
 
 		BytesValidatorBuilder {
 			_state: PhantomData,
@@ -243,7 +243,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 	where
 		S::Contains: IsUnset,
 	{
-		self.data.contains = Some(val.into_bytes());
+		self.data.contains = Some(val.__into_bytes());
 
 		BytesValidatorBuilder {
 			_state: PhantomData,
@@ -286,7 +286,7 @@ impl<S: State> BytesValidatorBuilder<S> {
 	where
 		S::Const: IsUnset,
 	{
-		self.data.const_ = Some(val.into_bytes());
+		self.data.const_ = Some(val.__into_bytes());
 
 		BytesValidatorBuilder {
 			_state: PhantomData,

@@ -56,7 +56,6 @@ pub(crate) struct Sealed;
 
 /// A sealed trait that defines the kind of protobuf map key that a rust type maps to.
 pub trait AsProtoMapKey {
-	#[doc(hidden)]
 	fn as_proto_map_key() -> ProtoMapKey;
 
 	#[doc(hidden)]
