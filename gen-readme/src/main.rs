@@ -55,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 [![Sponsor](https://img.shields.io/badge/GitHub%20Sponsors-30363D?&logo=GitHub-Sponsors&logoColor=EA4AAA)](https://github.com/sponsors/Rick-Phoenix)
 
+<a href="https://docs.rs/protify/latest/protify/index.html">Docs</a> &emsp; <a href="https://docs.rs/protify/latest/protify/guide/index.html">Guide</a>
 </div>
 </div>
 

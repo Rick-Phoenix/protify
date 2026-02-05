@@ -1,4 +1,4 @@
-# Schema Features
+# From Rust To Proto
 
 Each element of a protobuf file can be defined with a proc or attribute macro. Options for each element can be composed and assigned programmatically.
 

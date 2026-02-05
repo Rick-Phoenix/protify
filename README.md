@@ -10,16 +10,23 @@
 
 [![Sponsor](https://img.shields.io/badge/GitHub%20Sponsors-30363D?&logo=GitHub-Sponsors&logoColor=EA4AAA)](https://github.com/sponsors/Rick-Phoenix)
 
+<a href="https://docs.rs/protify/latest/protify/index.html">Docs</a> &emsp; <a href="https://docs.rs/protify/latest/protify/guide/index.html">Guide</a>
 </div>
 </div>
 
-Protify is a library that aims to vastly simplify working with protobuf in a rust project. It offers a rust-first approach in defining protobuf models, so that every element in a protobuf package (messages, enums, oneofs, services, extensions, files) can be fully defined in rust code, and then the respective proto files can be generated from it as a compilation artifact, rather than it being the other way around.
+Protify is a Rust-first framework to generate protobuf packages from rust code, as well as the validation logic for the elements contained in them.
 
- Whereas working with protobuf can often feel like an "alien" experience in rust, as we have to interact with structs and enums that are locked away in an included file outside of our reach and control, this crate aims to provide an experience that feels almost as simple and native as using `serde`.
+ Working with protobuf can often feel like an "alien" experience, where the models that we work with are defined in another language and require a separate build step just to be converted to rust code, only to then be locked away in a generated file outside of our immediate reach that is hard to interact with. In comparison, working with `serde` is just as easy as using a couple of attributes.
+
+ This library aims to change that. It flips this logic around, so that all the models can be defined in rust, and the protobuf files that describe the contracts are automatically generated from them.
+
+ It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
 
  >ℹ️ **NOTE**: This readme is generated from the rust documentation, so most of the links will not show up in Github. Read this in the docs.rs page to ensure that links work correctly.
 
-# Schema Features
+ You can visit the [guide](crate::guide) to learn more about each feature.
+
+# From Rust To Proto
 
 Each element of a protobuf file can be defined with a proc or attribute macro. Options for each element can be composed and assigned programmatically.
 
@@ -95,7 +102,7 @@ pub enum MyEnum {
 
  For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
 
-# Proxies
+# Proxies As A Translation Layer
 
 Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix (i.e. MyMsg -> MyMsgProto).
 
@@ -190,7 +197,7 @@ fn main() {
 ```
 
 
-# Database Mapping
+# Interacting With Databases
 
 An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the prost-build helper, which can be unergonomic and brittle.
 
@@ -313,7 +320,7 @@ fn main() {
 ```
 
 
-# Validators
+# Validating Content
 
 Whenever models or API contracts are defined and used, the need for validation follows close behind.
 

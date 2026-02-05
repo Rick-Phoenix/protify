@@ -1,4 +1,4 @@
-# Proxies
+# Proxies As A Translation Layer
 
 Messages and oneofs can be proxied. Doing so will generate a new struct/enum with the same name, followed by a `Proto` suffix (i.e. MyMsg -> MyMsgProto).
 

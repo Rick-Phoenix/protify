@@ -1,4 +1,4 @@
-# Validators
+# Validating Content
 
 Whenever models or API contracts are defined and used, the need for validation follows close behind.
 
