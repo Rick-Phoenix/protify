@@ -45,13 +45,10 @@ fn custom_int_validator(ctx: &mut ValidationCtx, val: Option<&i32>) -> Validatio
 	if *val == 1 {
 		Ok(IsValid::Yes)
 	} else {
-		ctx.violations.push(ViolationCtx {
-			data: test_violation(),
-			meta: ViolationMeta {
-				field_kind: FieldKind::default(),
-				kind: ViolationKind::Cel,
-			},
-		});
+		ctx.violations.push(ViolationCtx::new(
+			ViolationMeta::new(ViolationKind::Cel),
+			test_violation(),
+		));
 
 		Ok(IsValid::No)
 	}
@@ -120,13 +117,10 @@ fn custom_oneof_validator(
 	match val.unwrap() {
 		CustomValidatorOneof::CustomFn(1) => Ok(IsValid::Yes),
 		_ => {
-			ctx.violations.push(ViolationCtx {
-				data: test_violation(),
-				meta: ViolationMeta {
-					field_kind: FieldKind::default(),
-					kind: ViolationKind::Cel,
-				},
-			});
+			ctx.violations.push(ViolationCtx::new(
+				ViolationMeta::new(ViolationKind::Cel),
+				test_violation(),
+			));
 
 			Ok(IsValid::No)
 		}
@@ -152,13 +146,10 @@ fn custom_oneof_validator2(
 	match val.unwrap() {
 		MultipleValidatorsOneof::A(1) => Ok(IsValid::Yes),
 		_ => {
-			ctx.violations.push(ViolationCtx {
-				data: test_violation(),
-				meta: ViolationMeta {
-					field_kind: FieldKind::default(),
-					kind: ViolationKind::Cel,
-				},
-			});
+			ctx.violations.push(ViolationCtx::new(
+				ViolationMeta::new(ViolationKind::Cel),
+				test_violation(),
+			));
 
 			Ok(IsValid::No)
 		}
@@ -235,13 +226,10 @@ fn custom_top_level_validator(
 	if val.id == 1 {
 		Ok(IsValid::Yes)
 	} else {
-		ctx.violations.push(ViolationCtx {
-			data: test_violation(),
-			meta: ViolationMeta {
-				field_kind: FieldKind::default(),
-				kind: ViolationKind::Cel,
-			},
-		});
+		ctx.violations.push(ViolationCtx::new(
+			ViolationMeta::new(ViolationKind::Cel),
+			test_violation(),
+		));
 
 		Ok(IsValid::No)
 	}

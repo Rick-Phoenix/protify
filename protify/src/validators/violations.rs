@@ -9,9 +9,30 @@ use super::*;
 
 /// Offers information about the subject of the violation: the violation kind (string, int32, bytes, etc) and the field kind (map key, map value, etc).
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub struct ViolationMeta {
 	pub kind: ViolationKind,
 	pub field_kind: FieldKind,
+}
+
+impl ViolationMeta {
+	/// Creates a new instance, setting `field_kind` to [`FieldKind::Normal`].
+	#[inline]
+	#[must_use]
+	pub const fn new(kind: ViolationKind) -> Self {
+		Self {
+			kind,
+			field_kind: FieldKind::Normal,
+		}
+	}
+
+	/// Changes the [`FieldKind`] of this instance.
+	#[inline]
+	#[must_use]
+	pub const fn with_field_kind(mut self, field_kind: FieldKind) -> Self {
+		self.field_kind = field_kind;
+		self
+	}
 }
 
 /// Holds the rich context concerning the validation errors that occur during validation.
@@ -27,10 +48,12 @@ pub struct ValidationErrors {
 
 #[cfg(feature = "tonic")]
 impl From<ValidationErrors> for tonic::Status {
+	#[inline(never)]
+	#[cold]
 	fn from(value: ValidationErrors) -> Self {
 		use ::prost::Message;
 
-		let status_inner = value.into_status();
+		let status_inner: Status = value.into();
 
 		Self::with_details(
 			tonic::Code::InvalidArgument,
@@ -44,13 +67,38 @@ impl From<ValidationErrors> for tonic::Status {
 ///
 /// It contains the [`Violation`] data, which is used for protobuf serialization, as well as the [`ViolationMeta`], which contains the extra information about a the violation's kind and field kind.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ViolationCtx {
 	pub meta: ViolationMeta,
 	pub data: Violation,
 }
 
+impl From<ViolationCtx> for Violation {
+	#[inline]
+	fn from(value: ViolationCtx) -> Self {
+		value.data
+	}
+}
+
+impl ViolationCtx {
+	/// Creates a new instance.
+	#[inline]
+	#[must_use]
+	pub const fn new(meta: ViolationMeta, data: Violation) -> Self {
+		Self { meta, data }
+	}
+
+	/// Converts into a [`Violation`].
+	#[must_use]
+	#[inline]
+	pub fn into_violation(self) -> Violation {
+		self.into()
+	}
+}
+
 /// Immutable view for [`ViolationCtx`].
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ViolationCtxRef<'a> {
 	pub meta: ViolationMeta,
 	pub data: &'a Violation,
@@ -59,6 +107,8 @@ pub struct ViolationCtxRef<'a> {
 impl ViolationCtxRef<'_> {
 	/// Transforms this view into an owned instance of [`ViolationCtx`].
 	#[must_use]
+	#[inline(never)]
+	#[cold]
 	pub fn into_owned(self) -> ViolationCtx {
 		ViolationCtx {
 			meta: self.meta,
@@ -69,6 +119,7 @@ impl ViolationCtxRef<'_> {
 
 /// Mutable view for [`ViolationCtx`].
 #[derive(Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ViolationCtxMut<'a> {
 	pub meta: &'a mut ViolationMeta,
 	pub data: &'a mut Violation,
@@ -77,6 +128,8 @@ pub struct ViolationCtxMut<'a> {
 impl ViolationCtxMut<'_> {
 	/// Transforms this view into an owned instance of [`ViolationCtx`].
 	#[must_use]
+	#[inline(never)]
+	#[cold]
 	pub fn into_owned(&self) -> ViolationCtx {
 		ViolationCtx {
 			meta: *self.meta,
@@ -172,15 +225,6 @@ impl ExactSizeIterator for IterMut<'_> {
 	}
 }
 
-impl ViolationCtx {
-	/// Converts into a [`Violation`].
-	#[must_use]
-	#[inline]
-	pub fn into_violation(self) -> Violation {
-		self.into()
-	}
-}
-
 impl From<ValidationErrors> for Violations {
 	#[inline]
 	fn from(value: ValidationErrors) -> Self {
@@ -198,15 +242,10 @@ impl From<ValidationErrors> for Vec<Violation> {
 }
 
 impl From<ValidationErrors> for Status {
+	#[inline]
+	#[cold]
 	fn from(value: ValidationErrors) -> Self {
 		value.into_violations().into()
-	}
-}
-
-impl From<ViolationCtx> for Violation {
-	#[inline]
-	fn from(value: ViolationCtx) -> Self {
-		value.data
 	}
 }
 
