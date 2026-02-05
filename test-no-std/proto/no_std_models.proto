@@ -3,7 +3,6 @@ syntax = "proto3";
 package no_std_models;
 
 import "buf/validate/validate.proto";
-import "google/protobuf/descriptor.proto";
 
 
 enum TestEnum {

@@ -14,17 +14,15 @@
 </div>
 </div>
 
-Protify is a Rust-first framework to generate protobuf packages from rust code, as well as the validation logic for the elements contained in them.
+Protify is a Rust-first framework for protobuf that generates packages from rust code, with validation included.
 
- Working with protobuf can often feel like an "alien" experience, where the models that we work with are defined in another language and require a separate build step just to be converted to rust code, only to then be locked away in a generated file outside of our immediate reach that is hard to interact with. In comparison, working with `serde` is just as easy as using a couple of attributes.
-
- This library aims to change that. It flips this logic around, so that all the models can be defined in rust, and the protobuf files that describe the contracts are automatically generated from them.
+ This library aims to make working with protobuf feel (almost) as easy as using `serde`. It flips the logic of the typical proto workflow around, so that all the elements of a package can be defined in rust with a rich set of macros and attributes, and the resulting contracts can be generated from the rust code, rather than the other way around.
 
  It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
 
  >ℹ️ **NOTE**: This readme is generated from the rust documentation, so most of the links will not show up in Github. Read this in the docs.rs page to ensure that links work correctly.
 
- You can visit the [guide](crate::guide) to learn more about each feature.
+ You can visit the [package setup](crate::guide::package_setup) section of the [guide](crate::guide) to learn more about how to set up protify.
 
 # From Rust To Proto
 
@@ -60,6 +58,7 @@ enum MyService {
 	Service1 { request: MyMsg, response: MyMsg },
 }
 
+// We can directly plug this into a tonic handler!
 #[proto_message]
 #[proto(reserved_numbers(22, 23..30))]
 #[proto(reserved_names("name1", "name2"))]
@@ -108,12 +107,11 @@ Messages and oneofs can be proxied. Doing so will generate a new struct/enum wit
 
 Proxied messages/oneofs unlock the following features:
 
-- A field/variant can be missing from the proto struct, but present in the proxy
+- A field/variant can be missing from the proto struct, but present in the proxy (akin to the `skip` attribute with `serde`)
 - Enums can be represented with their actual rust enum type, rather than being pure integers
 - Oneofs don't need to be wrapped in `Option`
 - Messages don't need to be wrapped in `Option`
-- We can use types that are not supported by prost
-- We can map an incoming type from another type via custom conversions
+- We can use types that are not supported by prost and map them with custom conversions
 
 By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
 
@@ -199,9 +197,11 @@ fn main() {
 
 # Interacting With Databases
 
-An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the prost-build helper, which can be unergonomic and brittle.
+An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the `prost-build` helper, which can be unergonomic and brittle.
 
 And with proxies, the interactions with a database becomes even easier, because we can have the proto-facing struct with a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
+
+You can take a look at the [test-server](https://github.com/Rick-Phoenix/protify/tree/main/test-server) crate in the repo for an example of database interaction in a `tonic` handler.
 
 ```rust
 use diesel::prelude::*;
@@ -328,9 +328,9 @@ Because of this, `protify` ships with a validation framework that integrates val
 
 The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they can also produce a schema representation, so that their settings can be represented as options in a protobuf file, so that they can be ported between different applications.
 
-All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to customized protobuf options.
+All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to other custom options.
 
-Because every validator is type-safe and comes with an ergonomic builder methods to be built with, defining validators becomes a vastly superior experience than manual composition in protobuf files, where the process is repetitive, rigid, and lacking the most ergonomic features of modern programming such as type safety and LSP integration, as well as programmatic composition.
+Because every validator is type-safe and comes with an ergonomic builder methods to be built with, defining validators becomes a vastly superior experience than manual composition in protobuf files, where the process is repetitive, rigid, and lacking essential features of modern programming such as type safety and LSP integration, as well as programmatic composition.
 
 Validators can be assigned to oneofs/messages as a whole or to individual fields/variants to be incorporated in thier validation logic.
 

@@ -4,7 +4,6 @@ package test_schemas.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/any.proto";
-import "google/protobuf/descriptor.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";

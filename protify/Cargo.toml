@@ -1,7 +1,7 @@
 [package]
 name = "protify"
 version = "0.1.0"
-description = "A Rust-first framework to generate protobuf packages from rust code, with validation included"
+description = "A Rust-first protobuf framework to generate packages from rust code, with validation included"
 edition.workspace = true
 license.workspace = true
 authors.workspace = true

@@ -32,6 +32,7 @@ enum MyService {
 	Service1 { request: MyMsg, response: MyMsg },
 }
 
+// We can directly plug this into a tonic handler!
 #[proto_message]
 #[proto(reserved_numbers(22, 23..30))]
 #[proto(reserved_names("name1", "name2"))]

@@ -4,12 +4,11 @@ Messages and oneofs can be proxied. Doing so will generate a new struct/enum wit
 
 Proxied messages/oneofs unlock the following features:
 
-- A field/variant can be missing from the proto struct, but present in the proxy
+- A field/variant can be missing from the proto struct, but present in the proxy (akin to the `skip` attribute with `serde`)
 - Enums can be represented with their actual rust enum type, rather than being pure integers
 - Oneofs don't need to be wrapped in `Option`
 - Messages don't need to be wrapped in `Option`
-- We can use types that are not supported by prost
-- We can map an incoming type from another type via custom conversions
+- We can use types that are not supported by prost and map them with custom conversions
 
 By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
 

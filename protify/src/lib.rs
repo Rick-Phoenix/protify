@@ -6,17 +6,15 @@
 #![doc(
 	html_logo_url = "https://github.com/Rick-Phoenix/protify/blob/main/assets/doc_icon.png?raw=true"
 )]
-//! Protify is a Rust-first framework to generate protobuf packages from rust code, as well as the validation logic for the elements contained in them.
+//! Protify is a Rust-first framework for protobuf that generates packages from rust code, with validation included.
 //!
-//! Working with protobuf can often feel like an "alien" experience, where the models that we work with are defined in another language and require a separate build step just to be converted to rust code, only to then be locked away in a generated file outside of our immediate reach that is hard to interact with. In comparison, working with `serde` is just as easy as using a couple of attributes.
-//!
-//! This library aims to change that. It flips this logic around, so that all the models can be defined in rust, and the protobuf files that describe the contracts are automatically generated from them.
+//! This library aims to make working with protobuf feel (almost) as easy as using `serde`. It flips the logic of the typical proto workflow around, so that all the elements of a package can be defined in rust with a rich set of macros and attributes, and the resulting contracts can be generated from the rust code, rather than the other way around.
 //!
 //! It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
 //!
 //! >ℹ️ **NOTE**: This readme is generated from the rust documentation, so most of the links will not show up in Github. Read this in the docs.rs page to ensure that links work correctly.
 //!
-//! You can visit the [guide](crate::guide) to learn more about each feature.
+//! You can visit the [package setup](crate::guide::package_setup) section of the [guide](crate::guide) to learn more about how to set up protify.
 //!
 #![doc = include_str!("./guide/schema_features.md")]
 //!
@@ -24,7 +22,7 @@
 //!
 #![doc = include_str!("./guide/proxies.md")]
 //!
-#![doc = include_str!("./guide/database_mapping.md")]
+#![doc = include_str!("./guide/database_usage.md")]
 //!
 #![doc = include_str!("./guide/validators.md")]
 //!

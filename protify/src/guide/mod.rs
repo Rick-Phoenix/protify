@@ -14,7 +14,7 @@
 //!	- [Consistency checks](crate::guide::correctness)
 //!	- [CEL validation](crate::guide::cel_validation)
 //!	## Usage Examples
-//!	- [Working with databases](crate::guide::database_mapping)
+//!	- [Working with databases](crate::guide::database_usage)
 //!	- [Usage with tonic](crate::guide::usage_with_tonic)
 //!	## Things To Know
 //!	- [Prioritizing code elimination](crate::guide::code_elimination)
@@ -56,4 +56,4 @@ doc_mod!(roadmap);
 doc_mod!(limitations);
 doc_mod!(tips);
 doc_mod!(managing_files);
-doc_mod!(database_mapping);
+doc_mod!(database_usage);

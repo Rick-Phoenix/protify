@@ -1,8 +1,10 @@
 # Interacting With Databases
 
-An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the prost-build helper, which can be unergonomic and brittle.
+An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the `prost-build` helper, which can be unergonomic and brittle.
 
 And with proxies, the interactions with a database becomes even easier, because we can have the proto-facing struct with a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
+
+You can take a look at the [test-server](https://github.com/Rick-Phoenix/protify/tree/main/test-server) crate in the repo for an example of database interaction in a `tonic` handler.
 
 ```rust
 use diesel::prelude::*;

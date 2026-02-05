@@ -6,9 +6,9 @@ Because of this, `protify` ships with a validation framework that integrates val
 
 The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they can also produce a schema representation, so that their settings can be represented as options in a protobuf file, so that they can be ported between different applications.
 
-All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to customized protobuf options.
+All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to other custom options.
 
-Because every validator is type-safe and comes with an ergonomic builder methods to be built with, defining validators becomes a vastly superior experience than manual composition in protobuf files, where the process is repetitive, rigid, and lacking the most ergonomic features of modern programming such as type safety and LSP integration, as well as programmatic composition.
+Because every validator is type-safe and comes with an ergonomic builder methods to be built with, defining validators becomes a vastly superior experience than manual composition in protobuf files, where the process is repetitive, rigid, and lacking essential features of modern programming such as type safety and LSP integration, as well as programmatic composition.
 
 Validators can be assigned to oneofs/messages as a whole or to individual fields/variants to be incorporated in thier validation logic.
 
