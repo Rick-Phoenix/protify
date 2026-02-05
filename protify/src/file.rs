@@ -39,6 +39,7 @@ impl ProtoFile {
 
 	/// Creates a new instance.
 	#[must_use]
+	#[inline]
 	pub fn new(name: &'static str, package: &'static str) -> Self {
 		Self {
 			name: name.into(),
@@ -54,12 +55,14 @@ impl ProtoFile {
 	}
 
 	/// Adds the specified [`ProtoOption`]s to this file.
+	#[inline]
 	pub fn with_options(&mut self, options: impl IntoIterator<Item = ProtoOption>) -> &mut Self {
 		self.options.extend(options);
 		self
 	}
 
 	/// Adds the specified imports to this file.
+	#[inline]
 	pub fn with_imports(
 		&mut self,
 		imports: impl IntoIterator<Item = impl Into<FixedStr>>,
@@ -70,12 +73,14 @@ impl ProtoFile {
 	}
 
 	/// Mutates the [`Edition`] of this file.
+	#[inline]
 	pub const fn with_edition(&mut self, edition: Edition) -> &mut Self {
 		self.edition = edition;
 		self
 	}
 
 	/// Adds the given [`MessageSchema`]s to this file.
+	#[inline]
 	pub fn with_messages<I: IntoIterator<Item = MessageSchema>>(
 		&mut self,
 		messages: I,
@@ -91,6 +96,7 @@ impl ProtoFile {
 	}
 
 	/// Adds the given [`EnumSchema`]s to this file.
+	#[inline]
 	pub fn with_enums<I: IntoIterator<Item = EnumSchema>>(&mut self, enums: I) -> &mut Self {
 		for mut enum_ in enums {
 			enum_.file = self.name.clone();
@@ -102,6 +108,7 @@ impl ProtoFile {
 	}
 
 	/// Adds the given [`Service`]s to this file.
+	#[inline]
 	pub fn with_services<I: IntoIterator<Item = Service>>(&mut self, services: I) -> &mut Self {
 		for service in services {
 			for (request, response) in service
@@ -124,6 +131,7 @@ impl ProtoFile {
 	}
 
 	/// Adds the given [`Extension`]s to this file, as well as the import `google/protobuf/descriptor.proto`.
+	#[inline]
 	pub fn with_extensions<I: IntoIterator<Item = Extension>>(
 		&mut self,
 		extensions: I,

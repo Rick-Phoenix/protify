@@ -12,17 +12,17 @@ use super::*;
 /// Generic map trait.
 pub trait Map<K, V> {
 	#[doc(hidden)]
-	fn length(&self) -> usize;
+	fn __length(&self) -> usize;
 
 	#[doc(hidden)]
-	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
+	fn __items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
 	where
 		K: 'a,
 		V: 'a;
 
 	#[cfg(feature = "cel")]
 	#[doc(hidden)]
-	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
+	fn __try_convert_to_cel(self) -> Result<::cel::Value, CelError>
 	where
 		K: IntoCelKey,
 		V: TryIntoCel;
@@ -31,13 +31,13 @@ pub trait Map<K, V> {
 impl<K, V> Map<K, V> for BTreeMap<K, V> {
 	#[inline]
 	#[doc(hidden)]
-	fn length(&self) -> usize {
+	fn __length(&self) -> usize {
 		self.len()
 	}
 
 	#[cfg(feature = "cel")]
 	#[doc(hidden)]
-	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
+	fn __try_convert_to_cel(self) -> Result<::cel::Value, CelError>
 	where
 		K: IntoCelKey,
 		V: TryIntoCel,
@@ -47,7 +47,7 @@ impl<K, V> Map<K, V> for BTreeMap<K, V> {
 
 	#[inline]
 	#[doc(hidden)]
-	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
+	fn __items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
 	where
 		K: 'a,
 		V: 'a,
@@ -62,13 +62,13 @@ where
 {
 	#[inline]
 	#[doc(hidden)]
-	fn length(&self) -> usize {
+	fn __length(&self) -> usize {
 		self.len()
 	}
 
 	#[cfg(feature = "cel")]
 	#[doc(hidden)]
-	fn try_convert_to_cel(self) -> Result<::cel::Value, CelError>
+	fn __try_convert_to_cel(self) -> Result<::cel::Value, CelError>
 	where
 		K: IntoCelKey,
 		V: TryIntoCel,
@@ -78,7 +78,7 @@ where
 
 	#[inline]
 	#[doc(hidden)]
-	fn items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
+	fn __items<'a>(&'a self) -> impl IntoIterator<Item = (&'a K, &'a V)>
 	where
 		K: 'a,
 		V: 'a,
@@ -309,7 +309,7 @@ where
 		let mut errors: Vec<CelError> = Vec::new();
 
 		if !self.cel.is_empty() {
-			match val.try_convert_to_cel() {
+			match val.__try_convert_to_cel() {
 				Ok(val) => {
 					if let Err(e) = test_programs(&self.cel, val) {
 						errors.extend(e)
@@ -413,7 +413,7 @@ where
 		V: AsProtoType,
 	{
 		handle_ignore_always!(&self.ignore);
-		handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.length() == 0));
+		handle_ignore_if_zero_value!(&self.ignore, val.is_none_or(|v| v.__length() == 0));
 
 		let mut is_valid = IsValid::Yes;
 
@@ -432,13 +432,13 @@ where
 			}
 
 			if let Some(min_pairs) = self.min_pairs
-				&& val.length() < min_pairs
+				&& val.__length() < min_pairs
 			{
 				handle_violation!(MinPairs, format!("must contain at least {min_pairs} pairs"));
 			}
 
 			if let Some(max_pairs) = self.max_pairs
-				&& val.length() > max_pairs
+				&& val.__length() > max_pairs
 			{
 				handle_violation!(
 					MaxPairs,
@@ -451,7 +451,7 @@ where
 			let values_validator = self.values.as_ref();
 
 			if keys_validator.is_some() || values_validator.is_some() {
-				for (k, v) in val.items() {
+				for (k, v) in val.__items() {
 					let _ = ctx.field_context.as_mut().map(|fc| {
 						fc.subscript = Some(k.clone().into());
 						fc.map_key_type = Some(K::proto_type().into());
@@ -489,7 +489,7 @@ where
 
 			#[cfg(feature = "cel")]
 			if !self.cel.is_empty() {
-				match val.clone().try_convert_to_cel() {
+				match val.clone().__try_convert_to_cel() {
 					Ok(cel_value) => {
 						let cel_ctx = ProgramsExecutionCtx {
 							programs: &self.cel,

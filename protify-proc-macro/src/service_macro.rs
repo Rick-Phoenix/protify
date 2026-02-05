@@ -97,7 +97,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 				.name(#name.into())
 				.request(<#request as ::protify::MessagePath>::proto_path())
 				.response(<#response as ::protify::MessagePath>::proto_path())
-				.options(::protify::collect_options(#options, #deprecated))
+				.options(::protify::__collect_options(#options, #deprecated))
 				.build()
 		}
 	});
@@ -122,7 +122,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 					.file(__PROTO_FILE.name.into())
 					.package(__PROTO_FILE.package.into())
 					.handlers(::protify::vec![ #(#handlers_tokens),* ])
-					.options(::protify::collect_options(#service_options, #deprecated))
+					.options(::protify::__collect_options(#service_options, #deprecated))
 					.build()
 			}
 	  }

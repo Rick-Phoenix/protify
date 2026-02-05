@@ -5,7 +5,7 @@ fn process_custom_expression(expr: &PathOrClosure, base_ident: &TokenStream2) ->
 		PathOrClosure::Path(path) => quote! { #path(#base_ident) },
 		PathOrClosure::Closure(closure) => {
 			quote_spanned! {closure.span()=>
-			  ::protify::apply(#base_ident, #closure)
+			  ::protify::__apply(#base_ident, #closure)
 			}
 		}
 	}

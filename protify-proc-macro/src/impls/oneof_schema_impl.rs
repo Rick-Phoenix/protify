@@ -35,7 +35,7 @@ impl OneofCtx<'_> {
 						.name(stringify!(#enum_ident).into())
 						.fields(vec![ #variants_tokens ])
 						.options(#options_tokens.into_iter().collect())
-						.validators(::protify::collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]))
+						.validators(::protify::__collect_validators([ #(::protify::Validator::<#enum_ident>::schema(&#validators)),* ]))
 						.build()
 				}
 		  }

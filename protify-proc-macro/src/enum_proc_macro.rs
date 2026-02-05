@@ -161,7 +161,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 			quote_spanned! {*span=>
 			  ::protify::EnumVariant::builder()
 						.name(#name.into())
-						.options(::protify::collect_options(#options, #deprecated))
+						.options(::protify::__collect_options(#options, #deprecated))
 						.tag(#tag)
 						.build()
 			}
@@ -356,7 +356,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 					.variants(::protify::vec! [ #variants_tokens ])
 					.reserved_names(::protify::vec![ #(#reserved_names.into()),* ])
 					.reserved_numbers(#reserved_numbers)
-					.options(::protify::collect_options(#enum_options, #deprecated))
+					.options(::protify::__collect_options(#enum_options, #deprecated))
 					.rust_path(::protify::format!("::{}::{}", #module_path, #rust_ident_str).into())
 					.build()
 			}

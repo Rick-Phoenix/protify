@@ -144,6 +144,7 @@ impl Oneof {
 
 	/// Mutates the name of the oneof.
 	#[must_use]
+	#[inline]
 	pub fn with_name(mut self, name: impl Into<FixedStr>) -> Self {
 		self.name = name.into();
 		self
@@ -151,6 +152,7 @@ impl Oneof {
 
 	/// Adds [`ValidatorSchema`]s to this oneof.
 	#[must_use]
+	#[inline]
 	pub fn with_validators<I: IntoIterator<Item = ValidatorSchema>>(
 		mut self,
 		validators: I,
@@ -161,6 +163,7 @@ impl Oneof {
 
 	/// Adds [`ProtoOption`]s to this oneof.
 	#[must_use]
+	#[inline]
 	pub fn with_options<I: IntoIterator<Item = ProtoOption>>(mut self, options: I) -> Self {
 		self.options.extend(options);
 		self

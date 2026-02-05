@@ -31,7 +31,7 @@ impl FieldData {
 					<#path as ::protify::ProtoOneof>::proto_schema()
 						.with_name(#proto_name)
 						.with_options(#options)
-						.with_validators(::protify::filter_validators([ #(#validator_schema_tokens),* ]))
+						.with_validators(::protify::__filter_validators([ #(#validator_schema_tokens),* ]))
 			  )
 			}
 		} else {
@@ -41,9 +41,9 @@ impl FieldData {
 			  ::protify::Field::builder()
 					.name(#proto_name.into())
 					.tag(#tag)
-					.options(::protify::collect_options(#options, #deprecated))
+					.options(::protify::__collect_options(#options, #deprecated))
 					.type_(<#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field())
-					.validators(::protify::collect_validators([ #(#validator_schema_tokens),* ]))
+					.validators(::protify::__collect_validators([ #(#validator_schema_tokens),* ]))
 					.build()
 			}
 		}
@@ -215,11 +215,11 @@ impl MessageCtx<'_> {
 						.package(#package.into())
 						.reserved_names(vec![ #(#reserved_names.into()),* ])
 						.reserved_numbers(#reserved_numbers)
-						.options(::protify::collect_options(#message_options, #deprecated))
+						.options(::protify::__collect_options(#message_options, #deprecated))
 						.messages(vec![])
 						.enums(vec![])
 						.entries(vec![ #entries_tokens ])
-						.validators(::protify::collect_validators([ #(::protify::Validator::<#proto_struct>::schema(&#validators)),* ]))
+						.validators(::protify::__collect_validators([ #(::protify::Validator::<#proto_struct>::schema(&#validators)),* ]))
 						.rust_path(format!("::{}::{}", #module_path, #rust_ident_str).into())
 						.build()
 				}

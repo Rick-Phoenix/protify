@@ -181,7 +181,7 @@ pub use std::sync::LazyLock as Lazy;
 
 #[doc(hidden)]
 #[inline]
-pub fn apply<I, O, F>(input: I, f: F) -> O
+pub fn __apply<I, O, F>(input: I, f: F) -> O
 where
 	F: FnOnce(I) -> O,
 {
@@ -299,10 +299,10 @@ pub trait MaybeSerde {}
 #[cfg(not(feature = "serde"))]
 impl<T> MaybeSerde for T {}
 
-#[inline(never)]
+#[inline]
 #[cold]
 #[doc(hidden)]
-pub fn filter_validators(
+pub fn __filter_validators(
 	validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
 ) -> impl IntoIterator<Item = ValidatorSchema> {
 	validators.into_iter().flatten()
@@ -311,7 +311,7 @@ pub fn filter_validators(
 #[inline(never)]
 #[cold]
 #[doc(hidden)]
-pub fn collect_validators(
+pub fn __collect_validators(
 	validators: impl IntoIterator<Item = Option<ValidatorSchema>>,
 ) -> Vec<ValidatorSchema> {
 	validators.into_iter().flatten().collect()
@@ -333,7 +333,7 @@ pub static DEFAULT_REQUIRED_ONEOF_VALIDATOR: Lazy<OneofValidator> = Lazy::new(||
 #[inline(never)]
 #[cold]
 #[doc(hidden)]
-pub fn collect_options<I>(options: I, deprecated: bool) -> Vec<ProtoOption>
+pub fn __collect_options<I>(options: I, deprecated: bool) -> Vec<ProtoOption>
 where
 	I: IntoIterator<Item = ProtoOption>,
 {
