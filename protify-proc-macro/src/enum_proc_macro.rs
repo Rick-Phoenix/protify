@@ -320,6 +320,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 	  }
 
 	  impl ::protify::ProtoEnum for #enum_ident {
+			#[inline]
 			fn proto_name() -> &'static str {
 				#proto_name_method
 			}
@@ -344,6 +345,8 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 				#from_str_impl
 			}
 
+			#[inline(never)]
+			#[cold]
 			fn proto_schema() -> ::protify::EnumSchema {
 				::protify::EnumSchema::builder()
 					.short_name(#proto_name.into())

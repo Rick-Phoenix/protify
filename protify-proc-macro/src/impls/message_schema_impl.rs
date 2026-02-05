@@ -182,6 +182,7 @@ impl MessageCtx<'_> {
 				const PACKAGE: &str = #package;
 				const SHORT_NAME: &str = #proto_name;
 
+				#[inline]
 				fn type_url() -> &'static str {
 					static URL: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
 						format!("/{}", <#proto_struct as ::protify::ProtoMessage>::full_name())
@@ -190,6 +191,7 @@ impl MessageCtx<'_> {
 					&*URL
 				}
 
+				#[inline]
 				fn full_name() -> &'static str {
 					static NAME: ::protify::Lazy<String> = ::protify::Lazy::new(|| {
 						format!("{}.{}", <#proto_struct as ::protify::ProtoMessage>::PACKAGE, <#proto_struct as ::protify::ProtoMessage>::proto_name())
@@ -198,10 +200,13 @@ impl MessageCtx<'_> {
 					&*NAME
 				}
 
+				#[inline]
 				fn proto_name() -> &'static str {
 					#name_method
 				}
 
+				#[inline(never)]
+				#[cold]
 				fn proto_schema() -> ::protify::MessageSchema {
 					::protify::MessageSchema::builder()
 						.short_name(#proto_name.into())

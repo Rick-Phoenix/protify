@@ -28,6 +28,8 @@ impl OneofCtx<'_> {
 				#[doc(hidden)]
 				const TAGS: &[i32] = &[ #(#tags),* ];
 
+				#[inline(never)]
+				#[cold]
 				fn proto_schema() -> ::protify::Oneof {
 					::protify::Oneof::builder()
 						.name(stringify!(#enum_ident).into())

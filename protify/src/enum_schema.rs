@@ -74,6 +74,8 @@ pub struct EnumSchema {
 impl EnumSchema {
 	/// Renders the protobuf representation.
 	#[cfg(feature = "std")]
+	#[inline(never)]
+	#[cold]
 	pub fn render_schema(&self) -> Result<String, askama::Error> {
 		self.render()
 	}

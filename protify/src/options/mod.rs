@@ -31,6 +31,8 @@ where
 }
 
 impl OptionValue {
+	#[inline(never)]
+	#[cold]
 	pub(crate) fn is_short(&self) -> bool {
 		match self {
 			Self::List(list) => list.len() <= 5 && list.iter().all(Self::is_short),

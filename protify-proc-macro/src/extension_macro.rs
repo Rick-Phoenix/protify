@@ -58,6 +58,8 @@ pub fn process_extension_derive(
 
 	Ok(quote! {
 	  impl ::protify::ProtoExtension for #ident {
+			#[inline(never)]
+			#[cold]
 			fn proto_schema() -> ::protify::Extension {
 				::protify::Extension::builder()
 					.target(::protify::ExtensionTarget::#target)

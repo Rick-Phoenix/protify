@@ -114,6 +114,8 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 	  }
 
 	  impl ::protify::ProtoService for #ident {
+			#[inline(never)]
+			#[cold]
 			fn proto_schema() -> ::protify::Service {
 				::protify::Service::builder()
 					.name(#service_name.into())

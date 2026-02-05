@@ -194,6 +194,8 @@ pub fn process_file_macro(input: TokenStream2) -> syn::Result<TokenStream2> {
 			const PACKAGE: &str = <#package as ::protify::PackageSchema>::NAME;
 			const EXTERN_PATH: &str = #extern_path;
 
+			#[inline(never)]
+			#[cold]
 			fn file_schema() -> ::protify::ProtoFile {
 				let mut file = ::protify::ProtoFile::new(#file, <#package as ::protify::PackageSchema>::NAME);
 

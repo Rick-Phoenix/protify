@@ -75,37 +75,6 @@ impl ProtoFile {
 		self
 	}
 
-	/// Merges with another file, if the file has the same path.
-	///
-	/// # Panics
-	///
-	/// Panics if the files have different paths.
-	#[track_caller]
-	pub fn merge_with(&mut self, other: Self) -> &mut Self {
-		if self.name != other.name {
-			panic!(
-				"Cannot merge file `{}` with file `{}` as they have different names",
-				self.name, other.name
-			);
-		}
-
-		if self.package != other.package {
-			panic!(
-				"Cannot merge file `{}` with file `{}` as they belong to different packages",
-				self.name, other.name
-			);
-		}
-
-		self.imports.extend(other.imports);
-		self.messages.extend(other.messages);
-		self.enums.extend(other.enums);
-		self.services.extend(other.services);
-		self.extensions.extend(other.extensions);
-		self.options.extend(other.options);
-
-		self
-	}
-
 	/// Adds the given [`MessageSchema`]s to this file.
 	pub fn with_messages<I: IntoIterator<Item = MessageSchema>>(
 		&mut self,

@@ -57,6 +57,8 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 	  impl ::protify::PackageSchema for #pkg_ident {
 			const NAME: &str = #pkg_name;
 
+			#[inline(never)]
+			#[cold]
 			fn files() -> ::protify::Vec<::protify::ProtoFile> {
 				::protify::vec![ #(<#files as ::protify::FileSchema>::file_schema()),* ]
 			}
