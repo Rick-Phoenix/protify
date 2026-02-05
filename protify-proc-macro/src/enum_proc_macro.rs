@@ -259,7 +259,7 @@ pub fn enum_proc_macro(mut item: ItemEnum) -> TokenStream2 {
 
 	quote! {
 	  #[repr(i32)]
-	  #[derive(::protify::macros::Enum, Hash, PartialEq, Eq, Debug, Clone, Copy)]
+	  #[derive(::protify::macros::__Enum, Hash, PartialEq, Eq, Debug, Clone, Copy)]
 	  #item
 
 	  ::protify::register_proto_data! {

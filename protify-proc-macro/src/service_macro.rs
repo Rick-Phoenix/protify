@@ -103,7 +103,7 @@ pub fn process_service_derive(item: &ItemEnum) -> Result<TokenStream2, Error> {
 	});
 
 	Ok(quote! {
-	  #[derive(::protify::macros::Service)]
+	  #[derive(::protify::macros::__Service)]
 	  #vis struct #ident;
 
 	  ::protify::register_proto_data! {

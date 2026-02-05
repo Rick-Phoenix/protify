@@ -99,8 +99,8 @@ pub mod macros {
 	pub use protify_proc_macro::{ProtoEnum, ValidatedMessage, ValidatedOneof};
 
 	pub use protify_proc_macro::{
-		Enum, Extension, Message, Oneof, Service, define_proto_file, proto_enum, proto_extension,
-		proto_message, proto_oneof, proto_package, proto_service,
+		__Enum, __Extension, __Message, __Oneof, __Service, define_proto_file, proto_enum,
+		proto_extension, proto_message, proto_oneof, proto_package, proto_service,
 	};
 }
 

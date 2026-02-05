@@ -52,8 +52,9 @@ pub fn attr_forwarding_derive_test(_: TokenStream) -> TokenStream {
 	TokenStream::new()
 }
 
-/// Implements the [`CelOneof`](protify::CelOneof) trait on an enum. Automatically implemented
-/// by the [`proto_oneof`](protify::proto_oneof) macro when the `cel` feature is enabled.
+/// Implements the [`CelOneof`](protify::CelOneof) trait on an enum.
+///
+/// Automatically implemented by the [`proto_oneof`](protify::proto_oneof) macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelOneof, attributes(cel))]
 pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
@@ -65,8 +66,9 @@ pub fn cel_oneof_derive(input: TokenStream) -> TokenStream {
 	}
 }
 
-/// Implements the [`CelValue`](protify::CelValue) trait on a struct. Automatically
-/// implemented by the [`proto_message`](protify::proto_message) macro when the `cel` feature is enabled.
+/// Implements the [`CelValue`](protify::CelValue) trait on a struct.
+///
+/// Automatically implemented by the [`proto_message`](protify::proto_message) macro when the `cel` feature is enabled.
 #[cfg(feature = "cel")]
 #[proc_macro_derive(CelValue, attributes(cel))]
 pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
@@ -78,7 +80,9 @@ pub fn cel_struct_derive(input: TokenStream) -> TokenStream {
 	}
 }
 
-#[doc(hidden)]
+/// Implements [`ValidatedOneof`](protify::ValidatedOneof) on an enum.
+///
+/// Automatically implemented by the [`proto_oneof`](protify::proto_oneof) macro.
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ValidatedOneof, attributes(proto))]
 pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
@@ -87,7 +91,9 @@ pub fn validated_oneof_derive(input: TokenStream) -> TokenStream {
 	reflection::reflection_oneof_derive(&mut item).into()
 }
 
-#[doc(hidden)]
+/// Implements [`ProtoEnum`](protify::ProtoEnum).
+///
+/// Automatically implemented by the [`proto_enum`](protify::proto_enum) macro.
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ProtoEnum, attributes(proto))]
 pub fn enum_derive(input: TokenStream) -> TokenStream {
@@ -96,7 +102,9 @@ pub fn enum_derive(input: TokenStream) -> TokenStream {
 	reflection::enum_reflection_derive(&item).into()
 }
 
-#[doc(hidden)]
+/// Implements [`ValidatedMessage`](protify::ValidatedMessage) on a struct.
+///
+/// Automatically implemented by the [`proto_message`](protify::proto_message) macro.
 #[cfg(feature = "reflection")]
 #[proc_macro_derive(ValidatedMessage, attributes(proto))]
 pub fn validated_message_derive(input: TokenStream) -> TokenStream {
@@ -190,7 +198,7 @@ pub fn proto_message(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[doc(hidden)]
-#[proc_macro_derive(Message, attributes(proto))]
+#[proc_macro_derive(__Message, attributes(proto))]
 pub fn message_derive(_input: TokenStream) -> TokenStream {
 	TokenStream::new()
 }
@@ -206,7 +214,7 @@ pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
 	};
 
 	quote! {
-	  #[derive(::protify::macros::Extension)]
+	  #[derive(::protify::macros::__Extension)]
 	  #item
 
 	  #extra_tokens
@@ -215,7 +223,7 @@ pub fn proto_extension(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[doc(hidden)]
-#[proc_macro_derive(Extension, attributes(proto))]
+#[proc_macro_derive(__Extension, attributes(proto))]
 pub fn extension_derive(_input: TokenStream) -> TokenStream {
 	TokenStream::new()
 }
@@ -234,7 +242,7 @@ pub fn proto_service(_args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[doc(hidden)]
-#[proc_macro_derive(Service, attributes(proto))]
+#[proc_macro_derive(__Service, attributes(proto))]
 pub fn service_derive(_input: TokenStream) -> TokenStream {
 	TokenStream::new()
 }
@@ -248,7 +256,7 @@ pub fn proto_enum(_args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[doc(hidden)]
-#[proc_macro_derive(Enum, attributes(proto))]
+#[proc_macro_derive(__Enum, attributes(proto))]
 pub fn enum_empty_derive(_input: TokenStream) -> TokenStream {
 	TokenStream::new()
 }
@@ -265,7 +273,7 @@ pub fn proto_oneof(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[doc(hidden)]
-#[proc_macro_derive(Oneof, attributes(proto))]
+#[proc_macro_derive(__Oneof, attributes(proto))]
 pub fn oneof_derive(_input: TokenStream) -> TokenStream {
 	TokenStream::new()
 }

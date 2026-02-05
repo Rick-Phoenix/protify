@@ -116,7 +116,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
 		});
 
 		quote! {
-		  #[derive(::protify::macros::Message)]
+		  #[derive(::protify::macros::__Message)]
 		  #item
 
 		  #proto_derives
@@ -130,7 +130,7 @@ pub fn message_proc_macro(mut item: ItemStruct, macro_attrs: TokenStream2) -> To
 	} else {
 		quote! {
 		  #proto_derives
-		  #[derive(::protify::macros::Message)]
+		  #[derive(::protify::macros::__Message)]
 		  #item
 		}
 	};

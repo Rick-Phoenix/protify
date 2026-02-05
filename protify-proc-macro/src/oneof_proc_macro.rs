@@ -120,7 +120,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
 		});
 
 		quote! {
-		  #[derive(::protify::macros::Oneof)]
+		  #[derive(::protify::macros::__Oneof)]
 		  #item
 
 		  #proto_derives
@@ -134,7 +134,7 @@ pub fn process_oneof_proc_macro(mut item: ItemEnum, macro_attrs: TokenStream2) -
 	} else {
 		quote! {
 		  #proto_derives
-		  #[derive(::protify::macros::Oneof)]
+		  #[derive(::protify::macros::__Oneof)]
 		  #item
 		}
 	};
