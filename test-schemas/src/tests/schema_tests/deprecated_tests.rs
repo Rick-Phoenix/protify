@@ -348,3 +348,17 @@ fn deprecated_handler3() {
 		"should override deprecated attribute"
 	);
 }
+
+#[proto_extension(target = MessageOptions)]
+struct DeprecatedExtension {
+	#[deprecated]
+	#[proto(tag = 123)]
+	field: String,
+}
+
+#[test]
+fn deprecated_extension() {
+	let schema = DeprecatedExtension::proto_schema();
+
+	assert_eq_pretty!(schema.fields[0].options[0], __proto_deprecated());
+}

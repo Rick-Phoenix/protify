@@ -6,6 +6,7 @@ pub struct ExtensionFieldAttrs {
 	pub options: TokensOr<TokenStream2>,
 	pub proto_name: String,
 	pub proto_field: ProtoField,
+	pub deprecated: bool,
 }
 
 pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttrs, Error> {
@@ -13,32 +14,41 @@ pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttr
 	let mut options = TokenStreamOr::new(|_| quote! { ::protify::vec![] });
 	let mut name: Option<String> = None;
 	let mut proto_field: Option<ProtoField> = None;
+	let mut deprecated = false;
 
 	let field_ident = field.require_ident()?.clone();
 	let type_info = TypeInfo::from_type(&field.ty)?;
 
-	parse_filtered_attrs(&field.attrs, &["proto"], |meta| {
-		let ident = meta.path.require_ident()?.to_string();
+	for attr in &field.attrs {
+		if attr.path().is_ident("deprecated") {
+			deprecated = true;
+		}
 
-		match ident.as_str() {
-			"options" => {
-				options.span = meta.input.span();
-				options.set(meta.expr_value()?.into_token_stream());
-			}
-			"tag" => {
-				tag = Some(meta.parse_value::<ParsedNum>()?);
-			}
-			"name" => {
-				name = Some(meta.expr_value()?.as_string()?);
-			}
+		if attr.path().is_ident("proto") {
+			attr.parse_nested_meta(|meta| {
+				let ident = meta.path.require_ident()?.to_string();
 
-			_ => {
-				proto_field = Some(ProtoField::from_meta(&ident, &meta, &type_info)?);
-			}
-		};
+				match ident.as_str() {
+					"options" => {
+						options.span = meta.input.span();
+						options.set(meta.expr_value()?.into_token_stream());
+					}
+					"tag" => {
+						tag = Some(meta.parse_value::<ParsedNum>()?);
+					}
+					"name" => {
+						name = Some(meta.expr_value()?.as_string()?);
+					}
 
-		Ok(())
-	})?;
+					_ => {
+						proto_field = Some(ProtoField::from_meta(&ident, &meta, &type_info)?);
+					}
+				};
+
+				Ok(())
+			})?;
+		}
+	}
 
 	let proto_field = if let Some(mut field) = proto_field {
 		if let ProtoField::Single(proto_type) = &mut field
@@ -82,5 +92,6 @@ pub fn process_extension_field_attrs(field: &Field) -> Result<ExtensionFieldAttr
 		options,
 		proto_name: name.unwrap_or_else(|| rust_ident_to_proto_name(&field_ident)),
 		proto_field,
+		deprecated,
 	})
 }

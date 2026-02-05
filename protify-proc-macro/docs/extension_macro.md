@@ -19,6 +19,10 @@ proto_package!(MY_PKG, name = "my_pkg");
 pub struct MyExt {
 	#[proto(tag = 5000)]
 	cool_opt: String,
+	// We can mark fields as deprecated
+	#[deprecated]
+	#[proto(tag = 5001)]
+	deprecated_opt: String,
 }
 
 define_proto_file!(
@@ -39,6 +43,12 @@ define_proto_file!(
         The target of the given extension. It must match one of the supported targets from proto3 onwards, such as MessageOptions, FileOptions and so on.
 
 ## Field Attributes
+
+- `deprecated`
+    - Type: Ident
+    - Example: `#[deprecated]`
+    - Description:
+        Marks the extension field as deprecated.
 
 - `options`
     - Type: Expr

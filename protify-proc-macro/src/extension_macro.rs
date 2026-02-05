@@ -32,6 +32,7 @@ pub fn process_extension_derive(
 			options,
 			proto_name,
 			proto_field,
+			deprecated,
 		} = process_extension_field_attrs(field)?;
 
 		if tag.is_none() {
@@ -47,7 +48,7 @@ pub fn process_extension_derive(
 			::protify::Field::builder()
 				.name(#proto_name.into())
 				.tag(#tag)
-				.options(#options.into_iter().collect())
+				.options(::protify::collect_options(#options, #deprecated))
 				.type_(<#proto_field_trait_target as ::protify::AsProtoField>::as_proto_field())
 				.validators(::protify::vec![])
 				.build()
