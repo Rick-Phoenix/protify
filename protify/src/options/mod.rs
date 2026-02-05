@@ -16,6 +16,52 @@ pub struct ProtoOption {
 	pub value: OptionValue,
 }
 
+impl<N, V> From<(N, V)> for ProtoOption
+where
+	N: Into<FixedStr>,
+	V: Into<OptionValue>,
+{
+	fn from(value: (N, V)) -> Self {
+		let (name, val) = value;
+		Self {
+			name: name.into(),
+			value: val.into(),
+		}
+	}
+}
+
+impl OptionValue {
+	pub(crate) fn is_short(&self) -> bool {
+		match self {
+			Self::List(list) => list.len() <= 5 && list.iter().all(Self::is_short),
+			Self::String(str) => str.chars().count() <= 5,
+			Self::Duration(_) | Self::Timestamp(_) | Self::Message(_) => false,
+			_ => true,
+		}
+	}
+
+	/// Creates a new message option value.
+	pub fn new_message<I>(items: I) -> Self
+	where
+		I: Into<OptionMessage>,
+	{
+		Self::Message(items.into())
+	}
+
+	/// Creates a new list option value.
+	pub fn new_list<I>(items: I) -> Self
+	where
+		I: Into<OptionList>,
+	{
+		Self::List(items.into())
+	}
+
+	/// Creates a new bytes option value.
+	pub fn new_bytes(bytes: impl IntoBytes) -> Self {
+		Self::Bytes(bytes.into_bytes())
+	}
+}
+
 /// An enum representing values for protobuf options.
 ///
 /// These can be composed manually by using one of the many provided `From` impls, or with the `serde` feature, whcih allows conversion from [`serde_json::Value`].
@@ -182,6 +228,28 @@ impl OptionMessage {
 	}
 }
 
+impl From<Arc<[ProtoOption]>> for OptionMessage {
+	#[inline]
+	fn from(value: Arc<[ProtoOption]>) -> Self {
+		Self { inner: value }
+	}
+}
+
+impl From<ProtoOption> for OptionMessage {
+	fn from(value: ProtoOption) -> Self {
+		core::iter::once(value).collect()
+	}
+}
+
+impl<T> From<Vec<T>> for OptionMessage
+where
+	T: Into<ProtoOption>,
+{
+	fn from(value: Vec<T>) -> Self {
+		value.into_iter().map(|v| v.into()).collect()
+	}
+}
+
 /// A builder for building an [`OptionMessage`] with a map-like syntax.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct OptionMessageBuilder {
@@ -274,42 +342,6 @@ impl OptionMessageBuilder {
 		OptionMessage {
 			inner: self.inner.into_boxed_slice().into(),
 		}
-	}
-}
-
-impl<N, V> From<(N, V)> for ProtoOption
-where
-	N: Into<FixedStr>,
-	V: Into<OptionValue>,
-{
-	fn from(value: (N, V)) -> Self {
-		let (name, val) = value;
-		Self {
-			name: name.into(),
-			value: val.into(),
-		}
-	}
-}
-
-impl From<Arc<[ProtoOption]>> for OptionMessage {
-	#[inline]
-	fn from(value: Arc<[ProtoOption]>) -> Self {
-		Self { inner: value }
-	}
-}
-
-impl From<ProtoOption> for OptionMessage {
-	fn from(value: ProtoOption) -> Self {
-		core::iter::once(value).collect()
-	}
-}
-
-impl<T> From<Vec<T>> for OptionMessage
-where
-	T: Into<ProtoOption>,
-{
-	fn from(value: Vec<T>) -> Self {
-		value.into_iter().map(|v| v.into()).collect()
 	}
 }
 
@@ -441,38 +473,6 @@ where
 	fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
 		self.inner
 			.extend(iter.into_iter().map(|v| v.into()))
-	}
-}
-
-impl OptionValue {
-	pub(crate) fn is_short(&self) -> bool {
-		match self {
-			Self::List(list) => list.len() <= 5 && list.iter().all(Self::is_short),
-			Self::String(str) => str.chars().count() <= 5,
-			Self::Duration(_) | Self::Timestamp(_) | Self::Message(_) => false,
-			_ => true,
-		}
-	}
-
-	/// Creates a new message option value.
-	pub fn new_message<I>(items: I) -> Self
-	where
-		I: Into<OptionMessage>,
-	{
-		Self::Message(items.into())
-	}
-
-	/// Creates a new list option value.
-	pub fn new_list<I>(items: I) -> Self
-	where
-		I: Into<OptionList>,
-	{
-		Self::List(items.into())
-	}
-
-	/// Creates a new bytes option value.
-	pub fn new_bytes(bytes: impl IntoBytes) -> Self {
-		Self::Bytes(bytes.into_bytes())
 	}
 }
 

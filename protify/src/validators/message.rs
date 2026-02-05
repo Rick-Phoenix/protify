@@ -87,6 +87,24 @@ pub trait ValidatedMessage: ProtoValidation + Default + Clone {
 	fn validate_with_ctx(&self, ctx: &mut ValidationCtx) -> ValidationResult;
 }
 
+/// Defalt validator for messages used as fields of other messages.
+#[non_exhaustive]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct MessageValidator {
+	/// Adds custom validation using one or more [`CelRule`]s to this field.
+	pub cel: Vec<CelProgram>,
+
+	/// The conditions upon which this validator should be skipped.
+	pub ignore: Ignore,
+
+	/// Specifies that the field must be set in order to be valid.
+	pub required: bool,
+
+	/// A custom error message to display for the `required` violation.
+	pub required_error_message: Option<FixedStr>,
+}
+
 impl<T, S: builder::State> ValidatorBuilderFor<T> for MessageValidatorBuilder<S>
 where
 	T: ValidatedMessage + PartialEq + TryIntoCel,
@@ -202,6 +220,24 @@ where
 			cel_rules: <Self as Validator<T>>::__cel_rules(self),
 			imports: vec!["buf/validate/validate.proto".into()],
 		})
+	}
+}
+
+impl From<MessageValidator> for ProtoOption {
+	#[inline(never)]
+	#[cold]
+	fn from(validator: MessageValidator) -> Self {
+		let mut rules = OptionMessageBuilder::new();
+
+		rules
+			.add_cel_options(validator.cel)
+			.set_required(validator.required)
+			.set_ignore(validator.ignore);
+
+		Self {
+			name: "(buf.validate.field)".into(),
+			value: OptionValue::Message(rules.into()),
+		}
 	}
 }
 
@@ -321,42 +357,6 @@ impl From<CelValidator> for ProtoOption {
 
 		Self {
 			name: "(buf.validate.message)".into(),
-			value: OptionValue::Message(rules.into()),
-		}
-	}
-}
-
-/// Defalt validator for messages used as fields of other messages.
-#[non_exhaustive]
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct MessageValidator {
-	/// Adds custom validation using one or more [`CelRule`]s to this field.
-	pub cel: Vec<CelProgram>,
-
-	/// The conditions upon which this validator should be skipped.
-	pub ignore: Ignore,
-
-	/// Specifies that the field must be set in order to be valid.
-	pub required: bool,
-
-	/// A custom error message to display for the `required` violation.
-	pub required_error_message: Option<FixedStr>,
-}
-
-impl From<MessageValidator> for ProtoOption {
-	#[inline(never)]
-	#[cold]
-	fn from(validator: MessageValidator) -> Self {
-		let mut rules = OptionMessageBuilder::new();
-
-		rules
-			.add_cel_options(validator.cel)
-			.set_required(validator.required)
-			.set_ignore(validator.ignore);
-
-		Self {
-			name: "(buf.validate.field)".into(),
 			value: OptionValue::Message(rules.into()),
 		}
 	}

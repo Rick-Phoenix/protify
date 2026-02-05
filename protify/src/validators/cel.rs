@@ -108,10 +108,22 @@ mod cel_impls {
 		}
 	}
 
-	impl From<CelRule> for CelProgram {
+	impl CelProgramInner {
 		#[inline]
-		fn from(value: CelRule) -> Self {
-			Self::new(value)
+		fn get_program(&self) -> &Program {
+			self.program
+				.get_or_init(|| self.compile_program())
+		}
+
+		#[inline(never)]
+		#[cold]
+		fn compile_program(&self) -> Program {
+			Program::compile(&self.rule.expression).unwrap_or_else(|e| {
+				panic!(
+					"Failed to compile CEL program with id `{}`: {e}",
+					self.rule.id
+				)
+			})
 		}
 	}
 
@@ -199,22 +211,10 @@ mod cel_impls {
 		}
 	}
 
-	impl CelProgramInner {
+	impl From<CelRule> for CelProgram {
 		#[inline]
-		fn get_program(&self) -> &Program {
-			self.program
-				.get_or_init(|| self.compile_program())
-		}
-
-		#[inline(never)]
-		#[cold]
-		fn compile_program(&self) -> Program {
-			Program::compile(&self.rule.expression).unwrap_or_else(|e| {
-				panic!(
-					"Failed to compile CEL program with id `{}`: {e}",
-					self.rule.id
-				)
-			})
+		fn from(value: CelRule) -> Self {
+			Self::new(value)
 		}
 	}
 
