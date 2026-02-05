@@ -5,6 +5,7 @@ use proto_types::protovalidate::field_path_element::Subscript;
 
 /// The context for the field being validated.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub struct FieldContext {
 	pub name: FixedStr,
 	pub tag: i32,
@@ -13,6 +14,23 @@ pub struct FieldContext {
 	pub map_value_type: Option<ProtoPrimitive>,
 	pub field_type: ProtoPrimitive,
 	pub field_kind: FieldKind,
+}
+
+impl FieldContext {
+	/// Creates a new instance.
+	#[inline]
+	#[must_use]
+	pub const fn new(name: FixedStr, tag: i32, field_type: ProtoPrimitive) -> Self {
+		Self {
+			name,
+			tag,
+			subscript: None,
+			map_key_type: None,
+			map_value_type: None,
+			field_type,
+			field_kind: FieldKind::Normal,
+		}
+	}
 }
 
 impl FieldContext {
@@ -37,6 +55,7 @@ impl FieldContext {
 ///
 /// For example, if the validation is performed on a `repeated` field but the validation analyzes the collection as a whole (for example, its length), the [`FieldKind`] would be [`Normal`](FieldKind::Normal), whereas if the validation is performed on its individual items, then it would be set to [`RepeatedItem`](FieldKind::RepeatedItem).
 #[derive(Clone, Default, Debug, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum FieldKind {
 	MapKey,
 	MapValue,
@@ -89,7 +108,10 @@ impl FieldKind {
 /// ℹ️ **NOTE**: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
 /// because this is by far the most desired behaviour for most applications.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub struct ValidationCtx {
+	/// The context for the element being validated. Can be absent in case
+	/// the validation is happening at the top level.
 	pub field_context: Option<FieldContext>,
 	pub parent_elements: Vec<FieldPathElement>,
 	pub violations: ValidationErrors,
@@ -104,6 +126,18 @@ impl Default for ValidationCtx {
 	/// because this is by far the most desired behaviour for most applications.
 	#[inline]
 	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl ValidationCtx {
+	/// Default values for [`ValidationCtx`].
+	///
+	/// NOTE: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
+	/// because this is by far the most desired behaviour for most applications.
+	#[inline]
+	#[must_use]
+	pub const fn new() -> Self {
 		Self {
 			field_context: None,
 			parent_elements: vec![],
@@ -111,9 +145,7 @@ impl Default for ValidationCtx {
 			fail_fast: true,
 		}
 	}
-}
 
-impl ValidationCtx {
 	/// Sets the [`FieldContext`] to [`None`].
 	///
 	/// Mainly useful for validators defined at the top level of a oneof or an unnested message, which do not have a proto
@@ -139,27 +171,7 @@ impl ValidationCtx {
 		kind: ViolationKind,
 		error_message: impl Into<String>,
 	) -> ValidationResult {
-		let violation = create_violation_core(
-			None,
-			self.field_context.as_ref(),
-			&self.parent_elements,
-			kind.data(),
-			error_message.into(),
-		);
-
-		self.violations.push(ViolationCtx {
-			meta: ViolationMeta {
-				kind,
-				field_kind: self.field_kind(),
-			},
-			data: violation,
-		});
-
-		if self.fail_fast {
-			Err(FailFast)
-		} else {
-			Ok(IsValid::No)
-		}
+		self.add_violation_internal(None, kind, error_message.into())
 	}
 
 	/// Extracts the [`FieldKind`]. If the [`FieldContext`] is absent (for a top level validator), it falls back to [`FieldKind::Normal`].
@@ -172,21 +184,20 @@ impl ValidationCtx {
 			.unwrap_or_default()
 	}
 
-	/// Adds a new known violation to the list of errors, overriding the rule ID.
 	#[inline(never)]
 	#[cold]
-	pub fn add_violation_with_custom_id(
+	fn add_violation_internal(
 		&mut self,
-		rule_id: impl Into<String>,
+		rule_id: Option<String>,
 		kind: ViolationKind,
-		error_message: impl Into<String>,
+		error_message: String,
 	) -> ValidationResult {
 		let violation = create_violation_core(
-			Some(rule_id.into()),
+			rule_id,
 			self.field_context.as_ref(),
 			&self.parent_elements,
 			kind.data(),
-			error_message.into(),
+			error_message,
 		);
 
 		self.violations.push(ViolationCtx {
@@ -204,6 +215,18 @@ impl ValidationCtx {
 		}
 	}
 
+	/// Adds a new known violation to the list of errors, overriding the rule ID.
+	#[inline(never)]
+	#[cold]
+	pub fn add_violation_with_custom_id(
+		&mut self,
+		rule_id: impl Into<String>,
+		kind: ViolationKind,
+		error_message: impl Into<String>,
+	) -> ValidationResult {
+		self.add_violation_internal(Some(rule_id.into()), kind, error_message.into())
+	}
+
 	/// Adds a new violation related to a [`CelRule`].
 	#[inline]
 	#[cold]
@@ -211,10 +234,9 @@ impl ValidationCtx {
 		self.add_violation_with_custom_id(&rule.id, ViolationKind::Cel, &rule.message)
 	}
 
-	/// Adds a violation for a required oneof. If no custom error message is specified, the default will be used.
 	#[inline]
 	#[cold]
-	pub fn add_required_oneof_violation(
+	pub(crate) fn add_required_oneof_violation(
 		&mut self,
 		error_message: Option<String>,
 	) -> ValidationResult {

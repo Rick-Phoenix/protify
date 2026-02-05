@@ -115,15 +115,11 @@ impl FieldData {
 			} else {
 				quote_spanned! {*span=>
 				  ctx.with_field_context(
-						::protify::FieldContext {
-							name: #proto_name.into(),
-							tag: #tag,
-							field_type: #field_type,
-							map_key_type: None,
-							map_value_type: None,
-							subscript: None,
-							field_kind: Default::default(),
-						}
+						::protify::FieldContext::new(
+							#proto_name.into(),
+							#tag,
+							#field_type
+						)
 				  ),
 				  #argument
 				}
