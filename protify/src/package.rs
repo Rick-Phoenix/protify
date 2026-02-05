@@ -145,7 +145,7 @@ impl Package {
 		Ok(())
 	}
 
-	/// Creates a new instance.
+	#[doc(hidden)]
 	#[must_use]
 	pub fn new(name: impl Into<FixedStr>) -> Self {
 		Self {
@@ -154,19 +154,15 @@ impl Package {
 		}
 	}
 
-	/// Extracts a file schema from this package.
+	#[doc(hidden)]
 	#[must_use]
-	pub fn get_file(&self, name: &str) -> Option<&ProtoFile> {
-		self.files.iter().find(|f| f.name == name)
-	}
+	pub fn with_files(mut self, mut files: Vec<ProtoFile>) -> Self {
+		for file in &mut files {
+			file.package = self.name.clone();
+		}
 
-	/// Adds the given files to this package.
-	#[must_use]
-	pub fn with_files(mut self, files: impl IntoIterator<Item = ProtoFile>) -> Self {
-		self.files.extend(files.into_iter().map(|mut f| {
-			f.package = self.name.clone();
-			f
-		}));
+		self.files.append(&mut files);
+
 		self
 	}
 

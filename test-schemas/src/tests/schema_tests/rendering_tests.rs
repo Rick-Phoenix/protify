@@ -149,7 +149,7 @@ fn rendering_test() {
 	  no_emit
 	);
 
-	let manual_pkg = Package::new("rendering").with_files([ManualFile::file_schema()]);
+	let manual_pkg = Package::new("rendering").with_files(vec![ManualFile::file_schema()]);
 
 	let output2 = test_output_dir.join("output2");
 

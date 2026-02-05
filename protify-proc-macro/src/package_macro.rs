@@ -66,6 +66,7 @@ pub fn package_macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 
 	  impl #pkg_ident {
 			#[doc = concat!("Returns the fully built ", #pkg_name, " protobuf package.")]
+			#[track_caller]
 			pub fn get_package() -> ::protify::Package {
 				<Self as ::protify::PackageSchema>::get_package()
 			}
