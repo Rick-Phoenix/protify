@@ -71,3 +71,4 @@ pub enum MyEnum {
 }
 ```
 
+All the messages defined in this snippet can be plugged directly in a tonic handler and work out of the box. All you need to do is to set up tonic so that it doesn't try to build them from the protos, but rather imports them directly from your models crate. This is explained in detail in the [usage with tonic](https://docs.rs/protify/latest/protify/guide/usage_with_tonic/index.html) section.

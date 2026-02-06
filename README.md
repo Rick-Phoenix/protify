@@ -20,7 +20,7 @@ Protify is a Rust-first framework for protobuf that generates packages from rust
 
  It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
 
- >ℹ️ **NOTE**: This readme is generated from the rust documentation, so most of the links will not show up in Github. Read this in the docs.rs page to ensure that links work correctly.
+ >ℹ️ **NOTE**: This readme is generated from the rust documentation to ensure better maintainability, so most of the links will not show up in Github. Read this in the [docs.rs](https://docs.rs/protify/latest/protify/index.html) page to ensure that links work correctly.
 
  You can visit the [package setup](https://docs.rs/protify/latest/protify/guide/package_setup/index.html) section of the [guide](https://docs.rs/protify/latest/protify/guide/index.html) to learn more about how to set up protify.
 
@@ -97,6 +97,7 @@ pub enum MyEnum {
 }
 ```
 
+All the messages defined in this snippet can be plugged directly in a tonic handler and work out of the box. All you need to do is to set up tonic so that it doesn't try to build them from the protos, but rather imports them directly from your models crate. This is explained in detail in the [usage with tonic](https://docs.rs/protify/latest/protify/guide/usage_with_tonic/index.html) section.
 
 
  For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
