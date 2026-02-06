@@ -16,7 +16,7 @@
 
 Protify is a Rust-first framework for protobuf that generates packages from rust code, with validation included.
 
- This library aims to make working with protobuf feel (almost) as easy as using `serde`. It flips the logic of the typical proto workflow around, so that all the elements of a package can be defined in rust with a rich set of macros and attributes, and the resulting contracts can be generated from the rust code, rather than the other way around.
+ It aims to make working with protobuf feel (almost) as easy as using `serde`. It flips the logic of the typical proto workflow around, so that all the elements of a package can be defined in rust with a rich set of macros and attributes, and the resulting contracts can be generated from the rust code, rather than the other way around.
 
  It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
 
@@ -568,3 +568,6 @@ fn main() {
 * **`reflection`** —  Enables usage with reflection, to generate validation logic from pre-built protos with protovalidate annotations.
 * **`cel`** *(enabled by default)* —  Enables CEL validation.
 * **`regex`** *(enabled by default)* —  Enables regex-based validators.
+# License
+This repository is licensed under the MPL-2.0 license.
+The file `CREDITS.md` contains the licensing details for the external code used in this project.

@@ -64,6 +64,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	write!(file, "{}", readme_content.trim())?;
 
+	write!(
+		file,
+		"
+# License
+This repository is licensed under the MPL-2.0 license.
+The file `CREDITS.md` contains the licensing details for the external code used in this project."
+	)?;
+
 	println!("README.md updated successfully!");
 
 	Ok(())
