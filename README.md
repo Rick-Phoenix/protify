@@ -6,11 +6,11 @@
 <div align="center">
 <div>
 
-![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white) ![License](https://img.shields.io/github/license/Rick-Phoenix/protify)
+[![Crates.io Version](https://img.shields.io/crates/v/protify)](https://crates.io/crates/protify) [![License](https://img.shields.io/github/license/Rick-Phoenix/protify)](https://www.mozilla.org/en-US/MPL/2.0/)
 
 [![Sponsor](https://img.shields.io/badge/GitHub%20Sponsors-30363D?&logo=GitHub-Sponsors&logoColor=EA4AAA)](https://github.com/sponsors/Rick-Phoenix)
 
-<a href="https://docs.rs/protify/latest/protify/index.html">Docs</a> &emsp; <a href="https://docs.rs/protify/latest/protify/guide/index.html">Guide</a>
+<a href="https://docs.rs/protify/latest/protify/">Docs</a> &emsp; <a href="https://docs.rs/protify/latest/protify/guide/index.html">Guide</a>
 </div>
 </div>
 
@@ -22,7 +22,7 @@ Protify is a Rust-first framework for protobuf that generates packages from rust
 
  >ℹ️ **NOTE**: This readme is generated from the rust documentation, so most of the links will not show up in Github. Read this in the docs.rs page to ensure that links work correctly.
 
- You can visit the [package setup](crate::guide::package_setup) section of the [guide](crate::guide) to learn more about how to set up protify.
+ You can visit the [package setup](https://docs.rs/protify/latest/protify/guide/package_setup/index.html) section of the [guide](https://docs.rs/protify/latest/protify/guide/index.html) to learn more about how to set up protify.
 
 # From Rust To Proto
 

@@ -12,9 +12,9 @@
 //!
 //! It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
 //!
-//! >ℹ️ **NOTE**: This readme is generated from the rust documentation, so most of the links will not show up in Github. Read this in the docs.rs page to ensure that links work correctly.
+//! >ℹ️ **NOTE**: This readme is generated from the rust documentation to ensure better maintainability, so most of the links will not show up in Github. Read this in the [docs.rs](https://docs.rs/protify/latest/protify/index.html) page to ensure that links work correctly.
 //!
-//! You can visit the [package setup](crate::guide::package_setup) section of the [guide](crate::guide) to learn more about how to set up protify.
+//! You can visit the [package setup](https://docs.rs/protify/latest/protify/guide/package_setup/index.html) section of the [guide](https://docs.rs/protify/latest/protify/guide/index.html) to learn more about how to set up protify.
 //!
 #![doc = include_str!("./guide/schema_features.md")]
 //!

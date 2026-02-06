@@ -51,11 +51,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 <div align="center">
 <div>
 
-![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white) ![License](https://img.shields.io/github/license/Rick-Phoenix/protify)
+[![Crates.io Version](https://img.shields.io/crates/v/protify)](https://crates.io/crates/protify) [![License](https://img.shields.io/github/license/Rick-Phoenix/protify)](https://www.mozilla.org/en-US/MPL/2.0/)
 
 [![Sponsor](https://img.shields.io/badge/GitHub%20Sponsors-30363D?&logo=GitHub-Sponsors&logoColor=EA4AAA)](https://github.com/sponsors/Rick-Phoenix)
 
-<a href="https://docs.rs/protify/latest/protify/index.html">Docs</a> &emsp; <a href="https://docs.rs/protify/latest/protify/guide/index.html">Guide</a>
+<a href="https://docs.rs/protify/latest/protify/">Docs</a> &emsp; <a href="https://docs.rs/protify/latest/protify/guide/index.html">Guide</a>
 </div>
 </div>
 
