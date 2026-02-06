@@ -3,6 +3,7 @@
 	clippy::collapsible_if,
 	clippy::collapsible_else_if
 )]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use std::{
 	borrow::Cow,

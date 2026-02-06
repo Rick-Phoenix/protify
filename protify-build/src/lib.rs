@@ -1,6 +1,7 @@
-//! Build-time library for protify when using pre-built `.proto` files.
+//! Build-time library for protify when using pre-built `.proto` files with `protovalidate` annotations.
 //!
 #![doc = ::document_features::document_features!()]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use std::fmt::Write;
 use std::fs;

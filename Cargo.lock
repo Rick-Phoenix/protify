@@ -275,6 +275,8 @@ dependencies = [
 [[package]]
 name = "bool-enum"
 version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9942ab9d401edf65433b45bd33007c4aa714dc21464147bd9cb50a941a6789b"
 
 [[package]]
 name = "borrow-or-share"

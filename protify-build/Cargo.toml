@@ -8,6 +8,10 @@ authors.workspace = true
 repository.workspace = true
 keywords = ["protobuf", "validation", "reflection"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
 prost-build = { workspace = true }
 prost-reflect = { workspace = true }

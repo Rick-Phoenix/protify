@@ -8,6 +8,10 @@ authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [lib]
 proc-macro = true
 
@@ -20,7 +24,7 @@ quote = "1.0"
 syn = { version = "2", features = ["extra-traits", "full"] }
 convert_case = { workspace = true }
 proto-types = { workspace = true, features = ["default", "protovalidate"] }
-syn-utils = { path = "../../syn-utils/" }
+syn-utils = { version = "0.5.0", path = "../../syn-utils/" }
 prost-reflect = { version = "0.16", optional = true }
 paste = "1"
 bytes = "1"

@@ -24,6 +24,7 @@ tag = false
 allow-branch = ["main"]
 enable-all-features = true
 shared-version = true
+tag-name = "v{{version}}"
 
 [workspace.package]
 edition = "2024"
@@ -66,7 +67,7 @@ bytes = "1"
 prost-build = "0.14"
 prost-reflect = "0.16"
 similar-asserts = "1"
-bool-enum = { path = "../bool-enum/" }
+bool-enum = { version = "0.1.1" }
 
 [workspace.lints.clippy]
 redundant_closure = "allow"
