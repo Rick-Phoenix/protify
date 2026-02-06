@@ -231,3 +231,7 @@ fn main() {
 	)
 }
 ```
+
+## Protovalidate Support
+
+The best way to use protify is to define a schema from scratch using rust code. However, it is also possible to generate validators that are defined in pre-built proto files using the `protovalidate` syntax. You can learn more about this in the [reflection usage](crate::guide::reflection_usage) section.
