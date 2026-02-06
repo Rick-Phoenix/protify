@@ -180,15 +180,17 @@ where
 		let mut is_valid = IsValid::Yes;
 
 		if let Some(val) = val {
-			if let Some(field_context) = &mut ctx.field_context {
-				ctx.parent_elements
-					.push(field_context.as_path_element());
-			}
+			if T::HAS_DEFAULT_VALIDATOR {
+				if let Some(field_context) = &mut ctx.field_context {
+					ctx.parent_elements
+						.push(field_context.as_path_element());
+				}
 
-			is_valid &= val.validate_with_ctx(ctx)?;
+				is_valid &= val.validate_with_ctx(ctx)?;
 
-			if ctx.field_context.is_some() {
-				ctx.parent_elements.pop();
+				if ctx.field_context.is_some() {
+					ctx.parent_elements.pop();
+				}
 			}
 
 			#[cfg(feature = "cel")]

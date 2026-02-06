@@ -106,7 +106,7 @@ impl ProtoField {
 				// Early return due to different `kind`
 				Some(ValidatorTokens {
 					expr: quote_spanned! {span=>
-					  *::protify::DEFAULT_ONEOF_VALIDATOR
+						::protify::OneofValidator::default()
 					},
 					kind: ValidatorKind::DefaultOneof,
 					span,
@@ -147,7 +147,7 @@ impl ProtoField {
 					.is_custom_message()
 					.then(|| ValidatorTokens {
 						expr: quote_spanned! {span=>
-						  *::protify::DEFAULT_MESSAGE_VALIDATOR
+							::protify::MessageValidator::default()
 						},
 						kind: ValidatorKind::DefaultMessage,
 						span,

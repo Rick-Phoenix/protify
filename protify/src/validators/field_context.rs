@@ -54,15 +54,21 @@ impl FieldContext {
 /// a value or key in a map field, or an item in a repeated field.
 ///
 /// For example, if the validation is performed on a `repeated` field but the validation analyzes the collection as a whole (for example, its length), the [`FieldKind`] would be [`Normal`](FieldKind::Normal), whereas if the validation is performed on its individual items, then it would be set to [`RepeatedItem`](FieldKind::RepeatedItem).
-#[derive(Clone, Default, Debug, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum FieldKind {
 	MapKey,
 	MapValue,
 	RepeatedItem,
 	/// Signifies that the target of validation is either an item as a whole (for validators defined at the top level of messages/oneofs) or a field.
-	#[default]
 	Normal,
+}
+
+impl Default for FieldKind {
+	#[inline]
+	fn default() -> Self {
+		Self::Normal
+	}
 }
 
 impl FieldKind {
