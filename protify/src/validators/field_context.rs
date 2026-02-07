@@ -128,7 +128,7 @@ pub struct ValidationCtx {
 impl Default for ValidationCtx {
 	/// Default values for [`ValidationCtx`].
 	///
-	/// NOTE: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
+	/// NOTE: By default, `fail_fast` is set to true even if this is slightly unidiomatic for a boolean,
 	/// because this is by far the most desired behaviour for most applications.
 	#[inline]
 	fn default() -> Self {
@@ -139,7 +139,7 @@ impl Default for ValidationCtx {
 impl ValidationCtx {
 	/// Default values for [`ValidationCtx`].
 	///
-	/// NOTE: By default, `fail_fast` is set to true even if this is slightly unitiomatic for a boolean,
+	/// NOTE: By default, `fail_fast` is set to true even if this is slightly unidiomatic for a boolean,
 	/// because this is by far the most desired behaviour for most applications.
 	#[inline]
 	#[must_use]

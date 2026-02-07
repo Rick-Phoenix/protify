@@ -121,7 +121,7 @@ fn main() {
     - Type: number
     - Example: `#[proto(tag = 10000)]`
     - Description:
-    Specifies the protobuf tag for the given field. Unline in messages or enums, tags must be set manually for extensions.
+    Specifies the protobuf tag for the given field. Unlike in messages or enums, tags must be set manually for extensions.
 
 - `name`
     - Type: string

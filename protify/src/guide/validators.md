@@ -10,7 +10,7 @@ All the provided validators map their options to the [protovalidate](https://git
 
 Because every validator is type-safe and comes with an ergonomic builder methods to be built with, defining validators becomes a vastly superior experience than manual composition in protobuf files, where the process is repetitive, rigid, and lacking essential features of modern programming such as type safety and LSP integration, as well as programmatic composition.
 
-Validators can be assigned to oneofs/messages as a whole or to individual fields/variants to be incorporated in thier validation logic.
+Validators can be assigned to oneofs/messages as a whole or to individual fields/variants to be incorporated in their validation logic.
 
 ```rust
 use protify::*;

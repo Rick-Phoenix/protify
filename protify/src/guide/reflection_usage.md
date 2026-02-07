@@ -4,13 +4,13 @@ The preferred usage for this crate is to define the items in rust, and to genera
 
 In this case, it is possible to use pre-build proto files that have been marked with `protovalidate` annotations, and generate the validation logic accordingly.
 
-To do that, you must first add the [`protify-build`](::protify_build) to the build-dependencies.
+To do that, you must first add [`protify-build`](::protify_build) to the build-dependencies.
 
 For convenience, the builder exports the [`DescriptorDataConfig`](protify_build::DescriptorDataConfig) struct, which you can use to gather information about the elements of a package while the validators are being set (which can often be useful to handle things like oneof attributes which aren't very ergonomic to set up in prost in a programmatic way).
 
-The [`DescriptorDataConfig::set_up_validators`](protify_build::DescriptorDataConfig::set_up_validators) method can then be used to set up the validators for the target packages while collecting the desided data.
+The [`DescriptorDataConfig::set_up_validators`](protify_build::DescriptorDataConfig::set_up_validators) method can then be used to set up the validators for the target packages while collecting the decided data.
 
-If you desire to just set up the validators without gathering any other data, you can just call the omonimous [`set_up_validators`](protify_build::set_up_validators) function exported from the root of the crate.
+If you desire to just set up the validators without gathering any other data, you can just call the homonymous [`set_up_validators`](protify_build::set_up_validators) function exported from the root of the crate.
 
 ```rust,ignore
 use std::{env, path::PathBuf};
@@ -64,7 +64,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-After doing this, all of the selected messages will implement [`ValidatedMessage`](crate::ValidatedMessage), the selected enums will impement [`ProtoEnum`](crate::ProtoEnum), and the selected oneofs will implement [`ValidatedOneof`](crate::ValidatedOneof), and all of them will impement [`ProtoValidation`](crate::ProtoValidation).
+After this setup:
+
+- All of the selected messages will implement [`ValidatedMessage`](crate::ValidatedMessage)
+- All the selected enums will implement [`ProtoEnum`](crate::ProtoEnum)
+- All the selected oneofs will implement [`ValidatedOneof`](crate::ValidatedOneof)
+- All of the above will implement [`ProtoValidation`](crate::ProtoValidation).
 
 If the `cel` feature is enabled, [`CelValue`](crate::CelValue) and [`CelOneof`](crate::CelOneof) will also be implemented for messages and oneofs.
 

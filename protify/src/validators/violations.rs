@@ -65,7 +65,7 @@ impl From<ValidationErrors> for tonic::Status {
 
 /// The context of a specific violation.
 ///
-/// It contains the [`Violation`] data, which is used for protobuf serialization, as well as the [`ViolationMeta`], which contains the extra information about a the violation's kind and field kind.
+/// It contains the [`Violation`] data, which is used for protobuf serialization, as well as the [`ViolationMeta`], which contains the extra information about the violation's kind and field kind.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ViolationCtx {

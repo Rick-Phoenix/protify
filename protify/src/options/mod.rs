@@ -66,7 +66,7 @@ impl OptionValue {
 
 /// An enum representing values for protobuf options.
 ///
-/// These can be composed manually by using one of the many provided `From` impls, or with the `serde` feature, whcih allows conversion from [`serde_json::Value`].
+/// These can be composed manually by using one of the many provided `From` impls, or with the `serde` feature, which allows conversion from [`serde_json::Value`].
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "std", derive(Template))]
