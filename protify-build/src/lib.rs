@@ -17,7 +17,7 @@ use prost_reflect::{prost::Message as ProstMessage, prost_types::FileDescriptorS
 ///
 /// You can then collect the data while also setting up the validators with the [`set_up_validators`](DescriptorDataConfig::set_up_validators) method.
 ///
-/// Should you wish to not collect any data at all, you can call the omonimous function [`set_up_validators`] exported to the root, which will set up the validators and return an empty [`DescriptorData`] instance.
+/// Should you wish to not collect any data at all, you can call the homonymous function [`set_up_validators`] exported to the root, which will set up the validators and return an empty [`DescriptorData`] instance.
 #[derive(Default)]
 pub struct DescriptorDataConfig {
 	collect_oneofs_data: bool,
@@ -27,7 +27,7 @@ pub struct DescriptorDataConfig {
 
 impl DescriptorDataConfig {
 	/// Sets up the validators for the specified packages, while also collecting the data that was requested
-	/// in the configuration. Refer to the omonimous [`set_up_validators`] function's documentation to learn more about the implementations provided by this method.
+	/// in the configuration. Refer to the homonymous [`set_up_validators`] function's documentation to learn more about the implementations provided by this method.
 	pub fn set_up_validators(
 		&self,
 		config: &mut Config,
@@ -174,7 +174,7 @@ fn full_ish_name<'a>(item: &'a str, package: &'a str) -> &'a str {
 ///
 /// If you wish to collect data from the descriptor while setting up the validators, look into the [`DescriptorDataConfig`] struct.
 ///
-/// All of the selected messages will implement [`ValidatedMessage`](crate::ValidatedMessage), the selected enums will impement [`ProtoEnum`](crate::ProtoEnum), and the selected oneofs will implement [`ValidatedOneof`](crate::ValidatedOneof), and all of them will impement [`ProtoValidation`](crate::ProtoValidation).
+/// All of the selected messages will implement [`ValidatedMessage`](crate::ValidatedMessage), the selected enums will implement [`ProtoEnum`](crate::ProtoEnum), and the selected oneofs will implement [`ValidatedOneof`](crate::ValidatedOneof), and all of them will implement [`ProtoValidation`](crate::ProtoValidation).
 ///
 /// If the `cel` feature is enabled, [`CelValue`](crate::CelValue) and [`CelOneof`](crate::CelOneof) will also be implemented for messages and oneofs.
 ///

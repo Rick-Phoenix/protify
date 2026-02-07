@@ -48,7 +48,7 @@ pub struct TimestampValidator {
 	/// Specifies that this field's value will be valid only if it is within the specified Duration (either in the past or future) from the moment when it's being validated.
 	pub within: Option<Duration>,
 
-	/// Used only in the `gt_now` check. This is for cases when you may want to check if a value is "from now onwards", but a tiny delay between the value's creation (which is the indended "now" moment) and its validation (which is when the "now" is evaluated) would cause the validation to fail.
+	/// Used only in the `gt_now` check. This is for cases when you may want to check if a value is "from now onwards", but a tiny delay between the value's creation (which is the intended "now" moment) and its validation (which is when the "now" is evaluated) would cause the validation to fail.
 	#[cfg(all(feature = "chrono", any(feature = "std", feature = "chrono-wasm")))]
 	pub now_tolerance: Duration,
 
