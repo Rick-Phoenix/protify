@@ -19,7 +19,7 @@ pub trait PackageSchema {
 	fn get_package() -> Package {
 		#[cfg(feature = "inventory")]
 		{
-			collect_package(Self::NAME)
+			inventory_collection::collect_package(Self::NAME)
 		}
 
 		#[cfg(not(feature = "inventory"))]

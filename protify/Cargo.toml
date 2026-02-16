@@ -51,7 +51,7 @@ thiserror = { version = "2", default-features = false }
 log = "0.4"
 owo-colors = { version = "4" }
 inventory = { version = "0.3", optional = true }
-ordermap = { version = "1", default-features = false }
+ordermap = { version = "1", optional = true, default-features = false }
 similar-asserts = { version = "1" }
 float_eq = { version = "1", default-features = false }
 protify-proc-macro = { version = "0.1.0", path = "../protify-proc-macro/", default-features = false }
@@ -89,7 +89,7 @@ serde = [
 ]
 
 ## Enables automatic collection for elements of a package. (Required `std`)
-inventory = ["std", "dep:inventory"]
+inventory = ["std", "dep:inventory", "dep:ordermap"]
 
 ## Enables timestamp `now` features in CEL and timestamp validation.
 chrono = ["proto-types/chrono", "dep:chrono"]
