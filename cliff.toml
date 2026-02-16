@@ -34,6 +34,7 @@ body = """
 """
 
 [git]
+skip_tags = "v0.1.0"
 commit_parsers = [
   { message = "^feat", group = "<!-- 0 -->⛰️  Features" },
   { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },

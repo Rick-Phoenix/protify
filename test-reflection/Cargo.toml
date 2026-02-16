@@ -8,6 +8,9 @@ authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
+[package.metadata.release]
+release = false
+
 [dependencies]
 proto-types = { workspace = true, features = ["default", "all_common", "rpc"] }
 protify = { path = "../protify/", features = ["reflection"] }

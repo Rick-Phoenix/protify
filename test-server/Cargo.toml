@@ -8,6 +8,9 @@ authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
+[package.metadata.release]
+release = false
+
 [dependencies]
 tonic = { workspace = true, features = ["default"] }
 tonic-prost = { workspace = true }
