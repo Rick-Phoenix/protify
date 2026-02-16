@@ -1483,7 +1483,7 @@ dependencies = [
 
 [[package]]
 name = "protify"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "askama",
  "bon",
@@ -1521,7 +1521,7 @@ dependencies = [
 
 [[package]]
 name = "protify-build"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "document-features",
  "prost-build",
@@ -1530,7 +1530,7 @@ dependencies = [
 
 [[package]]
 name = "protify-proc-macro"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bool-enum",
  "bytes",
