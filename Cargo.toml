@@ -51,10 +51,10 @@ diesel = { version = "2", features = [
   "returning_clauses_for_sqlite_3_35",
 ] }
 proto-types = { version = "0.2.1", path = "../proto-types/proto-types/", default-features = false }
-tonic = { version = "0.14", default-features = false }
-tonic-prost = "0.14"
-prost = { version = "0.14", default-features = false, features = ["derive"] }
-tonic-prost-build = "0.14"
+tonic = { version = "0.14.3", default-features = false }
+tonic-prost = "0.14.3"
+prost = { version = "0.14.3", default-features = false, features = ["derive"] }
+tonic-prost-build = "0.14.3"
 serde = { version = "1", features = ["derive"] }
 chrono = "0.4"
 protocheck-core = { path = "../protocheck/core" }
@@ -64,7 +64,7 @@ constcat = "0.6"
 float_eq = "1"
 ordered-float = "5"
 bytes = "1"
-prost-build = "0.14"
+prost-build = "0.14.3"
 prost-reflect = "0.16"
 similar-asserts = "1"
 bool-enum = { version = "0.1.1" }
