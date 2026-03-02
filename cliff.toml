@@ -49,6 +49,7 @@ commit_parsers = [
   { message = "^chore: Update changelog", skip = true },
   { message = "^chore\\(deps.*\\)", skip = true },
   { message = "^chore\\(pr\\)", skip = true },
+  { message = "^chore\\(release\\)", skip = true },
   { message = "^chore\\(pull\\)", skip = true },
   { message = "^chore\\(npm\\).*yarn\\.lock", skip = true },
   { message = "^ci", group = "<!-- 7 -->📦 CI/CD" },
