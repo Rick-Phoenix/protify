@@ -1,6 +1,6 @@
 [package]
 name = "protify-proc-macro"
-version = "0.1.2"
+version = "0.1.3"
 description = "Proc macro implementations for protify."
 edition.workspace = true
 license.workspace = true
