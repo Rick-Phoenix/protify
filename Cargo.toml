@@ -8,7 +8,6 @@ members = [
   "protify-build",
   "no-std-models",
   "test-no-std",
-  "gen-readme",
 ]
 resolver = "3"
 

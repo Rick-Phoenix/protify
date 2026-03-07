@@ -1,4 +1,3 @@
-
 <p align="center">
 <img alt="protify logo" src="https://github.com/Rick-Phoenix/protify/blob/main/assets/logo.jpg?raw=true">
 </p>
@@ -14,21 +13,36 @@
 </div>
 </div>
 
+<!-- cargo-reedme: start -->
+
+<!-- cargo-reedme: info-start
+
+    Do not edit this region by hand
+    ===============================
+
+    This region was generated from Rust documentation comments by `cargo-reedme` using this command:
+
+        cargo +nightly reedme -p protify
+
+    for more info: https://github.com/nik-rev/cargo-reedme
+
+cargo-reedme: info-end -->
+
 Protify is a Rust-first framework for protobuf that generates packages from rust code, with validation included.
 
- It aims to make working with protobuf feel (almost) as easy as using `serde`. It flips the logic of the typical proto workflow around, so that all the elements of a package can be defined in rust with a rich set of macros and attributes, and the resulting contracts can be generated from the rust code, rather than the other way around.
+It aims to make working with protobuf feel (almost) as easy as using `serde`. It flips the logic of the typical proto workflow around, so that all the elements of a package can be defined in rust with a rich set of macros and attributes, and the resulting contracts can be generated from the rust code, rather than the other way around.
 
- It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
+It also offers a rich validation framework that can be used to programmatically create highly customizable validators that can also be transposed into protobuf options to provide portability to other systems.
 
- >ℹ️ **NOTE**: This readme is generated from the rust documentation to ensure better maintainability, so most of the links will not show up in Github. Read this in the [docs.rs](https://docs.rs/protify/latest/protify/index.html) page to ensure that links work correctly.
+>ℹ️ **NOTE**: This readme is generated from the rust documentation to ensure better maintainability, so most of the links will not show up in Github. Read this in the [docs.rs](https://docs.rs/protify/latest/protify/index.html) page to ensure that links work correctly.
 
- You can visit the [package setup](https://docs.rs/protify/latest/protify/guide/package_setup/index.html) section of the [guide](https://docs.rs/protify/latest/protify/guide/index.html) to learn more about how to set up protify.
+You can visit the [package setup](https://docs.rs/protify/latest/protify/guide/package_setup/index.html) section of the [guide](https://docs.rs/protify/latest/protify/guide/index.html) to learn more about how to set up protify.
 
 # From Rust To Proto
 
 Each element of a protobuf file can be defined with a proc or attribute macro. Options for each element can be composed and assigned programmatically.
 
-Unlike in prost, enums representing protobuf oneofs can be reused for multiple messages (with limitations explained in the [reusing oneofs](crate::guide::reusing_oneofs) section).
+Unlike in prost, enums representing protobuf oneofs can be reused for multiple messages (with limitations explained in the [reusing oneofs](https://docs.rs/protify/latest/protify/guide/reusing_oneofs/) section).
 
 ```rust
 use protify::*;
@@ -97,10 +111,9 @@ pub enum MyEnum {
 }
 ```
 
-All the messages defined in this snippet can be plugged directly in a tonic handler and work out of the box. All you need to do is to set up tonic so that it doesn't try to build them from the protos, but rather imports them directly from your models crate. This is explained in detail in the [usage with tonic](https://docs.rs/protify/latest/protify/guide/usage_with_tonic/index.html) section.
+All the messages defined in this snippet can be plugged directly in a tonic handler and work out of the box. All you need to do is to set up tonic so that it doesn’t try to build them from the protos, but rather imports them directly from your models crate. This is explained in detail in the [usage with tonic](https://docs.rs/protify/latest/protify/guide/usage_with_tonic/index.html) section.
 
-
- For a full guide on how to set up a package, visit the [package setup](crate::guide::package_setup) section.
+For a full guide on how to set up a package, visit the [package setup](https://docs.rs/protify/latest/protify/guide/package_setup/) section.
 
 # Proxies As A Translation Layer
 
@@ -110,15 +123,15 @@ Proxied messages/oneofs unlock the following features:
 
 - A field/variant can be missing from the proto struct, but present in the proxy (akin to the `skip` attribute with `serde`)
 - Enums can be represented with their actual rust enum type, rather than being pure integers
-- Oneofs don't need to be wrapped in `Option`
-- Messages don't need to be wrapped in `Option`
+- Oneofs don’t need to be wrapped in `Option`
+- Messages don’t need to be wrapped in `Option`
 - We can use types that are not supported by prost and map them with custom conversions
 
-By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field's prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
+By default, the macro will generate a conversion from proxy to proto and vice versa that just calls `.into()` for each field/variant. So if the field’s prost type implements `From` with the proxy field and vice versa, no additional attributes are required.
 
 To provide custom conversions, you can use the `from_proto` and `into_proto` attributes on the container (to replace the automatically generated impl as a whole) or on individual fields/variants.
 
-The proxied structs/enums will also implement [`ProxiedMessage`](crate::ProxiedMessage) or [`ProxiedOneof`](crate::ProxiedOneof), whereas the proxies will implement [`MessageProxy`](crate::MessageProxy) and [`OneofProxy`](crate::OneofProxy).
+The proxied structs/enums will also implement [`ProxiedMessage`](https://docs.rs/protify/latest/protify/message_schema/trait.ProxiedMessage.html) or [`ProxiedOneof`](https://docs.rs/protify/latest/protify/oneof_schema/trait.ProxiedOneof.html), whereas the proxies will implement [`MessageProxy`](https://docs.rs/protify/latest/protify/message_schema/trait.MessageProxy.html) and [`OneofProxy`](https://docs.rs/protify/latest/protify/oneof_schema/trait.OneofProxy.html).
 
 ```rust
 use protify::*;
@@ -195,10 +208,9 @@ fn main() {
 }
 ```
 
-
 # Interacting With Databases
 
-An important benefit that comes from having a "rust-first" approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the `prost-build` helper, which can be unergonomic and brittle.
+An important benefit that comes from having a “rust-first” approach when defining our models is that they can easily be used for operations such as db queries, without needing to create separate structs to map to the generated protos, or injecting the attributes as plain text with the `prost-build` helper, which can be unergonomic and brittle.
 
 And with proxies, the interactions with a database becomes even easier, because we can have the proto-facing struct with a certain shape, while the proxy can represent the state of a message after its data has been mapped, for example, to an item queried from the database.
 
@@ -320,14 +332,13 @@ fn main() {
 }
 ```
 
-
 # Validating Content
 
 Whenever models or API contracts are defined and used, the need for validation follows close behind.
 
 Because of this, `protify` ships with a validation framework that integrates validation logic with schema definitions.
 
-The implementors of [`Validator`](crate::Validator) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they can also produce a schema representation, so that their settings can be represented as options in a protobuf file, so that they can be ported between different applications.
+The implementors of [`Validator`](https://docs.rs/protify/latest/protify/validators/trait.Validator.html) hold two roles at the same time: on the one hand, they handle the validation logic on the rust side, and on the other hand, they can also produce a schema representation, so that their settings can be represented as options in a protobuf file, so that they can be ported between different applications.
 
 All the provided validators map their options to the [protovalidate](https://github.com/bufbuild/protovalidate) options, but you can also create customized validators that map to other custom options.
 
@@ -384,17 +395,17 @@ pub enum MyOneof {
 }
 ```
 
-ℹ️ **NOTE**: Validators that are provided via closures will be cached in a Lazy struct (normally a [`LazyLock`](std::sync::LazyLock) or a wrapper for [`OnceBox`](once_cell::race::OnceBox) in a no_std environment), so they are only initialized once (except for the [`OneofValidator`](crate::OneofValidator) which is small enough).
+ℹ️ **NOTE**: Validators that are provided via closures will be cached in a Lazy struct (normally a [`LazyLock`](https://doc.rust-lang.org/stable/std/sync/lazy_lock/struct.LazyLock.html) or a wrapper for [`OnceBox`](https://docs.rs/once_cell/latest/once_cell/race/once_box/struct.OnceBox.html) in a no_std environment), so they are only initialized once (except for the [`OneofValidator`](https://docs.rs/protify/latest/protify/validators/oneof/struct.OneofValidator.html) which is small enough).
 
 ## Custom Validators
 
-The [`Validator`](crate::Validator) trait allows for the construction of custom validators.
+The [`Validator`](https://docs.rs/protify/latest/protify/validators/trait.Validator.html) trait allows for the construction of custom validators.
 
-A validator can be a struct (stateful) or just a function, wrapped with the [`from_fn`](crate::from_fn) helper.
+A validator can be a struct (stateful) or just a function, wrapped with the [`from_fn`](https://docs.rs/protify/latest/protify/validators/fn.from_fn.html) helper.
 
-Each validator only needs to implement a single method, [`execute_validation`](crate::Validator::execute_validation), which receives a [`ValidationCtx`](crate::ValidationCtx) and an [`Option`] of the target type. All the other methods are automatically derived.
+Each validator only needs to implement a single method, [`execute_validation`](https://docs.rs/protify/latest/protify/validators/trait.Validator.html#tymethod.execute_validation), which receives a [`ValidationCtx`](https://docs.rs/protify/latest/protify/validators/field_context/struct.ValidationCtx.html) and an [`Option`](https://doc.rust-lang.org/stable/core/option/enum.Option.html) of the target type. All the other methods are automatically derived.
 
-The [`schema`](crate::Validator::schema) and [`check_consistency`](crate::Validator::check_consistency) methods can be optionally implemented, as described later in this section and in the [`correctness`](crate::guide::correctness) section.
+The [`schema`](https://docs.rs/protify/latest/protify/validators/trait.Validator.html#tymethod.schema) and [`check_consistency`](https://docs.rs/protify/latest/protify/validators/trait.Validator.html#tymethod.check_consistency) methods can be optionally implemented, as described later in this section and in the [`correctness`](https://docs.rs/protify/latest/protify/guide/correctness/) section.
 
 ```rust
 use protify::*;
@@ -487,7 +498,7 @@ You can have a look at the testing crates in the [repo](https://github.com/Rick-
 
 In order to facilitate things like i18n, every provided validator allows for customization of the error messages, without requiring a whole custom validator to be designed purely for this purpose.
 
-Each builder features a method called `with_error_messages`, which accepts a [`BTreeMap`](std::collections::BTreeMap) that maps the violations that it may produce to error messages.
+Each builder features a method called `with_error_messages`, which accepts a [`BTreeMap`](https://doc.rust-lang.org/stable/alloc/collections/btree/map/struct.BTreeMap.html) that maps the violations that it may produce to error messages.
 
 ```rust
 use protify::*;
@@ -517,7 +528,7 @@ assert_eq!(violations[0].message(), "the nickname must be at least three charact
 
 ## Schema Representation
 
-In order to make validation settings portable, each validator can optionally implement the [`schema`](crate::Validator::schema) method, which outputs a [`ProtoOption`](crate::ProtoOption) that will be added to the receiving message/oneof in the proto file.
+In order to make validation settings portable, each validator can optionally implement the [`schema`](https://docs.rs/protify/latest/protify/validators/trait.Validator.html#tymethod.schema) method, which outputs a [`ProtoOption`](https://docs.rs/protify/latest/protify/options/struct.ProtoOption.html) that will be added to the receiving message/oneof in the proto file.
 
 All default validators implement this method and output the options in the `protovalidate` format.
 
@@ -557,22 +568,20 @@ fn main() {
 
 ## Protovalidate Support
 
-The best way to use protify is to define a schema from scratch using rust code. However, it is also possible to generate validators that are defined in pre-built proto files using the `protovalidate` syntax. You can learn more about this in the [reflection usage](crate::guide::reflection_usage) section.
+The best way to use protify is to define a schema from scratch using rust code. However, it is also possible to generate validators that are defined in pre-built proto files using the `protovalidate` syntax. You can learn more about this in the [reflection usage](https://docs.rs/protify/latest/protify/guide/reflection_usage/) section.
 
+# Feature Flags
 
- # Feature Flags
-
-* **`tonic`** —  Enables direct conversion from validation errors to [`tonic::Status`].
+* **`tonic`** —  Enables direct conversion from validation errors to [`tonic::Status`](https://docs.rs/tonic/latest/tonic/status/struct.Status.html).
 * **`serde`** —  Enables serde for all schema representations.
 * **`inventory`** *(enabled by default)* —  Enables automatic collection for elements of a package. (Required `std`)
 * **`chrono`** *(enabled by default)* —  Enables timestamp `now` features in CEL and timestamp validation.
-* **`chrono-wasm`** —  Enables usage of wasmbind for chrono's `now` methods.
+* **`chrono-wasm`** —  Enables usage of wasmbind for chrono’s `now` methods.
 * **`std`** *(enabled by default)* —  Enables the std library features.
 * **`common-types`** —  Enables schema features for `google.type` types.
 * **`rpc-types`** —  Enables schema features for `google.rpc` types.
 * **`reflection`** —  Enables usage with reflection, to generate validation logic from pre-built protos with protovalidate annotations.
 * **`cel`** *(enabled by default)* —  Enables CEL validation.
 * **`regex`** *(enabled by default)* —  Enables regex-based validators.
-# License
-This repository is licensed under the MPL-2.0 license.
-The file `CREDITS.md` contains the licensing details for the external code used in this project.
+
+<!-- cargo-reedme: end -->

@@ -36,7 +36,7 @@ where
 	}
 }
 
-/// A trait that enables conversion into [`cel::Value`](::cel::Value).
+/// A trait that enables conversion into [`cel::Value`].
 ///
 /// Implemented by the [`proto_message`] macro.
 #[cfg(feature = "cel")]
@@ -47,7 +47,7 @@ pub trait CelValue: Clone + TryInto<::cel::Value, Error = CelConversionError> {
 	}
 }
 
-/// A trait that enables conversion into [`cel::Value`](::cel::Value).
+/// A trait that enables conversion into [`cel::Value`].
 ///
 /// Implemented by the [`proto_oneof`] macro.
 #[cfg(feature = "cel")]

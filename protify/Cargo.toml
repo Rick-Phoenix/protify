@@ -15,6 +15,9 @@ workspace = true
 [package.metadata.release]
 tag = true
 
+[package.metadata.cargo-reedme]
+features = ["document-features"]
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]

@@ -1,5 +1,5 @@
 gen-readme:
-    cargo run -p gen-readme
+	cargo reedme -p protify
 
 check-asm-output:
     cargo asm --release -p protify --test code_elimination trigger_validation
@@ -39,5 +39,5 @@ release version exec="": test-all gen-readme
     ./pre-release.sh {{ version }} {{ exec }}
     cargo release {{ version }} {{ exec }}
 
-build-docs: gen-readme
+docs: gen-readme
     RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --no-deps -p protify --all-features --open
