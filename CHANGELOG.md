@@ -1,3 +1,13 @@
+## [0.1.4] - 2026-03-07
+
+### ⛰️  Features
+
+- [8f3655b](https://github.com/Rick-Phoenix/proto-types/commit/8f3655b05abfb34eb9dcb975f2a753a0c9fa333a) Support streams in service schema
+
+### 📚 Documentation
+
+- [33d87df](https://github.com/Rick-Phoenix/proto-types/commit/33d87dfc30bc229b3e7b39838bbbf87f0d094282) Switched to cargo-reedme for generating readme from rustdoc
+
 ## [0.1.3] - 2026-03-02
 
 ### ⚙️ Miscellaneous Tasks
