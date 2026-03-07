@@ -234,7 +234,7 @@ pub fn extension_derive(_input: TokenStream) -> TokenStream {
 pub fn proto_service(_args: TokenStream, input: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(input as ItemEnum);
 
-	let output = match process_service_derive(&item) {
+	let output = match process_service_macro(&item) {
 		Ok(output) => output,
 		Err(e) => return e.to_compile_error().into(),
 	};

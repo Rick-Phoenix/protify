@@ -36,6 +36,15 @@ impl Service {
 pub struct ServiceHandler {
 	pub name: FixedStr,
 	pub options: Vec<ProtoOption>,
-	pub request: ProtoPath,
-	pub response: ProtoPath,
+	pub request: HandlerTarget,
+	pub response: HandlerTarget,
+}
+
+/// A struct that represents the target of a service handler, either request or response.
+#[derive(Debug, PartialEq, Builder)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
+pub struct HandlerTarget {
+	pub message: ProtoPath,
+	pub is_stream: bool,
 }

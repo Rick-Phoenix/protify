@@ -260,7 +260,9 @@ fn extension_schema_output() {
 pub enum TestService {
 	#[proto(options = test_options())]
 	Service1 {
+		#[stream]
 		request: TestMessage,
+		#[stream]
 		response: Nested1,
 	},
 	Service2 {
@@ -278,10 +280,10 @@ fn service_schema_output() {
 	let service1 = schema.handlers.first().unwrap();
 
 	assert_eq_pretty!(service1.name, "Service1");
-	assert_eq_pretty!(service1.request.name, "TestMessage");
-	assert_eq_pretty!(service1.request.file, RENDERING::NAME);
-	assert_eq_pretty!(service1.request.package, RENDERING::PACKAGE);
-	assert_eq_pretty!(service1.response.name, "TestMessage.Nested1");
+	assert_eq_pretty!(service1.request.message.name, "TestMessage");
+	assert_eq_pretty!(service1.request.message.file, RENDERING::NAME);
+	assert_eq_pretty!(service1.request.message.package, RENDERING::PACKAGE);
+	assert_eq_pretty!(service1.response.message.name, "TestMessage.Nested1");
 	assert_eq_pretty!(service1.options, test_options());
 }
 

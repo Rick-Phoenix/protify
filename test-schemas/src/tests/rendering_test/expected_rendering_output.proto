@@ -210,7 +210,7 @@ message TestMessage {
         id: "abc",
         message: "abc",
         expression: "true == true"
-      }, 
+      },
       {
         id: "abc",
         message: "abc",
@@ -644,7 +644,7 @@ service TestService {
     }
   };
 
-  rpc Service1 (TestMessage) returns (TestMessage.Nested1) {
+  rpc Service1 (stream TestMessage) returns (stream TestMessage.Nested1) {
     option name = {
       string: "abc",
       int: 1,

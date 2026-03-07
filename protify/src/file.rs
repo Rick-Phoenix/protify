@@ -110,8 +110,8 @@ impl ProtoFile {
 				.iter()
 				.map(|h| (&h.request, &h.response))
 			{
-				self.imports.insert_from_path(request);
-				self.imports.insert_from_path(response);
+				self.imports.insert_from_path(&request.message);
+				self.imports.insert_from_path(&response.message);
 			}
 
 			if *service.file != *self.name {

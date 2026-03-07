@@ -8,7 +8,25 @@ Each variant represents a protobuf method for the given service, and it must con
 The target of a method must implement [`MessagePath`](protify::MessagePath), which is automatically implemented by the
 [`proto_message`](protify::proto_message) macro and for all types from the [`proto_types`](protify::proto_types) crate.
 
-# Example
+## Attributes
+
+These two attributes can be used on the **container**, to refer to the service as a whole, or to the individual methods.
+
+- `options`
+    - Type: Expr
+    - Example: `#[proto(options = vec![ my_option_1() ])]`
+    - Description:
+    Specifies the options for the given service or method. It must resolve to an implementor of IntoIterator<Item = [`ProtoOption`](crate::ProtoOption)>.
+
+- `deprecated`
+    - Type: Ident
+    - Example: `#[proto(deprecated = true)]` or `#[deprecated]`
+    - Description:
+    Marks the service or method as deprecated.
+
+Furthermore, you can use the `#[stream]` attribute on the request/response fields to mark a request or response as a stream, as shown below.
+
+## Example
 ```rust
 use indoc::indoc;
 use protify::*;
@@ -36,8 +54,15 @@ pub struct Status {
 
 #[proto_service]
 enum UserService {
-	GetUser { request: UserId, response: User },
-	UpdateUser { request: User, response: Status },
+	GetUser {
+        request: UserId,
+        response: User
+    },
+	UpdateUser {
+        #[stream]
+        request: User,
+        response: Status
+    },
 }
 
 fn main() {
@@ -48,7 +73,7 @@ fn main() {
 		indoc! {"
             service UserService {
               rpc GetUser (UserId) returns (User);
-              rpc UpdateUser (User) returns (Status);
+              rpc UpdateUser (stream User) returns (Status);
             }"
 		}
 	);
